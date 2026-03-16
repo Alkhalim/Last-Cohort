@@ -633,9 +633,21 @@ class GameUI {
         break;
       case PHASE.VICTORY:
         phaseLabel.textContent = 'VICTORY';
+        if (!this._victoryTimeout) {
+          this._victoryTimeout = setTimeout(() => {
+            this._victoryTimeout = null;
+            this.onVictory();
+          }, 1200);
+        }
         break;
       case PHASE.DEFEAT:
         phaseLabel.textContent = 'DEFEAT';
+        if (!this._defeatTimeout) {
+          this._defeatTimeout = setTimeout(() => {
+            this._defeatTimeout = null;
+            this.onDefeat();
+          }, 1500);
+        }
         break;
     }
 

@@ -45,7 +45,7 @@ html, body {
   background: var(--bg-deep);
   color: var(--text);
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -1757,18 +1757,19 @@ html, body {
   width: 100%;
   padding: 10px;
   font-family: 'Cinzel', serif;
-  font-size: 0.8rem;
-  background: var(--bg-card);
-  color: var(--text-dim);
-  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  background: linear-gradient(180deg, #1e2230 0%, #161a24 100%);
+  color: var(--text-bright);
+  border: 1px solid var(--border-highlight);
   cursor: pointer;
   letter-spacing: 0.08em;
-  min-height: 44px;
+  min-height: 48px;
   transition: all 0.15s;
 }
 
 .btn-secondary:active {
-  background: var(--bg-card-hover);
+  background: linear-gradient(180deg, #2a2e3a 0%, #1e2230 100%);
+  border-color: var(--gold-dim);
 }
 
 .btn-secondary.hidden {
