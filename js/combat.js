@@ -317,6 +317,16 @@ class CombatEngine {
     if (this.enemies.every(e => e.dead)) {
       this.phase = PHASE.VICTORY;
       this.addLog('All enemies defeated!');
+      this.update();
+      return;
+    }
+
+    // Auto-end turn if all alive units have acted
+    const allActed = this.party.every(u => u.downed || u.actedThisTurn);
+    if (allActed) {
+      this.update();
+      setTimeout(() => this.endPlayerTurn(), 400);
+      return;
     }
 
     this.update();
