@@ -47,6 +47,7 @@ class CombatEngine {
         taunt: false,
         actedThisTurn: false,
         conditions: [],
+        equipment: { weapon: null, armor: null, trinket: null },
         // Per-encounter stats
         stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 },
       };
@@ -62,6 +63,7 @@ class CombatEngine {
     this.phase = PHASE.PRE_COMBAT;
     this.currentEncounterDef = encounterDef;
     this.targetMode = null;
+    this.killedEnemies = [];
     this.party.forEach(u => {
       u.block = 0;
       u.taunt = false;
@@ -70,6 +72,7 @@ class CombatEngine {
       u.actedThisTurn = false;
       u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 };
       if (u.passive) u.passive.triggered = false;
+      this.computeEquipmentStats(u);
     });
     this.addLog(encounterDef.intro);
   }
@@ -321,9 +324,8 @@ class CombatEngine {
       return;
     }
 
-    // Auto-end turn if all alive units have acted
-    const allActed = this.party.every(u => u.downed || u.actedThisTurn);
-    if (allActed) {
+    // Auto-end turn if all alive units have acted or can't act
+    if (this.shouldAutoEndTurn()) {
       this.update();
       setTimeout(() => this.endPlayerTurn(), 400);
       return;
@@ -334,15 +336,15 @@ class CombatEngine {
 
   applySkillResult(unit, result) {
     if (result.damage && result.target && result.target.hp !== undefined) {
-      let dmg = result.damage + (unit.bonusDamage || 0);
+      let dmg = result.damage + (unit.bonusDamage || 0) + (unit.equipDamage || 0);
       result.target.hp = Math.max(0, result.target.hp - dmg);
       unit.stats.damageDealt += dmg;
     }
     if (result.heal && result.target) {
+      const healAmount = result.heal + (unit.equipHeal || 0);
       const before = result.target.hp;
-      result.target.hp = Math.min(result.target.maxHp, result.target.hp + result.heal);
+      result.target.hp = Math.min(result.target.maxHp, result.target.hp + healAmount);
       const actual = result.target.hp - before;
-      unit.stats.healingDone += actual;
       if (actual > 0 && this.onVisual) {
         this.onVisual('unitHeal', { unitIndex: result.target.index, amount: actual });
       }
@@ -352,17 +354,19 @@ class CombatEngine {
       unit.stats.damageTaken += result.selfDamage;
     }
     if (result.block && result.target) {
-      result.target.block = (result.target.block || 0) + result.block;
-      unit.stats.blockGenerated += result.block;
+      const blockVal = result.block + (unit.equipBlock || 0);
+      result.target.block = (result.target.block || 0) + blockVal;
+      unit.stats.blockGenerated += blockVal;
     }
     if (result.taunt) {
       unit.taunt = true;
     }
     if (result.blockAll) {
+      const blockAllVal = result.blockAll + (unit.equipBlock || 0);
       this.party.forEach(u => {
-        if (!u.downed) u.block = (u.block || 0) + result.blockAll;
+        if (!u.downed) u.block = (u.block || 0) + blockAllVal;
       });
-      unit.stats.blockGenerated += result.blockAll * this.party.filter(u => !u.downed).length;
+      unit.stats.blockGenerated += blockAllVal * this.party.filter(u => !u.downed).length;
     }
     if (result.buffAllies) {
       this.party.forEach(u => {
@@ -383,8 +387,21 @@ class CombatEngine {
       if (e.hp <= 0 && !e.dead) {
         e.dead = true;
         e.hp = 0;
+        this.killedEnemies.push(e.id);
         this.addLog(`${e.name} falls!`);
       }
+    });
+  }
+
+  shouldAutoEndTurn() {
+    // No dice left
+    if (this.dicePool.getAvailable().length === 0) return true;
+    // All units acted, downed, or can't use any skill
+    return this.party.every(u => {
+      if (u.downed || u.actedThisTurn) return true;
+      // Check if this unit can use at least one skill
+      const available = this.dicePool.getAvailable();
+      return !u.skills.some(s => this.canUseSkill(u.index, s, available));
     });
   }
 
@@ -514,6 +531,58 @@ class CombatEngine {
       this.phase = PHASE.DEFEAT;
       this.addLog('The last cohort falls...');
     }
+  }
+
+  // --- Equipment ---
+  computeEquipmentStats(unit) {
+    unit.equipDamage = 0;
+    unit.equipBlock = 0;
+    unit.equipHeal = 0;
+    for (const slot of ['weapon', 'armor', 'trinket']) {
+      const itemId = unit.equipment[slot];
+      if (!itemId) continue;
+      const item = getItemData(itemId);
+      if (!item) continue;
+      if (item.stats.damage) unit.equipDamage += item.stats.damage;
+      if (item.stats.block) unit.equipBlock += item.stats.block;
+      if (item.stats.heal) unit.equipHeal += item.stats.heal;
+    }
+  }
+
+  equipItem(unitIndex, itemId) {
+    const unit = this.party[unitIndex];
+    const item = getItemData(itemId);
+    if (!item) return false;
+    if (!item.equippableBy.includes(unit.classId)) return false;
+
+    // Unequip existing item in that slot first
+    this.unequipItem(unitIndex, item.slot);
+
+    unit.equipment[item.slot] = itemId;
+    // Apply maxHp bonus
+    if (item.stats.maxHp) {
+      unit.maxHp += item.stats.maxHp;
+      unit.hp += item.stats.maxHp;
+    }
+    this.computeEquipmentStats(unit);
+    return true;
+  }
+
+  unequipItem(unitIndex, slot) {
+    const unit = this.party[unitIndex];
+    const oldId = unit.equipment[slot];
+    if (!oldId) return null;
+
+    const oldItem = getItemData(oldId);
+    unit.equipment[slot] = null;
+    // Remove maxHp bonus
+    if (oldItem && oldItem.stats.maxHp) {
+      unit.maxHp -= oldItem.stats.maxHp;
+      unit.hp = Math.min(unit.hp, unit.maxHp);
+      if (unit.hp < 1) unit.hp = 1;
+    }
+    this.computeEquipmentStats(unit);
+    return oldId;
   }
 
   afterEncounter() {

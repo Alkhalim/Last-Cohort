@@ -647,22 +647,106 @@ class GameUI {
     this.engine.afterEncounter();
     this.engine.encounterIndex++;
 
+    // Roll drops from killed enemies
+    this.pendingLoot = [];
+    for (const enemyId of this.engine.killedEnemies) {
+      const itemId = rollDrop(enemyId);
+      if (itemId) this.pendingLoot.push(itemId);
+    }
+
+    this.lootScreenFinal = isFinal;
     this.showScreen('loot-screen');
+    this.renderLootScreen();
+  }
 
-    // Placeholder loot — will be expanded later
+  renderLootScreen() {
     const lootText = document.getElementById('loot-text');
-    lootText.textContent = 'Your soldiers scavenge what they can from the fallen.';
-
-    const lootItems = document.getElementById('loot-items');
-    lootItems.innerHTML = '<div class="loot-placeholder">No loot system yet — coming soon.</div>';
-
+    const dropsEl = document.getElementById('loot-drops');
+    const equipListEl = document.getElementById('loot-equip-list');
     const continueBtn = document.getElementById('btn-loot-continue');
-    if (isFinal) {
+
+    dropsEl.innerHTML = '';
+
+    if (this.pendingLoot.length === 0) {
+      lootText.textContent = 'Nothing of value was found among the fallen.';
+    } else {
+      lootText.textContent = 'Your soldiers scavenge what they can.';
+
+      this.pendingLoot.forEach((itemId, lootIdx) => {
+        const item = getItemData(itemId);
+        if (!item) return;
+
+        const card = document.createElement('div');
+        card.className = `loot-card rarity-${item.rarity}`;
+
+        // Which units can equip this?
+        const eligible = this.engine.party.filter(u => !u.downed && item.equippableBy.includes(u.classId));
+
+        const equipBtns = eligible.map(u => {
+          const existing = u.equipment[item.slot];
+          const existingItem = existing ? getItemData(existing) : null;
+          const replaceText = existingItem ? `Replaces: ${existingItem.name}` : '';
+          return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}">
+            Equip ${u.title}${replaceText ? `<span class="loot-replace">${replaceText}</span>` : ''}
+          </button>`;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="loot-card-header">
+            <span class="loot-item-name">${item.name}</span>
+            <span class="loot-rarity">${item.rarity.toUpperCase()}</span>
+          </div>
+          <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)}</div>
+          <div class="loot-item-desc">${item.description}</div>
+          <div class="loot-equip-actions">${equipBtns}</div>
+        `;
+
+        // Bind equip buttons
+        card.querySelectorAll('.loot-equip-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const li = parseInt(btn.dataset.loot);
+            const ui = parseInt(btn.dataset.unit);
+            this.equipLootItem(li, ui);
+          });
+        });
+
+        dropsEl.appendChild(card);
+      });
+    }
+
+    // Current equipment summary
+    equipListEl.innerHTML = this.engine.party.map(u => {
+      const slots = ['weapon', 'armor', 'trinket'].map(slot => {
+        const itemId = u.equipment[slot];
+        const item = itemId ? getItemData(itemId) : null;
+        return `<span class="equip-slot">
+          <span class="equip-slot-label">${slot}</span>
+          <span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? item.name : '—'}</span>
+        </span>`;
+      }).join('');
+      return `<div class="equip-unit">
+        <span class="equip-unit-name">${u.title} ${u.name}</span>
+        <div class="equip-slots">${slots}</div>
+      </div>`;
+    }).join('');
+
+    if (this.lootScreenFinal) {
       continueBtn.textContent = 'New March';
       continueBtn.onclick = () => window.game.startNewRun();
     } else {
       continueBtn.textContent = 'Continue March';
       continueBtn.onclick = () => window.game.startNextEncounter();
+    }
+  }
+
+  equipLootItem(lootIndex, unitIndex) {
+    const itemId = this.pendingLoot[lootIndex];
+    if (!itemId) return;
+    const success = this.engine.equipItem(unitIndex, itemId);
+    if (success) {
+      // Remove from pending loot
+      this.pendingLoot.splice(lootIndex, 1);
+      this.renderLootScreen();
     }
   }
 

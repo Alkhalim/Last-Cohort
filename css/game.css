@@ -908,15 +908,15 @@ html, body {
 
 /* --- Loot Screen --- */
 #loot-screen {
-  justify-content: center;
   align-items: center;
   background: linear-gradient(180deg, #0a0a0c 0%, #1a1814 50%, #141410 100%);
+  overflow-y: auto;
 }
 
 .loot-content {
-  padding: 2rem 1rem;
-  max-width: 400px;
-  text-align: center;
+  padding: 1.5rem 1rem;
+  max-width: 420px;
+  width: 100%;
 }
 
 .loot-title {
@@ -934,15 +934,159 @@ html, body {
   line-height: 1.5;
 }
 
-.loot-placeholder {
-  color: var(--text-dim);
-  font-size: 0.75rem;
-  font-style: italic;
-  padding: 20px;
-  border: 1px dashed var(--border);
-  border-radius: 4px;
-  margin-bottom: 1.5rem;
+/* --- Loot drops --- */
+#loot-drops {
+  margin-bottom: 16px;
 }
+
+.loot-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.loot-card.rarity-common { border-left: 3px solid var(--text-dim); }
+.loot-card.rarity-uncommon { border-left: 3px solid var(--blue-bright); }
+.loot-card.rarity-rare { border-left: 3px solid var(--gold); }
+
+.loot-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.loot-item-name {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text-bright);
+}
+
+.loot-rarity {
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+.rarity-common .loot-rarity { color: var(--text-dim); }
+.rarity-uncommon .loot-rarity { color: var(--blue-bright); }
+.rarity-rare .loot-rarity { color: var(--gold); }
+
+.loot-item-meta {
+  font-size: 0.68rem;
+  color: var(--gold);
+  margin-bottom: 3px;
+}
+
+.loot-item-desc {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.loot-equip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.loot-equip-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 8px 6px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  background: linear-gradient(180deg, #2a2a14 0%, #1a1a0a 100%);
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.loot-equip-btn:active {
+  background: linear-gradient(180deg, #3a3a24 0%, #2a2a14 100%);
+}
+
+.loot-replace {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.55rem;
+  color: #aa6666;
+  font-style: italic;
+}
+
+/* --- Equipment summary --- */
+#loot-equipment {
+  margin-bottom: 16px;
+}
+
+.loot-equip-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.equip-unit {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+}
+
+.equip-unit-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.equip-slots {
+  display: flex;
+  gap: 8px;
+}
+
+.equip-slot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.equip-slot-label {
+  font-size: 0.5rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.equip-slot-item {
+  font-size: 0.62rem;
+  color: var(--text);
+}
+
+.equip-slot-item.empty {
+  color: var(--text-dim);
+}
+
+.equip-slot-item.rarity-uncommon { color: var(--blue-bright); }
+.equip-slot-item.rarity-rare { color: var(--gold); }
 
 #btn-loot-continue {
   display: block;

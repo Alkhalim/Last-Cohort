@@ -331,3 +331,123 @@ function getMoraleBand(morale) {
   }
   return MORALE_BANDS[MORALE_BANDS.length - 1];
 }
+
+// --- Item definitions ---
+const ITEM_DATA = {
+  iron_gladius: {
+    id: 'iron_gladius', name: 'Iron Gladius', slot: 'weapon', rarity: 'common',
+    equippableBy: ['legionary', 'centurion'],
+    stats: { damage: 2 },
+    description: 'A sturdy blade taken from a fallen raider.',
+  },
+  raider_shield: {
+    id: 'raider_shield', name: "Raider's Shield", slot: 'armor', rarity: 'common',
+    equippableBy: ['legionary', 'centurion'],
+    stats: { block: 2 },
+    description: 'Rough wood and hide, but it turns a blade.',
+  },
+  wolf_pelt: {
+    id: 'wolf_pelt', name: 'Wolf Pelt', slot: 'armor', rarity: 'common',
+    equippableBy: ['legionary', 'centurion', 'medicus'],
+    stats: { maxHp: 4 },
+    description: 'Thick fur that wards off the cold and softens blows.',
+  },
+  sling_stones: {
+    id: 'sling_stones', name: 'Sling Stones', slot: 'weapon', rarity: 'common',
+    equippableBy: ['centurion', 'medicus'],
+    stats: { damage: 1 },
+    description: 'Smooth river stones, still in their pouch.',
+  },
+  bone_needle_kit: {
+    id: 'bone_needle_kit', name: 'Bone Needle Kit', slot: 'trinket', rarity: 'common',
+    equippableBy: ['medicus'],
+    stats: { heal: 3 },
+    description: 'Germanic surgical tools. Crude but effective.',
+  },
+  woad_charm: {
+    id: 'woad_charm', name: 'Woad Charm', slot: 'trinket', rarity: 'uncommon',
+    equippableBy: ['legionary', 'centurion', 'medicus'],
+    stats: { maxHp: 3, block: 1 },
+    description: 'A blue-stained bone token. It feels warm to the touch.',
+  },
+  hunters_cloak: {
+    id: 'hunters_cloak', name: "Hunter's Cloak", slot: 'armor', rarity: 'uncommon',
+    equippableBy: ['centurion', 'medicus'],
+    stats: { maxHp: 5 },
+    description: 'Woven from marsh reeds and wolf hair. Surprisingly tough.',
+  },
+  fang_necklace: {
+    id: 'fang_necklace', name: 'Fang Necklace', slot: 'trinket', rarity: 'uncommon',
+    equippableBy: ['legionary', 'centurion'],
+    stats: { damage: 1, maxHp: 2 },
+    description: 'A string of wolf fangs. The men eye it uneasily.',
+  },
+  chiefs_spear: {
+    id: 'chiefs_spear', name: "Chieftain's Spear", slot: 'weapon', rarity: 'rare',
+    equippableBy: ['legionary'],
+    stats: { damage: 4 },
+    description: 'Ash-hafted and iron-tipped. Taken from a war chief.',
+  },
+  marsh_fang: {
+    id: 'marsh_fang', name: 'Marsh Fang', slot: 'trinket', rarity: 'rare',
+    equippableBy: ['medicus'],
+    stats: { heal: 5, maxHp: 3 },
+    description: 'A hollowed fang filled with dark salve. Potent medicine.',
+  },
+};
+
+// --- Drop tables per enemy ---
+const DROP_TABLES = {
+  cheruscan_raider: {
+    nothingChance: 0.25,
+    tiers: [
+      { chance: 0.50, items: ['iron_gladius', 'raider_shield'] },
+      { chance: 0.20, items: ['woad_charm'] },
+      { chance: 0.05, items: ['chiefs_spear'] },
+    ],
+  },
+  sling_hunter: {
+    nothingChance: 0.30,
+    tiers: [
+      { chance: 0.45, items: ['sling_stones', 'bone_needle_kit'] },
+      { chance: 0.20, items: ['hunters_cloak'] },
+      { chance: 0.05, items: ['woad_charm'] },
+    ],
+  },
+  marsh_wolf: {
+    nothingChance: 0.25,
+    tiers: [
+      { chance: 0.45, items: ['wolf_pelt'] },
+      { chance: 0.20, items: ['fang_necklace'] },
+      { chance: 0.10, items: ['marsh_fang'] },
+    ],
+  },
+};
+
+function rollDrop(enemyId) {
+  const table = DROP_TABLES[enemyId];
+  if (!table) return null;
+  const roll = Math.random();
+  let cumulative = table.nothingChance;
+  if (roll < cumulative) return null;
+  for (const tier of table.tiers) {
+    cumulative += tier.chance;
+    if (roll < cumulative) {
+      return tier.items[Math.floor(Math.random() * tier.items.length)];
+    }
+  }
+  return null;
+}
+
+function getItemData(itemId) {
+  return ITEM_DATA[itemId] || null;
+}
+
+function formatItemStats(stats) {
+  const parts = [];
+  if (stats.damage) parts.push(`+${stats.damage} dmg`);
+  if (stats.block) parts.push(`+${stats.block} block`);
+  if (stats.maxHp) parts.push(`+${stats.maxHp} HP`);
+  if (stats.heal) parts.push(`+${stats.heal} heal`);
+  return parts.join(', ');
+}
