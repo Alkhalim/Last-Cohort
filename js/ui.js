@@ -321,23 +321,48 @@ class GameUI {
     const panel = document.getElementById('skill-panel');
     const list = document.getElementById('skill-list');
     const nameEl = document.getElementById('skill-unit-name');
+    const confirmBtn = document.getElementById('btn-confirm');
+    const endBtn = document.getElementById('btn-end-turn');
+
+    // End turn button — visible during player turn (not targeting)
+    if (this.engine.phase === PHASE.PLAYER_TURN && !this.engine.targetMode) {
+      endBtn.classList.remove('hidden');
+      endBtn.onclick = () => { this.stagedSkill = null; this.engine.endPlayerTurn(); };
+    } else if (this.engine.phase === PHASE.PLAYER_TURN && this.engine.targetMode) {
+      endBtn.classList.remove('hidden');
+      endBtn.textContent = 'Cancel';
+      endBtn.onclick = () => { this.engine.cancelTarget(); this.stagedSkill = null; };
+    } else if (this.engine.phase === PHASE.VICTORY) {
+      endBtn.classList.remove('hidden');
+      endBtn.textContent = 'Continue';
+      endBtn.onclick = () => this.onVictory();
+    } else if (this.engine.phase === PHASE.DEFEAT) {
+      endBtn.classList.remove('hidden');
+      endBtn.textContent = 'Fall';
+      endBtn.onclick = () => this.onDefeat();
+    } else {
+      endBtn.classList.add('hidden');
+      endBtn.textContent = 'End Turn';
+    }
 
     if (this.engine.phase !== PHASE.PLAYER_TURN) {
       panel.classList.add('hidden');
+      confirmBtn.classList.add('hidden');
       return;
     }
 
-    // Auto-select a unit if needed
     this.ensureUnitSelected();
 
     if (this.selectedUnitIndex === null || this.selectedUnitIndex < 0) {
       panel.classList.add('hidden');
+      confirmBtn.classList.add('hidden');
       return;
     }
 
     const unit = this.engine.party[this.selectedUnitIndex];
     if (!unit || unit.downed) {
       panel.classList.add('hidden');
+      confirmBtn.classList.add('hidden');
       return;
     }
 
@@ -346,6 +371,7 @@ class GameUI {
     if (unit.actedThisTurn) {
       nameEl.textContent = `${unit.name} — Done`;
       list.innerHTML = '<div class="skill-acted-msg">This unit has already acted this turn.</div>';
+      confirmBtn.classList.add('hidden');
       return;
     }
 
@@ -358,55 +384,60 @@ class GameUI {
       const el = document.createElement('div');
       const isStaged = this.stagedSkill && this.stagedSkill.skillId === skill.id;
 
-      // Check if staged dice are valid for confirmation
-      let canConfirm = false;
-      if (isStaged) {
-        canConfirm = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
-      }
-
-      el.className = `skill-btn${skill.canUse ? '' : ' disabled'}${isStaged ? ' staged' : ''}${canConfirm ? ' confirm-ready' : ''}`;
+      el.className = `skill-btn${skill.canUse ? '' : ' disabled'}${isStaged ? ' staged' : ''}`;
 
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span></div>
         <div class="skill-desc">${skill.description}</div>
-        ${canConfirm ? '<div class="skill-confirm-hint">Tap to confirm</div>' : ''}
       `;
 
       if (skill.canUse) {
-        el.addEventListener('click', () => this.onSkillClick(skill, isStaged, canConfirm));
+        el.addEventListener('click', () => this.onSkillClick(skill));
       }
 
       list.appendChild(el);
     });
-  }
 
-  onSkillClick(skill, isStaged, canConfirm) {
-    if (isStaged && canConfirm) {
-      // Second click with valid dice — execute!
-      const diceIds = [...this.stagedSkill.diceIds];
-      const unitIndex = this.selectedUnitIndex;
-      this.stagedSkill = null;
-      this.engine.beginSkillTarget(unitIndex, skill.id, diceIds);
-      // Auto-advance to next non-acted unit
-      this.autoAdvanceUnit();
-    } else if (isStaged && !canConfirm) {
-      // Staged but dice swapped to invalid — unstage
-      this.stagedSkill = null;
-      this.render();
-    } else {
-      // First click — auto-pick dice and stage
-      const autoDice = this.engine.autoPick(skill);
-      if (autoDice.length > 0) {
-        this.stagedSkill = { skillId: skill.id, diceIds: autoDice };
+    // Confirm button — show when a skill is staged with valid dice
+    if (this.stagedSkill) {
+      const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
+      const canConfirm = skill && this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
+      if (canConfirm) {
+        confirmBtn.classList.remove('hidden');
+        confirmBtn.textContent = `Confirm ${skill.name}`;
+        confirmBtn.onclick = () => this.confirmSkill();
       } else {
-        this.stagedSkill = { skillId: skill.id, diceIds: [] };
+        confirmBtn.classList.add('hidden');
       }
-      this.render();
+    } else {
+      confirmBtn.classList.add('hidden');
     }
   }
 
+  onSkillClick(skill) {
+    if (this.stagedSkill && this.stagedSkill.skillId === skill.id) {
+      // Clicking same skill again — unstage
+      this.stagedSkill = null;
+    } else {
+      // Stage this skill with auto-picked dice
+      const autoDice = this.engine.autoPick(skill);
+      this.stagedSkill = { skillId: skill.id, diceIds: autoDice };
+    }
+    this.render();
+  }
+
+  confirmSkill() {
+    if (!this.stagedSkill) return;
+    const diceIds = [...this.stagedSkill.diceIds];
+    const unitIndex = this.selectedUnitIndex;
+    const skillId = this.stagedSkill.skillId;
+    this.stagedSkill = null;
+    this.engine.beginSkillTarget(unitIndex, skillId, diceIds);
+    // Auto-advance to next non-acted unit
+    this.autoAdvanceUnit();
+  }
+
   autoAdvanceUnit() {
-    // Move to next unit that hasn't acted
     const next = this.engine.party.findIndex(u => !u.downed && !u.actedThisTurn);
     if (next >= 0) {
       this.selectedUnitIndex = next;
@@ -417,11 +448,9 @@ class GameUI {
   renderPhaseUI() {
     const phaseLabel = document.getElementById('phase-label');
     const rollBtn = document.getElementById('btn-roll');
-    const endBtn = document.getElementById('btn-end-turn');
     const logToggle = document.getElementById('btn-log-toggle');
 
     rollBtn.classList.add('hidden');
-    endBtn.classList.add('hidden');
 
     switch (this.engine.phase) {
       case PHASE.PRE_COMBAT:
@@ -442,16 +471,9 @@ class GameUI {
         break;
       case PHASE.PLAYER_TURN:
         if (this.engine.targetMode) {
-          const tm = this.engine.targetMode;
-          phaseLabel.textContent = `SELECT TARGET FOR ${tm.skill.name.toUpperCase()}`;
-          endBtn.classList.remove('hidden');
-          endBtn.textContent = 'Cancel';
-          endBtn.onclick = () => { this.engine.cancelTarget(); this.stagedSkill = null; };
+          phaseLabel.textContent = `SELECT TARGET FOR ${this.engine.targetMode.skill.name.toUpperCase()}`;
         } else {
           phaseLabel.textContent = `TURN ${this.engine.turn}`;
-          endBtn.classList.remove('hidden');
-          endBtn.textContent = 'End Turn';
-          endBtn.onclick = () => { this.stagedSkill = null; this.engine.endPlayerTurn(); };
         }
         break;
       case PHASE.ENEMY_TURN:
@@ -459,19 +481,12 @@ class GameUI {
         break;
       case PHASE.VICTORY:
         phaseLabel.textContent = 'VICTORY';
-        endBtn.classList.remove('hidden');
-        endBtn.textContent = 'Continue';
-        endBtn.onclick = () => this.onVictory();
         break;
       case PHASE.DEFEAT:
         phaseLabel.textContent = 'DEFEAT';
-        endBtn.classList.remove('hidden');
-        endBtn.textContent = 'Fall';
-        endBtn.onclick = () => this.onDefeat();
         break;
     }
 
-    // Log toggle button
     logToggle.onclick = () => this.toggleLog();
   }
 
