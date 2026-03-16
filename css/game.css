@@ -642,13 +642,16 @@ html, body {
   color: var(--bg-deep);
 }
 
-/* --- Dice hint --- */
+/* --- Dice hint (fixed height to prevent layout shift) --- */
 .dice-hint {
   font-size: 0.68rem;
   color: var(--gold);
-  margin-top: -4px;
+  height: 1.2em;
+  line-height: 1.2em;
+  margin-top: 2px;
   margin-bottom: 4px;
   letter-spacing: 0.03em;
+  text-align: center;
 }
 
 /* --- Combat Log (collapsed toggle) --- */

@@ -221,8 +221,9 @@ class GameUI {
     const pool = document.getElementById('dice-pool');
     pool.innerHTML = '';
 
-    // Remove old hints
-    document.querySelectorAll('.dice-hint').forEach(h => h.remove());
+    // Reset hint slot
+    const hintSlot = document.getElementById('dice-hint-slot');
+    if (hintSlot) hintSlot.innerHTML = '&nbsp;';
 
     if (this.engine.phase === PHASE.PRE_COMBAT || this.engine.phase === PHASE.SPAWNING) {
       for (let i = 0; i < this.engine.dicePool.count; i++) {
@@ -291,17 +292,14 @@ class GameUI {
       pool.appendChild(el);
     });
 
-    // Show staged dice hint
-    if (stagedDiceIds.length > 0) {
-      const hint = document.createElement('div');
-      hint.className = 'dice-hint';
+    // Update staged dice hint in the fixed slot
+    if (hintSlot && stagedDiceIds.length > 0) {
       const sum = stagedDiceIds.reduce((s, id) => {
         const d = this.engine.dicePool.dice.find(x => x.id === id);
         return s + (d ? d.value : 0);
       }, 0);
       const skill = this.stagedSkill ? this.engine.party[this.selectedUnitIndex].skills.find(s => s.id === this.stagedSkill.skillId) : null;
-      hint.textContent = skill ? `${skill.name}: ${stagedDiceIds.length} dice (sum: ${sum}) \u2014 tap skill to confirm` : '';
-      pool.parentElement.insertBefore(hint, pool.nextSibling);
+      hintSlot.textContent = skill ? `${skill.name}: ${stagedDiceIds.length} dice (sum: ${sum})` : '';
     }
   }
 
