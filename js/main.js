@@ -44,7 +44,7 @@ class Game {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return { musicVolume: 35, soundVolume: 70 };
+    return { musicVolume: 15, soundVolume: 50 };
   }
 
   saveSettings() {
@@ -199,6 +199,11 @@ class Game {
   }
 
   showOptionsScreen() {
+    // Track which screen we came from so Back returns there
+    const active = document.querySelector('.screen.active');
+    if (active && active.id !== 'options-screen') {
+      this.previousScreen = active.id;
+    }
     this.ui.showScreen('options-screen');
     document.getElementById('opt-music-vol').value = this.settings.musicVolume;
     document.getElementById('opt-music-val').textContent = this.settings.musicVolume + '%';

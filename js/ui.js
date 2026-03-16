@@ -75,7 +75,12 @@ class GameUI {
         this.flashElement(`unit-${data.unitIndex}`, 'healed', 600);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'heal');
         break;
+      case 'unitBlock':
+        this.flashElement(`unit-${data.unitIndex}`, 'blocked', 500);
+        this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'block');
+        break;
       case 'morale':
+        this.flashElement('morale-bar', data.amount > 0 ? 'morale-up' : 'morale-down', 600);
         this.showDamagePopup('morale-bar', data.amount, 'morale');
         break;
     }
@@ -722,10 +727,12 @@ class GameUI {
     if (!target) return;
 
     const popup = document.createElement('div');
-    popup.className = `damage-popup${type === 'heal' ? ' heal' : ''}${type === 'morale' ? ' morale' : ''}`;
+    popup.className = `damage-popup${type === 'heal' ? ' heal' : ''}${type === 'morale' ? ' morale' : ''}${type === 'block' ? ' block' : ''}`;
     if (type === 'damage') {
       popup.textContent = `-${amount}`;
     } else if (type === 'heal') {
+      popup.textContent = `+${amount}`;
+    } else if (type === 'block') {
       popup.textContent = `+${amount}`;
     } else if (type === 'morale') {
       popup.textContent = amount > 0 ? `+${amount}` : `${amount}`;

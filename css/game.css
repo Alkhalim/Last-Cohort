@@ -357,6 +357,32 @@ html, body {
   border-radius: 3px;
 }
 
+/* --- Settings Cog (in-game) --- */
+.options-cog {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 20;
+  width: 32px;
+  height: 32px;
+  background: rgba(18, 20, 26, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.options-cog:active {
+  color: var(--gold);
+  border-color: var(--gold-dim);
+}
+
 /* --- Morale Tooltip --- */
 .morale-tooltip {
   position: absolute;
@@ -1126,6 +1152,10 @@ html, body {
   color: var(--green-bright);
 }
 
+.damage-popup.block {
+  color: var(--blue-bright);
+}
+
 .damage-popup.morale {
   color: var(--purple);
   font-size: 0.9rem;
@@ -1443,6 +1473,38 @@ html, body {
   0% { background: var(--bg-card); }
   25% { background: rgba(74, 122, 58, 0.35); border-color: var(--green-bright); }
   100% { background: var(--bg-card); }
+}
+
+/* --- Unit block flash --- */
+.unit-card.blocked {
+  animation: unit-block 0.5s ease-out;
+}
+
+@keyframes unit-block {
+  0% { background: var(--bg-card); }
+  25% { background: rgba(58, 90, 138, 0.35); border-color: var(--blue-bright); }
+  100% { background: var(--bg-card); }
+}
+
+/* --- Morale flash --- */
+#morale-bar.morale-up {
+  animation: morale-flash-up 0.6s ease-out;
+}
+
+#morale-bar.morale-down {
+  animation: morale-flash-down 0.6s ease-out;
+}
+
+@keyframes morale-flash-up {
+  0% { background: var(--bg-dark); }
+  25% { background: rgba(201, 162, 39, 0.2); }
+  100% { background: var(--bg-dark); }
+}
+
+@keyframes morale-flash-down {
+  0% { background: var(--bg-dark); }
+  25% { background: rgba(160, 48, 48, 0.2); }
+  100% { background: var(--bg-dark); }
 }
 
 /* --- HP fill heal (green flash layer) --- */

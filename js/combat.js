@@ -169,6 +169,7 @@ class CombatEngine {
     });
 
     this.party.forEach(u => {
+      u.block = 0;
       u.taunt = false;
       u.actedThisTurn = false;
     });
@@ -443,6 +444,7 @@ class CombatEngine {
       if (!result.damage && !result.heal) {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
+      if (this.onVisual) this.onVisual('unitBlock', { unitIndex: result.target.index, amount: totalBlock });
     }
     if (result.taunt) {
       unit.taunt = true;
@@ -451,7 +453,12 @@ class CombatEngine {
     if (result.blockAll) {
       const totalBlock = result.blockAll + bonusBlock;
       const count = this.party.filter(u => !u.downed).length;
-      this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + totalBlock; });
+      this.party.forEach(u => {
+        if (!u.downed) {
+          u.block = (u.block || 0) + totalBlock;
+          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: totalBlock });
+        }
+      });
       unit.stats.blockGenerated += totalBlock * count;
       const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
       if (!result.damage && !result.heal && !result.block) {
@@ -505,6 +512,7 @@ class CombatEngine {
       this.morale = Math.max(-100, Math.min(100, this.morale + result.morale));
       if (result.morale > 0) unit.stats.moraleRestored += this.morale - oldMorale;
       parts.push(`+${result.morale} Morale.`);
+      if (this.onVisual) this.onVisual('morale', { amount: result.morale });
     }
     if (parts.length === 0) parts.push(`${unit.name} uses ${skill.name}.`);
     return parts.join(' ');

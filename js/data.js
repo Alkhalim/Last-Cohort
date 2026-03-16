@@ -167,7 +167,7 @@ const CLASS_DATA = {
         execute(unit, targets, dice) { return { heal: 5, baseHeal: 5, target: targets[0] }; },
       },
       {
-        id: 'toxic_dart', name: 'Toxic Dart', starter: true,
+        id: 'aconitum', name: 'Aconitum', starter: true,
         cost: COST.any(), target: TARGET.SINGLE_ENEMY,
         description: 'Deals 2 damage and applies 2 Poison.',
         execute(unit, targets, dice) { return { damage: 2, baseDamage: 2, poison: 2, target: targets[0] }; },
