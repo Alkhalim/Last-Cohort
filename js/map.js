@@ -2,7 +2,7 @@
 // Last Cohort – Map Generator
 // ============================================================
 
-function generateMap() {
+function generateMap(difficulty = 1) {
   const nodes = [];
   let idCounter = 0;
 
@@ -35,7 +35,7 @@ function generateMap() {
         type = 'rest';
       }
 
-      // Threat scales with depth
+      // Threat scales with depth + difficulty
       let threat = 1;
       if (depth >= 5) {
         threat = 2 + (Math.random() < 0.4 ? 1 : 0);
@@ -44,6 +44,8 @@ function generateMap() {
       } else {
         threat = 1;
       }
+      // Difficulty adds to threat (capped at 3 for display, but passed to encounter gen)
+      threat = Math.min(3, threat + (difficulty - 1));
 
       const x = (n + 1) / (count + 1);
       const node = {
@@ -118,6 +120,35 @@ function generateMap() {
   for (const n of depth7) {
     n.children.push(bossNode.id);
     bossNode.parents.push(n.id);
+  }
+
+  // Enforce: no more than 2 non-combat nodes in a row on any path.
+  // For each node at depth >= 2, check if ALL parents are non-combat AND
+  // ALL grandparents of those parents are also non-combat. If so, force combat.
+  for (const node of nodes) {
+    if (node.type === 'combat' || node.type === 'boss' || node.depth < 2) continue;
+    const allParentsNonCombat = node.parents.every(pid => {
+      const p = nodes.find(n => n.id === pid);
+      return p && p.type !== 'combat' && p.type !== 'boss';
+    });
+    if (!allParentsNonCombat) continue;
+    // Check grandparents: does every parent have at least one non-combat parent?
+    const twoDeepNonCombat = node.parents.every(pid => {
+      const p = nodes.find(n => n.id === pid);
+      if (!p) return false;
+      return p.parents.every(gpid => {
+        const gp = nodes.find(n => n.id === gpid);
+        return gp && gp.type !== 'combat' && gp.type !== 'boss';
+      });
+    });
+    if (twoDeepNonCombat) {
+      node.type = 'combat';
+      let threat = 1;
+      if (node.depth >= 5) threat = 2 + (Math.random() < 0.4 ? 1 : 0);
+      else if (node.depth >= 3) threat = 1 + (Math.random() < 0.5 ? 1 : 0);
+      threat = Math.min(3, threat + (difficulty - 1));
+      node.threat = threat;
+    }
   }
 
   // Generate encounters for combat nodes

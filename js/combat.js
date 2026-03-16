@@ -20,10 +20,15 @@ class CombatEngine {
     this.morale = 50;
     this.phase = PHASE.PRE_COMBAT;
     this.turn = 0;
+    this.turnCount = 0;
     this.log = [];
     this.targetMode = null;
     this.onUpdate = null;
     this.onVisual = null;
+    this.difficulty = 1;
+    this.totalEnemiesKilled = 0;
+    this.encountersCompleted = 0;
+    this.totalRenownEarned = 0;
   }
 
   // --- Setup ---
@@ -63,6 +68,7 @@ class CombatEngine {
     this.enemies = [];
     this.spawnIndex = 0;
     this.turn = 0;
+    this.turnCount = 0;
     this.log = [];
     this.phase = PHASE.PRE_COMBAT;
     this.currentEncounterDef = encounterDef;
@@ -95,10 +101,19 @@ class CombatEngine {
     }
     const eid = this.enemyDefs[this.spawnIndex];
     const data = ENEMY_DATA[eid];
+    // Difficulty scaling: +20% HP and +1 damage per action per difficulty above 1
+    const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.2));
+    const scaledActions = data.actions.map(a => ({
+      ...a,
+      damage: a.damage > 0 ? a.damage + diffBonus : 0,
+    }));
     const enemy = {
       index: this.spawnIndex,
       ...data,
-      hp: data.maxHp,
+      maxHp: scaledMaxHp,
+      hp: scaledMaxHp,
+      actions: scaledActions,
       dead: false,
       justSpawned: true,
     };
@@ -119,8 +134,19 @@ class CombatEngine {
   }
 
   // --- Phase management ---
+  // Calculate renown earned from a completed encounter
+  calculateRenown() {
+    const baseRenown = this.killedEnemies.reduce((sum, eid) => {
+      const data = ENEMY_DATA[eid];
+      return sum + (data ? (data.xpValue || 0) * 2 : 0);
+    }, 0);
+    const bonusMultiplier = Math.max(0.5, 1.5 - (this.turnCount * 0.1));
+    return Math.round(baseRenown * bonusMultiplier);
+  }
+
   startRollPhase() {
     this.turn++;
+    this.turnCount++;
     this.phase = PHASE.ROLLING;
     this.party.forEach(u => {
       u.block = 0;
@@ -415,6 +441,7 @@ class CombatEngine {
         e.dead = true;
         e.hp = 0;
         this.killedEnemies.push(e.id);
+        this.totalEnemiesKilled++;
         this.addLog(`${e.name} falls!`);
       }
     });

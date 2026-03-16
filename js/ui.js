@@ -614,6 +614,14 @@ class GameUI {
   }
 
   renderMapMorale() {
+    const title = document.getElementById('map-title');
+    const diff = this.difficulty || 1;
+    if (diff > 1) {
+      title.textContent = `TEUTOBURG FOREST — MARCH ${diff}`;
+    } else {
+      title.textContent = 'TEUTOBURG FOREST';
+    }
+
     const label = document.getElementById('map-morale-label');
     const band = getMoraleBand(this.engine.morale);
     label.textContent = `${band.label} (${this.engine.morale})`;
@@ -897,24 +905,32 @@ class GameUI {
       ? "Arminius's Champion lies defeated. The path is clear."
       : 'The enemy falls. You press deeper into the forest.';
 
-    this.showSummary(title, text, isBoss);
+    // Calculate renown for this encounter
+    const renownEarned = this.engine.calculateRenown();
+    this.engine.totalRenownEarned += renownEarned;
+    this.engine.encountersCompleted++;
+
+    this.showSummary(title, text, isBoss, renownEarned);
   }
 
   onDefeat() {
-    this.showSummary(
-      'THE COHORT FALLS',
-      'The forest claims another Roman detachment. None will know where they fell.',
-      true
-    );
+    this.showRunSummary(false);
   }
 
-  showSummary(title, text, isBossOrDefeat) {
+  showSummary(title, text, isBossOrDefeat, renownEarned) {
     this.showScreen('summary-screen');
     document.getElementById('summary-title').textContent = title;
     document.getElementById('summary-text').textContent = text;
 
     const statsEl = document.getElementById('summary-stats');
-    statsEl.innerHTML = this.engine.party.map(u => {
+    let statsHtml = '';
+
+    // Renown earned line
+    if (renownEarned > 0) {
+      statsHtml += `<div class="summary-renown">+${renownEarned} Renown</div>`;
+    }
+
+    statsHtml += this.engine.party.map(u => {
       const s = u.stats;
       const statLines = [];
       if (s.damageDealt > 0) statLines.push(`<span class="stat-dmg">${s.damageDealt} damage dealt</span>`);
@@ -935,6 +951,8 @@ class GameUI {
           </div>
         </div>`;
     }).join('');
+
+    statsEl.innerHTML = statsHtml;
 
     const continueBtn = document.getElementById('btn-summary-continue');
     if (title === 'THE COHORT FALLS') {
@@ -1069,8 +1087,8 @@ class GameUI {
     }).join('');
 
     if (this.lootScreenFinal) {
-      continueBtn.textContent = 'Victory';
-      continueBtn.onclick = () => this.showRunComplete();
+      continueBtn.textContent = 'Continue';
+      continueBtn.onclick = () => this.showPostBossChoice();
     } else if (this.lootReturnToMap) {
       continueBtn.textContent = 'Continue March';
       continueBtn.onclick = () => this.showMapScreen();
@@ -1094,13 +1112,25 @@ class GameUI {
   // RUN COMPLETE
   // ================================================================
 
-  showRunComplete() {
+  showPostBossChoice() {
     this.showScreen('run-complete-screen');
+
+    const diff = window.game.difficulty || 1;
+    const marchLabel = diff === 1 ? 'First March' : `March ${diff}`;
+
     document.getElementById('run-complete-title').textContent = 'VICTORY';
-    document.getElementById('run-complete-text').textContent = 'Your cohort has defeated Arminius\'s Champion and broken through the Teutoburg Forest. Against all odds, the last cohort survives to tell the tale.';
+    document.getElementById('run-complete-text').textContent =
+      `Your cohort has defeated the Champion and broken through. The forest grows darker ahead, but there is still work to be done. Will you press on?`;
 
     const statsEl = document.getElementById('run-complete-stats');
-    statsEl.innerHTML = this.engine.party.map(u => {
+    let html = '<div class="run-summary-section">';
+    html += `<div class="run-summary-stat"><span class="run-summary-label">${marchLabel} Complete</span><span class="run-summary-value"></span></div>`;
+    html += `<div class="run-summary-stat"><span class="run-summary-label">Encounters Completed</span><span class="run-summary-value">${this.engine.encountersCompleted}</span></div>`;
+    html += `<div class="run-summary-stat"><span class="run-summary-label">Enemies Defeated</span><span class="run-summary-value">${this.engine.totalEnemiesKilled}</span></div>`;
+    html += `<div class="run-summary-stat renown-stat"><span class="run-summary-label">Renown Earned</span><span class="run-summary-value renown-value">+${this.engine.totalRenownEarned}</span></div>`;
+    html += '</div>';
+
+    html += this.engine.party.map(u => {
       return `<div class="run-complete-unit">
         <span class="run-complete-unit-name">${u.title} ${u.name}</span>
         <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
@@ -1108,7 +1138,66 @@ class GameUI {
       </div>`;
     }).join('');
 
-    document.getElementById('btn-run-complete').onclick = () => window.game.startNewRun();
+    statsEl.innerHTML = html;
+
+    // Save renown
+    window.game.addRunRenown(this.engine.totalRenownEarned);
+    // Reset run renown counter so it doesn't double-count
+    this.engine.totalRenownEarned = 0;
+
+    // Two buttons: continue deeper or return home
+    const btnContainer = document.getElementById('btn-run-complete');
+    btnContainer.textContent = 'Deeper into the Forest';
+    btnContainer.onclick = () => window.game.continueRun();
+
+    // Add a secondary "Return Home" link if not already there
+    let homeBtn = document.getElementById('btn-run-home');
+    if (!homeBtn) {
+      homeBtn = document.createElement('button');
+      homeBtn.id = 'btn-run-home';
+      homeBtn.className = 'btn-secondary';
+      homeBtn.textContent = 'Return Home';
+      btnContainer.parentElement.appendChild(homeBtn);
+    }
+    homeBtn.classList.remove('hidden');
+    homeBtn.onclick = () => {
+      homeBtn.classList.add('hidden');
+      window.game.returnHome();
+    };
+  }
+
+  showRunSummary(isVictory) {
+    this.showScreen('run-complete-screen');
+
+    document.getElementById('run-complete-title').textContent = 'DEFEAT';
+    document.getElementById('run-complete-text').textContent =
+      'The forest claims another Roman detachment. None will know where they fell.';
+
+    const statsEl = document.getElementById('run-complete-stats');
+    let html = '<div class="run-summary-section">';
+    html += `<div class="run-summary-stat"><span class="run-summary-label">Encounters Completed</span><span class="run-summary-value">${this.engine.encountersCompleted}</span></div>`;
+    html += `<div class="run-summary-stat"><span class="run-summary-label">Enemies Defeated</span><span class="run-summary-value">${this.engine.totalEnemiesKilled}</span></div>`;
+    html += `<div class="run-summary-stat renown-stat"><span class="run-summary-label">Renown Earned</span><span class="run-summary-value renown-value">+${this.engine.totalRenownEarned}</span></div>`;
+    html += '</div>';
+
+    html += this.engine.party.map(u => {
+      return `<div class="run-complete-unit">
+        <span class="run-complete-unit-name">${u.title} ${u.name}</span>
+        <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
+        <span class="run-complete-unit-level">Lv ${u.level}</span>
+      </div>`;
+    }).join('');
+
+    statsEl.innerHTML = html;
+
+    window.game.addRunRenown(this.engine.totalRenownEarned);
+
+    // Hide the secondary button if it exists
+    const homeBtn = document.getElementById('btn-run-home');
+    if (homeBtn) homeBtn.classList.add('hidden');
+
+    document.getElementById('btn-run-complete').textContent = 'Return Home';
+    document.getElementById('btn-run-complete').onclick = () => window.game.returnHome();
   }
 
   showResult(title, text, isFinal) {

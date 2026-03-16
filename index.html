@@ -10,12 +10,35 @@
 </head>
 <body>
   <div id="game">
-    <!-- Title Screen -->
+    <!-- Home Screen -->
     <div id="title-screen" class="screen active">
-      <div class="title-content">
-        <h1>LAST COHORT</h1>
+      <div class="home-content">
+        <h1 class="home-title">LAST COHORT</h1>
         <p class="subtitle">Teutoburg Forest, 9 AD</p>
-        <button id="btn-start" class="btn-primary">Begin March</button>
+        <div class="home-renown">
+          <span class="home-renown-label">LIFETIME RENOWN</span>
+          <span id="home-renown-value" class="home-renown-value">0</span>
+        </div>
+        <button id="btn-start" class="btn-primary home-start-btn">Begin March</button>
+        <div class="home-unlockables">
+          <div class="home-unlockables-title">FUTURE UNLOCKS</div>
+          <div class="home-unlock-slot locked">
+            <span class="unlock-name">Speculator Class</span>
+            <span class="unlock-cost">50 Renown</span>
+          </div>
+          <div class="home-unlock-slot locked">
+            <span class="unlock-name">Extra Starting Trinket</span>
+            <span class="unlock-cost">100 Renown</span>
+          </div>
+          <div class="home-unlock-slot locked">
+            <span class="unlock-name">Veteran Legionary Skin</span>
+            <span class="unlock-cost">200 Renown</span>
+          </div>
+          <div class="home-unlock-slot locked">
+            <span class="unlock-name">Battle Standard</span>
+            <span class="unlock-cost">500 Renown</span>
+          </div>
+        </div>
       </div>
     </div>
 
