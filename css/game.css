@@ -383,6 +383,29 @@ html, body {
   border-color: var(--gold-dim);
 }
 
+.options-cog-inline {
+  width: 28px;
+  height: 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: all 0.15s;
+}
+
+.options-cog-inline:active {
+  color: var(--gold);
+  border-color: var(--gold-dim);
+}
+
 /* --- Morale Tooltip --- */
 .morale-tooltip {
   position: absolute;
