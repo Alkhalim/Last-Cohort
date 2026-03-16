@@ -19,6 +19,34 @@
       </div>
     </div>
 
+    <!-- Map Screen -->
+    <div id="map-screen" class="screen">
+      <div id="map-party-bar"></div>
+      <div id="map-header">
+        <span id="map-title">TEUTOBURG FOREST</span>
+        <span id="map-morale-label"></span>
+      </div>
+      <div id="map-scroll-container">
+        <div id="map-canvas-wrapper">
+          <canvas id="map-canvas"></canvas>
+          <div id="map-nodes-layer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Screen -->
+    <div id="event-screen" class="screen">
+      <div class="event-content">
+        <h2 id="event-title"></h2>
+        <p id="event-intro"></p>
+        <div id="event-choices"></div>
+        <div id="event-outcome" class="hidden">
+          <p id="event-outcome-text"></p>
+          <button id="btn-event-continue" class="btn-primary">Continue</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Combat Screen -->
     <div id="combat-screen" class="screen">
       <!-- Morale Bar -->
@@ -92,6 +120,16 @@
       </div>
     </div>
 
+    <!-- Run Complete Screen -->
+    <div id="run-complete-screen" class="screen">
+      <div class="run-complete-content">
+        <h2 id="run-complete-title">VICTORY</h2>
+        <p id="run-complete-text">Your cohort has defeated Arminius's Champion and broken through the forest. Against all odds, you survive.</p>
+        <div id="run-complete-stats"></div>
+        <button id="btn-run-complete" class="btn-primary">New March</button>
+      </div>
+    </div>
+
     <!-- Defeat Screen -->
     <div id="result-screen" class="screen">
       <div class="result-content">
@@ -106,6 +144,7 @@
   <script src="js/data.js"></script>
   <script src="js/dice.js"></script>
   <script src="js/combat.js"></script>
+  <script src="js/map.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
 </body>

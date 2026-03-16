@@ -46,6 +46,7 @@ const CLASS_DATA = {
     name: 'Legionary',
     title: 'LEG',
     maxHp: 32,
+    tags: ['heavy', 'roman'],
     description: 'Heavy infantry. Reliable damage and strong defense.',
     passive: {
       name: 'Shield Discipline',
@@ -124,6 +125,7 @@ const CLASS_DATA = {
     name: 'Centurion',
     title: 'CEN',
     maxHp: 28,
+    tags: ['command', 'roman'],
     description: 'Officer. Buffs allies and controls the battlefield.',
     passive: {
       name: 'Discipline of Office',
@@ -194,6 +196,7 @@ const CLASS_DATA = {
     name: 'Medicus',
     title: 'MED',
     maxHp: 22,
+    tags: ['support', 'roman'],
     description: 'Field surgeon. Heals allies and manages attrition.',
     passive: {
       name: 'Field Triage',
@@ -302,19 +305,66 @@ const ENEMY_DATA = {
       { name: 'Howl', damage: 0, morale: -8, chance: 0.2, text: 'howls into the mist' },
     ],
   },
+  arminius_champion: {
+    id: 'arminius_champion',
+    name: "Arminius's Champion",
+    maxHp: 55, row: 'front',
+    damage: [8, 14], speed: 2, xpValue: 20,
+    isBoss: true,
+    ai: 'boss',
+    actions: [
+      { name: 'Crushing Blow', damage: 10, chance: 0.4, text: 'brings down a crushing blow' },
+      { name: 'Shield Bash', damage: 6, chance: 0.25, text: 'bashes with iron shield' },
+      { name: 'War Cry', damage: 0, morale: -12, chance: 0.15, text: 'roars a war cry' },
+      { name: 'Frenzy', damage: 8, chance: 0.2, text: 'attacks in a frenzy', aoe: true },
+    ],
+  },
 };
 
 // --- Encounter templates ---
 const ENCOUNTERS = [
   { name: 'Ambush on the Trail', enemies: ['cheruscan_raider', 'cheruscan_raider', 'sling_hunter'],
-    intro: 'Shapes burst from the undergrowth — Germanic warriors block the path.' },
+    intro: 'Shapes burst from the undergrowth \u2014 Germanic warriors block the path.' },
   { name: 'Wolves in the Mire', enemies: ['marsh_wolf', 'marsh_wolf'],
     intro: 'Low growls echo from the fog. Yellow eyes track your every step.' },
   { name: 'Raiding Party', enemies: ['cheruscan_raider', 'sling_hunter', 'sling_hunter'],
     intro: 'Stones whistle past. A raiding party has found your trail.' },
   { name: 'The Clearing', enemies: ['cheruscan_raider', 'cheruscan_raider', 'marsh_wolf', 'sling_hunter'],
-    intro: 'You stumble into a clearing — and into an ambush. Steel and fangs surround you.' },
+    intro: 'You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you.' },
 ];
+
+// --- Boss encounters ---
+const BOSS_ENCOUNTERS = [
+  {
+    name: "Arminius's Champion",
+    enemies: ['arminius_champion', 'cheruscan_raider'],
+    intro: "A towering Germanic champion steps from the treeline, flanked by his guard. The final test.",
+  },
+];
+
+// --- Encounter generation by threat level ---
+function generateEncounterByThreat(threat) {
+  if (threat <= 1) {
+    const easy = [
+      { name: 'Forest Scouts', enemies: ['cheruscan_raider', 'sling_hunter'], intro: 'A pair of scouts spot your column and attack.' },
+      { name: 'Lone Wolves', enemies: ['marsh_wolf', 'marsh_wolf'], intro: 'Wolves slink from the undergrowth, hungry and desperate.' },
+    ];
+    return easy[Math.floor(Math.random() * easy.length)];
+  } else if (threat === 2) {
+    const mid = [
+      { name: 'Ambush on the Trail', enemies: ['cheruscan_raider', 'cheruscan_raider', 'sling_hunter'], intro: 'Shapes burst from the undergrowth \u2014 Germanic warriors block the path.' },
+      { name: 'Raiding Party', enemies: ['cheruscan_raider', 'sling_hunter', 'sling_hunter'], intro: 'Stones whistle past. A raiding party has found your trail.' },
+      { name: 'Wolf Pack', enemies: ['marsh_wolf', 'marsh_wolf', 'marsh_wolf'], intro: 'A whole wolf pack emerges from the fog. There is no retreat.' },
+    ];
+    return mid[Math.floor(Math.random() * mid.length)];
+  } else {
+    const hard = [
+      { name: 'The Clearing', enemies: ['cheruscan_raider', 'cheruscan_raider', 'marsh_wolf', 'sling_hunter'], intro: 'You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you.' },
+      { name: 'War Band', enemies: ['cheruscan_raider', 'cheruscan_raider', 'cheruscan_raider', 'sling_hunter'], intro: 'A full war band charges from the trees. Prepare for a desperate fight.' },
+    ];
+    return hard[Math.floor(Math.random() * hard.length)];
+  }
+}
 
 // --- Morale thresholds ---
 const MORALE_BANDS = [
@@ -343,83 +393,110 @@ const EQUIP_SLOTS = {
 const ITEM_DATA = {
   iron_gladius: {
     id: 'iron_gladius', name: 'Iron Gladius', slot: 'weapon', rarity: 'common',
-    equippableBy: ['legionary', 'centurion'],
+    classTags: ['heavy', 'command'],
     stats: { damage: 2 },
     description: 'A sturdy blade taken from a fallen raider.',
   },
   raider_shield: {
     id: 'raider_shield', name: "Raider's Shield", slot: 'armor', rarity: 'common',
-    equippableBy: ['legionary', 'centurion', 'medicus'],
+    classTags: ['roman'],
     stats: { block: 2 },
     description: 'Rough wood and hide, but it turns a blade.',
   },
   wolf_pelt: {
     id: 'wolf_pelt', name: 'Wolf Pelt', slot: 'armor', rarity: 'common',
-    equippableBy: ['legionary', 'centurion', 'medicus'],
+    classTags: ['roman'],
     stats: { maxHp: 4 },
     description: 'Thick fur that wards off the cold and softens blows.',
   },
   sling_stones: {
     id: 'sling_stones', name: 'Sling Stones', slot: 'weapon', rarity: 'common',
-    equippableBy: ['centurion', 'medicus'],
+    classTags: ['command', 'support'],
     stats: { damage: 1 },
     description: 'Smooth river stones, still in their pouch.',
   },
   bone_needle_kit: {
     id: 'bone_needle_kit', name: 'Bone Needle Kit', slot: 'trinket', rarity: 'common',
-    equippableBy: ['medicus'],
+    classTags: ['support'],
     stats: { heal: 3 },
     description: 'Germanic surgical tools. Crude but effective.',
   },
   herb_pouch: {
     id: 'herb_pouch', name: 'Herb Pouch', slot: 'trinket', rarity: 'common',
-    equippableBy: ['medicus', 'centurion'],
+    classTags: ['command', 'support'],
     stats: { heal: 2 },
     description: 'Dried marsh herbs with surprising potency.',
   },
   woad_charm: {
     id: 'woad_charm', name: 'Woad Charm', slot: 'trinket', rarity: 'uncommon',
-    equippableBy: ['legionary', 'centurion', 'medicus'],
+    classTags: ['roman'],
     stats: { maxHp: 3, block: 1 },
     description: 'A blue-stained bone token. It feels warm to the touch.',
   },
   hunters_cloak: {
     id: 'hunters_cloak', name: "Hunter's Cloak", slot: 'armor', rarity: 'uncommon',
-    equippableBy: ['centurion', 'medicus'],
+    classTags: ['command', 'support'],
     stats: { maxHp: 5 },
     description: 'Woven from marsh reeds and wolf hair. Surprisingly tough.',
   },
   fang_necklace: {
     id: 'fang_necklace', name: 'Fang Necklace', slot: 'trinket', rarity: 'uncommon',
-    equippableBy: ['legionary', 'centurion', 'medicus'],
+    classTags: ['roman'],
     stats: { damage: 1, maxHp: 2 },
     description: 'A string of wolf fangs. The men eye it uneasily.',
   },
   chiefs_spear: {
     id: 'chiefs_spear', name: "Chieftain's Spear", slot: 'weapon', rarity: 'rare',
-    equippableBy: ['legionary'],
+    classTags: ['heavy'],
     stats: { damage: 4 },
     description: 'Ash-hafted and iron-tipped. Taken from a war chief.',
   },
   marsh_fang: {
     id: 'marsh_fang', name: 'Marsh Fang', slot: 'trinket', rarity: 'rare',
-    equippableBy: ['medicus'],
+    classTags: ['support'],
     stats: { heal: 5, maxHp: 3 },
     description: 'A hollowed fang filled with dark salve. Potent medicine.',
   },
   runic_stone: {
     id: 'runic_stone', name: 'Runic Stone', slot: 'trinket', rarity: 'rare',
-    equippableBy: ['legionary', 'centurion', 'medicus'],
+    classTags: ['roman'],
     stats: { extraDice: 1 },
     description: 'A stone carved with strange runes. It hums faintly. (+1 die per turn)',
   },
   scouts_sling: {
     id: 'scouts_sling', name: "Scout's Sling", slot: 'weapon', rarity: 'uncommon',
-    equippableBy: ['medicus'],
+    classTags: ['support'],
     stats: { damage: 2 },
     description: 'A well-worn sling. Even the surgeon can fight.',
   },
+  // Boss-exclusive items
+  champions_helm: {
+    id: 'champions_helm', name: "Champion's Helm", slot: 'armor', rarity: 'rare',
+    classTags: ['heavy', 'command'],
+    stats: { maxHp: 6, block: 2 },
+    description: 'A heavy iron helm ripped from the champion. It reeks of blood.',
+  },
+  arm_ring_of_arminius: {
+    id: 'arm_ring_of_arminius', name: 'Arm Ring of Arminius', slot: 'trinket', rarity: 'rare',
+    classTags: ['roman'],
+    stats: { damage: 2, maxHp: 3 },
+    description: 'A gold arm ring inscribed with Germanic runes. Power radiates from it.',
+  },
+  warlords_blade: {
+    id: 'warlords_blade', name: "Warlord's Blade", slot: 'weapon', rarity: 'rare',
+    classTags: ['heavy'],
+    stats: { damage: 5 },
+    description: 'A massive iron sword. Only the strongest can wield it.',
+  },
 };
+
+// Boss-exclusive drop pool
+const BOSS_DROP_POOL = ['champions_helm', 'arm_ring_of_arminius', 'warlords_blade'];
+
+// --- canEquipItem helper ---
+function canEquipItem(unit, item) {
+  return item.classTags.some(tag => CLASS_DATA[unit.classId].tags.includes(tag));
+}
 
 // --- Drop tables per enemy ---
 const DROP_TABLES = {
@@ -447,9 +524,15 @@ const DROP_TABLES = {
       { chance: 0.10, items: ['marsh_fang', 'runic_stone'] },
     ],
   },
+  arminius_champion: {
+    nothingChance: 0.0,
+    tiers: [
+      { chance: 1.0, items: BOSS_DROP_POOL },
+    ],
+  },
 };
 
-function rollDrop(enemyId) {
+function rollDrop(enemyId, party) {
   const table = DROP_TABLES[enemyId];
   if (!table) return null;
   const roll = Math.random();
@@ -458,7 +541,27 @@ function rollDrop(enemyId) {
   for (const tier of table.tiers) {
     cumulative += tier.chance;
     if (roll < cumulative) {
-      return tier.items[Math.floor(Math.random() * tier.items.length)];
+      let candidates = tier.items;
+      // Smart drop filtering: reduce chance if slot is full on all eligible characters
+      if (party && party.length > 0) {
+        candidates = candidates.filter(itemId => {
+          const item = ITEM_DATA[itemId];
+          if (!item) return true;
+          const eligible = party.filter(u => canEquipItem(u, item));
+          if (eligible.length === 0) return false;
+          const allFull = eligible.every(u => {
+            const slots = u.equipment[item.slot];
+            return slots.every(s => s !== null);
+          });
+          if (allFull) {
+            // 60% chance to skip this item
+            return Math.random() > 0.6;
+          }
+          return true;
+        });
+        if (candidates.length === 0) candidates = tier.items;
+      }
+      return candidates[Math.floor(Math.random() * candidates.length)];
     }
   }
   return null;
@@ -477,3 +580,130 @@ function formatItemStats(stats) {
   if (stats.extraDice) parts.push(`+${stats.extraDice} die`);
   return parts.join(', ');
 }
+
+// --- Event Data ---
+const EVENT_DATA = [
+  {
+    id: 'roadside_shrine',
+    name: 'Roadside Shrine',
+    intro: 'You come upon a weathered shrine to some forgotten god. Offerings of fruit and bone litter the base. The men look to you for guidance.',
+    choices: [
+      {
+        text: 'Leave an offering and pray.',
+        outcomes: [
+          { weight: 0.5, text: 'A warm light fills the glade. The men feel renewed.', effects: { healAll: 8, morale: 10 } },
+          { weight: 0.3, text: 'Nothing happens. The gods are silent.', effects: {} },
+          { weight: 0.2, text: 'A cold wind sweeps through. The shrine crumbles. An ill omen.', effects: { morale: -10 } },
+        ],
+      },
+      {
+        text: 'Smash the shrine and take the offerings.',
+        outcomes: [
+          { weight: 0.4, text: 'You find a charm hidden among the bones.', effects: { grantItem: 'woad_charm' } },
+          { weight: 0.3, text: 'The men cheer at the defiance, but the forest seems to darken.', effects: { morale: 5 } },
+          { weight: 0.3, text: 'A trap! Poisoned thorns cut your hands.', effects: { damageAll: 5, morale: -5 } },
+        ],
+      },
+      {
+        text: 'Pass by without stopping.',
+        outcomes: [
+          { weight: 1.0, text: 'You march on. The shrine watches in silence.', effects: {} },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'fallen_legionary',
+    name: 'Fallen Legionary',
+    intro: 'A Roman soldier lies against a tree, barely alive. His armor is shattered and his eyes are dim. He clutches a leather satchel.',
+    choices: [
+      {
+        text: 'Tend to his wounds and take the satchel.',
+        outcomes: [
+          { weight: 0.6, text: 'He dies in your arms, but the satchel holds useful supplies.', effects: { grantItem: 'herb_pouch', morale: -5 } },
+          { weight: 0.4, text: 'He revives briefly and whispers a warning about the path ahead. The satchel holds medicine.', effects: { healAll: 6, morale: 5 } },
+        ],
+      },
+      {
+        text: 'Take his equipment and move on.',
+        outcomes: [
+          { weight: 0.5, text: 'His gladius is still sharp.', effects: { grantItem: 'iron_gladius' } },
+          { weight: 0.5, text: 'Nothing of value remains. The men grow quiet.', effects: { morale: -8 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'river_crossing',
+    name: 'River Crossing',
+    intro: 'A swollen river blocks your path. The current is fast and the water dark. Upstream, a narrow fallen log offers a precarious bridge.',
+    choices: [
+      {
+        text: 'Ford the river directly.',
+        outcomes: [
+          { weight: 0.4, text: 'You push through the freezing water. Everyone makes it, barely.', effects: { damageAll: 4, morale: -5 } },
+          { weight: 0.3, text: 'The crossing goes smoothly. The cold water numbs old wounds.', effects: { healAll: 3 } },
+          { weight: 0.3, text: 'The current is stronger than expected. Equipment is lost.', effects: { damageAll: 6, morale: -10 } },
+        ],
+      },
+      {
+        text: 'Cross on the fallen log.',
+        outcomes: [
+          { weight: 0.5, text: 'Careful footing gets everyone across safely.', effects: { morale: 5 } },
+          { weight: 0.3, text: 'The log holds. You find a cache on the far bank.', effects: { grantItem: 'fang_necklace' } },
+          { weight: 0.2, text: 'The log snaps! Several soldiers tumble into the rapids.', effects: { damageAll: 8, morale: -8 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'captured_scout',
+    name: 'Captured Scout',
+    intro: 'Your men drag a struggling Germanic scout from the bushes. He spits and snarls but is clearly terrified.',
+    choices: [
+      {
+        text: 'Interrogate him for information.',
+        outcomes: [
+          { weight: 0.5, text: 'He reveals a hidden supply cache before escaping.', effects: { grantItem: 'herb_pouch', morale: 5 } },
+          { weight: 0.3, text: 'He tells you nothing useful and manages to bite a soldier.', effects: { damageAll: 2 } },
+          { weight: 0.2, text: 'He breaks free and screams an alarm. You must move quickly.', effects: { morale: -12 } },
+        ],
+      },
+      {
+        text: 'Release him as a show of mercy.',
+        outcomes: [
+          { weight: 0.6, text: 'The men question your judgment, but the gesture feels right.', effects: { morale: 8 } },
+          { weight: 0.4, text: 'He returns later with friends. You were foolish.', effects: { morale: -15 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'foragers_cache',
+    name: "Forager's Cache",
+    intro: 'Behind a fallen oak, you discover a hidden cache of supplies \u2014 likely left by a Germanic foraging party. Dried meat, herbs, and a few weapons.',
+    choices: [
+      {
+        text: 'Take everything.',
+        outcomes: [
+          { weight: 0.6, text: 'A good haul. The men eat well tonight.', effects: { healAll: 10, morale: 8 } },
+          { weight: 0.4, text: 'You find excellent supplies and a fine weapon among the cache.', effects: { healAll: 6, grantItem: 'iron_gladius' } },
+        ],
+      },
+      {
+        text: 'Take only the medicine and leave the rest.',
+        outcomes: [
+          { weight: 0.7, text: 'The herbs are potent. Your wounded recover.', effects: { healAll: 12 } },
+          { weight: 0.3, text: 'Among the herbs you find something special.', effects: { healAll: 8, grantItem: 'bone_needle_kit' } },
+        ],
+      },
+      {
+        text: 'Leave it \u2014 it could be a trap.',
+        outcomes: [
+          { weight: 0.5, text: 'Prudent. The men grumble but respect your caution.', effects: { morale: -3 } },
+          { weight: 0.5, text: 'As you leave, you hear a tripwire snap behind you. Good instincts.', effects: { morale: 10 } },
+        ],
+      },
+    ],
+  },
+];

@@ -24,7 +24,6 @@ class CombatEngine {
     this.targetMode = null;
     this.onUpdate = null;
     this.onVisual = null;
-    this.encounterIndex = 0;
   }
 
   // --- Setup ---
@@ -131,7 +130,7 @@ class CombatEngine {
     });
     this.dicePool.adjustUsed = false;
     this.targetMode = null;
-    this.addLog(`— Turn ${this.turn} —`);
+    this.addLog(`\u2014 Turn ${this.turn} \u2014`);
 
     // Roll dice — base 5 + extra from equipment
     const extraDice = this.getExtraDiceCount();
@@ -159,7 +158,7 @@ class CombatEngine {
     if (!die) return false;
     const oldVal = die.value;
     if (this.dicePool.adjustDie(dieId, direction)) {
-      this.addLog(`Centurion adjusts die: ${oldVal} → ${die.value}`);
+      this.addLog(`Centurion adjusts die: ${oldVal} \u2192 ${die.value}`);
       this.update();
       return true;
     }
@@ -361,7 +360,7 @@ class CombatEngine {
       const actual = result.target.hp - before;
       unit.stats.healingDone += actual;
       const bonusStr = bonusHeal > 0 ? ` (${result.heal}+${bonusHeal})` : '';
-      parts.push(`${unit.name} uses ${skill.name} — heals ${result.target.name} for ${actual}${bonusStr} HP.`);
+      parts.push(`${unit.name} uses ${skill.name} \u2014 heals ${result.target.name} for ${actual}${bonusStr} HP.`);
       if (actual > 0 && this.onVisual) {
         this.onVisual('unitHeal', { unitIndex: result.target.index, amount: actual });
       }
@@ -377,7 +376,7 @@ class CombatEngine {
       unit.stats.blockGenerated += totalBlock;
       const bonusStr = bonusBlock > 0 ? ` (${result.block}+${bonusBlock})` : '';
       if (!result.damage && !result.heal) {
-        parts.push(`${unit.name} uses ${skill.name} — ${totalBlock}${bonusStr} Block.`);
+        parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
     }
     if (result.taunt) {
@@ -391,13 +390,13 @@ class CombatEngine {
       unit.stats.blockGenerated += totalBlock * count;
       const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
       if (!result.damage && !result.heal && !result.block) {
-        parts.push(`${unit.name} uses ${skill.name} — all gain ${totalBlock}${bonusStr} Block.`);
+        parts.push(`${unit.name} uses ${skill.name} \u2014 all gain ${totalBlock}${bonusStr} Block.`);
       }
     }
     if (result.buffAllies) {
       this.party.forEach(u => { if (!u.downed) u.bonusDamage = (u.bonusDamage || 0) + (result.buffAllies.bonusDamage || 0); });
       if (!result.damage && !result.heal && !result.block && !result.blockAll) {
-        parts.push(`${unit.name} uses ${skill.name} — allies gain +${result.buffAllies.bonusDamage} damage.`);
+        parts.push(`${unit.name} uses ${skill.name} \u2014 allies gain +${result.buffAllies.bonusDamage} damage.`);
       }
     }
     if (result.morale) {
@@ -461,6 +460,13 @@ class CombatEngine {
 
     const enemy = enemies[index];
     this.executeEnemyAction(enemy);
+
+    // Boss enrage: if boss is below 50% HP, attack twice
+    if (enemy.isBoss && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5) {
+      this.addLog(`${enemy.name} is enraged and strikes again!`);
+      this.executeEnemySingleAction(enemy);
+    }
+
     this.checkPartyDowned();
     this.update();
 
@@ -468,6 +474,10 @@ class CombatEngine {
   }
 
   executeEnemyAction(enemy) {
+    this.executeEnemySingleAction(enemy);
+  }
+
+  executeEnemySingleAction(enemy) {
     const roll = Math.random();
     let cumulative = 0;
     let action = enemy.actions[0];
@@ -608,7 +618,7 @@ class CombatEngine {
     const unit = this.party[unitIndex];
     const item = getItemData(itemId);
     if (!item) return false;
-    if (!item.equippableBy.includes(unit.classId)) return false;
+    if (!canEquipItem(unit, item)) return false;
 
     const slots = unit.equipment[item.slot];
     // Find empty slot
@@ -652,6 +662,11 @@ class CombatEngine {
         this.addLog(`${u.name} recovers at ${u.hp} HP.`);
       }
     });
+  }
+
+  // Check if current encounter has a boss
+  hasBossEnemy() {
+    return this.enemies.some(e => e.isBoss);
   }
 
   update() {
