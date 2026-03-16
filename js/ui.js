@@ -10,8 +10,8 @@ class GameUI {
     this.prevEnemyHp = {};
     this.prevUnitHp = {};
     this.logOpen = false;
-    this.diceRevealed = 0;      // how many dice have been revealed so far
-    this.diceRevealTimer = null;
+    this.diceRevealed = 0;
+    this.diceRevealRunning = false;
     this.init();
   }
 
@@ -235,18 +235,19 @@ class GameUI {
     this.render();
   }
 
-  // Dice reveal animation for rolling phase
+  // Dice reveal animation for rolling phase — updates dice DOM only, no full render
   startDiceReveal() {
     this.diceRevealed = 0;
-    this.render();
+    this.renderDicePool();
     const revealNext = () => {
       if (this.diceRevealed >= this.engine.dicePool.count) {
-        // All revealed
+        this.diceRevealRunning = false;
+        this.diceRevealed = 0;
         setTimeout(() => this.engine.onDiceRevealed(), 200);
         return;
       }
       this.diceRevealed++;
-      this.render();
+      this.renderDicePool();
       setTimeout(revealNext, 120);
     };
     setTimeout(revealNext, 300);
@@ -434,9 +435,9 @@ class GameUI {
         break;
       case PHASE.ROLLING:
         phaseLabel.textContent = `TURN ${this.engine.turn}`;
-        // Start dice reveal animation
-        if (this.diceRevealed === 0) {
-          this.startDiceReveal();
+        if (!this.diceRevealRunning) {
+          this.diceRevealRunning = true;
+          setTimeout(() => this.startDiceReveal(), 50);
         }
         break;
       case PHASE.PLAYER_TURN:
