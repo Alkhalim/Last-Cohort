@@ -227,21 +227,7 @@ html, body {
   text-overflow: ellipsis;
 }
 
-/* --- HP Bars (shared) --- */
-.hp-bar {
-  height: 5px;
-  background: #1a1a1a;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 2px;
-}
-
-.hp-fill {
-  height: 100%;
-  background: var(--red);
-  transition: width 0.3s;
-  border-radius: 3px;
-}
+/* --- HP Bars (shared) — main styles are below with drain animation --- */
 
 .hp-fill.critical {
   background: var(--red-critical);
@@ -608,6 +594,123 @@ html, body {
 
 .result-unit.downed {
   color: var(--red);
+}
+
+/* --- Enemy spawn animation --- */
+.enemy-card.spawning {
+  animation: enemy-spawn 0.45s ease-out;
+}
+
+@keyframes enemy-spawn {
+  0% { opacity: 0; transform: translateY(-20px) scale(0.8); }
+  60% { opacity: 1; transform: translateY(4px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Dice selection badge (multi-select) --- */
+.die-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  background: var(--gold);
+  color: var(--bg-deep);
+  border-radius: 50%;
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- Dice hint (selected count + sum) --- */
+.dice-hint {
+  font-size: 0.65rem;
+  color: var(--gold);
+  margin-top: -6px;
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* --- Enemy attack flash --- */
+.enemy-card.attacking {
+  animation: enemy-attack 0.5s ease-out;
+}
+
+@keyframes enemy-attack {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.1) translateY(6px); box-shadow: 0 0 16px rgba(208, 64, 64, 0.5); }
+  100% { transform: scale(1); }
+}
+
+/* --- Unit damage flash --- */
+.unit-card.hit {
+  animation: unit-hit 0.5s ease-out;
+}
+
+@keyframes unit-hit {
+  0% { background: var(--bg-card); }
+  20% { background: rgba(160, 48, 48, 0.4); border-color: var(--red-bright); }
+  100% { background: var(--bg-card); }
+}
+
+/* --- Damage number popup --- */
+.damage-popup {
+  position: absolute;
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--red-bright);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  pointer-events: none;
+  z-index: 20;
+  animation: damage-float 1s ease-out forwards;
+}
+
+.damage-popup.heal {
+  color: var(--green-bright);
+}
+
+.damage-popup.morale {
+  color: var(--purple);
+  font-size: 0.9rem;
+}
+
+@keyframes damage-float {
+  0% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+
+/* --- HP bar drain animation (two-layer) --- */
+.hp-bar {
+  height: 5px;
+  background: #1a1a1a;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 2px;
+  position: relative;
+}
+
+.hp-drain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #cc8844;
+  border-radius: 3px;
+  transition: width 0.8s ease-in 0.3s;
+}
+
+.hp-fill {
+  height: 100%;
+  background: var(--red);
+  border-radius: 3px;
+  position: relative;
+  z-index: 1;
+  transition: width 0.15s ease-out;
 }
 
 /* --- Scrollbar --- */

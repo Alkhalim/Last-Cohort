@@ -4,6 +4,7 @@
 
 const PHASE = {
   PRE_COMBAT: 'pre_combat',
+  SPAWNING: 'spawning',
   ROLL: 'roll',
   PLAYER_TURN: 'player_turn',
   RESOLVE: 'resolve',
@@ -53,18 +54,13 @@ class CombatEngine {
   }
 
   initEncounter(encounterDef) {
-    this.enemies = encounterDef.enemies.map((eid, i) => {
-      const data = ENEMY_DATA[eid];
-      return {
-        index: i,
-        ...data,
-        hp: data.maxHp,
-        dead: false,
-      };
-    });
+    this.enemyDefs = encounterDef.enemies; // store for spawning
+    this.enemies = [];
+    this.spawnIndex = 0;
     this.turn = 0;
     this.log = [];
     this.phase = PHASE.PRE_COMBAT;
+    this.currentEncounterDef = encounterDef;
     // Reset per-encounter state
     this.party.forEach(u => {
       u.block = 0;
@@ -74,6 +70,40 @@ class CombatEngine {
       if (u.passive) u.passive.triggered = false;
     });
     this.addLog(encounterDef.intro);
+  }
+
+  // Spawn enemies one by one with callback for animation timing
+  beginSpawning() {
+    this.phase = PHASE.SPAWNING;
+    this.spawnIndex = 0;
+    this.spawnNextEnemy();
+  }
+
+  spawnNextEnemy() {
+    if (this.spawnIndex >= this.enemyDefs.length) {
+      // All spawned — move to roll phase
+      this.addLog('Prepare yourselves!');
+      this.startRollPhase();
+      return;
+    }
+    const eid = this.enemyDefs[this.spawnIndex];
+    const data = ENEMY_DATA[eid];
+    const enemy = {
+      index: this.spawnIndex,
+      ...data,
+      hp: data.maxHp,
+      dead: false,
+      justSpawned: true, // for CSS animation
+    };
+    this.enemies.push(enemy);
+    this.addLog(`${enemy.name} appears!`);
+    this.spawnIndex++;
+    this.update();
+    // Clear justSpawned flag after animation, then spawn next
+    setTimeout(() => {
+      enemy.justSpawned = false;
+      this.spawnNextEnemy();
+    }, 500);
   }
 
   // --- Logging ---
@@ -324,24 +354,33 @@ class CombatEngine {
     setTimeout(() => this.executeEnemyTurn(), 600);
   }
 
-  // --- Enemy turn ---
+  // --- Enemy turn (sequential with delays for visual impact) ---
   executeEnemyTurn() {
     const alive = this.enemies.filter(e => !e.dead);
     if (alive.length === 0) return;
 
-    alive.forEach(enemy => {
-      if (this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) return;
-      this.executeEnemyAction(enemy);
-    });
+    this.executeEnemySequence(alive, 0);
+  }
 
-    // Check for downed units
-    this.checkPartyDowned();
-
-    if (this.phase !== PHASE.DEFEAT && this.phase !== PHASE.VICTORY) {
-      this.startRollPhase();
-    } else {
-      this.update();
+  executeEnemySequence(enemies, index) {
+    if (index >= enemies.length || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
+      // All enemy actions done — check downed, then next turn
+      this.checkPartyDowned();
+      if (this.phase !== PHASE.DEFEAT && this.phase !== PHASE.VICTORY) {
+        setTimeout(() => this.startRollPhase(), 400);
+      } else {
+        this.update();
+      }
+      return;
     }
+
+    const enemy = enemies[index];
+    this.executeEnemyAction(enemy);
+    this.checkPartyDowned();
+    this.update();
+
+    // Delay before next enemy acts
+    setTimeout(() => this.executeEnemySequence(enemies, index + 1), 800);
   }
 
   executeEnemyAction(enemy) {
@@ -358,6 +397,11 @@ class CombatEngine {
     const target = this.pickEnemyTarget(enemy, action);
     if (!target) return;
 
+    // Visual: flash the attacking enemy
+    if (this.onVisual) {
+      this.onVisual('enemyAttack', { enemyIndex: enemy.index });
+    }
+
     if (action.damage > 0) {
       let dmg = action.damage;
       // Apply block
@@ -371,11 +415,20 @@ class CombatEngine {
       }
       target.hp = Math.max(0, target.hp - dmg);
       this.addLog(`${enemy.name} ${action.text} at ${target.name} for ${action.damage} damage${dmg < action.damage ? ` (${dmg} after block)` : ''}.`);
+
+      // Visual: flash hit unit + damage popup
+      if (this.onVisual) {
+        this.onVisual('unitHit', { unitIndex: target.index, damage: dmg });
+      }
     }
 
     if (action.morale) {
       this.morale = Math.max(-100, Math.min(100, this.morale + action.morale));
       this.addLog(`${enemy.name} ${action.text}! Morale ${action.morale > 0 ? '+' : ''}${action.morale}.`);
+
+      if (this.onVisual) {
+        this.onVisual('morale', { amount: action.morale });
+      }
     }
 
     // AOE
@@ -389,6 +442,9 @@ class CombatEngine {
             aoeDmg -= absorbed;
           }
           u.hp = Math.max(0, u.hp - aoeDmg);
+          if (this.onVisual) {
+            this.onVisual('unitHit', { unitIndex: u.index, damage: aoeDmg });
+          }
         }
       });
       this.addLog(`${enemy.name}'s attack hits the whole line!`);

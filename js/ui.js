@@ -5,14 +5,33 @@
 class GameUI {
   constructor(engine) {
     this.engine = engine;
-    this.selectedDieId = null;
+    this.selectedDice = []; // array of die IDs for multi-select
     this.selectedUnitIndex = null;
-    this.diceElements = new Map();
+    // Track previous HP for drain animation
+    this.prevEnemyHp = {};
+    this.prevUnitHp = {};
     this.init();
   }
 
   init() {
     this.engine.onUpdate = () => this.render();
+    this.engine.onVisual = (type, data) => this.handleVisual(type, data);
+  }
+
+  handleVisual(type, data) {
+    switch (type) {
+      case 'enemyAttack':
+        this.flashElement(`enemy-${data.enemyIndex}`, 'attacking', 500);
+        break;
+      case 'unitHit':
+        this.flashElement(`unit-${data.unitIndex}`, 'hit', 500);
+        this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
+        break;
+      case 'morale':
+        // Show morale change on the morale bar
+        this.showDamagePopup('morale-bar', data.amount, 'morale');
+        break;
+    }
   }
 
   // --- Screen management ---
@@ -39,7 +58,6 @@ class GameUI {
     const fill = document.getElementById('morale-fill');
     label.textContent = `${band.label} (${this.engine.morale})`;
     label.style.color = band.color;
-    // Map -100..100 to 0..100%
     const pct = (this.engine.morale + 100) / 200 * 100;
     fill.style.width = pct + '%';
     fill.style.background = band.color;
@@ -54,14 +72,30 @@ class GameUI {
 
     this.engine.enemies.forEach((enemy, i) => {
       const el = document.createElement('div');
-      el.className = `enemy-card ${enemy.dead ? 'dead' : ''} ${this.isEnemyTargetable(enemy) ? 'targetable' : ''}`;
+      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${enemy.justSpawned ? ' spawning' : ''}`;
+      el.id = `enemy-${i}`;
+
+      const hpPct = (enemy.hp / enemy.maxHp) * 100;
+      const prevHp = this.prevEnemyHp[i] !== undefined ? this.prevEnemyHp[i] : enemy.hp;
+      const drainPct = (prevHp / enemy.maxHp) * 100;
+      this.prevEnemyHp[i] = enemy.hp;
+
       el.innerHTML = `
         <div class="enemy-name">${enemy.name}</div>
         <div class="hp-bar">
-          <div class="hp-fill" style="width:${(enemy.hp / enemy.maxHp) * 100}%"></div>
+          <div class="hp-drain" style="width:${drainPct}%"></div>
+          <div class="hp-fill" style="width:${hpPct}%"></div>
         </div>
         <div class="hp-text">${enemy.hp}/${enemy.maxHp}</div>
       `;
+
+      // Animate drain layer to match current HP after brief delay
+      if (drainPct > hpPct) {
+        requestAnimationFrame(() => {
+          const drain = el.querySelector('.hp-drain');
+          if (drain) drain.style.width = hpPct + '%';
+        });
+      }
 
       if (this.isEnemyTargetable(enemy)) {
         el.addEventListener('click', () => this.onEnemyClick(enemy));
@@ -74,9 +108,9 @@ class GameUI {
       }
     });
 
-    // Hide back row if empty
-    const backAlive = this.engine.enemies.filter(e => e.row === 'back' && !e.dead);
-    document.getElementById('enemy-row-back').classList.toggle('hidden', backAlive.length === 0);
+    // Hide back row if no back-row enemies exist (alive or dead)
+    const backExists = this.engine.enemies.some(e => e.row === 'back');
+    document.getElementById('enemy-row-back').classList.toggle('hidden', !backExists);
   }
 
   isEnemyTargetable(enemy) {
@@ -95,8 +129,7 @@ class GameUI {
     const pool = document.getElementById('dice-pool');
     pool.innerHTML = '';
 
-    if (this.engine.phase === PHASE.ROLL || this.engine.phase === PHASE.PRE_COMBAT) {
-      // Show empty dice slots
+    if (this.engine.phase === PHASE.ROLL || this.engine.phase === PHASE.PRE_COMBAT || this.engine.phase === PHASE.SPAWNING) {
       for (let i = 0; i < 5; i++) {
         const el = document.createElement('div');
         el.className = 'die empty';
@@ -107,10 +140,19 @@ class GameUI {
     }
 
     this.engine.dicePool.dice.forEach(die => {
+      const isSelected = this.selectedDice.includes(die.id);
       const el = document.createElement('div');
-      el.className = `die ${die.used ? 'used' : ''} ${this.selectedDieId === die.id ? 'selected' : ''}`;
+      el.className = `die${die.used ? ' used' : ''}${isSelected ? ' selected' : ''}`;
       el.textContent = die.value;
       el.dataset.dieId = die.id;
+
+      // Show selection order badge for multi-select
+      if (isSelected && this.selectedDice.length > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'die-badge';
+        badge.textContent = this.selectedDice.indexOf(die.id) + 1;
+        el.appendChild(badge);
+      }
 
       if (!die.used && this.engine.phase === PHASE.PLAYER_TURN) {
         el.addEventListener('click', () => this.onDieClick(die));
@@ -139,16 +181,41 @@ class GameUI {
 
       pool.appendChild(el);
     });
+
+    // Show selected dice count hint
+    if (this.selectedDice.length > 0) {
+      const hint = document.createElement('div');
+      hint.className = 'dice-hint';
+      const sum = this.selectedDice.reduce((s, id) => {
+        const d = this.engine.dicePool.dice.find(x => x.id === id);
+        return s + (d ? d.value : 0);
+      }, 0);
+      hint.textContent = `${this.selectedDice.length} dice selected (sum: ${sum})`;
+      pool.parentElement.insertBefore(hint, pool.nextSibling);
+    }
+    // Remove old hints
+    const oldHint = document.querySelector('.dice-hint');
+    if (oldHint && this.selectedDice.length === 0) oldHint.remove();
   }
 
   onDieClick(die) {
     if (die.used) return;
-    if (this.selectedDieId === die.id) {
-      this.selectedDieId = null;
+    const idx = this.selectedDice.indexOf(die.id);
+    if (idx >= 0) {
+      // Deselect
+      this.selectedDice.splice(idx, 1);
     } else {
-      this.selectedDieId = die.id;
+      // Select (add to selection)
+      this.selectedDice.push(die.id);
     }
     this.render();
+  }
+
+  clearDiceSelection() {
+    this.selectedDice = [];
+    // Remove hint if present
+    const hint = document.querySelector('.dice-hint');
+    if (hint) hint.remove();
   }
 
   // --- Party ---
@@ -159,15 +226,21 @@ class GameUI {
     this.engine.party.forEach((unit, i) => {
       const el = document.createElement('div');
       const isTargetable = this.engine.targetMode && this.engine.targetMode.targetType === 'ally' && !unit.downed;
-      el.className = `unit-card ${unit.downed ? 'downed' : ''} ${this.selectedUnitIndex === i ? 'selected' : ''} ${isTargetable ? 'targetable' : ''}`;
+      el.className = `unit-card${unit.downed ? ' downed' : ''}${this.selectedUnitIndex === i ? ' selected' : ''}${isTargetable ? ' targetable' : ''}`;
+      el.id = `unit-${i}`;
 
       const hpPct = (unit.hp / unit.maxHp) * 100;
+      const prevHp = this.prevUnitHp[i] !== undefined ? this.prevUnitHp[i] : unit.hp;
+      const drainPct = (prevHp / unit.maxHp) * 100;
+      this.prevUnitHp[i] = unit.hp;
+
       el.innerHTML = `
         <div class="unit-header">
           <span class="unit-title">${unit.title}</span>
           <span class="unit-name">${unit.name}</span>
         </div>
         <div class="hp-bar">
+          <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 30 ? 'critical' : ''}" style="width:${hpPct}%"></div>
         </div>
         <div class="unit-stats">
@@ -176,6 +249,14 @@ class GameUI {
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
         </div>
       `;
+
+      // Animate drain
+      if (drainPct > hpPct) {
+        requestAnimationFrame(() => {
+          const drain = el.querySelector('.hp-drain');
+          if (drain) drain.style.width = hpPct + '%';
+        });
+      }
 
       if (!unit.downed && this.engine.phase === PHASE.PLAYER_TURN) {
         if (isTargetable) {
@@ -221,16 +302,16 @@ class GameUI {
     list.innerHTML = '';
 
     const skills = this.engine.getValidSkills(this.selectedUnitIndex);
+    const selectedCount = this.selectedDice.length;
+
     skills.forEach(skill => {
       const el = document.createElement('div');
-      el.className = `skill-btn ${skill.canUse ? '' : 'disabled'}`;
+      el.className = `skill-btn${skill.canUse ? '' : ' disabled'}`;
 
-      // Check if selected die is valid for this skill
-      let dieValid = false;
-      if (this.selectedDieId !== null && skill.canUse) {
-        if (skill.cost.dice === 1) {
-          dieValid = this.engine.dicePool.canPayCost(skill.cost, [this.selectedDieId]);
-        }
+      // Check if currently selected dice satisfy this skill's cost
+      let diceMatch = false;
+      if (selectedCount > 0 && skill.canUse && selectedCount === skill.cost.dice) {
+        diceMatch = this.engine.dicePool.canPayCost(skill.cost, this.selectedDice);
       }
 
       el.innerHTML = `
@@ -238,19 +319,18 @@ class GameUI {
         <div class="skill-desc">${skill.description}</div>
       `;
 
-      if (dieValid) {
+      if (diceMatch) {
+        // Selected dice match — tap to activate
         el.classList.add('die-ready');
         el.addEventListener('click', () => {
-          this.engine.beginSkillTarget(this.selectedUnitIndex, skill.id, [this.selectedDieId]);
-          this.selectedDieId = null;
+          const diceIds = [...this.selectedDice];
+          this.engine.beginSkillTarget(this.selectedUnitIndex, skill.id, diceIds);
+          this.clearDiceSelection();
           this.selectedUnitIndex = null;
         });
-      } else if (skill.canUse && skill.cost.dice === 1) {
-        // Let player click to see which dice work
+      } else if (skill.canUse) {
+        // Skill is usable but dice don't match yet — highlight valid dice
         el.addEventListener('click', () => this.highlightValidDice(skill));
-      } else if (skill.canUse && skill.cost.dice === 2) {
-        el.classList.add('multi-die');
-        el.addEventListener('click', () => this.startMultiDieSelect(this.selectedUnitIndex, skill));
       }
 
       list.appendChild(el);
@@ -264,49 +344,30 @@ class GameUI {
   }
 
   highlightValidDice(skill) {
-    // Flash valid dice for this skill
     const available = this.engine.dicePool.getAvailable();
-    available.forEach(d => {
-      if (this.engine.dicePool.canPayCost(skill.cost, [d.id])) {
+    if (skill.cost.dice === 1) {
+      // Highlight individual valid dice
+      available.forEach(d => {
+        if (this.engine.dicePool.canPayCost(skill.cost, [d.id])) {
+          const el = document.querySelector(`.die[data-die-id="${d.id}"]`);
+          if (el) {
+            el.classList.add('highlight');
+            setTimeout(() => el.classList.remove('highlight'), 800);
+          }
+        }
+      });
+    } else {
+      // For multi-die skills, flash all unused dice as a hint
+      available.forEach(d => {
         const el = document.querySelector(`.die[data-die-id="${d.id}"]`);
         if (el) {
           el.classList.add('highlight');
           setTimeout(() => el.classList.remove('highlight'), 800);
         }
-      }
-    });
-  }
-
-  startMultiDieSelect(unitIndex, skill) {
-    // For combined-cost skills: let player tap 2 dice then activate
-    this.multiDieMode = { unitIndex, skill, selected: [] };
-    this.addLog('Select ' + skill.cost.dice + ' dice for ' + skill.name);
-    // Override die click behavior temporarily
-    this._origDieClick = this.onDieClick.bind(this);
-    this.onDieClick = (die) => {
-      const mode = this.multiDieMode;
-      if (!mode) return;
-      const idx = mode.selected.indexOf(die.id);
-      if (idx >= 0) {
-        mode.selected.splice(idx, 1);
-      } else {
-        mode.selected.push(die.id);
-      }
-      if (mode.selected.length === skill.cost.dice) {
-        if (this.engine.dicePool.canPayCost(skill.cost, mode.selected)) {
-          this.engine.beginSkillTarget(mode.unitIndex, skill.id, mode.selected);
-          this.selectedDieId = null;
-          this.selectedUnitIndex = null;
-        } else {
-          this.engine.addLog('Those dice don\'t meet the cost. Try again.');
-          mode.selected = [];
-        }
-        this.multiDieMode = null;
-        this.onDieClick = this._origDieClick;
-      }
-      this.render();
-    };
-    this.render();
+      });
+      this.engine.addLog(`Select ${skill.cost.dice} dice for ${skill.name} (${skill.cost.label}).`);
+      this.renderLog();
+    }
   }
 
   // --- Phase UI ---
@@ -320,10 +381,13 @@ class GameUI {
 
     switch (this.engine.phase) {
       case PHASE.PRE_COMBAT:
-        phaseLabel.textContent = 'PREPARE FOR COMBAT';
+        phaseLabel.textContent = 'ENCOUNTER';
         rollBtn.classList.remove('hidden');
-        rollBtn.textContent = 'Begin';
-        rollBtn.onclick = () => { this.engine.startRollPhase(); };
+        rollBtn.textContent = 'Begin Encounter';
+        rollBtn.onclick = () => { this.engine.beginSpawning(); };
+        break;
+      case PHASE.SPAWNING:
+        phaseLabel.textContent = 'ENEMIES APPEAR...';
         break;
       case PHASE.ROLL:
         phaseLabel.textContent = `TURN ${this.engine.turn} — ROLL`;
@@ -337,12 +401,12 @@ class GameUI {
           phaseLabel.textContent = `SELECT TARGET FOR ${tm.skill.name.toUpperCase()}`;
           endBtn.classList.remove('hidden');
           endBtn.textContent = 'Cancel';
-          endBtn.onclick = () => { this.engine.cancelTarget(); this.selectedDieId = null; };
+          endBtn.onclick = () => { this.engine.cancelTarget(); this.clearDiceSelection(); };
         } else {
           phaseLabel.textContent = `TURN ${this.engine.turn} — ASSIGN DICE`;
           endBtn.classList.remove('hidden');
           endBtn.textContent = 'End Turn';
-          endBtn.onclick = () => this.engine.endPlayerTurn();
+          endBtn.onclick = () => { this.clearDiceSelection(); this.engine.endPlayerTurn(); };
         }
         break;
       case PHASE.ENEMY_TURN:
@@ -375,13 +439,42 @@ class GameUI {
     this.renderLog();
   }
 
+  // --- Visual effects ---
+  showDamagePopup(elementId, amount, type = 'damage') {
+    const target = document.getElementById(elementId);
+    if (!target) return;
+
+    const popup = document.createElement('div');
+    popup.className = `damage-popup${type === 'heal' ? ' heal' : ''}${type === 'morale' ? ' morale' : ''}`;
+    if (type === 'damage') {
+      popup.textContent = `-${amount}`;
+    } else if (type === 'heal') {
+      popup.textContent = `+${amount}`;
+    } else if (type === 'morale') {
+      popup.textContent = amount > 0 ? `+${amount}` : `${amount}`;
+    }
+
+    const rect = target.getBoundingClientRect();
+    popup.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+    popup.style.top = (rect.top) + 'px';
+    document.body.appendChild(popup);
+
+    setTimeout(() => popup.remove(), 1000);
+  }
+
+  flashElement(elementId, cssClass, duration = 500) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.classList.add(cssClass);
+    setTimeout(() => el.classList.remove(cssClass), duration);
+  }
+
   // --- Post-encounter ---
   onVictory() {
     this.engine.afterEncounter();
     this.engine.encounterIndex++;
 
     if (this.engine.encounterIndex >= ENCOUNTERS.length) {
-      // All encounters cleared
       this.showResult('SURVIVED', 'Your cohort escapes the Teutoburg Forest... for now.', true);
     } else {
       this.showResult('ENCOUNTER WON', 'The enemy falls. You press deeper into the forest.', false);
