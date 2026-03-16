@@ -816,6 +816,156 @@ html, body {
   100% { opacity: 0; transform: translateY(-40px); }
 }
 
+/* --- Summary Screen --- */
+#summary-screen {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #141820 50%, #1a1410 100%);
+  overflow-y: auto;
+}
+
+.summary-content {
+  padding: 1.5rem 1rem;
+  max-width: 420px;
+  width: 100%;
+}
+
+#summary-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+#summary-text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+}
+
+.summary-unit {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.summary-unit.downed {
+  border-color: var(--red);
+  opacity: 0.7;
+}
+
+.summary-unit-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.summary-unit-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.summary-unit-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  flex: 1;
+}
+
+.summary-unit-hp {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.summary-unit-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 0.68rem;
+}
+
+.stat-dmg { color: var(--red-bright); }
+.stat-heal { color: var(--green-bright); }
+.stat-block { color: var(--blue-bright); }
+.stat-morale { color: var(--gold); }
+.stat-taken { color: #aa6666; }
+.stat-none { color: var(--text-dim); font-style: italic; }
+
+#btn-summary-continue {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* --- Loot Screen --- */
+#loot-screen {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #1a1814 50%, #141410 100%);
+}
+
+.loot-content {
+  padding: 2rem 1rem;
+  max-width: 400px;
+  text-align: center;
+}
+
+.loot-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.8rem;
+}
+
+#loot-text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 1.2rem;
+  line-height: 1.5;
+}
+
+.loot-placeholder {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-style: italic;
+  padding: 20px;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+#btn-loot-continue {
+  display: block;
+  width: 100%;
+}
+
+/* --- Unit heal flash --- */
+.unit-card.healed {
+  animation: unit-heal 0.6s ease-out;
+}
+
+@keyframes unit-heal {
+  0% { background: var(--bg-card); }
+  25% { background: rgba(74, 122, 58, 0.35); border-color: var(--green-bright); }
+  100% { background: var(--bg-card); }
+}
+
+/* --- HP fill heal (green flash layer) --- */
+.hp-fill.healing {
+  background: var(--green-bright);
+  transition: width 0.6s ease-out;
+}
+
 /* --- Scrollbar --- */
 ::-webkit-scrollbar {
   width: 4px;

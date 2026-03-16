@@ -29,6 +29,10 @@ class GameUI {
         this.flashElement(`unit-${data.unitIndex}`, 'hit', 500);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
         break;
+      case 'unitHeal':
+        this.flashElement(`unit-${data.unitIndex}`, 'healed', 600);
+        this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'heal');
+        break;
       case 'morale':
         this.showDamagePopup('morale-bar', data.amount, 'morale');
         break;
@@ -584,18 +588,82 @@ class GameUI {
 
   // --- Post-encounter ---
   onVictory() {
-    this.engine.afterEncounter();
-    this.engine.encounterIndex++;
+    const isFinal = this.engine.encounterIndex + 1 >= ENCOUNTERS.length;
+    const title = isFinal ? 'SURVIVED' : 'ENCOUNTER WON';
+    const text = isFinal
+      ? 'Your cohort escapes the Teutoburg Forest... for now.'
+      : 'The enemy falls. You press deeper into the forest.';
 
-    if (this.engine.encounterIndex >= ENCOUNTERS.length) {
-      this.showResult('SURVIVED', 'Your cohort escapes the Teutoburg Forest... for now.', true);
-    } else {
-      this.showResult('ENCOUNTER WON', 'The enemy falls. You press deeper into the forest.', false);
-    }
+    this.showSummary(title, text, isFinal);
   }
 
   onDefeat() {
-    this.showResult('THE COHORT FALLS', 'The forest claims another Roman detachment. None will know where they fell.', true);
+    this.showSummary(
+      'THE COHORT FALLS',
+      'The forest claims another Roman detachment. None will know where they fell.',
+      true
+    );
+  }
+
+  showSummary(title, text, isFinal) {
+    this.showScreen('summary-screen');
+    document.getElementById('summary-title').textContent = title;
+    document.getElementById('summary-text').textContent = text;
+
+    const statsEl = document.getElementById('summary-stats');
+    statsEl.innerHTML = this.engine.party.map(u => {
+      const s = u.stats;
+      const statLines = [];
+      if (s.damageDealt > 0) statLines.push(`<span class="stat-dmg">${s.damageDealt} damage dealt</span>`);
+      if (s.healingDone > 0) statLines.push(`<span class="stat-heal">${s.healingDone} healing done</span>`);
+      if (s.blockGenerated > 0) statLines.push(`<span class="stat-block">${s.blockGenerated} block generated</span>`);
+      if (s.moraleRestored > 0) statLines.push(`<span class="stat-morale">${s.moraleRestored} morale restored</span>`);
+      if (s.damageTaken > 0) statLines.push(`<span class="stat-taken">${s.damageTaken} damage taken</span>`);
+
+      return `
+        <div class="summary-unit ${u.downed ? 'downed' : ''}">
+          <div class="summary-unit-header">
+            <span class="summary-unit-title">${u.title}</span>
+            <span class="summary-unit-name">${u.name}</span>
+            <span class="summary-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp}`}</span>
+          </div>
+          <div class="summary-unit-stats">
+            ${statLines.length > 0 ? statLines.join('  ') : '<span class="stat-none">No contribution</span>'}
+          </div>
+        </div>`;
+    }).join('');
+
+    const continueBtn = document.getElementById('btn-summary-continue');
+    if (title === 'THE COHORT FALLS') {
+      continueBtn.textContent = 'New March';
+      continueBtn.onclick = () => window.game.startNewRun();
+    } else {
+      continueBtn.textContent = 'Continue';
+      continueBtn.onclick = () => this.showLootScreen(isFinal);
+    }
+  }
+
+  showLootScreen(isFinal) {
+    this.engine.afterEncounter();
+    this.engine.encounterIndex++;
+
+    this.showScreen('loot-screen');
+
+    // Placeholder loot — will be expanded later
+    const lootText = document.getElementById('loot-text');
+    lootText.textContent = 'Your soldiers scavenge what they can from the fallen.';
+
+    const lootItems = document.getElementById('loot-items');
+    lootItems.innerHTML = '<div class="loot-placeholder">No loot system yet — coming soon.</div>';
+
+    const continueBtn = document.getElementById('btn-loot-continue');
+    if (isFinal) {
+      continueBtn.textContent = 'New March';
+      continueBtn.onclick = () => window.game.startNewRun();
+    } else {
+      continueBtn.textContent = 'Continue March';
+      continueBtn.onclick = () => window.game.startNextEncounter();
+    }
   }
 
   showResult(title, text, isFinal) {
@@ -611,12 +679,7 @@ class GameUI {
     ).join('');
 
     const nextBtn = document.getElementById('btn-next');
-    if (isFinal) {
-      nextBtn.textContent = 'New March';
-      nextBtn.onclick = () => window.game.startNewRun();
-    } else {
-      nextBtn.textContent = 'Continue March';
-      nextBtn.onclick = () => window.game.startNextEncounter();
-    }
+    nextBtn.textContent = 'New March';
+    nextBtn.onclick = () => window.game.startNewRun();
   }
 }

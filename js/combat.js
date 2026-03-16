@@ -47,6 +47,8 @@ class CombatEngine {
         taunt: false,
         actedThisTurn: false,
         conditions: [],
+        // Per-encounter stats
+        stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 },
       };
     });
   }
@@ -66,6 +68,7 @@ class CombatEngine {
       u.bonusDamage = 0;
       u.passiveTriggered = false;
       u.actedThisTurn = false;
+      u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 };
       if (u.passive) u.passive.triggered = false;
     });
     this.addLog(encounterDef.intro);
@@ -323,15 +326,24 @@ class CombatEngine {
     if (result.damage && result.target && result.target.hp !== undefined) {
       let dmg = result.damage + (unit.bonusDamage || 0);
       result.target.hp = Math.max(0, result.target.hp - dmg);
+      unit.stats.damageDealt += dmg;
     }
     if (result.heal && result.target) {
+      const before = result.target.hp;
       result.target.hp = Math.min(result.target.maxHp, result.target.hp + result.heal);
+      const actual = result.target.hp - before;
+      unit.stats.healingDone += actual;
+      if (actual > 0 && this.onVisual) {
+        this.onVisual('unitHeal', { unitIndex: result.target.index, amount: actual });
+      }
     }
     if (result.selfDamage) {
       unit.hp = Math.max(1, unit.hp - result.selfDamage);
+      unit.stats.damageTaken += result.selfDamage;
     }
     if (result.block && result.target) {
       result.target.block = (result.target.block || 0) + result.block;
+      unit.stats.blockGenerated += result.block;
     }
     if (result.taunt) {
       unit.taunt = true;
@@ -340,6 +352,7 @@ class CombatEngine {
       this.party.forEach(u => {
         if (!u.downed) u.block = (u.block || 0) + result.blockAll;
       });
+      unit.stats.blockGenerated += result.blockAll * this.party.filter(u => !u.downed).length;
     }
     if (result.buffAllies) {
       this.party.forEach(u => {
@@ -347,7 +360,11 @@ class CombatEngine {
       });
     }
     if (result.morale) {
+      const oldMorale = this.morale;
       this.morale = Math.max(-100, Math.min(100, this.morale + result.morale));
+      if (result.morale > 0) {
+        unit.stats.moraleRestored += this.morale - oldMorale;
+      }
     }
   }
 
@@ -422,6 +439,7 @@ class CombatEngine {
         }
       }
       target.hp = Math.max(0, target.hp - dmg);
+      target.stats.damageTaken += dmg;
       this.addLog(`${enemy.name} ${action.text} at ${target.name} for ${action.damage} damage${dmg < action.damage ? ` (${dmg} after block)` : ''}.`);
 
       if (this.onVisual) {
@@ -447,6 +465,7 @@ class CombatEngine {
             aoeDmg -= absorbed;
           }
           u.hp = Math.max(0, u.hp - aoeDmg);
+          u.stats.damageTaken += aoeDmg;
           if (this.onVisual) {
             this.onVisual('unitHit', { unitIndex: u.index, damage: aoeDmg });
           }
