@@ -16,19 +16,15 @@ class Game {
   }
 
   startNewRun() {
-    this.engine.encounterIndex = 0;
     this.engine.morale = 50;
     this.engine.initParty(['legionary', 'centurion', 'medicus']);
-    this.startNextEncounter();
-  }
 
-  startNextEncounter() {
-    const encounter = ENCOUNTERS[this.engine.encounterIndex];
-    this.engine.initEncounter(encounter);
-    this.ui.showScreen('combat-screen');
-    this.ui.selectedDieId = null;
-    this.ui.selectedUnitIndex = null;
-    this.ui.render();
+    // Generate map
+    this.ui.mapNodes = generateMap();
+    this.ui.currentNodeId = null;
+
+    // Show map screen
+    this.ui.showMapScreen();
   }
 }
 

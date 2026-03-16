@@ -12,6 +12,8 @@ class GameUI {
     this.logOpen = false;
     this.diceRevealed = 0;
     this.diceRevealRunning = false;
+    this.mapNodes = null;
+    this.currentNodeId = null;
     this.init();
   }
 
@@ -86,7 +88,7 @@ class GameUI {
 
     this.engine.enemies.forEach((enemy, i) => {
       const el = document.createElement('div');
-      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${enemy.justSpawned ? ' spawning' : ''}`;
+      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${enemy.justSpawned ? ' spawning' : ''}${enemy.isBoss ? ' boss' : ''}`;
       el.id = `enemy-${i}`;
 
       const hpPct = (enemy.hp / enemy.maxHp) * 100;
@@ -95,7 +97,7 @@ class GameUI {
       this.prevEnemyHp[i] = enemy.hp;
 
       el.innerHTML = `
-        <div class="enemy-name">${enemy.name}</div>
+        <div class="enemy-name">${enemy.name}${enemy.isBoss ? ' <span class="boss-icon">\u2620</span>' : ''}</div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill" style="width:${hpPct}%"></div>
@@ -250,7 +252,7 @@ class GameUI {
         return s + (d ? d.value : 0);
       }, 0);
       const skill = this.stagedSkill ? this.engine.party[this.selectedUnitIndex].skills.find(s => s.id === this.stagedSkill.skillId) : null;
-      hint.textContent = skill ? `${skill.name}: ${stagedDiceIds.length} dice (sum: ${sum}) — tap skill to confirm` : '';
+      hint.textContent = skill ? `${skill.name}: ${stagedDiceIds.length} dice (sum: ${sum}) \u2014 tap skill to confirm` : '';
       pool.parentElement.insertBefore(hint, pool.nextSibling);
     }
   }
@@ -412,7 +414,7 @@ class GameUI {
     panel.classList.remove('hidden');
 
     if (unit.actedThisTurn) {
-      nameEl.textContent = `${unit.name} — Done`;
+      nameEl.textContent = `${unit.name} \u2014 Done`;
       list.innerHTML = '<div class="skill-acted-msg">This unit has already acted this turn.</div>';
       confirmBtn.classList.add('hidden');
       return;
@@ -586,15 +588,316 @@ class GameUI {
     setTimeout(() => el.classList.remove(cssClass), duration);
   }
 
-  // --- Post-encounter ---
+  // ================================================================
+  // MAP SCREEN
+  // ================================================================
+
+  showMapScreen() {
+    this.showScreen('map-screen');
+    this.renderMapPartyBar();
+    this.renderMapMorale();
+    this.renderMap();
+  }
+
+  renderMapPartyBar() {
+    const bar = document.getElementById('map-party-bar');
+    bar.innerHTML = this.engine.party.map(u => {
+      const pct = (u.hp / u.maxHp) * 100;
+      return `<div class="map-party-unit${u.downed ? ' downed' : ''}">
+        <span class="map-party-name">${u.title}</span>
+        <div class="map-party-hp-bar">
+          <div class="map-party-hp-fill${pct < 30 ? ' critical' : ''}" style="width:${pct}%"></div>
+        </div>
+        <span class="map-party-hp-text">${u.hp}/${u.maxHp}</span>
+      </div>`;
+    }).join('');
+  }
+
+  renderMapMorale() {
+    const label = document.getElementById('map-morale-label');
+    const band = getMoraleBand(this.engine.morale);
+    label.textContent = `${band.label} (${this.engine.morale})`;
+    label.style.color = band.color;
+  }
+
+  renderMap() {
+    if (!this.mapNodes) return;
+
+    const nodesLayer = document.getElementById('map-nodes-layer');
+    const canvas = document.getElementById('map-canvas');
+    const wrapper = document.getElementById('map-canvas-wrapper');
+    const container = document.getElementById('map-scroll-container');
+
+    // Calculate dimensions
+    const maxDepth = 8;
+    const nodeSpacing = 90;
+    const topPadding = 60;
+    const bottomPadding = 60;
+    const totalHeight = topPadding + (maxDepth + 1) * nodeSpacing + bottomPadding;
+    const wrapperWidth = wrapper.parentElement.clientWidth || 400;
+
+    wrapper.style.height = totalHeight + 'px';
+    wrapper.style.width = '100%';
+    wrapper.style.position = 'relative';
+    canvas.width = wrapperWidth;
+    canvas.height = totalHeight;
+    canvas.style.width = wrapperWidth + 'px';
+    canvas.style.height = totalHeight + 'px';
+
+    nodesLayer.innerHTML = '';
+    nodesLayer.style.width = wrapperWidth + 'px';
+    nodesLayer.style.height = totalHeight + 'px';
+
+    const reachable = this.currentNodeId !== null ? getReachableNodes(this.mapNodes, this.currentNodeId) : [];
+    const reachableIds = reachable.map(n => n.id);
+
+    // If no current node, the start node (depth 0) is reachable
+    const startReachable = this.currentNodeId === null;
+
+    // Position nodes: bottom = start (depth 0), top = boss (depth 8)
+    const nodePositions = {};
+    for (const node of this.mapNodes) {
+      const y = totalHeight - bottomPadding - node.depth * nodeSpacing;
+      const x = node.x * (wrapperWidth - 80) + 40;
+      nodePositions[node.id] = { x, y };
+    }
+
+    // Draw lines on canvas
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 2;
+
+    for (const node of this.mapNodes) {
+      const from = nodePositions[node.id];
+      for (const childId of node.children) {
+        const to = nodePositions[childId];
+        if (!to) continue;
+
+        const childNode = this.mapNodes.find(n => n.id === childId);
+        const isReachableLine = (node.id === this.currentNodeId) ||
+          (startReachable && node.depth === 0);
+
+        ctx.strokeStyle = isReachableLine ? 'rgba(201, 162, 39, 0.6)' : 'rgba(42, 46, 58, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+      }
+    }
+
+    // Render node elements
+    for (const node of this.mapNodes) {
+      const pos = nodePositions[node.id];
+      const el = document.createElement('div');
+
+      const isReachableNode = startReachable ? (node.depth === 0) : reachableIds.includes(node.id);
+      const isCurrent = node.id === this.currentNodeId;
+
+      el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''} type-${node.type}`;
+      el.style.left = (pos.x - 22) + 'px';
+      el.style.top = (pos.y - 22) + 'px';
+
+      let icon = '';
+      switch (node.type) {
+        case 'combat': icon = '\u2694'; break;
+        case 'event': icon = '\uD83D\uDCDC'; break;
+        case 'rest': icon = '\uD83D\uDD25'; break;
+        case 'boss': icon = '\uD83D\uDC80'; break;
+      }
+
+      let threatSkulls = '';
+      if (node.type === 'combat' && node.threat > 0) {
+        threatSkulls = `<div class="map-node-threat">${'\u2620'.repeat(node.threat)}</div>`;
+      }
+
+      el.innerHTML = `<span class="map-node-icon">${icon}</span>${threatSkulls}`;
+
+      if (isReachableNode && !node.visited) {
+        el.addEventListener('click', () => this.onMapNodeClick(node));
+      }
+
+      nodesLayer.appendChild(el);
+    }
+
+    // Scroll to show the current position (or bottom for start)
+    if (this.currentNodeId !== null) {
+      const pos = nodePositions[this.currentNodeId];
+      container.scrollTop = pos.y - container.clientHeight / 2;
+    } else {
+      container.scrollTop = totalHeight;
+    }
+  }
+
+  onMapNodeClick(node) {
+    // Mark as visited and set current
+    node.visited = true;
+    this.currentNodeId = node.id;
+
+    if (node.type === 'combat') {
+      this.startCombatNode(node);
+    } else if (node.type === 'boss') {
+      this.startCombatNode(node);
+    } else if (node.type === 'event') {
+      this.startEventNode(node);
+    } else if (node.type === 'rest') {
+      this.startRestNode(node);
+    }
+  }
+
+  startCombatNode(node) {
+    this.engine.initEncounter(node.encounter);
+    this.showScreen('combat-screen');
+    this.selectedUnitIndex = null;
+    this.stagedSkill = null;
+    this.prevEnemyHp = {};
+    this.prevUnitHp = {};
+    this.diceRevealRunning = false;
+    this.render();
+  }
+
+  // ================================================================
+  // EVENT SCREEN
+  // ================================================================
+
+  startEventNode(node) {
+    this.showScreen('event-screen');
+    const event = node.encounter;
+
+    document.getElementById('event-title').textContent = event.name;
+    document.getElementById('event-intro').textContent = event.intro;
+    document.getElementById('event-outcome').classList.add('hidden');
+
+    const choicesEl = document.getElementById('event-choices');
+    choicesEl.innerHTML = '';
+
+    event.choices.forEach((choice, ci) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-event-choice';
+      btn.textContent = choice.text;
+      btn.addEventListener('click', () => this.resolveEventChoice(event, choice));
+      choicesEl.appendChild(btn);
+    });
+  }
+
+  resolveEventChoice(event, choice) {
+    // Weighted random outcome
+    const roll = Math.random();
+    let cumulative = 0;
+    let outcome = choice.outcomes[0];
+    for (const o of choice.outcomes) {
+      cumulative += o.weight;
+      if (roll < cumulative) { outcome = o; break; }
+    }
+
+    // Apply effects
+    const effects = outcome.effects || {};
+    if (effects.healAll) {
+      this.engine.party.forEach(u => {
+        if (!u.downed) {
+          u.hp = Math.min(u.maxHp, u.hp + effects.healAll);
+        }
+      });
+    }
+    if (effects.damageAll) {
+      this.engine.party.forEach(u => {
+        if (!u.downed) {
+          u.hp = Math.max(1, u.hp - effects.damageAll);
+        }
+      });
+    }
+    if (effects.morale) {
+      this.engine.morale = Math.max(-100, Math.min(100, this.engine.morale + effects.morale));
+    }
+    if (effects.grantItem) {
+      this.pendingEventItem = effects.grantItem;
+    } else {
+      this.pendingEventItem = null;
+    }
+
+    // Hide choices, show outcome
+    document.getElementById('event-choices').innerHTML = '';
+    document.getElementById('event-outcome').classList.remove('hidden');
+
+    let outcomeText = outcome.text;
+    if (effects.healAll) outcomeText += ` (Party healed ${effects.healAll} HP)`;
+    if (effects.damageAll) outcomeText += ` (Party took ${effects.damageAll} damage)`;
+    if (effects.morale && effects.morale > 0) outcomeText += ` (+${effects.morale} Morale)`;
+    if (effects.morale && effects.morale < 0) outcomeText += ` (${effects.morale} Morale)`;
+    if (effects.grantItem) {
+      const item = getItemData(effects.grantItem);
+      if (item) outcomeText += ` (Found: ${item.name})`;
+    }
+
+    document.getElementById('event-outcome-text').textContent = outcomeText;
+
+    document.getElementById('btn-event-continue').onclick = () => {
+      if (this.pendingEventItem) {
+        this.showEventItemScreen(this.pendingEventItem);
+      } else {
+        this.showMapScreen();
+      }
+    };
+  }
+
+  showEventItemScreen(itemId) {
+    const item = getItemData(itemId);
+    if (!item) {
+      this.showMapScreen();
+      return;
+    }
+
+    // Reuse the loot screen for a single item
+    this.pendingLoot = [itemId];
+    this.lootScreenFinal = false;
+    this.lootReturnToMap = true;
+    this.showScreen('loot-screen');
+    this.renderLootScreen();
+  }
+
+  // ================================================================
+  // REST SCREEN
+  // ================================================================
+
+  startRestNode(node) {
+    this.showScreen('event-screen');
+    document.getElementById('event-title').textContent = 'Rest';
+    document.getElementById('event-intro').textContent = 'Your cohort finds a sheltered spot to rest. Wounds are tended, weapons sharpened, spirits lifted.';
+    document.getElementById('event-choices').innerHTML = '';
+    document.getElementById('event-outcome').classList.remove('hidden');
+
+    // Heal all party 30% maxHP
+    let healed = false;
+    this.engine.party.forEach(u => {
+      if (!u.downed) {
+        const healAmt = Math.floor(u.maxHp * 0.3);
+        const before = u.hp;
+        u.hp = Math.min(u.maxHp, u.hp + healAmt);
+        if (u.hp > before) healed = true;
+      }
+    });
+
+    const text = healed
+      ? 'The rest does the cohort good. Everyone recovers some strength.'
+      : 'The cohort is already in good shape. The rest is brief but welcome.';
+    document.getElementById('event-outcome-text').textContent = text + ' (Party healed 30% max HP)';
+
+    document.getElementById('btn-event-continue').onclick = () => {
+      this.showMapScreen();
+    };
+  }
+
+  // ================================================================
+  // POST-COMBAT
+  // ================================================================
+
   onVictory() {
-    const isFinal = this.engine.encounterIndex + 1 >= ENCOUNTERS.length;
-    const title = isFinal ? 'SURVIVED' : 'ENCOUNTER WON';
-    const text = isFinal
-      ? 'Your cohort escapes the Teutoburg Forest... for now.'
+    const isBoss = this.engine.hasBossEnemy();
+    const title = isBoss ? 'THE CHAMPION FALLS' : 'ENCOUNTER WON';
+    const text = isBoss
+      ? "Arminius's Champion lies defeated. The path is clear."
       : 'The enemy falls. You press deeper into the forest.';
 
-    this.showSummary(title, text, isFinal);
+    this.showSummary(title, text, isBoss);
   }
 
   onDefeat() {
@@ -605,7 +908,7 @@ class GameUI {
     );
   }
 
-  showSummary(title, text, isFinal) {
+  showSummary(title, text, isBossOrDefeat) {
     this.showScreen('summary-screen');
     document.getElementById('summary-title').textContent = title;
     document.getElementById('summary-text').textContent = text;
@@ -639,11 +942,11 @@ class GameUI {
       continueBtn.onclick = () => window.game.startNewRun();
     } else {
       continueBtn.textContent = 'Continue';
-      continueBtn.onclick = () => this.showLootScreen(isFinal);
+      continueBtn.onclick = () => this.showLootScreen(this.engine.hasBossEnemy());
     }
   }
 
-  showLootScreen(isFinal) {
+  showLootScreen(isBossVictory) {
     this.engine.afterEncounter();
 
     // Award XP from killed enemies
@@ -657,21 +960,27 @@ class GameUI {
       });
     }
 
-    this.engine.encounterIndex++;
-
     // Roll drops — filter to items at least one party member can use
     this.pendingLoot = [];
     for (const enemyId of this.engine.killedEnemies) {
-      const itemId = rollDrop(enemyId);
+      const isBossEnemy = ENEMY_DATA[enemyId] && ENEMY_DATA[enemyId].isBoss;
+      const itemId = rollDrop(enemyId, this.engine.party);
       if (!itemId) continue;
       const item = getItemData(itemId);
       if (!item) continue;
       // Only drop if someone in the party can equip it
-      const canUse = this.engine.party.some(u => item.equippableBy.includes(u.classId));
+      const canUse = this.engine.party.some(u => canEquipItem(u, item));
       if (canUse) this.pendingLoot.push(itemId);
     }
 
-    this.lootScreenFinal = isFinal;
+    // Boss guaranteed rare drop if nothing dropped
+    if (isBossVictory && this.pendingLoot.length === 0) {
+      const bossItem = BOSS_DROP_POOL[Math.floor(Math.random() * BOSS_DROP_POOL.length)];
+      this.pendingLoot.push(bossItem);
+    }
+
+    this.lootScreenFinal = isBossVictory;
+    this.lootReturnToMap = !isBossVictory;
     this.showScreen('loot-screen');
     this.renderLootScreen();
   }
@@ -696,7 +1005,7 @@ class GameUI {
         const card = document.createElement('div');
         card.className = `loot-card rarity-${item.rarity}`;
 
-        const eligible = this.engine.party.filter(u => item.equippableBy.includes(u.classId));
+        const eligible = this.engine.party.filter(u => canEquipItem(u, item));
 
         const equipBtns = eligible.map(u => {
           const slots = u.equipment[item.slot];
@@ -742,7 +1051,7 @@ class GameUI {
       const slotHtml = ['weapon', 'armor', 'trinket'].map(slot => {
         const items = u.equipment[slot].map((id, si) => {
           const item = id ? getItemData(id) : null;
-          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? item.name : '—'}</span>`;
+          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? item.name : '\u2014'}</span>`;
         }).join(', ');
         return `<div class="equip-slot-row">
           <span class="equip-slot-label">${slot} (${EQUIP_SLOTS[slot]})</span>
@@ -760,11 +1069,14 @@ class GameUI {
     }).join('');
 
     if (this.lootScreenFinal) {
-      continueBtn.textContent = 'New March';
-      continueBtn.onclick = () => window.game.startNewRun();
+      continueBtn.textContent = 'Victory';
+      continueBtn.onclick = () => this.showRunComplete();
+    } else if (this.lootReturnToMap) {
+      continueBtn.textContent = 'Continue March';
+      continueBtn.onclick = () => this.showMapScreen();
     } else {
       continueBtn.textContent = 'Continue March';
-      continueBtn.onclick = () => window.game.startNextEncounter();
+      continueBtn.onclick = () => this.showMapScreen();
     }
   }
 
@@ -776,6 +1088,27 @@ class GameUI {
       this.pendingLoot.splice(lootIndex, 1);
       this.renderLootScreen();
     }
+  }
+
+  // ================================================================
+  // RUN COMPLETE
+  // ================================================================
+
+  showRunComplete() {
+    this.showScreen('run-complete-screen');
+    document.getElementById('run-complete-title').textContent = 'VICTORY';
+    document.getElementById('run-complete-text').textContent = 'Your cohort has defeated Arminius\'s Champion and broken through the Teutoburg Forest. Against all odds, the last cohort survives to tell the tale.';
+
+    const statsEl = document.getElementById('run-complete-stats');
+    statsEl.innerHTML = this.engine.party.map(u => {
+      return `<div class="run-complete-unit">
+        <span class="run-complete-unit-name">${u.title} ${u.name}</span>
+        <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
+        <span class="run-complete-unit-level">Lv ${u.level}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('btn-run-complete').onclick = () => window.game.startNewRun();
   }
 
   showResult(title, text, isFinal) {
