@@ -52,7 +52,7 @@ class CombatEngine {
         skills: [], // populated by getUnlockedSkills
         passive: { ...data.passive },
         passiveTriggered: false,
-        bonusDamage: 0,
+        buffs: [], // { damage, attacksLeft }
         taunt: false,
         actedThisTurn: false,
         conditions: [],
@@ -78,7 +78,7 @@ class CombatEngine {
     this.party.forEach(u => {
       u.block = 0;
       u.taunt = false;
-      u.bonusDamage = 0;
+      u.buffs = [];
       u.passiveTriggered = false;
       u.actedThisTurn = false;
       u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 };
@@ -151,7 +151,6 @@ class CombatEngine {
     this.phase = PHASE.ROLLING;
     this.party.forEach(u => {
       u.taunt = false;
-      u.bonusDamage = 0;
       u.actedThisTurn = false;
     });
     this.dicePool.adjustUsed = false;
@@ -366,9 +365,24 @@ class CombatEngine {
     this.update();
   }
 
+  consumeBuffDamage(unit) {
+    let total = 0;
+    for (let i = unit.buffs.length - 1; i >= 0; i--) {
+      const b = unit.buffs[i];
+      if (b.damage) {
+        total += b.damage;
+        b.attacksLeft--;
+        if (b.attacksLeft <= 0) unit.buffs.splice(i, 1);
+      }
+    }
+    return total;
+  }
+
   applySkillResult(unit, skill, result) {
     const parts = [];
-    const bonusDmg = (unit.bonusDamage || 0) + (unit.equipDamage || 0);
+    // Consume buff damage only when actually dealing damage
+    const buffDmg = (result.damage && result.target) ? this.consumeBuffDamage(unit) : 0;
+    const bonusDmg = buffDmg + (unit.equipDamage || 0);
     const bonusBlock = unit.equipBlock || 0;
     const bonusHeal = unit.equipHeal || 0;
 
@@ -420,9 +434,15 @@ class CombatEngine {
       }
     }
     if (result.buffAllies) {
-      this.party.forEach(u => { if (!u.downed) u.bonusDamage = (u.bonusDamage || 0) + (result.buffAllies.bonusDamage || 0); });
+      const attacks = result.buffAllies.attacks || 1;
+      this.party.forEach(u => {
+        if (!u.downed) {
+          u.buffs.push({ damage: result.buffAllies.bonusDamage || 0, attacksLeft: attacks });
+        }
+      });
+      const attackStr = attacks === 1 ? 'next attack' : `next ${attacks} attacks`;
       if (!result.damage && !result.heal && !result.block && !result.blockAll) {
-        parts.push(`${unit.name} uses ${skill.name} \u2014 allies gain +${result.buffAllies.bonusDamage} damage.`);
+        parts.push(`${unit.name} uses ${skill.name} \u2014 allies gain +${result.buffAllies.bonusDamage} damage (${attackStr}).`);
       }
     }
     if (result.morale) {

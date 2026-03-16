@@ -144,9 +144,9 @@ const CLASS_DATA = {
       {
         id: 'commanding_shout', name: 'Commanding Shout', unlockLevel: 1,
         cost: COST.exact(3), target: TARGET.ALL_ALLIES,
-        description: 'All allies gain +2 damage on their next action.',
+        description: 'All allies gain +2 damage on their next attack.',
         execute(unit, targets, dice) {
-          return { buffAllies: { bonusDamage: 2 } };
+          return { buffAllies: { bonusDamage: 2, attacks: 1 } };
         },
       },
       {
@@ -176,9 +176,9 @@ const CLASS_DATA = {
       {
         id: 'rally_cry', name: 'Rally Cry', unlockLevel: 2,
         cost: COST.combined(6, 2), target: TARGET.ALL_ALLIES,
-        description: '2 dice totaling 6+. +15 Morale and all allies gain +1 damage.',
+        description: '2 dice totaling 6+. +15 Morale and all allies gain +1 damage for next 2 attacks.',
         execute(unit, targets, dice) {
-          return { morale: 15, buffAllies: { bonusDamage: 1 } };
+          return { morale: 15, buffAllies: { bonusDamage: 1, attacks: 2 } };
         },
       },
       {

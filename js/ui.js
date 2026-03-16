@@ -21,6 +21,41 @@ class GameUI {
   init() {
     this.engine.onUpdate = () => this.render();
     this.engine.onVisual = (type, data) => this.handleVisual(type, data);
+    this.bindMoraleTooltip();
+  }
+
+  bindMoraleTooltip() {
+    const bar = document.getElementById('morale-bar');
+    const tooltip = document.getElementById('morale-tooltip');
+    if (!bar || !tooltip) return;
+
+    const show = () => {
+      const band = getMoraleBand(this.engine.morale);
+      let effects = '';
+      if (this.engine.morale >= 75) {
+        effects = 'Inspired: Slight damage and resistance bonuses. Command skills improved.';
+      } else if (this.engine.morale >= 25) {
+        effects = 'Steady: Minor reliability bonus. Baseline performance.';
+      } else if (this.engine.morale >= -24) {
+        effects = 'Shaken: No major modifiers. Neutral state.';
+      } else if (this.engine.morale >= -74) {
+        effects = 'Distressed: Softer defense. Higher vulnerability to fear and curses.';
+      } else {
+        effects = 'Broken: Severe vulnerability. Distorted enemy perception. Worse event outcomes.';
+      }
+      tooltip.textContent = effects;
+      tooltip.classList.remove('hidden');
+    };
+    const hide = () => { tooltip.classList.add('hidden'); };
+
+    bar.addEventListener('mouseenter', show);
+    bar.addEventListener('mouseleave', hide);
+    let holdTimer = null;
+    bar.addEventListener('touchstart', (e) => {
+      holdTimer = setTimeout(show, 200);
+    }, { passive: true });
+    bar.addEventListener('touchend', () => { clearTimeout(holdTimer); hide(); });
+    bar.addEventListener('touchcancel', () => { clearTimeout(holdTimer); hide(); });
   }
 
   handleVisual(type, data) {
@@ -199,16 +234,18 @@ class GameUI {
       return;
     }
 
-    // Rolling phase: reveal dice one by one
+    // Rolling phase: all dice shake with random numbers, settle one by one
     if (this.engine.phase === PHASE.ROLLING) {
       this.engine.dicePool.dice.forEach((die, i) => {
         const el = document.createElement('div');
         if (i < this.diceRevealed) {
-          el.className = 'die roll-in';
+          // Settled
+          el.className = 'die settled';
           el.textContent = die.value;
         } else {
-          el.className = 'die empty';
-          el.textContent = '?';
+          // Shaking — show random number
+          el.className = 'die shaking';
+          el.textContent = Math.floor(Math.random() * 6) + 1;
         }
         pool.appendChild(el);
       });
@@ -287,22 +324,32 @@ class GameUI {
     this.render();
   }
 
-  // Dice reveal animation for rolling phase — updates dice DOM only, no full render
+  // Dice reveal: all dice shake with cycling numbers, then settle one by one
   startDiceReveal() {
     this.diceRevealed = 0;
-    this.renderDicePool();
-    const revealNext = () => {
-      if (this.diceRevealed >= this.engine.dicePool.count) {
-        this.diceRevealRunning = false;
-        this.diceRevealed = 0;
-        setTimeout(() => this.engine.onDiceRevealed(), 200);
-        return;
+
+    // Shake phase: cycle random numbers on all dice for ~800ms
+    let shakeFrames = 0;
+    const shakeInterval = setInterval(() => {
+      this.renderDicePool(); // re-renders with new random numbers
+      shakeFrames++;
+      if (shakeFrames > 12) { // ~60ms * 12 = ~720ms of shaking
+        clearInterval(shakeInterval);
+        this.settleNextDie();
       }
-      this.diceRevealed++;
-      this.renderDicePool();
-      setTimeout(revealNext, 120);
-    };
-    setTimeout(revealNext, 300);
+    }, 60);
+  }
+
+  settleNextDie() {
+    if (this.diceRevealed >= this.engine.dicePool.count) {
+      this.diceRevealRunning = false;
+      this.diceRevealed = 0;
+      setTimeout(() => this.engine.onDiceRevealed(), 200);
+      return;
+    }
+    this.diceRevealed++;
+    this.renderDicePool();
+    setTimeout(() => this.settleNextDie(), 150);
   }
 
   // --- Party ---
@@ -335,6 +382,7 @@ class GameUI {
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
           ${unit.block > 0 ? `<span class="block-text">Block: ${unit.block}</span>` : ''}
+          ${unit.buffs && unit.buffs.length > 0 ? unit.buffs.map(b => `<span class="buff-text">+${b.damage} (${b.attacksLeft})</span>`).join('') : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
           ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
         </div>

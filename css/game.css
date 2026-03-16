@@ -327,6 +327,7 @@ html, body {
   background: var(--bg-dark);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  position: relative;
 }
 
 #morale-label {
@@ -349,6 +350,27 @@ html, body {
   background: var(--blue-bright);
   transition: width 0.4s, background 0.4s;
   border-radius: 3px;
+}
+
+/* --- Morale Tooltip --- */
+.morale-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  right: 10px;
+  background: rgba(10, 10, 12, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.7rem;
+  color: var(--text);
+  line-height: 1.4;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.morale-tooltip.hidden {
+  display: none;
 }
 
 /* --- Enemy Area --- */
@@ -563,14 +585,29 @@ html, body {
   animation: die-highlight 0.8s;
 }
 
-.die.roll-in {
-  animation: die-roll-in 0.2s ease-out;
+.die.shaking {
+  animation: die-shake 0.1s infinite;
+  color: var(--text-dim);
+  border-color: var(--die-border);
 }
 
-@keyframes die-roll-in {
-  0% { opacity: 0; transform: scale(0.3) rotateZ(-20deg); }
-  60% { opacity: 1; transform: scale(1.1) rotateZ(5deg); }
-  100% { opacity: 1; transform: scale(1) rotateZ(0); }
+.die.settled {
+  animation: die-settle 0.25s ease-out;
+  border-color: var(--gold-dim);
+}
+
+@keyframes die-shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-1px, 1px) rotate(-2deg); }
+  50% { transform: translate(1px, -1px) rotate(2deg); }
+  75% { transform: translate(-1px, -1px) rotate(-1deg); }
+  100% { transform: translate(1px, 1px) rotate(1deg); }
+}
+
+@keyframes die-settle {
+  0% { transform: scale(1.15); border-color: var(--gold); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 
 @keyframes die-highlight {
@@ -750,6 +787,12 @@ html, body {
 .block-text {
   font-size: 0.6rem;
   color: var(--blue-bright);
+}
+
+.buff-text {
+  font-size: 0.55rem;
+  color: var(--gold);
+  font-weight: 600;
 }
 
 .downed-text {
