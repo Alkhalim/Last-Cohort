@@ -3,12 +3,6 @@
 // ============================================================
 
 // --- Skill cost types ---
-// threshold: die >= value
-// exact: die === value
-// any: any die works
-// combined: sum of N dice meets condition
-// sacrifice: costs HP + exact die
-
 const COST = {
   threshold: (min) => ({ type: 'threshold', min, dice: 1, label: `${min}+` }),
   exact: (val) => ({ type: 'exact', val, dice: 1, label: `=${val}` }),
@@ -27,7 +21,26 @@ const TARGET = {
   ALL_ALLIES: 'all_allies',
 };
 
+// --- XP thresholds per level ---
+const XP_PER_LEVEL = [0, 10, 25, 50, 80, 120];
+// Level 1: 0 XP (start), Level 2: 10 XP, etc.
+
+function getLevelForXp(xp) {
+  for (let i = XP_PER_LEVEL.length - 1; i >= 0; i--) {
+    if (xp >= XP_PER_LEVEL[i]) return i + 1;
+  }
+  return 1;
+}
+
+function getXpToNextLevel(xp) {
+  const lvl = getLevelForXp(xp);
+  if (lvl >= XP_PER_LEVEL.length) return null; // max level
+  return XP_PER_LEVEL[lvl] - xp;
+}
+
 // --- Class definitions ---
+// Skills have `unlockLevel` — available from that level onward.
+// Skills return base values; the combat engine adds equipment/buff bonuses and builds the log text.
 const CLASS_DATA = {
   legionary: {
     name: 'Legionary',
@@ -40,67 +53,68 @@ const CLASS_DATA = {
       triggered: false,
     },
     skills: [
+      // --- Starting skills (level 1) ---
       {
-        id: 'strike',
-        name: 'Strike',
-        cost: COST.any(),
-        target: TARGET.SINGLE_ENEMY,
-        damage: 4,
+        id: 'strike', name: 'Strike', unlockLevel: 1,
+        cost: COST.any(), target: TARGET.SINGLE_ENEMY,
         description: 'Basic sword strike. Deals 4 damage.',
         execute(unit, targets, dice) {
-          return { damage: 4, target: targets[0], text: `${unit.name} strikes for 4 damage.` };
+          return { damage: 4, baseDamage: 4, target: targets[0] };
         },
       },
       {
-        id: 'shield_brace',
-        name: 'Shield Brace',
-        cost: COST.threshold(2),
-        target: TARGET.SELF,
-        description: 'Gain 5 Block. (4+ triggers Shield Discipline for +4 more, once per encounter.)',
+        id: 'shield_brace', name: 'Shield Brace', unlockLevel: 1,
+        cost: COST.threshold(2), target: TARGET.SELF,
+        description: 'Gain 5 Block. (4+ triggers Shield Discipline for +4.)',
         execute(unit, targets, dice) {
           let block = 5;
-          let text = '';
-          if (dice[0] >= 4 && !unit.passiveTriggered) {
+          if (dice[0] && dice[0].value >= 4 && !unit.passiveTriggered) {
             block += 4;
             unit.passiveTriggered = true;
-            text = `${unit.name} braces shield for ${block} Block (Shield Discipline!).`;
-          } else {
-            text = `${unit.name} braces shield for ${block} Block.`;
           }
-          return { block, target: unit, text };
+          return { block, target: unit };
         },
       },
       {
-        id: 'gladius_thrust',
-        name: 'Gladius Thrust',
-        cost: COST.threshold(3),
-        target: TARGET.SINGLE_ENEMY,
-        damage: 7,
+        id: 'gladius_thrust', name: 'Gladius Thrust', unlockLevel: 1,
+        cost: COST.threshold(3), target: TARGET.SINGLE_ENEMY,
         description: 'Precise thrust. Deals 7 damage.',
         execute(unit, targets, dice) {
-          return { damage: 7, target: targets[0], text: `${unit.name} thrusts gladius for 7 damage!` };
+          return { damage: 7, baseDamage: 7, target: targets[0] };
         },
       },
+      // --- Unlockable skills ---
       {
-        id: 'hold_fast',
-        name: 'Hold Fast',
-        cost: COST.exact(4),
-        target: TARGET.SELF,
+        id: 'hold_fast', name: 'Hold Fast', unlockLevel: 2,
+        cost: COST.exact(4), target: TARGET.SELF,
         description: 'Gain 8 Block and Taunt (enemies target this unit).',
         execute(unit, targets, dice) {
-          return { block: 8, taunt: true, target: unit, text: `${unit.name} holds fast! 8 Block, taunting enemies.` };
+          return { block: 8, taunt: true, target: unit };
         },
       },
       {
-        id: 'pilum_cast',
-        name: 'Pilum Cast',
-        cost: COST.threshold(5),
-        target: TARGET.SINGLE_ENEMY,
-        damage: 10,
+        id: 'pilum_cast', name: 'Pilum Cast', unlockLevel: 3,
+        cost: COST.threshold(5), target: TARGET.SINGLE_ENEMY,
         ignoreRow: true,
         description: 'Throw pilum at any row. Deals 10 damage.',
         execute(unit, targets, dice) {
-          return { damage: 10, target: targets[0], ignoreRow: true, text: `${unit.name} hurls pilum for 10 damage!` };
+          return { damage: 10, baseDamage: 10, target: targets[0], ignoreRow: true };
+        },
+      },
+      {
+        id: 'twin_slash', name: 'Twin Slash', unlockLevel: 2,
+        cost: COST.combined(5, 2), target: TARGET.SINGLE_ENEMY,
+        description: '2 dice totaling 5+. Deals 11 damage.',
+        execute(unit, targets, dice) {
+          return { damage: 11, baseDamage: 11, target: targets[0] };
+        },
+      },
+      {
+        id: 'shield_wall', name: 'Shield Wall', unlockLevel: 4,
+        cost: COST.combined(8, 2), target: TARGET.ALL_ALLIES,
+        description: '2 dice totaling 8+. All allies gain 6 Block.',
+        execute(unit, targets, dice) {
+          return { blockAll: 6 };
         },
       },
     ],
@@ -118,55 +132,59 @@ const CLASS_DATA = {
     },
     skills: [
       {
-        id: 'strike',
-        name: 'Strike',
-        cost: COST.any(),
-        target: TARGET.SINGLE_ENEMY,
-        damage: 3,
+        id: 'strike', name: 'Strike', unlockLevel: 1,
+        cost: COST.any(), target: TARGET.SINGLE_ENEMY,
         description: 'Basic strike. Deals 3 damage.',
         execute(unit, targets, dice) {
-          return { damage: 3, target: targets[0], text: `${unit.name} strikes for 3 damage.` };
+          return { damage: 3, baseDamage: 3, target: targets[0] };
         },
       },
       {
-        id: 'commanding_shout',
-        name: 'Commanding Shout',
-        cost: COST.exact(3),
-        target: TARGET.ALL_ALLIES,
-        description: 'All allies gain +2 damage on their next action this turn.',
+        id: 'commanding_shout', name: 'Commanding Shout', unlockLevel: 1,
+        cost: COST.exact(3), target: TARGET.ALL_ALLIES,
+        description: 'All allies gain +2 damage on their next action.',
         execute(unit, targets, dice) {
-          return { buffAllies: { bonusDamage: 2 }, target: 'all_allies', text: `${unit.name} shouts commands! Allies gain +2 damage.` };
+          return { buffAllies: { bonusDamage: 2 } };
         },
       },
       {
-        id: 'reform_the_line',
-        name: 'Reform the Line',
-        cost: COST.threshold(4),
-        target: TARGET.ALL_ALLIES,
+        id: 'reform_the_line', name: 'Reform the Line', unlockLevel: 1,
+        cost: COST.threshold(4), target: TARGET.ALL_ALLIES,
         description: 'All allies gain 3 Block.',
         execute(unit, targets, dice) {
-          return { blockAll: 3, target: 'all_allies', text: `${unit.name} reforms the line! All gain 3 Block.` };
+          return { blockAll: 3 };
         },
       },
       {
-        id: 'measured_advance',
-        name: 'Measured Advance',
-        cost: COST.combined(7, 2),
-        target: TARGET.SINGLE_ENEMY,
-        damage: 12,
-        description: 'Requires 2 dice totaling 7+. Deals 12 damage.',
+        id: 'measured_advance', name: 'Measured Advance', unlockLevel: 2,
+        cost: COST.combined(7, 2), target: TARGET.SINGLE_ENEMY,
+        description: '2 dice totaling 7+. Deals 12 damage.',
         execute(unit, targets, dice) {
-          return { damage: 12, target: targets[0], text: `${unit.name} leads a measured advance for 12 damage!` };
+          return { damage: 12, baseDamage: 12, target: targets[0] };
         },
       },
       {
-        id: 'no_retreat',
-        name: 'No Retreat',
-        cost: COST.exact(6),
-        target: TARGET.ALL_ALLIES,
+        id: 'no_retreat', name: 'No Retreat', unlockLevel: 3,
+        cost: COST.exact(6), target: TARGET.ALL_ALLIES,
         description: 'All allies gain 5 Block and +10 Morale.',
         execute(unit, targets, dice) {
-          return { blockAll: 5, morale: 10, target: 'all_allies', text: `${unit.name}: "No retreat!" All gain 5 Block, +10 Morale.` };
+          return { blockAll: 5, morale: 10 };
+        },
+      },
+      {
+        id: 'rally_cry', name: 'Rally Cry', unlockLevel: 2,
+        cost: COST.combined(6, 2), target: TARGET.ALL_ALLIES,
+        description: '2 dice totaling 6+. +15 Morale and all allies gain +1 damage.',
+        execute(unit, targets, dice) {
+          return { morale: 15, buffAllies: { bonusDamage: 1 } };
+        },
+      },
+      {
+        id: 'decimation_strike', name: 'Decimation Strike', unlockLevel: 4,
+        cost: COST.combinedExact(7, 2), target: TARGET.SINGLE_ENEMY,
+        description: '2 dice totaling exactly 7. Deals 16 damage.',
+        execute(unit, targets, dice) {
+          return { damage: 16, baseDamage: 16, target: targets[0] };
         },
       },
     ],
@@ -184,59 +202,59 @@ const CLASS_DATA = {
     },
     skills: [
       {
-        id: 'strike',
-        name: 'Weak Strike',
-        cost: COST.any(),
-        target: TARGET.SINGLE_ENEMY,
-        damage: 2,
+        id: 'strike', name: 'Weak Strike', unlockLevel: 1,
+        cost: COST.any(), target: TARGET.SINGLE_ENEMY,
         description: 'Feeble strike. Deals 2 damage.',
         execute(unit, targets, dice) {
-          return { damage: 2, target: targets[0], text: `${unit.name} strikes weakly for 2 damage.` };
+          return { damage: 2, baseDamage: 2, target: targets[0] };
         },
       },
       {
-        id: 'bind_wounds',
-        name: 'Bind Wounds',
-        cost: COST.threshold(2),
-        target: TARGET.SINGLE_ALLY,
+        id: 'bind_wounds', name: 'Bind Wounds', unlockLevel: 1,
+        cost: COST.threshold(2), target: TARGET.SINGLE_ALLY,
         description: 'Heal an ally for 6 HP.',
         execute(unit, targets, dice) {
-          return { heal: 6, target: targets[0], text: `${unit.name} binds wounds, healing ${targets[0].name} for 6 HP.` };
+          return { heal: 6, baseHeal: 6, target: targets[0] };
         },
       },
       {
-        id: 'triage',
-        name: 'Triage',
-        cost: COST.exact(4),
-        target: TARGET.SINGLE_ALLY,
-        description: 'Heal an ally for 10 HP and remove one negative condition.',
+        id: 'triage', name: 'Triage', unlockLevel: 1,
+        cost: COST.exact(4), target: TARGET.SINGLE_ALLY,
+        description: 'Heal an ally for 10 HP.',
         execute(unit, targets, dice) {
-          return { heal: 10, cleanse: true, target: targets[0], text: `${unit.name} performs triage on ${targets[0].name}, healing 10 HP!` };
+          return { heal: 10, baseHeal: 10, cleanse: true, target: targets[0] };
         },
       },
       {
-        id: 'emergency_draught',
-        name: 'Emergency Draught',
-        cost: COST.threshold(5),
-        target: TARGET.SINGLE_ALLY,
+        id: 'emergency_draught', name: 'Emergency Draught', unlockLevel: 2,
+        cost: COST.threshold(5), target: TARGET.SINGLE_ALLY,
         description: 'Heal an ally for 14 HP.',
         execute(unit, targets, dice) {
-          return { heal: 14, target: targets[0], text: `${unit.name} administers emergency draught! ${targets[0].name} heals 14 HP.` };
+          return { heal: 14, baseHeal: 14, target: targets[0] };
         },
       },
       {
-        id: 'sawbones_choice',
-        name: "Sawbones' Choice",
-        cost: COST.exact(1),
-        target: TARGET.SINGLE_ALLY,
-        description: 'Sacrifice 4 HP from Medicus to heal ally for 12 HP.',
+        id: 'sawbones_choice', name: "Sawbones' Choice", unlockLevel: 3,
+        cost: COST.exact(1), target: TARGET.SINGLE_ALLY,
+        description: 'Sacrifice 4 HP to heal ally for 12 HP.',
         execute(unit, targets, dice) {
-          return {
-            heal: 12,
-            selfDamage: 4,
-            target: targets[0],
-            text: `${unit.name} sacrifices own blood to heal ${targets[0].name} for 12 HP! (Takes 4 damage)`,
-          };
+          return { heal: 12, baseHeal: 12, selfDamage: 4, target: targets[0] };
+        },
+      },
+      {
+        id: 'field_surgery', name: 'Field Surgery', unlockLevel: 2,
+        cost: COST.combined(6, 2), target: TARGET.SINGLE_ALLY,
+        description: '2 dice totaling 6+. Heal ally for 18 HP.',
+        execute(unit, targets, dice) {
+          return { heal: 18, baseHeal: 18, target: targets[0] };
+        },
+      },
+      {
+        id: 'poison_blade', name: 'Poison Blade', unlockLevel: 4,
+        cost: COST.combined(4, 2), target: TARGET.SINGLE_ENEMY,
+        description: '2 dice totaling 4+. Deals 8 damage.',
+        execute(unit, targets, dice) {
+          return { damage: 8, baseDamage: 8, target: targets[0] };
         },
       },
     ],
@@ -248,10 +266,8 @@ const ENEMY_DATA = {
   cheruscan_raider: {
     id: 'cheruscan_raider',
     name: 'Cheruscan Raider',
-    maxHp: 18,
-    row: 'front',
-    damage: [4, 7],
-    speed: 1,
+    maxHp: 18, row: 'front',
+    damage: [4, 7], speed: 1, xpValue: 5,
     description: 'Germanic warrior. Aggressive melee fighter.',
     ai: 'aggressive',
     actions: [
@@ -263,10 +279,8 @@ const ENEMY_DATA = {
   sling_hunter: {
     id: 'sling_hunter',
     name: 'Sling Hunter',
-    maxHp: 12,
-    row: 'back',
-    damage: [3, 5],
-    speed: 2,
+    maxHp: 12, row: 'back',
+    damage: [3, 5], speed: 2, xpValue: 4,
     description: 'Ranged skirmisher. Targets weakest unit.',
     ai: 'sniper',
     actions: [
@@ -278,10 +292,8 @@ const ENEMY_DATA = {
   marsh_wolf: {
     id: 'marsh_wolf',
     name: 'Marsh Wolf',
-    maxHp: 14,
-    row: 'front',
-    damage: [3, 6],
-    speed: 3,
+    maxHp: 14, row: 'front',
+    damage: [3, 6], speed: 3, xpValue: 4,
     description: 'Fast predator. Attacks twice when wounded.',
     ai: 'aggressive',
     actions: [
@@ -294,26 +306,14 @@ const ENEMY_DATA = {
 
 // --- Encounter templates ---
 const ENCOUNTERS = [
-  {
-    name: 'Ambush on the Trail',
-    enemies: ['cheruscan_raider', 'cheruscan_raider', 'sling_hunter'],
-    intro: 'Shapes burst from the undergrowth — Germanic warriors block the path.',
-  },
-  {
-    name: 'Wolves in the Mire',
-    enemies: ['marsh_wolf', 'marsh_wolf'],
-    intro: 'Low growls echo from the fog. Yellow eyes track your every step.',
-  },
-  {
-    name: 'Raiding Party',
-    enemies: ['cheruscan_raider', 'sling_hunter', 'sling_hunter'],
-    intro: 'Stones whistle past. A raiding party has found your trail.',
-  },
-  {
-    name: 'The Clearing',
-    enemies: ['cheruscan_raider', 'cheruscan_raider', 'marsh_wolf', 'sling_hunter'],
-    intro: 'You stumble into a clearing — and into an ambush. Steel and fangs surround you.',
-  },
+  { name: 'Ambush on the Trail', enemies: ['cheruscan_raider', 'cheruscan_raider', 'sling_hunter'],
+    intro: 'Shapes burst from the undergrowth — Germanic warriors block the path.' },
+  { name: 'Wolves in the Mire', enemies: ['marsh_wolf', 'marsh_wolf'],
+    intro: 'Low growls echo from the fog. Yellow eyes track your every step.' },
+  { name: 'Raiding Party', enemies: ['cheruscan_raider', 'sling_hunter', 'sling_hunter'],
+    intro: 'Stones whistle past. A raiding party has found your trail.' },
+  { name: 'The Clearing', enemies: ['cheruscan_raider', 'cheruscan_raider', 'marsh_wolf', 'sling_hunter'],
+    intro: 'You stumble into a clearing — and into an ambush. Steel and fangs surround you.' },
 ];
 
 // --- Morale thresholds ---
@@ -332,6 +332,13 @@ function getMoraleBand(morale) {
   return MORALE_BANDS[MORALE_BANDS.length - 1];
 }
 
+// --- Equipment slot counts ---
+const EQUIP_SLOTS = {
+  weapon: 2,
+  armor: 2,
+  trinket: 3,
+};
+
 // --- Item definitions ---
 const ITEM_DATA = {
   iron_gladius: {
@@ -342,7 +349,7 @@ const ITEM_DATA = {
   },
   raider_shield: {
     id: 'raider_shield', name: "Raider's Shield", slot: 'armor', rarity: 'common',
-    equippableBy: ['legionary', 'centurion'],
+    equippableBy: ['legionary', 'centurion', 'medicus'],
     stats: { block: 2 },
     description: 'Rough wood and hide, but it turns a blade.',
   },
@@ -364,6 +371,12 @@ const ITEM_DATA = {
     stats: { heal: 3 },
     description: 'Germanic surgical tools. Crude but effective.',
   },
+  herb_pouch: {
+    id: 'herb_pouch', name: 'Herb Pouch', slot: 'trinket', rarity: 'common',
+    equippableBy: ['medicus', 'centurion'],
+    stats: { heal: 2 },
+    description: 'Dried marsh herbs with surprising potency.',
+  },
   woad_charm: {
     id: 'woad_charm', name: 'Woad Charm', slot: 'trinket', rarity: 'uncommon',
     equippableBy: ['legionary', 'centurion', 'medicus'],
@@ -378,7 +391,7 @@ const ITEM_DATA = {
   },
   fang_necklace: {
     id: 'fang_necklace', name: 'Fang Necklace', slot: 'trinket', rarity: 'uncommon',
-    equippableBy: ['legionary', 'centurion'],
+    equippableBy: ['legionary', 'centurion', 'medicus'],
     stats: { damage: 1, maxHp: 2 },
     description: 'A string of wolf fangs. The men eye it uneasily.',
   },
@@ -394,6 +407,18 @@ const ITEM_DATA = {
     stats: { heal: 5, maxHp: 3 },
     description: 'A hollowed fang filled with dark salve. Potent medicine.',
   },
+  runic_stone: {
+    id: 'runic_stone', name: 'Runic Stone', slot: 'trinket', rarity: 'rare',
+    equippableBy: ['legionary', 'centurion', 'medicus'],
+    stats: { extraDice: 1 },
+    description: 'A stone carved with strange runes. It hums faintly. (+1 die per turn)',
+  },
+  scouts_sling: {
+    id: 'scouts_sling', name: "Scout's Sling", slot: 'weapon', rarity: 'uncommon',
+    equippableBy: ['medicus'],
+    stats: { damage: 2 },
+    description: 'A well-worn sling. Even the surgeon can fight.',
+  },
 };
 
 // --- Drop tables per enemy ---
@@ -401,25 +426,25 @@ const DROP_TABLES = {
   cheruscan_raider: {
     nothingChance: 0.25,
     tiers: [
-      { chance: 0.50, items: ['iron_gladius', 'raider_shield'] },
-      { chance: 0.20, items: ['woad_charm'] },
-      { chance: 0.05, items: ['chiefs_spear'] },
+      { chance: 0.45, items: ['iron_gladius', 'raider_shield', 'herb_pouch'] },
+      { chance: 0.20, items: ['woad_charm', 'fang_necklace'] },
+      { chance: 0.05, items: ['chiefs_spear', 'runic_stone'] },
     ],
   },
   sling_hunter: {
     nothingChance: 0.30,
     tiers: [
-      { chance: 0.45, items: ['sling_stones', 'bone_needle_kit'] },
-      { chance: 0.20, items: ['hunters_cloak'] },
-      { chance: 0.05, items: ['woad_charm'] },
+      { chance: 0.40, items: ['sling_stones', 'bone_needle_kit', 'raider_shield'] },
+      { chance: 0.20, items: ['hunters_cloak', 'scouts_sling'] },
+      { chance: 0.05, items: ['woad_charm', 'runic_stone'] },
     ],
   },
   marsh_wolf: {
     nothingChance: 0.25,
     tiers: [
-      { chance: 0.45, items: ['wolf_pelt'] },
-      { chance: 0.20, items: ['fang_necklace'] },
-      { chance: 0.10, items: ['marsh_fang'] },
+      { chance: 0.40, items: ['wolf_pelt', 'herb_pouch'] },
+      { chance: 0.25, items: ['fang_necklace'] },
+      { chance: 0.10, items: ['marsh_fang', 'runic_stone'] },
     ],
   },
 };
@@ -449,5 +474,6 @@ function formatItemStats(stats) {
   if (stats.block) parts.push(`+${stats.block} block`);
   if (stats.maxHp) parts.push(`+${stats.maxHp} HP`);
   if (stats.heal) parts.push(`+${stats.heal} heal`);
+  if (stats.extraDice) parts.push(`+${stats.extraDice} die`);
   return parts.join(', ');
 }

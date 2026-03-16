@@ -37,21 +37,26 @@ class CombatEngine {
         name: `${data.name}`,
         title: data.title,
         maxHp: data.maxHp,
+        baseMaxHp: data.maxHp,
         hp: data.maxHp,
         block: 0,
         downed: false,
-        skills: data.skills.map(s => ({ ...s })),
+        allSkills: data.skills.map(s => ({ ...s })),
+        skills: [], // populated by getUnlockedSkills
         passive: { ...data.passive },
         passiveTriggered: false,
         bonusDamage: 0,
         taunt: false,
         actedThisTurn: false,
         conditions: [],
-        equipment: { weapon: null, armor: null, trinket: null },
-        // Per-encounter stats
+        xp: 0,
+        level: 1,
+        equipment: { weapon: [null, null], armor: [null, null], trinket: [null, null, null] },
+        equipDamage: 0, equipBlock: 0, equipHeal: 0, equipExtraDice: 0,
         stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 },
       };
     });
+    this.party.forEach(u => this.refreshSkills(u));
   }
 
   initEncounter(encounterDef) {
@@ -128,9 +133,11 @@ class CombatEngine {
     this.targetMode = null;
     this.addLog(`— Turn ${this.turn} —`);
 
-    // Roll dice internally, then reveal one by one via UI
+    // Roll dice — base 5 + extra from equipment
+    const extraDice = this.getExtraDiceCount();
+    this.dicePool.count = 5 + extraDice;
     this.dicePool.roll();
-    this.update(); // UI will handle the staggered reveal
+    this.update();
   }
 
   onDiceRevealed() {
@@ -310,8 +317,8 @@ class CombatEngine {
     diceIds.forEach(id => this.dicePool.useDie(id));
     const result = skill.execute(unit, targets, diceIds.map(id => this.dicePool.dice.find(d => d.id === id)));
 
-    this.applySkillResult(unit, result);
-    this.addLog(result.text);
+    const logText = this.applySkillResult(unit, skill, result);
+    this.addLog(logText);
 
     // Mark unit as acted
     unit.actedThisTurn = true;
@@ -334,17 +341,27 @@ class CombatEngine {
     this.update();
   }
 
-  applySkillResult(unit, result) {
+  applySkillResult(unit, skill, result) {
+    const parts = [];
+    const bonusDmg = (unit.bonusDamage || 0) + (unit.equipDamage || 0);
+    const bonusBlock = unit.equipBlock || 0;
+    const bonusHeal = unit.equipHeal || 0;
+
     if (result.damage && result.target && result.target.hp !== undefined) {
-      let dmg = result.damage + (unit.bonusDamage || 0) + (unit.equipDamage || 0);
-      result.target.hp = Math.max(0, result.target.hp - dmg);
-      unit.stats.damageDealt += dmg;
+      const total = result.damage + bonusDmg;
+      result.target.hp = Math.max(0, result.target.hp - total);
+      unit.stats.damageDealt += total;
+      const bonusStr = bonusDmg > 0 ? ` (${result.damage}+${bonusDmg})` : '';
+      parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
     }
     if (result.heal && result.target) {
-      const healAmount = result.heal + (unit.equipHeal || 0);
+      const totalHeal = result.heal + bonusHeal;
       const before = result.target.hp;
-      result.target.hp = Math.min(result.target.maxHp, result.target.hp + healAmount);
+      result.target.hp = Math.min(result.target.maxHp, result.target.hp + totalHeal);
       const actual = result.target.hp - before;
+      unit.stats.healingDone += actual;
+      const bonusStr = bonusHeal > 0 ? ` (${result.heal}+${bonusHeal})` : '';
+      parts.push(`${unit.name} uses ${skill.name} — heals ${result.target.name} for ${actual}${bonusStr} HP.`);
       if (actual > 0 && this.onVisual) {
         this.onVisual('unitHeal', { unitIndex: result.target.index, amount: actual });
       }
@@ -352,34 +369,45 @@ class CombatEngine {
     if (result.selfDamage) {
       unit.hp = Math.max(1, unit.hp - result.selfDamage);
       unit.stats.damageTaken += result.selfDamage;
+      parts.push(`(${unit.name} takes ${result.selfDamage} self-damage.)`);
     }
     if (result.block && result.target) {
-      const blockVal = result.block + (unit.equipBlock || 0);
-      result.target.block = (result.target.block || 0) + blockVal;
-      unit.stats.blockGenerated += blockVal;
+      const totalBlock = result.block + bonusBlock;
+      result.target.block = (result.target.block || 0) + totalBlock;
+      unit.stats.blockGenerated += totalBlock;
+      const bonusStr = bonusBlock > 0 ? ` (${result.block}+${bonusBlock})` : '';
+      if (!result.damage && !result.heal) {
+        parts.push(`${unit.name} uses ${skill.name} — ${totalBlock}${bonusStr} Block.`);
+      }
     }
     if (result.taunt) {
       unit.taunt = true;
+      if (parts.length > 0) parts[parts.length - 1] += ' Taunting!';
     }
     if (result.blockAll) {
-      const blockAllVal = result.blockAll + (unit.equipBlock || 0);
-      this.party.forEach(u => {
-        if (!u.downed) u.block = (u.block || 0) + blockAllVal;
-      });
-      unit.stats.blockGenerated += blockAllVal * this.party.filter(u => !u.downed).length;
+      const totalBlock = result.blockAll + bonusBlock;
+      const count = this.party.filter(u => !u.downed).length;
+      this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + totalBlock; });
+      unit.stats.blockGenerated += totalBlock * count;
+      const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
+      if (!result.damage && !result.heal && !result.block) {
+        parts.push(`${unit.name} uses ${skill.name} — all gain ${totalBlock}${bonusStr} Block.`);
+      }
     }
     if (result.buffAllies) {
-      this.party.forEach(u => {
-        if (!u.downed) u.bonusDamage = (u.bonusDamage || 0) + (result.buffAllies.bonusDamage || 0);
-      });
+      this.party.forEach(u => { if (!u.downed) u.bonusDamage = (u.bonusDamage || 0) + (result.buffAllies.bonusDamage || 0); });
+      if (!result.damage && !result.heal && !result.block && !result.blockAll) {
+        parts.push(`${unit.name} uses ${skill.name} — allies gain +${result.buffAllies.bonusDamage} damage.`);
+      }
     }
     if (result.morale) {
       const oldMorale = this.morale;
       this.morale = Math.max(-100, Math.min(100, this.morale + result.morale));
-      if (result.morale > 0) {
-        unit.stats.moraleRestored += this.morale - oldMorale;
-      }
+      if (result.morale > 0) unit.stats.moraleRestored += this.morale - oldMorale;
+      parts.push(`+${result.morale} Morale.`);
     }
+    if (parts.length === 0) parts.push(`${unit.name} uses ${skill.name}.`);
+    return parts.join(' ');
   }
 
   checkEnemyDeaths() {
@@ -533,20 +561,47 @@ class CombatEngine {
     }
   }
 
-  // --- Equipment ---
+  // --- Skills / Leveling ---
+  refreshSkills(unit) {
+    unit.level = getLevelForXp(unit.xp);
+    unit.skills = unit.allSkills.filter(s => (s.unlockLevel || 1) <= unit.level);
+  }
+
+  awardXp(unit, amount) {
+    const oldLevel = unit.level;
+    unit.xp += amount;
+    unit.level = getLevelForXp(unit.xp);
+    this.refreshSkills(unit);
+    if (unit.level > oldLevel) {
+      this.addLog(`${unit.name} reached level ${unit.level}!`);
+    }
+  }
+
+  // --- Equipment (2 weapon, 2 armor, 3 trinket) ---
   computeEquipmentStats(unit) {
     unit.equipDamage = 0;
     unit.equipBlock = 0;
     unit.equipHeal = 0;
+    unit.equipExtraDice = 0;
     for (const slot of ['weapon', 'armor', 'trinket']) {
-      const itemId = unit.equipment[slot];
-      if (!itemId) continue;
-      const item = getItemData(itemId);
-      if (!item) continue;
-      if (item.stats.damage) unit.equipDamage += item.stats.damage;
-      if (item.stats.block) unit.equipBlock += item.stats.block;
-      if (item.stats.heal) unit.equipHeal += item.stats.heal;
+      for (const itemId of unit.equipment[slot]) {
+        if (!itemId) continue;
+        const item = getItemData(itemId);
+        if (!item) continue;
+        if (item.stats.damage) unit.equipDamage += item.stats.damage;
+        if (item.stats.block) unit.equipBlock += item.stats.block;
+        if (item.stats.heal) unit.equipHeal += item.stats.heal;
+        if (item.stats.extraDice) unit.equipExtraDice += item.stats.extraDice;
+      }
     }
+  }
+
+  getExtraDiceCount() {
+    let extra = 0;
+    this.party.forEach(u => {
+      if (!u.downed) extra += (u.equipExtraDice || 0);
+    });
+    return extra;
   }
 
   equipItem(unitIndex, itemId) {
@@ -555,11 +610,16 @@ class CombatEngine {
     if (!item) return false;
     if (!item.equippableBy.includes(unit.classId)) return false;
 
-    // Unequip existing item in that slot first
-    this.unequipItem(unitIndex, item.slot);
+    const slots = unit.equipment[item.slot];
+    // Find empty slot
+    let slotIdx = slots.indexOf(null);
+    if (slotIdx === -1) {
+      // All full — replace the first slot
+      this.unequipSlot(unitIndex, item.slot, 0);
+      slotIdx = 0;
+    }
 
-    unit.equipment[item.slot] = itemId;
-    // Apply maxHp bonus
+    slots[slotIdx] = itemId;
     if (item.stats.maxHp) {
       unit.maxHp += item.stats.maxHp;
       unit.hp += item.stats.maxHp;
@@ -568,14 +628,13 @@ class CombatEngine {
     return true;
   }
 
-  unequipItem(unitIndex, slot) {
+  unequipSlot(unitIndex, slot, slotIdx) {
     const unit = this.party[unitIndex];
-    const oldId = unit.equipment[slot];
+    const oldId = unit.equipment[slot][slotIdx];
     if (!oldId) return null;
 
     const oldItem = getItemData(oldId);
-    unit.equipment[slot] = null;
-    // Remove maxHp bonus
+    unit.equipment[slot][slotIdx] = null;
     if (oldItem && oldItem.stats.maxHp) {
       unit.maxHp -= oldItem.stats.maxHp;
       unit.hp = Math.min(unit.hp, unit.maxHp);

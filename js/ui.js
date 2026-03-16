@@ -645,13 +645,30 @@ class GameUI {
 
   showLootScreen(isFinal) {
     this.engine.afterEncounter();
+
+    // Award XP from killed enemies
+    const totalXp = this.engine.killedEnemies.reduce((sum, eid) => {
+      const data = ENEMY_DATA[eid];
+      return sum + (data ? data.xpValue || 0 : 0);
+    }, 0);
+    if (totalXp > 0) {
+      this.engine.party.forEach(u => {
+        if (!u.downed) this.engine.awardXp(u, totalXp);
+      });
+    }
+
     this.engine.encounterIndex++;
 
-    // Roll drops from killed enemies
+    // Roll drops — filter to items at least one party member can use
     this.pendingLoot = [];
     for (const enemyId of this.engine.killedEnemies) {
       const itemId = rollDrop(enemyId);
-      if (itemId) this.pendingLoot.push(itemId);
+      if (!itemId) continue;
+      const item = getItemData(itemId);
+      if (!item) continue;
+      // Only drop if someone in the party can equip it
+      const canUse = this.engine.party.some(u => item.equippableBy.includes(u.classId));
+      if (canUse) this.pendingLoot.push(itemId);
     }
 
     this.lootScreenFinal = isFinal;
@@ -679,13 +696,17 @@ class GameUI {
         const card = document.createElement('div');
         card.className = `loot-card rarity-${item.rarity}`;
 
-        // Which units can equip this?
-        const eligible = this.engine.party.filter(u => !u.downed && item.equippableBy.includes(u.classId));
+        const eligible = this.engine.party.filter(u => item.equippableBy.includes(u.classId));
 
         const equipBtns = eligible.map(u => {
-          const existing = u.equipment[item.slot];
-          const existingItem = existing ? getItemData(existing) : null;
-          const replaceText = existingItem ? `Replaces: ${existingItem.name}` : '';
+          const slots = u.equipment[item.slot];
+          const hasEmpty = slots.some(s => s === null);
+          let replaceText = '';
+          if (!hasEmpty) {
+            // Would replace first slot item
+            const firstItem = getItemData(slots[0]);
+            replaceText = firstItem ? `Replaces: ${firstItem.name}` : '';
+          }
           return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}">
             Equip ${u.title}${replaceText ? `<span class="loot-replace">${replaceText}</span>` : ''}
           </button>`;
@@ -701,7 +722,6 @@ class GameUI {
           <div class="loot-equip-actions">${equipBtns}</div>
         `;
 
-        // Bind equip buttons
         card.querySelectorAll('.loot-equip-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             const li = parseInt(btn.dataset.loot);
@@ -716,17 +736,26 @@ class GameUI {
 
     // Current equipment summary
     equipListEl.innerHTML = this.engine.party.map(u => {
-      const slots = ['weapon', 'armor', 'trinket'].map(slot => {
-        const itemId = u.equipment[slot];
-        const item = itemId ? getItemData(itemId) : null;
-        return `<span class="equip-slot">
-          <span class="equip-slot-label">${slot}</span>
-          <span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? item.name : '—'}</span>
-        </span>`;
+      const xpInfo = getXpToNextLevel(u.xp);
+      const xpStr = xpInfo !== null ? `Lv${u.level} (${u.xp}/${XP_PER_LEVEL[u.level] || '??'} XP)` : `Lv${u.level} (MAX)`;
+
+      const slotHtml = ['weapon', 'armor', 'trinket'].map(slot => {
+        const items = u.equipment[slot].map((id, si) => {
+          const item = id ? getItemData(id) : null;
+          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? item.name : '—'}</span>`;
+        }).join(', ');
+        return `<div class="equip-slot-row">
+          <span class="equip-slot-label">${slot} (${EQUIP_SLOTS[slot]})</span>
+          ${items}
+        </div>`;
       }).join('');
+
       return `<div class="equip-unit">
-        <span class="equip-unit-name">${u.title} ${u.name}</span>
-        <div class="equip-slots">${slots}</div>
+        <div class="equip-unit-header">
+          <span class="equip-unit-name">${u.title} ${u.name}</span>
+          <span class="equip-unit-xp">${xpStr}</span>
+        </div>
+        ${slotHtml}
       </div>`;
     }).join('');
 
@@ -744,7 +773,6 @@ class GameUI {
     if (!itemId) return;
     const success = this.engine.equipItem(unitIndex, itemId);
     if (success) {
-      // Remove from pending loot
       this.pendingLoot.splice(lootIndex, 1);
       this.renderLootScreen();
     }

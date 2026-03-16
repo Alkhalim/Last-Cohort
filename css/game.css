@@ -1049,24 +1049,29 @@ html, body {
   margin-bottom: 4px;
 }
 
+.equip-unit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
 .equip-unit-name {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-bright);
-  display: block;
-  margin-bottom: 4px;
 }
 
-.equip-slots {
-  display: flex;
-  gap: 8px;
+.equip-unit-xp {
+  font-size: 0.6rem;
+  color: var(--gold);
 }
 
-.equip-slot {
-  flex: 1;
+.equip-slot-row {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 2px;
 }
 
 .equip-slot-label {
