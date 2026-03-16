@@ -135,21 +135,129 @@ html, body {
 
 .home-start-btn {
   width: 100%;
-  margin-bottom: 2rem;
-}
-
-.home-unlockables {
-  text-align: left;
-}
-
-.home-unlockables-title {
-  font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  letter-spacing: 0.15em;
-  text-align: center;
   margin-bottom: 0.8rem;
 }
+
+.home-buttons {
+  width: 100%;
+}
+
+.home-nav-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.home-nav-btn {
+  flex: 1;
+}
+
+/* --- Submenu screens (Unlocks, Options) --- */
+#unlocks-screen,
+#options-screen {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #141820 50%, #1a1410 100%);
+  overflow-y: auto;
+}
+
+.submenu-content {
+  padding: 2rem 1.2rem;
+  max-width: 420px;
+  width: 100%;
+}
+
+.submenu-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.submenu-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.submenu-renown {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.submenu-back {
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+/* --- Options sliders --- */
+.options-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 1rem;
+}
+
+.option-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+
+.option-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: var(--text-bright);
+  letter-spacing: 0.08em;
+}
+
+.option-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #1a1a1a;
+  border-radius: 3px;
+  outline: none;
+}
+
+.option-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--gold);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--gold-dim);
+}
+
+.option-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--gold);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--gold-dim);
+}
+
+.option-value {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* --- Unlock slots (shared between home and unlocks screen) --- */
 
 .home-unlock-slot {
   display: flex;
@@ -238,6 +346,7 @@ html, body {
 
 #morale-fill {
   height: 100%;
+  background: var(--blue-bright);
   transition: width 0.4s, background 0.4s;
   border-radius: 3px;
 }
@@ -292,6 +401,12 @@ html, body {
   cursor: pointer;
 }
 
+.enemy-card.preview {
+  border-color: var(--red);
+  box-shadow: 0 0 6px rgba(208, 64, 64, 0.2);
+  opacity: 0.85;
+}
+
 .enemy-card.targetable:active {
   background: var(--bg-card-hover);
 }
@@ -339,11 +454,19 @@ html, body {
 
 .hp-fill {
   height: 100%;
-  background: var(--red);
+  background: var(--green-bright);
   border-radius: 3px;
   position: relative;
   z-index: 1;
-  transition: width 0.15s ease-out;
+  transition: width 0.15s ease-out, background 0.3s;
+}
+
+.hp-fill.hp-mid {
+  background: #c9a227;
+}
+
+.hp-fill.hp-low {
+  background: var(--red);
 }
 
 .hp-fill.critical {
@@ -585,6 +708,11 @@ html, body {
 .unit-card.targetable {
   border-color: var(--green-bright);
   box-shadow: 0 0 8px rgba(106, 170, 74, 0.3);
+}
+
+.unit-card.preview {
+  border-color: var(--green);
+  box-shadow: 0 0 6px rgba(106, 170, 74, 0.2);
 }
 
 .unit-card:active:not(.downed) {
@@ -1265,14 +1393,14 @@ html, body {
 
 .map-party-hp-fill {
   height: 100%;
-  background: var(--red);
+  background: var(--green-bright);
   border-radius: 3px;
-  transition: width 0.3s;
+  transition: width 0.3s, background 0.3s;
 }
 
-.map-party-hp-fill.critical {
-  background: var(--red-critical);
-}
+.map-party-hp-fill.hp-mid { background: #c9a227; }
+.map-party-hp-fill.hp-low { background: var(--red); }
+.map-party-hp-fill.critical { background: var(--red-critical); }
 
 .map-party-hp-text {
   font-size: 0.55rem;
@@ -1602,6 +1730,35 @@ html, body {
 
 .btn-secondary.hidden {
   display: none !important;
+}
+
+/* --- Level Up Screen --- */
+#levelup-screen {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #14180a 50%, #1a1a10 100%);
+  overflow-y: auto;
+}
+
+.levelup-unit-btn {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.levelup-skill-card {
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 48px;
+}
+
+.levelup-skill-card:active {
+  border-color: var(--gold);
+  background: rgba(201, 162, 39, 0.08);
 }
 
 /* --- Map difficulty indicator --- */

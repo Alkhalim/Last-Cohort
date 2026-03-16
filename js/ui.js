@@ -7,6 +7,7 @@ class GameUI {
     this.engine = engine;
     this.selectedUnitIndex = 0; // default to first unit
     this.stagedSkill = null;    // { skillId, diceIds[] } — skill clicked once, dice highlighted
+    this.previewSkillId = null; // skill being hovered/held — highlights targets without staging
     this.prevEnemyHp = {};
     this.prevUnitHp = {};
     this.logOpen = false;
@@ -76,7 +77,6 @@ class GameUI {
     label.style.color = band.color;
     const pct = (this.engine.morale + 100) / 200 * 100;
     fill.style.width = pct + '%';
-    fill.style.background = band.color;
   }
 
   // --- Enemies ---
@@ -88,7 +88,7 @@ class GameUI {
 
     this.engine.enemies.forEach((enemy, i) => {
       const el = document.createElement('div');
-      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${enemy.justSpawned ? ' spawning' : ''}${enemy.isBoss ? ' boss' : ''}`;
+      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${this.isEnemyPreview(enemy) ? ' preview' : ''}${enemy.justSpawned ? ' spawning' : ''}${enemy.isBoss ? ' boss' : ''}`;
       el.id = `enemy-${i}`;
 
       const hpPct = (enemy.hp / enemy.maxHp) * 100;
@@ -100,7 +100,7 @@ class GameUI {
         <div class="enemy-name">${enemy.name}${enemy.isBoss ? ' <span class="boss-icon">\u2620</span>' : ''}</div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
-          <div class="hp-fill" style="width:${hpPct}%"></div>
+          <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
         <div class="hp-text">${enemy.hp}/${enemy.maxHp}</div>
       `;
@@ -125,11 +125,10 @@ class GameUI {
 
   isEnemyTargetable(enemy) {
     if (enemy.dead) return false;
-    // Old targeting mode (from engine)
     if (this.engine.targetMode && this.engine.targetMode.targetType === 'enemy') {
       return this.engine.getValidEnemyTargets(this.engine.targetMode.skill).includes(enemy);
     }
-    // New: staged skill targeting
+    // Staged skill targeting
     if (this.stagedSkill && this.selectedUnitIndex !== null) {
       const unit = this.engine.party[this.selectedUnitIndex];
       if (!unit) return false;
@@ -140,6 +139,13 @@ class GameUI {
       return this.engine.getValidEnemyTargets(skill).includes(enemy);
     }
     return false;
+  }
+
+  isEnemyPreview(enemy) {
+    if (enemy.dead) return false;
+    const skill = this.getPreviewSkill();
+    if (!skill || skill.target !== TARGET.SINGLE_ENEMY) return false;
+    return this.engine.getValidEnemyTargets(skill).includes(enemy);
   }
 
   onEnemyClick(enemy) {
@@ -156,9 +162,7 @@ class GameUI {
 
   isAllyTargetable(unit) {
     if (unit.downed) return false;
-    // Old targeting mode
     if (this.engine.targetMode && this.engine.targetMode.targetType === 'ally') return true;
-    // Staged skill targeting
     if (this.stagedSkill && this.selectedUnitIndex !== null) {
       const caster = this.engine.party[this.selectedUnitIndex];
       if (!caster) return false;
@@ -168,6 +172,13 @@ class GameUI {
       return canPay;
     }
     return false;
+  }
+
+  isAllyPreview(unit) {
+    if (unit.downed) return false;
+    const skill = this.getPreviewSkill();
+    if (!skill || skill.target !== TARGET.SINGLE_ALLY) return false;
+    return true;
   }
 
   // --- Dice Pool ---
@@ -302,8 +313,9 @@ class GameUI {
     this.engine.party.forEach((unit, i) => {
       const el = document.createElement('div');
       const isTargetable = this.isAllyTargetable(unit);
+      const isPreview = this.isAllyPreview(unit);
       const isSelected = this.selectedUnitIndex === i;
-      el.className = `unit-card${unit.downed ? ' downed' : ''}${isSelected ? ' selected' : ''}${isTargetable ? ' targetable' : ''}${unit.actedThisTurn ? ' acted' : ''}`;
+      el.className = `unit-card${unit.downed ? ' downed' : ''}${isSelected ? ' selected' : ''}${isTargetable ? ' targetable' : ''}${isPreview ? ' preview' : ''}${unit.actedThisTurn ? ' acted' : ''}`;
       el.id = `unit-${i}`;
 
       const hpPct = (unit.hp / unit.maxHp) * 100;
@@ -318,7 +330,7 @@ class GameUI {
         </div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
-          <div class="hp-fill ${hpPct < 30 ? 'critical' : ''}" style="width:${hpPct}%"></div>
+          <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
@@ -438,6 +450,24 @@ class GameUI {
 
       if (skill.canUse) {
         el.addEventListener('click', () => this.onSkillClick(skill));
+        // Hover: highlight targets on desktop
+        el.addEventListener('mouseenter', () => this.setPreviewSkill(skill));
+        el.addEventListener('mouseleave', () => this.clearPreviewSkill());
+        // Long-press: highlight targets on mobile
+        let holdTimer = null;
+        el.addEventListener('touchstart', (e) => {
+          holdTimer = setTimeout(() => {
+            this.setPreviewSkill(skill);
+          }, 300);
+        }, { passive: true });
+        el.addEventListener('touchend', () => {
+          clearTimeout(holdTimer);
+          this.clearPreviewSkill();
+        });
+        el.addEventListener('touchcancel', () => {
+          clearTimeout(holdTimer);
+          this.clearPreviewSkill();
+        });
       }
 
       list.appendChild(el);
@@ -446,7 +476,29 @@ class GameUI {
     confirmBtn.classList.add('hidden');
   }
 
+  setPreviewSkill(skill) {
+    if (this.stagedSkill) return; // don't override staged
+    this.previewSkillId = skill.id;
+    this.renderEnemies();
+    this.renderParty();
+  }
+
+  clearPreviewSkill() {
+    if (!this.previewSkillId) return;
+    this.previewSkillId = null;
+    this.renderEnemies();
+    this.renderParty();
+  }
+
+  getPreviewSkill() {
+    if (!this.previewSkillId || this.selectedUnitIndex === null) return null;
+    const unit = this.engine.party[this.selectedUnitIndex];
+    if (!unit || unit.downed || unit.actedThisTurn) return null;
+    return unit.skills.find(s => s.id === this.previewSkillId) || null;
+  }
+
   onSkillClick(skill) {
+    this.previewSkillId = null; // clear preview on click
     if (this.stagedSkill && this.stagedSkill.skillId === skill.id) {
       // Clicking same skill again — unstage
       this.stagedSkill = null;
@@ -606,7 +658,7 @@ class GameUI {
       return `<div class="map-party-unit${u.downed ? ' downed' : ''}">
         <span class="map-party-name">${u.title}</span>
         <div class="map-party-hp-bar">
-          <div class="map-party-hp-fill${pct < 30 ? ' critical' : ''}" style="width:${pct}%"></div>
+          <div class="map-party-hp-fill${pct < 20 ? ' critical' : pct < 40 ? ' hp-low' : pct < 65 ? ' hp-mid' : ''}" style="width:${pct}%"></div>
         </div>
         <span class="map-party-hp-text">${u.hp}/${u.maxHp}</span>
       </div>`;
@@ -967,15 +1019,14 @@ class GameUI {
   showLootScreen(isBossVictory) {
     this.engine.afterEncounter();
 
-    // Award XP from killed enemies
+    // Award party XP from killed enemies
     const totalXp = this.engine.killedEnemies.reduce((sum, eid) => {
       const data = ENEMY_DATA[eid];
       return sum + (data ? data.xpValue || 0 : 0);
     }, 0);
     if (totalXp > 0) {
-      this.engine.party.forEach(u => {
-        if (!u.downed) this.engine.awardXp(u, totalXp);
-      });
+      const levelsGained = this.engine.awardPartyXp(totalXp);
+      this.engine.pendingLevelUps += levelsGained;
     }
 
     // Roll drops — filter to items at least one party member can use
@@ -1063,8 +1114,7 @@ class GameUI {
 
     // Current equipment summary
     equipListEl.innerHTML = this.engine.party.map(u => {
-      const xpInfo = getXpToNextLevel(u.xp);
-      const xpStr = xpInfo !== null ? `Lv${u.level} (${u.xp}/${XP_PER_LEVEL[u.level] || '??'} XP)` : `Lv${u.level} (MAX)`;
+      const skillCount = `${u.skills.length}/${u.allSkills.length} skills`;
 
       const slotHtml = ['weapon', 'armor', 'trinket'].map(slot => {
         const items = u.equipment[slot].map((id, si) => {
@@ -1080,22 +1130,24 @@ class GameUI {
       return `<div class="equip-unit">
         <div class="equip-unit-header">
           <span class="equip-unit-name">${u.title} ${u.name}</span>
-          <span class="equip-unit-xp">${xpStr}</span>
+          <span class="equip-unit-xp">${skillCount}</span>
         </div>
         ${slotHtml}
       </div>`;
     }).join('');
 
-    if (this.lootScreenFinal) {
-      continueBtn.textContent = 'Continue';
-      continueBtn.onclick = () => this.showPostBossChoice();
-    } else if (this.lootReturnToMap) {
-      continueBtn.textContent = 'Continue March';
-      continueBtn.onclick = () => this.showMapScreen();
-    } else {
-      continueBtn.textContent = 'Continue March';
-      continueBtn.onclick = () => this.showMapScreen();
-    }
+    const afterLoot = () => {
+      if (this.engine.pendingLevelUps > 0) {
+        this.showLevelUpScreen();
+      } else if (this.lootScreenFinal) {
+        this.showPostBossChoice();
+      } else {
+        this.showMapScreen();
+      }
+    };
+
+    continueBtn.textContent = this.lootScreenFinal ? 'Continue' : 'Continue March';
+    continueBtn.onclick = afterLoot;
   }
 
   equipLootItem(lootIndex, unitIndex) {
@@ -1111,6 +1163,92 @@ class GameUI {
   // ================================================================
   // RUN COMPLETE
   // ================================================================
+
+  // ================================================================
+  // LEVEL UP
+  // ================================================================
+
+  showLevelUpScreen() {
+    this.showScreen('levelup-screen');
+    const content = document.getElementById('levelup-content');
+    const title = document.getElementById('levelup-title');
+    const desc = document.getElementById('levelup-desc');
+
+    const remaining = this.engine.pendingLevelUps;
+    title.textContent = `LEVEL UP (${this.engine.partyLevel})`;
+    desc.textContent = remaining > 1
+      ? `Choose a soldier to learn a new skill. (${remaining} level-ups remaining)`
+      : 'Choose a soldier to learn a new skill.';
+
+    // Show units that have unlearned skills
+    const eligible = this.engine.party.filter(u => !u.downed && this.engine.getUnlearnedSkills(u).length > 0);
+
+    if (eligible.length === 0) {
+      // Everyone has all skills — skip
+      this.engine.pendingLevelUps = 0;
+      this.afterLevelUps();
+      return;
+    }
+
+    content.innerHTML = '';
+    eligible.forEach(u => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary levelup-unit-btn';
+      btn.textContent = `${u.title} ${u.name} (${u.skills.length}/${u.allSkills.length} skills)`;
+      btn.addEventListener('click', () => this.showSkillChoices(u.index));
+      content.appendChild(btn);
+    });
+  }
+
+  showSkillChoices(unitIndex) {
+    const content = document.getElementById('levelup-content');
+    const unit = this.engine.party[unitIndex];
+    const choices = this.engine.getSkillChoices(unit, 2);
+
+    if (choices.length === 0) {
+      // No skills to learn — skip this unit
+      this.showLevelUpScreen();
+      return;
+    }
+
+    document.getElementById('levelup-desc').textContent = `${unit.name} — choose a new skill:`;
+
+    content.innerHTML = '';
+    choices.forEach(skill => {
+      const card = document.createElement('div');
+      card.className = 'levelup-skill-card';
+      card.innerHTML = `
+        <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span></div>
+        <div class="skill-desc">${skill.description}</div>
+      `;
+      card.addEventListener('click', () => {
+        this.engine.teachSkill(unitIndex, skill.id);
+        this.engine.pendingLevelUps--;
+        if (this.engine.pendingLevelUps > 0) {
+          this.showLevelUpScreen();
+        } else {
+          this.afterLevelUps();
+        }
+      });
+      content.appendChild(card);
+    });
+
+    // Back button
+    const backBtn = document.createElement('button');
+    backBtn.className = 'btn-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.style.marginTop = '12px';
+    backBtn.addEventListener('click', () => this.showLevelUpScreen());
+    content.appendChild(backBtn);
+  }
+
+  afterLevelUps() {
+    if (this.lootScreenFinal) {
+      this.showPostBossChoice();
+    } else {
+      this.showMapScreen();
+    }
+  }
 
   showPostBossChoice() {
     this.showScreen('run-complete-screen');
@@ -1134,7 +1272,7 @@ class GameUI {
       return `<div class="run-complete-unit">
         <span class="run-complete-unit-name">${u.title} ${u.name}</span>
         <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
-        <span class="run-complete-unit-level">Lv ${u.level}</span>
+        <span class="run-complete-unit-level">${u.skills.length} skills</span>
       </div>`;
     }).join('');
 
@@ -1184,7 +1322,7 @@ class GameUI {
       return `<div class="run-complete-unit">
         <span class="run-complete-unit-name">${u.title} ${u.name}</span>
         <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
-        <span class="run-complete-unit-level">Lv ${u.level}</span>
+        <span class="run-complete-unit-level">${u.skills.length} skills</span>
       </div>`;
     }).join('');
 

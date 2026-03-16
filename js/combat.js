@@ -29,6 +29,9 @@ class CombatEngine {
     this.totalEnemiesKilled = 0;
     this.encountersCompleted = 0;
     this.totalRenownEarned = 0;
+    this.partyXp = 0;
+    this.partyLevel = 1;
+    this.pendingLevelUps = 0;
   }
 
   // --- Setup ---
@@ -53,14 +56,12 @@ class CombatEngine {
         taunt: false,
         actedThisTurn: false,
         conditions: [],
-        xp: 0,
-        level: 1,
         equipment: { weapon: [null, null], armor: [null, null], trinket: [null, null, null] },
         equipDamage: 0, equipBlock: 0, equipHeal: 0, equipExtraDice: 0,
         stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 },
       };
     });
-    this.party.forEach(u => this.refreshSkills(u));
+    this.party.forEach(u => this.initSkills(u));
   }
 
   initEncounter(encounterDef) {
@@ -149,7 +150,6 @@ class CombatEngine {
     this.turnCount++;
     this.phase = PHASE.ROLLING;
     this.party.forEach(u => {
-      u.block = 0;
       u.taunt = false;
       u.bonusDamage = 0;
       u.actedThisTurn = false;
@@ -598,20 +598,41 @@ class CombatEngine {
     }
   }
 
-  // --- Skills / Leveling ---
-  refreshSkills(unit) {
-    unit.level = getLevelForXp(unit.xp);
-    unit.skills = unit.allSkills.filter(s => (s.unlockLevel || 1) <= unit.level);
+  // --- Skills / Leveling (party-wide XP) ---
+  initSkills(unit) {
+    // Start with level-1 skills only
+    unit.skills = unit.allSkills.filter(s => (s.unlockLevel || 1) <= 1).map(s => ({ ...s }));
   }
 
-  awardXp(unit, amount) {
-    const oldLevel = unit.level;
-    unit.xp += amount;
-    unit.level = getLevelForXp(unit.xp);
-    this.refreshSkills(unit);
-    if (unit.level > oldLevel) {
-      this.addLog(`${unit.name} reached level ${unit.level}!`);
+  getUnlearnedSkills(unit) {
+    const learnedIds = unit.skills.map(s => s.id);
+    return unit.allSkills.filter(s => !learnedIds.includes(s.id));
+  }
+
+  getSkillChoices(unit, count = 2) {
+    const unlearned = this.getUnlearnedSkills(unit);
+    // Shuffle and pick `count`
+    const shuffled = unlearned.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  }
+
+  teachSkill(unitIndex, skillId) {
+    const unit = this.party[unitIndex];
+    const skill = unit.allSkills.find(s => s.id === skillId);
+    if (skill && !unit.skills.find(s => s.id === skillId)) {
+      unit.skills.push({ ...skill });
     }
+  }
+
+  awardPartyXp(amount) {
+    const oldLevel = this.partyLevel;
+    this.partyXp += amount;
+    this.partyLevel = getLevelForXp(this.partyXp);
+    const levelsGained = this.partyLevel - oldLevel;
+    if (levelsGained > 0) {
+      this.addLog(`Party reached level ${this.partyLevel}!`);
+    }
+    return levelsGained;
   }
 
   // --- Equipment (2 weapon, 2 armor, 3 trinket) ---
