@@ -16,7 +16,7 @@ class CombatEngine {
   constructor() {
     this.party = [];
     this.enemies = [];
-    this.dicePool = new DicePool(5);
+    this.dicePool = new DicePool(4);
     this.morale = 50;
     this.phase = PHASE.PRE_COMBAT;
     this.turn = 0;
@@ -29,9 +29,7 @@ class CombatEngine {
     this.totalEnemiesKilled = 0;
     this.encountersCompleted = 0;
     this.totalRenownEarned = 0;
-    this.partyXp = 0;
-    this.partyLevel = 1;
-    this.pendingLevelUps = 0;
+    this.pendingSkillPicks = 0;
   }
 
   // --- Setup ---
@@ -79,6 +77,7 @@ class CombatEngine {
       u.block = 0;
       u.taunt = false;
       u.buffs = [];
+      u.poison = 0;
       u.passiveTriggered = false;
       u.actedThisTurn = false;
       u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 };
@@ -116,6 +115,7 @@ class CombatEngine {
       hp: scaledMaxHp,
       actions: scaledActions,
       dead: false,
+      poison: 0,
       justSpawned: true,
     };
     this.enemies.push(enemy);
@@ -149,6 +149,25 @@ class CombatEngine {
     this.turn++;
     this.turnCount++;
     this.phase = PHASE.ROLLING;
+
+    // Poison tick on enemies
+    this.enemies.forEach(e => {
+      if (!e.dead && e.poison > 0) {
+        e.hp = Math.max(0, e.hp - e.poison);
+        this.addLog(`${e.name} takes ${e.poison} poison damage.`);
+        e.poison = Math.max(0, e.poison - 1);
+        if (e.hp <= 0) { e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.addLog(`${e.name} falls to poison!`); }
+      }
+    });
+    // Poison tick on allies
+    this.party.forEach(u => {
+      if (!u.downed && u.poison > 0) {
+        u.hp = Math.max(1, u.hp - u.poison);
+        this.addLog(`${u.name} takes ${u.poison} poison damage.`);
+        u.poison = Math.max(0, u.poison - 1);
+      }
+    });
+
     this.party.forEach(u => {
       u.taunt = false;
       u.actedThisTurn = false;
@@ -159,7 +178,7 @@ class CombatEngine {
 
     // Roll dice — base 5 + extra from equipment
     const extraDice = this.getExtraDiceCount();
-    this.dicePool.count = 5 + extraDice;
+    this.dicePool.count = 4 + extraDice;
     this.dicePool.roll();
     this.update();
   }
@@ -451,6 +470,36 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 allies gain +${result.buffAllies.bonusDamage} damage (${attackStr}).`);
       }
     }
+    // Poison (single target)
+    if (result.poison && result.target) {
+      result.target.poison = (result.target.poison || 0) + result.poison;
+      parts.push(`Applies ${result.poison} Poison.`);
+    }
+    // Poison all enemies
+    if (result.poisonAll) {
+      this.enemies.forEach(e => {
+        if (!e.dead) e.poison = (e.poison || 0) + result.poisonAll;
+      });
+      parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${result.poisonAll} Poison to all enemies.`);
+    }
+    // Heal all allies
+    if (result.healAll) {
+      const totalHeal = result.healAll + bonusHeal;
+      this.party.forEach(u => {
+        if (!u.downed) {
+          const before = u.hp;
+          u.hp = Math.min(u.maxHp, u.hp + totalHeal);
+          unit.stats.healingDone += u.hp - before;
+        }
+      });
+      const bonusStr = bonusHeal > 0 ? ` (${result.healAll}+${bonusHeal})` : '';
+      parts.push(`${unit.name} uses ${skill.name} \u2014 heals all allies for ${totalHeal}${bonusStr} HP.`);
+    }
+    // Cleanse poison from target
+    if (result.cleanse && result.target && result.target.poison > 0) {
+      result.target.poison = 0;
+      parts.push('Poison cleared.');
+    }
     if (result.morale) {
       const oldMorale = this.morale;
       this.morale = Math.max(-100, Math.min(100, this.morale + result.morale));
@@ -565,6 +614,12 @@ class CombatEngine {
       }
     }
 
+    // Enemy poison on target
+    if (action.poisonTarget && target) {
+      target.poison = (target.poison || 0) + action.poisonTarget;
+      this.addLog(`${target.name} is poisoned! (+${action.poisonTarget} Poison)`);
+    }
+
     if (action.morale) {
       this.morale = Math.max(-100, Math.min(100, this.morale + action.morale));
       this.addLog(`${enemy.name} ${action.text}! Morale ${action.morale > 0 ? '+' : ''}${action.morale}.`);
@@ -626,8 +681,7 @@ class CombatEngine {
 
   // --- Skills / Leveling (party-wide XP) ---
   initSkills(unit) {
-    // Start with level-1 skills only
-    unit.skills = unit.allSkills.filter(s => (s.unlockLevel || 1) <= 1).map(s => ({ ...s }));
+    unit.skills = unit.allSkills.filter(s => s.starter).map(s => ({ ...s }));
   }
 
   getUnlearnedSkills(unit) {
@@ -650,15 +704,13 @@ class CombatEngine {
     }
   }
 
-  awardPartyXp(amount) {
-    const oldLevel = this.partyLevel;
-    this.partyXp += amount;
-    this.partyLevel = getLevelForXp(this.partyXp);
-    const levelsGained = this.partyLevel - oldLevel;
-    if (levelsGained > 0) {
-      this.addLog(`Party reached level ${this.partyLevel}!`);
+  // Grant one skill pick after each combat encounter
+  grantSkillPick() {
+    // Only if someone has unlearned skills
+    const hasUnlearned = this.party.some(u => this.getUnlearnedSkills(u).length > 0);
+    if (hasUnlearned) {
+      this.pendingSkillPicks++;
     }
-    return levelsGained;
   }
 
   // --- Equipment (2 weapon, 2 armor, 3 trinket) ---

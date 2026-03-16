@@ -152,9 +152,7 @@ class Game {
     this.engine.totalEnemiesKilled = 0;
     this.engine.encountersCompleted = 0;
     this.engine.totalRenownEarned = 0;
-    this.engine.partyXp = 0;
-    this.engine.partyLevel = 1;
-    this.engine.pendingLevelUps = 0;
+    this.engine.pendingSkillPicks = 0;
     this.engine.difficulty = this.difficulty;
     this.engine.initParty(['legionary', 'centurion', 'medicus']);
 

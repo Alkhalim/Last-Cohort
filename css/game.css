@@ -835,6 +835,12 @@ html, body {
   vertical-align: middle;
 }
 
+.poison-text {
+  font-size: 0.55rem;
+  color: #8a2;
+  font-weight: 600;
+}
+
 .buff-text {
   font-size: 0.55rem;
   color: var(--gold);

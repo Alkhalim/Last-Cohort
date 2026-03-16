@@ -141,7 +141,7 @@ class GameUI {
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
-        <div class="hp-text">${enemy.hp}/${enemy.maxHp}</div>
+        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.poison > 0 ? ` <span class="poison-text">P:${enemy.poison}</span>` : ''}</div>
       `;
 
       if (drainPct > hpPct) {
@@ -385,6 +385,7 @@ class GameUI {
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
           ${unit.block > 0 ? `<span class="block-text">Block: ${unit.block}</span>` : ''}
+          ${unit.poison > 0 ? `<span class="poison-text">Poison: ${unit.poison}</span>` : ''}
           ${unit.buffs && unit.buffs.length > 0 ? unit.buffs.map(b => `<span class="buff-text">+${b.damage} (${b.attacksLeft})</span>`).join('') : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
           ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
@@ -1124,15 +1125,8 @@ class GameUI {
   showLootScreen(isBossVictory) {
     this.engine.afterEncounter();
 
-    // Award party XP from killed enemies
-    const totalXp = this.engine.killedEnemies.reduce((sum, eid) => {
-      const data = ENEMY_DATA[eid];
-      return sum + (data ? data.xpValue || 0 : 0);
-    }, 0);
-    if (totalXp > 0) {
-      const levelsGained = this.engine.awardPartyXp(totalXp);
-      this.engine.pendingLevelUps += levelsGained;
-    }
+    // Grant one skill pick after each combat encounter
+    this.engine.grantSkillPick();
 
     // Roll drops — filter to items at least one party member can use
     this.pendingLoot = [];
@@ -1242,7 +1236,7 @@ class GameUI {
     }).join('');
 
     const afterLoot = () => {
-      if (this.engine.pendingLevelUps > 0) {
+      if (this.engine.pendingSkillPicks > 0) {
         this.showLevelUpScreen();
       } else if (this.lootScreenFinal) {
         this.showPostBossChoice();
@@ -1279,18 +1273,15 @@ class GameUI {
     const title = document.getElementById('levelup-title');
     const desc = document.getElementById('levelup-desc');
 
-    const remaining = this.engine.pendingLevelUps;
-    title.textContent = `LEVEL UP (${this.engine.partyLevel})`;
-    desc.textContent = remaining > 1
-      ? `Choose a soldier to learn a new skill. (${remaining} level-ups remaining)`
-      : 'Choose a soldier to learn a new skill.';
+    title.textContent = 'NEW SKILL';
+    desc.textContent = 'Choose a soldier to learn a new skill.';
 
     // Show units that have unlearned skills
     const eligible = this.engine.party.filter(u => !u.downed && this.engine.getUnlearnedSkills(u).length > 0);
 
     if (eligible.length === 0) {
       // Everyone has all skills — skip
-      this.engine.pendingLevelUps = 0;
+      this.engine.pendingSkillPicks = 0;
       this.afterLevelUps();
       return;
     }
@@ -1328,8 +1319,8 @@ class GameUI {
       `;
       card.addEventListener('click', () => {
         this.engine.teachSkill(unitIndex, skill.id);
-        this.engine.pendingLevelUps--;
-        if (this.engine.pendingLevelUps > 0) {
+        this.engine.pendingSkillPicks--;
+        if (this.engine.pendingSkillPicks > 0) {
           this.showLevelUpScreen();
         } else {
           this.afterLevelUps();
