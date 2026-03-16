@@ -327,11 +327,12 @@ class GameUI {
     // End turn button — visible during player turn (not targeting)
     if (this.engine.phase === PHASE.PLAYER_TURN && !this.engine.targetMode) {
       endBtn.classList.remove('hidden');
+      endBtn.textContent = 'End Turn';
       endBtn.onclick = () => { this.stagedSkill = null; this.engine.endPlayerTurn(); };
     } else if (this.engine.phase === PHASE.PLAYER_TURN && this.engine.targetMode) {
       endBtn.classList.remove('hidden');
       endBtn.textContent = 'Cancel';
-      endBtn.onclick = () => { this.engine.cancelTarget(); this.stagedSkill = null; };
+      endBtn.onclick = () => { this.engine.cancelTarget(); this.stagedSkill = null; this.render(); };
     } else if (this.engine.phase === PHASE.VICTORY) {
       endBtn.classList.remove('hidden');
       endBtn.textContent = 'Continue';
