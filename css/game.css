@@ -29,6 +29,11 @@
   --die-border: #5a4a2a;
   --die-selected: #c9a227;
   --die-used: #3a3a3a;
+  /* Class tag colors */
+  --class-heavy: #c44a3a;
+  --class-command: #c9a227;
+  --class-support: #4aaa6a;
+  --class-roman: #8a8a7a;
 }
 
 * {
@@ -792,6 +797,44 @@ html, body {
   color: var(--blue-bright);
 }
 
+/* --- Class color coding --- */
+.class-heavy .unit-title,
+.class-heavy .summary-unit-title { color: var(--class-heavy); }
+.class-command .unit-title,
+.class-command .summary-unit-title { color: var(--class-command); }
+.class-support .unit-title,
+.class-support .summary-unit-title { color: var(--class-support); }
+
+.unit-card.class-heavy.selected { border-color: var(--class-heavy); box-shadow: 0 0 8px rgba(196, 74, 58, 0.25); }
+.unit-card.class-command.selected { border-color: var(--class-command); box-shadow: 0 0 8px rgba(201, 162, 39, 0.25); }
+.unit-card.class-support.selected { border-color: var(--class-support); box-shadow: 0 0 8px rgba(74, 170, 106, 0.25); }
+
+/* Skill panel header color matches selected unit */
+#skill-panel.class-heavy { border-top-color: var(--class-heavy); }
+#skill-panel.class-command { border-top-color: var(--class-command); }
+#skill-panel.class-support { border-top-color: var(--class-support); }
+
+/* Item class tag pips */
+.tag-pip {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 2px;
+  vertical-align: middle;
+}
+.tag-pip.tag-heavy { background: var(--class-heavy); }
+.tag-pip.tag-command { background: var(--class-command); }
+.tag-pip.tag-support { background: var(--class-support); }
+.tag-pip.tag-roman { background: var(--class-roman); }
+
+.loot-item-tags {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .buff-text {
   font-size: 0.55rem;
   color: var(--gold);
@@ -913,6 +956,16 @@ html, body {
   font-size: 0.68rem;
   color: var(--text-dim);
   line-height: 1.3;
+}
+
+.mod-value {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+.mod-bonus {
+  color: var(--gold);
+  font-size: 0.6rem;
 }
 
 /* --- Confirm Attack Button --- */

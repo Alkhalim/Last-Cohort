@@ -360,7 +360,8 @@ class GameUI {
       const isTargetable = this.isAllyTargetable(unit);
       const isPreview = this.isAllyPreview(unit);
       const isSelected = this.selectedUnitIndex === i;
-      el.className = `unit-card${unit.downed ? ' downed' : ''}${isSelected ? ' selected' : ''}${isTargetable ? ' targetable' : ''}${isPreview ? ' preview' : ''}${unit.actedThisTurn ? ' acted' : ''}`;
+      const primaryTag = getPrimaryTag(unit.classId);
+      el.className = `unit-card class-${primaryTag}${unit.downed ? ' downed' : ''}${isSelected ? ' selected' : ''}${isTargetable ? ' targetable' : ''}${isPreview ? ' preview' : ''}${unit.actedThisTurn ? ' acted' : ''}`;
       el.id = `unit-${i}`;
 
       const hpPct = (unit.hp / unit.maxHp) * 100;
@@ -463,6 +464,9 @@ class GameUI {
     }
 
     const unit = this.engine.party[this.selectedUnitIndex];
+    // Apply class color to skill panel
+    panel.className = 'class-' + getPrimaryTag(unit ? unit.classId : 'legionary');
+
     if (!unit || unit.downed) {
       panel.classList.add('hidden');
       confirmBtn.classList.add('hidden');
@@ -483,15 +487,47 @@ class GameUI {
 
     const skills = this.engine.getValidSkills(this.selectedUnitIndex);
 
+    // Compute equipment bonuses for modified descriptions
+    const equipDmg = unit.equipDamage || 0;
+    const equipBlock = unit.equipBlock || 0;
+    const equipHeal = unit.equipHeal || 0;
+    const buffDmg = (unit.buffs || []).reduce((s, b) => s + (b.damage || 0), 0);
+    const totalBonusDmg = equipDmg + buffDmg;
+
     skills.forEach(skill => {
       const el = document.createElement('div');
       const isStaged = this.stagedSkill && this.stagedSkill.skillId === skill.id;
 
       el.className = `skill-btn${skill.canUse ? '' : ' disabled'}${isStaged ? ' staged' : ''}`;
 
+      // Build modified description showing bonuses
+      let desc = skill.description;
+      if (totalBonusDmg > 0) {
+        desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
+          const total = parseInt(base) + totalBonusDmg;
+          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}+${totalBonusDmg})</span>`;
+        });
+      }
+      if (equipBlock > 0) {
+        desc = desc.replace(/Gain (\d+) Block/g, (match, base) => {
+          const total = parseInt(base) + equipBlock;
+          return `Gain <span class="mod-value">${total}</span> Block <span class="mod-bonus">(${base}+${equipBlock})</span>`;
+        });
+        desc = desc.replace(/All allies gain (\d+) Block/g, (match, base) => {
+          const total = parseInt(base) + equipBlock;
+          return `All allies gain <span class="mod-value">${total}</span> Block <span class="mod-bonus">(${base}+${equipBlock})</span>`;
+        });
+      }
+      if (equipHeal > 0) {
+        desc = desc.replace(/Heal.*?for (\d+) HP/g, (match, base) => {
+          const total = parseInt(base) + equipHeal;
+          return match.replace(base + ' HP', `<span class="mod-value">${total}</span> HP <span class="mod-bonus">(${base}+${equipHeal})</span>`);
+        });
+      }
+
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span></div>
-        <div class="skill-desc">${skill.description}</div>
+        <div class="skill-desc">${desc}</div>
       `;
 
       if (skill.canUse) {
@@ -714,7 +750,7 @@ class GameUI {
     bar.innerHTML = this.engine.party.map(u => {
       const pct = (u.hp / u.maxHp) * 100;
       return `<div class="map-party-unit${u.downed ? ' downed' : ''}">
-        <span class="map-party-name">${u.title}</span>
+        <span class="map-party-name" style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>
         <div class="map-party-hp-bar">
           <div class="map-party-hp-fill${pct < 20 ? ' critical' : pct < 40 ? ' hp-low' : pct < 65 ? ' hp-mid' : ''}" style="width:${pct}%"></div>
         </div>
@@ -1052,7 +1088,7 @@ class GameUI {
       return `
         <div class="summary-unit ${u.downed ? 'downed' : ''}">
           <div class="summary-unit-header">
-            <span class="summary-unit-title">${u.title}</span>
+            <span class="summary-unit-title" style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>
             <span class="summary-unit-name">${u.name}</span>
             <span class="summary-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp}`}</span>
           </div>
@@ -1153,7 +1189,7 @@ class GameUI {
             <span class="loot-item-name">${item.name}</span>
             <span class="loot-rarity">${item.rarity.toUpperCase()}</span>
           </div>
-          <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)}</div>
+          <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
           <div class="loot-item-desc">${item.description}</div>
           <div class="loot-equip-actions">${equipBtns}</div>
         `;
@@ -1177,7 +1213,7 @@ class GameUI {
       const slotHtml = ['weapon', 'armor', 'trinket'].map(slot => {
         const items = u.equipment[slot].map((id, si) => {
           const item = id ? getItemData(id) : null;
-          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? item.name : '\u2014'}</span>`;
+          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? renderTagPips(item.classTags) + ' ' + item.name : '\u2014'}</span>`;
         }).join(', ');
         return `<div class="equip-slot-row">
           <span class="equip-slot-label">${slot} (${EQUIP_SLOTS[slot]})</span>

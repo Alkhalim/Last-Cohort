@@ -571,6 +571,17 @@ function getItemData(itemId) {
   return ITEM_DATA[itemId] || null;
 }
 
+// Returns the primary (non-roman) tag for a class, for color coding
+function getPrimaryTag(classId) {
+  const tags = CLASS_DATA[classId] ? CLASS_DATA[classId].tags : [];
+  return tags.find(t => t !== 'roman') || tags[0] || 'roman';
+}
+
+// Returns tag pip HTML for an item's classTags
+function renderTagPips(classTags) {
+  return classTags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
+}
+
 function formatItemStats(stats) {
   const parts = [];
   if (stats.damage) parts.push(`+${stats.damage} dmg`);
