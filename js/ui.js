@@ -118,15 +118,50 @@ class GameUI {
   }
 
   isEnemyTargetable(enemy) {
-    return this.engine.targetMode && this.engine.targetMode.targetType === 'enemy' && !enemy.dead &&
-      this.engine.getValidEnemyTargets(this.engine.targetMode.skill).includes(enemy);
+    if (enemy.dead) return false;
+    // Old targeting mode (from engine)
+    if (this.engine.targetMode && this.engine.targetMode.targetType === 'enemy') {
+      return this.engine.getValidEnemyTargets(this.engine.targetMode.skill).includes(enemy);
+    }
+    // New: staged skill targeting
+    if (this.stagedSkill && this.selectedUnitIndex !== null) {
+      const unit = this.engine.party[this.selectedUnitIndex];
+      if (!unit) return false;
+      const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
+      if (!skill || skill.target !== TARGET.SINGLE_ENEMY) return false;
+      const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
+      if (!canPay) return false;
+      return this.engine.getValidEnemyTargets(skill).includes(enemy);
+    }
+    return false;
   }
 
   onEnemyClick(enemy) {
+    // Staged skill — click to confirm on this target
+    if (this.stagedSkill) {
+      this.onStagedTarget(enemy);
+      return;
+    }
+    // Old engine targeting
     if (this.engine.targetMode && this.engine.targetMode.targetType === 'enemy') {
       this.engine.selectTarget(enemy);
-      this.stagedSkill = null;
     }
+  }
+
+  isAllyTargetable(unit) {
+    if (unit.downed) return false;
+    // Old targeting mode
+    if (this.engine.targetMode && this.engine.targetMode.targetType === 'ally') return true;
+    // Staged skill targeting
+    if (this.stagedSkill && this.selectedUnitIndex !== null) {
+      const caster = this.engine.party[this.selectedUnitIndex];
+      if (!caster) return false;
+      const skill = caster.skills.find(s => s.id === this.stagedSkill.skillId);
+      if (!skill || skill.target !== TARGET.SINGLE_ALLY) return false;
+      const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
+      return canPay;
+    }
+    return false;
   }
 
   // --- Dice Pool ---
@@ -260,7 +295,7 @@ class GameUI {
 
     this.engine.party.forEach((unit, i) => {
       const el = document.createElement('div');
-      const isTargetable = this.engine.targetMode && this.engine.targetMode.targetType === 'ally' && !unit.downed;
+      const isTargetable = this.isAllyTargetable(unit);
       const isSelected = this.selectedUnitIndex === i;
       el.className = `unit-card${unit.downed ? ' downed' : ''}${isSelected ? ' selected' : ''}${isTargetable ? ' targetable' : ''}${unit.actedThisTurn ? ' acted' : ''}`;
       el.id = `unit-${i}`;
@@ -297,8 +332,11 @@ class GameUI {
       if (this.engine.phase === PHASE.PLAYER_TURN) {
         if (isTargetable) {
           el.addEventListener('click', () => {
-            this.engine.selectTarget(unit);
-            this.stagedSkill = null;
+            if (this.stagedSkill) {
+              this.onStagedTarget(unit);
+            } else if (this.engine.targetMode) {
+              this.engine.selectTarget(unit);
+            }
           });
         } else if (!unit.downed) {
           el.addEventListener('click', () => this.onUnitClick(i));
@@ -399,42 +437,49 @@ class GameUI {
       list.appendChild(el);
     });
 
-    // Confirm button — show when a skill is staged with valid dice
-    if (this.stagedSkill) {
-      const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
-      const canConfirm = skill && this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
-      if (canConfirm) {
-        confirmBtn.classList.remove('hidden');
-        confirmBtn.textContent = `Confirm ${skill.name}`;
-        confirmBtn.onclick = () => this.confirmSkill();
-      } else {
-        confirmBtn.classList.add('hidden');
-      }
-    } else {
-      confirmBtn.classList.add('hidden');
-    }
+    confirmBtn.classList.add('hidden');
   }
 
   onSkillClick(skill) {
     if (this.stagedSkill && this.stagedSkill.skillId === skill.id) {
       // Clicking same skill again — unstage
       this.stagedSkill = null;
-    } else {
-      // Stage this skill with auto-picked dice
-      const autoDice = this.engine.autoPick(skill);
-      this.stagedSkill = { skillId: skill.id, diceIds: autoDice };
+      this.render();
+      return;
     }
+
+    // Stage this skill with auto-picked dice
+    const autoDice = this.engine.autoPick(skill);
+    this.stagedSkill = { skillId: skill.id, diceIds: autoDice };
+
+    // For self/all-target skills, execute immediately (no target to click)
+    const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
+    if (canPay && (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES)) {
+      const diceIds = [...this.stagedSkill.diceIds];
+      this.stagedSkill = null;
+      this.engine.beginSkillTarget(this.selectedUnitIndex, skill.id, diceIds);
+      this.autoAdvanceUnit();
+      return;
+    }
+
+    // For targeted skills, render so enemies/allies light up
     this.render();
   }
 
-  confirmSkill() {
+  // Called when player clicks a targetable enemy/ally while a skill is staged
+  onStagedTarget(target) {
     if (!this.stagedSkill) return;
+    const unit = this.engine.party[this.selectedUnitIndex];
+    const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
+    if (!skill) return;
+
+    const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
+    if (!canPay) return;
+
     const diceIds = [...this.stagedSkill.diceIds];
     const unitIndex = this.selectedUnitIndex;
-    const skillId = this.stagedSkill.skillId;
     this.stagedSkill = null;
-    this.engine.beginSkillTarget(unitIndex, skillId, diceIds);
-    // Auto-advance to next non-acted unit
+    this.engine.executeSkill(unitIndex, skill.id, diceIds, [target]);
     this.autoAdvanceUnit();
   }
 
