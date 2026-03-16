@@ -25,6 +25,12 @@
       <div id="morale-bar">
         <div id="morale-label">STEADY</div>
         <div id="morale-track"><div id="morale-fill"></div></div>
+        <button id="btn-log-toggle" class="log-toggle-btn">Log</button>
+      </div>
+
+      <!-- Combat Log overlay (collapsed by default) -->
+      <div id="combat-log">
+        <div id="log-content"></div>
       </div>
 
       <!-- Enemy Area -->
@@ -49,22 +55,15 @@
         </div>
       </div>
 
-      <!-- Combat Log (collapsed by default) -->
-      <button id="btn-log-toggle" class="log-toggle-btn">Log</button>
-      <div id="combat-log">
-        <div id="log-content"></div>
-      </div>
-
-      <!-- Party Area -->
-      <div id="party-area"></div>
-
-      <!-- Skill Panel (shown when a unit is selected) -->
-      <div id="skill-panel" class="hidden">
-        <div id="skill-panel-header">
-          <span id="skill-unit-name"></span>
-          <button id="btn-close-skills">&times;</button>
+      <!-- Party + Skills (bottom section) -->
+      <div id="bottom-section">
+        <div id="party-area"></div>
+        <div id="skill-panel" class="hidden">
+          <div id="skill-panel-header">
+            <span id="skill-unit-name"></span>
+          </div>
+          <div id="skill-list"></div>
         </div>
-        <div id="skill-list"></div>
       </div>
     </div>
 
