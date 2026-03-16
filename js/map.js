@@ -152,6 +152,19 @@ function generateMap(difficulty = 1) {
     }
   }
 
+  // Enforce: no 2 rest nodes in a row on any path. Convert second rest to event.
+  for (const node of nodes) {
+    if (node.type !== 'rest' || node.depth < 1) continue;
+    for (const pid of node.parents) {
+      const parent = nodes.find(n => n.id === pid);
+      if (parent && parent.type === 'rest') {
+        node.type = 'event';
+        node.threat = 0;
+        break;
+      }
+    }
+  }
+
   // Generate encounters for combat nodes
   for (const node of nodes) {
     if (node.type === 'combat') {

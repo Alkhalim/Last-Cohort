@@ -33,15 +33,19 @@ class GameUI {
       const band = getMoraleBand(this.engine.morale);
       let effects = '';
       if (this.engine.morale >= 75) {
-        effects = 'Inspired: +1 damage to all attacks. Command skills improved.';
+        effects = 'Inspired: +2 damage and +2 healing to all actions.';
+      } else if (this.engine.morale >= 50) {
+        effects = 'Confident: +1 damage and +1 healing to all actions.';
       } else if (this.engine.morale >= 25) {
         effects = 'Steady: Baseline performance. No modifiers.';
       } else if (this.engine.morale >= -24) {
         effects = 'Shaken: No major modifiers. Neutral state.';
-      } else if (this.engine.morale >= -74) {
+      } else if (this.engine.morale >= -49) {
         effects = 'Distressed: Higher vulnerability to fear and curses.';
+      } else if (this.engine.morale >= -74) {
+        effects = 'Wavering: -1 damage and -1 healing to all actions.';
       } else {
-        effects = 'Broken: -1 damage to all attacks. Worse event outcomes.';
+        effects = 'Broken: -2 damage and -2 healing to all actions.';
       }
       tooltip.textContent = effects;
       tooltip.classList.remove('hidden');
@@ -492,8 +496,13 @@ class GameUI {
     const equipBlock = unit.equipBlock || 0;
     const equipHeal = unit.equipHeal || 0;
     const buffDmg = (unit.buffs || []).reduce((s, b) => s + (b.damage || 0), 0);
-    const moraleDmg = this.engine.morale >= 75 ? 1 : this.engine.morale <= -75 ? -1 : 0;
-    const totalBonusDmg = equipDmg + buffDmg + moraleDmg;
+    let moraleMod = 0;
+    if (this.engine.morale >= 75) moraleMod = 2;
+    else if (this.engine.morale >= 50) moraleMod = 1;
+    else if (this.engine.morale <= -75) moraleMod = -2;
+    else if (this.engine.morale <= -50) moraleMod = -1;
+    const totalBonusDmg = equipDmg + buffDmg + moraleMod;
+    const totalBonusHeal = equipHeal + moraleMod;
 
     skills.forEach(skill => {
       const el = document.createElement('div');
@@ -519,10 +528,11 @@ class GameUI {
           return `All allies gain <span class="mod-value">${total}</span> Block <span class="mod-bonus">(${base}+${equipBlock})</span>`;
         });
       }
-      if (equipHeal > 0) {
+      if (totalBonusHeal !== 0) {
         desc = desc.replace(/Heal.*?for (\d+) HP/g, (match, base) => {
-          const total = parseInt(base) + equipHeal;
-          return match.replace(base + ' HP', `<span class="mod-value">${total}</span> HP <span class="mod-bonus">(${base}+${equipHeal})</span>`);
+          const total = Math.max(0, parseInt(base) + totalBonusHeal);
+          const sign = totalBonusHeal > 0 ? '+' : '';
+          return match.replace(base + ' HP', `<span class="mod-value">${total}</span> HP <span class="mod-bonus">(${base}${sign}${totalBonusHeal})</span>`);
         });
       }
 

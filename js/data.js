@@ -796,4 +796,63 @@ const EVENT_DATA = [
       },
     ],
   },
+  {
+    id: 'deserter_camp',
+    name: 'Deserter Camp',
+    intro: 'You stumble upon a makeshift camp. Roman equipment is scattered about, but the soldiers here have abandoned their colors. They eye you warily, hands on weapons.',
+    choices: [
+      {
+        text: 'Demand they rejoin the column.',
+        outcomes: [
+          { weight: 0.4, text: 'They fall in line, ashamed. Your men stand a little taller.', effects: { morale: 15 } },
+          { weight: 0.3, text: 'They refuse and flee into the forest, but leave useful supplies behind.', effects: { healAll: 6, grantItem: 'iron_gladius' } },
+          { weight: 0.3, text: 'They attack in desperation. You put them down, but the fight costs you.', effects: { damageAll: 5, morale: -10 } },
+        ],
+      },
+      {
+        text: 'Trade supplies with them.',
+        outcomes: [
+          { weight: 0.6, text: 'They share medicine and a warm meal. A brief taste of civilization.', effects: { healAll: 10, morale: 5 } },
+          { weight: 0.4, text: 'They trade you a curious trinket for your last rations.', effects: { grantItem: 'woad_charm', damageAll: 3 } },
+        ],
+      },
+      {
+        text: 'Leave them. You have enough problems.',
+        outcomes: [
+          { weight: 1.0, text: 'You slip past. The deserters watch you go in silence.', effects: {} },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ancient_oak',
+    name: 'The Ancient Oak',
+    intro: 'A colossal oak tree dominates a clearing, its trunk carved with faces that seem to shift in the firelight. Offerings hang from its branches \u2014 weapons, bones, and Roman standards.',
+    choices: [
+      {
+        text: 'Take back the Roman standards.',
+        outcomes: [
+          { weight: 0.5, text: 'Your men cheer. The standards still carry weight, even here.', effects: { morale: 20 } },
+          { weight: 0.3, text: 'As you pull the last standard free, the tree groans. Something watches.', effects: { morale: 10, damageAll: 3 } },
+          { weight: 0.2, text: 'The offerings were trapped. Poison thorns slice your hands.', effects: { damageAll: 6, morale: -5 } },
+        ],
+      },
+      {
+        text: 'Search the offerings for useful equipment.',
+        outcomes: [
+          { weight: 0.5, text: 'Among the bones you find a weapon, still sharp.', effects: { grantItem: 'chiefs_spear' } },
+          { weight: 0.3, text: 'You find herbs wrapped in leather. Good medicine.', effects: { healAll: 8, grantItem: 'herb_pouch' } },
+          { weight: 0.2, text: 'Nothing but rot and bone. The men grow uneasy.', effects: { morale: -8 } },
+        ],
+      },
+      {
+        text: 'Burn the tree.',
+        outcomes: [
+          { weight: 0.4, text: 'The fire catches fast. The carved faces scream as they burn. Your men feel a dark satisfaction.', effects: { morale: 5 } },
+          { weight: 0.3, text: 'The fire reveals a hidden cache at the roots.', effects: { grantItem: 'runic_stone', morale: 5 } },
+          { weight: 0.3, text: 'The smoke draws attention. You hear war horns in the distance.', effects: { morale: -12 } },
+        ],
+      },
+    ],
+  },
 ];
