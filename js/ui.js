@@ -160,11 +160,66 @@ class GameUI {
         el.addEventListener('click', () => this.onEnemyClick(enemy));
       }
 
+      // Enemy info tooltip on hover / long-press
+      if (!enemy.dead) {
+        el.addEventListener('mouseenter', () => this.showEnemyTooltip(enemy, el));
+        el.addEventListener('mouseleave', () => this.hideEnemyTooltip());
+        let holdTimer = null;
+        el.addEventListener('touchstart', () => {
+          holdTimer = setTimeout(() => this.showEnemyTooltip(enemy, el), 300);
+        }, { passive: true });
+        el.addEventListener('touchend', () => { clearTimeout(holdTimer); this.hideEnemyTooltip(); });
+        el.addEventListener('touchcancel', () => { clearTimeout(holdTimer); this.hideEnemyTooltip(); });
+      }
+
       (enemy.row === 'front' ? frontSlots : backSlots).appendChild(el);
     });
 
     const backExists = this.engine.enemies.some(e => e.row === 'back');
     document.getElementById('enemy-row-back').classList.toggle('hidden', !backExists);
+  }
+
+  showEnemyTooltip(enemy, el) {
+    this.hideEnemyTooltip();
+    const tooltip = document.createElement('div');
+    tooltip.id = 'enemy-tooltip';
+    tooltip.className = 'enemy-tooltip';
+
+    const actions = enemy.actions.map(a => {
+      let desc = a.name;
+      if (a.damage > 0) desc += ` (${a.damage} dmg`;
+      if (a.poisonTarget) desc += (a.damage > 0 ? `, ` : ' (') + `${a.poisonTarget} poison`;
+      if (a.morale) desc += (a.damage > 0 || a.poisonTarget ? ', ' : ' (') + `${a.morale} morale`;
+      if (a.aoe) desc += ', AOE';
+      if (a.ignoreRow) desc += ', any row';
+      if (a.damage > 0 || a.poisonTarget || a.morale) desc += ')';
+      return `<div class="enemy-tooltip-action">${desc}</div>`;
+    }).join('');
+
+    const tags = [];
+    if (enemy.isBoss) tags.push('<span class="enemy-tag tag-boss">BOSS</span>');
+    if (enemy.isElite) tags.push('<span class="enemy-tag tag-elite">ELITE</span>');
+    tags.push(`<span class="enemy-tag">${enemy.row} row</span>`);
+
+    tooltip.innerHTML = `
+      <div class="enemy-tooltip-name">${enemy.name}</div>
+      <div class="enemy-tooltip-tags">${tags.join(' ')}</div>
+      <div class="enemy-tooltip-desc">${enemy.description || ''}</div>
+      <div class="enemy-tooltip-actions-title">Attacks:</div>
+      ${actions}
+    `;
+
+    const rect = el.getBoundingClientRect();
+    const gameRect = document.getElementById('game').getBoundingClientRect();
+    tooltip.style.left = Math.max(4, rect.left - gameRect.left) + 'px';
+    tooltip.style.top = (rect.bottom - gameRect.top + 4) + 'px';
+
+    document.getElementById('combat-screen').appendChild(tooltip);
+  }
+
+  hideEnemyTooltip() {
+    const existing = document.getElementById('enemy-tooltip');
+    if (existing) existing.remove();
   }
 
   isEnemyTargetable(enemy) {
