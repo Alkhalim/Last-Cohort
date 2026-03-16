@@ -1,0 +1,636 @@
+/* ============================================================
+   Last Cohort – Dark Roman Mythic-Horror Theme
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg-deep: #0a0a0c;
+  --bg-dark: #12141a;
+  --bg-card: #1a1d26;
+  --bg-card-hover: #242836;
+  --border: #2a2e3a;
+  --border-highlight: #4a4e5a;
+  --text: #c8c4b8;
+  --text-dim: #7a7868;
+  --text-bright: #e8e4d8;
+  --gold: #c9a227;
+  --gold-dim: #8a7020;
+  --red: #a03030;
+  --red-bright: #d04040;
+  --red-critical: #ff4444;
+  --green: #4a7a3a;
+  --green-bright: #6aaa4a;
+  --blue: #3a5a8a;
+  --blue-bright: #4a7aba;
+  --brown: #6a4a2a;
+  --purple: #5a3a6a;
+  --die-bg: #2a2418;
+  --die-border: #5a4a2a;
+  --die-selected: #c9a227;
+  --die-used: #3a3a3a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+/* --- Screens --- */
+.screen {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Title Screen --- */
+#title-screen {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #141820 40%, #1a1410 100%);
+}
+
+.title-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.title-content h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 2.4rem;
+  color: var(--gold);
+  letter-spacing: 0.3em;
+  text-shadow: 0 2px 20px rgba(201, 162, 39, 0.3);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-family: 'Cinzel', serif;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 3rem;
+}
+
+/* --- Buttons --- */
+.btn-primary {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  padding: 0.8rem 2.5rem;
+  background: linear-gradient(180deg, #3a2a14 0%, #2a1a0a 100%);
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  transition: all 0.2s;
+  min-height: 48px;
+}
+
+.btn-primary:active {
+  background: linear-gradient(180deg, #4a3a24 0%, #3a2a14 100%);
+  transform: scale(0.97);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- Combat Screen Layout --- */
+#combat-screen {
+  background: var(--bg-deep);
+  gap: 0;
+}
+
+/* --- Morale Bar --- */
+#morale-bar {
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#morale-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  min-width: 120px;
+}
+
+#morale-track {
+  flex: 1;
+  height: 6px;
+  background: #1a1a1a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+#morale-fill {
+  height: 100%;
+  transition: width 0.4s, background 0.4s;
+  border-radius: 3px;
+}
+
+/* --- Enemy Area --- */
+#enemy-area {
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.enemy-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.row-label {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: 32px;
+  text-align: right;
+}
+
+.enemy-slots {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.enemy-card {
+  flex: 1;
+  max-width: 120px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  transition: all 0.2s;
+}
+
+.enemy-card.dead {
+  opacity: 0.3;
+  border-color: transparent;
+}
+
+.enemy-card.targetable {
+  border-color: var(--red-bright);
+  box-shadow: 0 0 8px rgba(208, 64, 64, 0.3);
+  cursor: pointer;
+}
+
+.enemy-card.targetable:active {
+  background: var(--bg-card-hover);
+}
+
+.enemy-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- HP Bars (shared) --- */
+.hp-bar {
+  height: 5px;
+  background: #1a1a1a;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.hp-fill {
+  height: 100%;
+  background: var(--red);
+  transition: width 0.3s;
+  border-radius: 3px;
+}
+
+.hp-fill.critical {
+  background: var(--red-critical);
+  animation: pulse-critical 1s infinite;
+}
+
+@keyframes pulse-critical {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.hp-text {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
+/* --- Combat Log --- */
+#combat-log {
+  flex: 1;
+  min-height: 60px;
+  max-height: 120px;
+  overflow: hidden;
+  background: var(--bg-dark);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+#log-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 6px 10px;
+  scroll-behavior: smooth;
+}
+
+.log-line {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  padding: 1px 0;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(42, 46, 58, 0.3);
+}
+
+.log-line:last-child {
+  color: var(--text);
+}
+
+/* --- Dice Area --- */
+#dice-area {
+  padding: 10px;
+  text-align: center;
+  background: var(--bg-dark);
+  flex-shrink: 0;
+}
+
+#phase-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+}
+
+#dice-pool {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.die {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: var(--die-bg);
+  border: 2px solid var(--die-border);
+  border-radius: 6px;
+  color: var(--text-bright);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.die.empty {
+  color: var(--text-dim);
+  border-style: dashed;
+  cursor: default;
+}
+
+.die.selected {
+  border-color: var(--die-selected);
+  box-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
+  transform: translateY(-4px);
+}
+
+.die.used {
+  background: var(--die-used);
+  border-color: transparent;
+  color: #555;
+  cursor: default;
+}
+
+.die.highlight {
+  animation: die-highlight 0.8s;
+}
+
+@keyframes die-highlight {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 16px rgba(201, 162, 39, 0.6); border-color: var(--gold); }
+}
+
+/* Die adjust buttons (Centurion passive) */
+.die-adjust {
+  position: absolute;
+  top: -18px;
+  display: flex;
+  gap: 2px;
+}
+
+.adjust-btn {
+  width: 18px;
+  height: 16px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.adjust-btn:active {
+  background: var(--gold-dim);
+  color: var(--bg-deep);
+}
+
+/* --- Party Area --- */
+#party-area {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.unit-card {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.unit-card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(201, 162, 39, 0.2);
+}
+
+.unit-card.downed {
+  opacity: 0.4;
+  border-color: var(--red);
+  cursor: default;
+}
+
+.unit-card.targetable {
+  border-color: var(--green-bright);
+  box-shadow: 0 0 8px rgba(106, 170, 74, 0.3);
+}
+
+.unit-card:active:not(.downed) {
+  background: var(--bg-card-hover);
+}
+
+.unit-header {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.unit-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.unit-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.unit-stats {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.block-text {
+  font-size: 0.6rem;
+  color: var(--blue-bright);
+}
+
+.downed-text {
+  font-size: 0.6rem;
+  color: var(--red-bright);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* --- Skill Panel --- */
+#skill-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 55%;
+  background: var(--bg-dark);
+  border-top: 2px solid var(--gold-dim);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  animation: slide-up 0.2s ease-out;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+#skill-panel.hidden {
+  display: none !important;
+}
+
+#skill-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+#skill-unit-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+#btn-close-skills {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#skill-list {
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.skill-btn {
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 48px;
+}
+
+.skill-btn:active:not(.disabled) {
+  background: var(--bg-card-hover);
+}
+
+.skill-btn.disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.skill-btn.die-ready {
+  border-color: var(--gold);
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.skill-btn.die-ready:active {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.skill-btn.multi-die {
+  border-color: var(--blue);
+}
+
+.skill-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-bright);
+  margin-bottom: 2px;
+}
+
+.skill-cost {
+  font-weight: 400;
+  color: var(--gold);
+  font-size: 0.7rem;
+}
+
+.skill-desc {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+/* --- Result Screen --- */
+#result-screen {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #1a1410 100%);
+}
+
+.result-content {
+  text-align: center;
+  padding: 2rem;
+  max-width: 360px;
+}
+
+#result-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  margin-bottom: 1rem;
+}
+
+#result-text {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+#result-party-status {
+  margin-bottom: 2rem;
+}
+
+.result-unit {
+  font-size: 0.8rem;
+  padding: 4px 0;
+  color: var(--text);
+}
+
+.result-unit.downed {
+  color: var(--red);
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* --- Mobile adjustments --- */
+@media (max-height: 600px) {
+  #combat-log { max-height: 80px; }
+  .die { width: 42px; height: 42px; font-size: 1.1rem; }
+}
+
+@media (min-width: 481px) {
+  .die { width: 56px; height: 56px; font-size: 1.5rem; }
+  .enemy-card { max-width: 140px; }
+}
