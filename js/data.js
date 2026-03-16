@@ -58,9 +58,9 @@ const CLASS_DATA = {
       {
         id: 'strike', name: 'Strike', unlockLevel: 1,
         cost: COST.any(), target: TARGET.SINGLE_ENEMY,
-        description: 'Basic sword strike. Deals 4 damage.',
+        description: 'Basic sword strike. Deals 2 damage.',
         execute(unit, targets, dice) {
-          return { damage: 4, baseDamage: 4, target: targets[0] };
+          return { damage: 2, baseDamage: 2, target: targets[0] };
         },
       },
       {
@@ -79,9 +79,9 @@ const CLASS_DATA = {
       {
         id: 'gladius_thrust', name: 'Gladius Thrust', unlockLevel: 1,
         cost: COST.threshold(3), target: TARGET.SINGLE_ENEMY,
-        description: 'Precise thrust. Deals 7 damage.',
+        description: 'Precise thrust. Deals 5 damage.',
         execute(unit, targets, dice) {
-          return { damage: 7, baseDamage: 7, target: targets[0] };
+          return { damage: 5, baseDamage: 5, target: targets[0] };
         },
       },
       // --- Unlockable skills ---
@@ -97,17 +97,17 @@ const CLASS_DATA = {
         id: 'pilum_cast', name: 'Pilum Cast', unlockLevel: 3,
         cost: COST.threshold(5), target: TARGET.SINGLE_ENEMY,
         ignoreRow: true,
-        description: 'Throw pilum at any row. Deals 10 damage.',
+        description: 'Throw pilum at any row. Deals 8 damage.',
         execute(unit, targets, dice) {
-          return { damage: 10, baseDamage: 10, target: targets[0], ignoreRow: true };
+          return { damage: 8, baseDamage: 8, target: targets[0], ignoreRow: true };
         },
       },
       {
         id: 'twin_slash', name: 'Twin Slash', unlockLevel: 2,
         cost: COST.combined(5, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling 5+. Deals 11 damage.',
+        description: '2 dice totaling 5+. Deals 9 damage.',
         execute(unit, targets, dice) {
-          return { damage: 11, baseDamage: 11, target: targets[0] };
+          return { damage: 9, baseDamage: 9, target: targets[0] };
         },
       },
       {
@@ -136,9 +136,9 @@ const CLASS_DATA = {
       {
         id: 'strike', name: 'Strike', unlockLevel: 1,
         cost: COST.any(), target: TARGET.SINGLE_ENEMY,
-        description: 'Basic strike. Deals 3 damage.',
+        description: 'Basic strike. Deals 1 damage.',
         execute(unit, targets, dice) {
-          return { damage: 3, baseDamage: 3, target: targets[0] };
+          return { damage: 1, baseDamage: 1, target: targets[0] };
         },
       },
       {
@@ -160,9 +160,9 @@ const CLASS_DATA = {
       {
         id: 'measured_advance', name: 'Measured Advance', unlockLevel: 2,
         cost: COST.combined(7, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling 7+. Deals 12 damage.',
+        description: '2 dice totaling 7+. Deals 10 damage.',
         execute(unit, targets, dice) {
-          return { damage: 12, baseDamage: 12, target: targets[0] };
+          return { damage: 10, baseDamage: 10, target: targets[0] };
         },
       },
       {
@@ -184,9 +184,9 @@ const CLASS_DATA = {
       {
         id: 'decimation_strike', name: 'Decimation Strike', unlockLevel: 4,
         cost: COST.combinedExact(7, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling exactly 7. Deals 16 damage.',
+        description: '2 dice totaling exactly 7. Deals 14 damage.',
         execute(unit, targets, dice) {
-          return { damage: 16, baseDamage: 16, target: targets[0] };
+          return { damage: 14, baseDamage: 14, target: targets[0] };
         },
       },
     ],
@@ -207,57 +207,57 @@ const CLASS_DATA = {
       {
         id: 'strike', name: 'Weak Strike', unlockLevel: 1,
         cost: COST.any(), target: TARGET.SINGLE_ENEMY,
-        description: 'Feeble strike. Deals 2 damage.',
+        description: 'Feeble strike. Deals 1 damage.',
         execute(unit, targets, dice) {
-          return { damage: 2, baseDamage: 2, target: targets[0] };
+          return { damage: 1, baseDamage: 1, target: targets[0] };
         },
       },
       {
         id: 'bind_wounds', name: 'Bind Wounds', unlockLevel: 1,
         cost: COST.threshold(2), target: TARGET.SINGLE_ALLY,
-        description: 'Heal an ally for 6 HP.',
+        description: 'Heal an ally for 4 HP.',
         execute(unit, targets, dice) {
-          return { heal: 6, baseHeal: 6, target: targets[0] };
+          return { heal: 4, baseHeal: 4, target: targets[0] };
         },
       },
       {
         id: 'triage', name: 'Triage', unlockLevel: 1,
         cost: COST.exact(4), target: TARGET.SINGLE_ALLY,
-        description: 'Heal an ally for 10 HP.',
+        description: 'Heal an ally for 8 HP.',
         execute(unit, targets, dice) {
-          return { heal: 10, baseHeal: 10, cleanse: true, target: targets[0] };
+          return { heal: 8, baseHeal: 8, cleanse: true, target: targets[0] };
         },
       },
       {
         id: 'emergency_draught', name: 'Emergency Draught', unlockLevel: 2,
         cost: COST.threshold(5), target: TARGET.SINGLE_ALLY,
-        description: 'Heal an ally for 14 HP.',
+        description: 'Heal an ally for 12 HP.',
         execute(unit, targets, dice) {
-          return { heal: 14, baseHeal: 14, target: targets[0] };
+          return { heal: 12, baseHeal: 12, target: targets[0] };
         },
       },
       {
         id: 'sawbones_choice', name: "Sawbones' Choice", unlockLevel: 3,
         cost: COST.exact(1), target: TARGET.SINGLE_ALLY,
-        description: 'Sacrifice 4 HP to heal ally for 12 HP.',
+        description: 'Sacrifice 4 HP to heal ally for 10 HP.',
         execute(unit, targets, dice) {
-          return { heal: 12, baseHeal: 12, selfDamage: 4, target: targets[0] };
+          return { heal: 10, baseHeal: 10, selfDamage: 4, target: targets[0] };
         },
       },
       {
         id: 'field_surgery', name: 'Field Surgery', unlockLevel: 2,
         cost: COST.combined(6, 2), target: TARGET.SINGLE_ALLY,
-        description: '2 dice totaling 6+. Heal ally for 18 HP.',
+        description: '2 dice totaling 6+. Heal ally for 16 HP.',
         execute(unit, targets, dice) {
-          return { heal: 18, baseHeal: 18, target: targets[0] };
+          return { heal: 16, baseHeal: 16, target: targets[0] };
         },
       },
       {
         id: 'poison_blade', name: 'Poison Blade', unlockLevel: 4,
         cost: COST.combined(4, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling 4+. Deals 8 damage.',
+        description: '2 dice totaling 4+. Deals 6 damage.',
         execute(unit, targets, dice) {
-          return { damage: 8, baseDamage: 8, target: targets[0] };
+          return { damage: 6, baseDamage: 6, target: targets[0] };
         },
       },
     ],
