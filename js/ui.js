@@ -1180,7 +1180,7 @@ class GameUI {
             replaceText = firstItem ? `Replaces: ${firstItem.name}` : '';
           }
           return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}">
-            Equip ${u.title}${replaceText ? `<span class="loot-replace">${replaceText}</span>` : ''}
+            Equip <span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>${replaceText ? `<span class="loot-replace">${replaceText}</span>` : ''}
           </button>`;
         }).join('');
 
@@ -1223,7 +1223,7 @@ class GameUI {
 
       return `<div class="equip-unit">
         <div class="equip-unit-header">
-          <span class="equip-unit-name">${u.title} ${u.name}</span>
+          <span class="equip-unit-name"><span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name}</span>
           <span class="equip-unit-xp">${skillCount}</span>
         </div>
         ${slotHtml}
@@ -1288,7 +1288,7 @@ class GameUI {
     eligible.forEach(u => {
       const btn = document.createElement('button');
       btn.className = 'btn-primary levelup-unit-btn';
-      btn.textContent = `${u.title} ${u.name} (${u.skills.length}/${u.allSkills.length} skills)`;
+      btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} (${u.skills.length}/${u.allSkills.length} skills)`;
       btn.addEventListener('click', () => this.showSkillChoices(u.index));
       content.appendChild(btn);
     });
@@ -1364,7 +1364,7 @@ class GameUI {
 
     html += this.engine.party.map(u => {
       return `<div class="run-complete-unit">
-        <span class="run-complete-unit-name">${u.title} ${u.name}</span>
+        <span class="run-complete-unit-name"><span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name}</span>
         <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
         <span class="run-complete-unit-level">${u.skills.length} skills</span>
       </div>`;
@@ -1414,7 +1414,7 @@ class GameUI {
 
     html += this.engine.party.map(u => {
       return `<div class="run-complete-unit">
-        <span class="run-complete-unit-name">${u.title} ${u.name}</span>
+        <span class="run-complete-unit-name"><span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name}</span>
         <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
         <span class="run-complete-unit-level">${u.skills.length} skills</span>
       </div>`;
@@ -1440,7 +1440,7 @@ class GameUI {
     const statusEl = document.getElementById('result-party-status');
     statusEl.innerHTML = this.engine.party.map(u =>
       `<div class="result-unit ${u.downed ? 'downed' : ''}">
-        ${u.name}: ${u.downed ? 'Fallen' : `${u.hp}/${u.maxHp} HP`}
+        <span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name}: ${u.downed ? 'Fallen' : `${u.hp}/${u.maxHp} HP`}
       </div>`
     ).join('');
 
