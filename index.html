@@ -39,17 +39,20 @@
         </div>
       </div>
 
-      <!-- Combat Log -->
-      <div id="combat-log">
-        <div id="log-content"></div>
-      </div>
-
       <!-- Dice Pool -->
       <div id="dice-area">
         <div id="phase-label">ROLL PHASE</div>
         <div id="dice-pool"></div>
-        <button id="btn-roll" class="btn-primary">Roll Dice</button>
-        <button id="btn-end-turn" class="btn-primary hidden">End Turn</button>
+        <div id="dice-actions">
+          <button id="btn-roll" class="btn-primary">Roll Dice</button>
+          <button id="btn-end-turn" class="btn-primary hidden">End Turn</button>
+        </div>
+      </div>
+
+      <!-- Combat Log (collapsed by default) -->
+      <button id="btn-log-toggle" class="log-toggle-btn">Log</button>
+      <div id="combat-log">
+        <div id="log-content"></div>
       </div>
 
       <!-- Party Area -->

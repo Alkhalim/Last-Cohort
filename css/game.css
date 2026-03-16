@@ -227,7 +227,34 @@ html, body {
   text-overflow: ellipsis;
 }
 
-/* --- HP Bars (shared) — main styles are below with drain animation --- */
+/* --- HP Bars (two-layer drain) --- */
+.hp-bar {
+  height: 5px;
+  background: #1a1a1a;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 2px;
+  position: relative;
+}
+
+.hp-drain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #cc8844;
+  border-radius: 3px;
+  transition: width 0.8s ease-in 0.3s;
+}
+
+.hp-fill {
+  height: 100%;
+  background: var(--red);
+  border-radius: 3px;
+  position: relative;
+  z-index: 1;
+  transition: width 0.15s ease-out;
+}
 
 .hp-fill.critical {
   background: var(--red-critical);
@@ -244,71 +271,53 @@ html, body {
   color: var(--text-dim);
 }
 
-/* --- Combat Log --- */
-#combat-log {
-  flex: 1;
-  min-height: 60px;
-  max-height: 120px;
-  overflow: hidden;
-  background: var(--bg-dark);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-#log-content {
-  height: 100%;
-  overflow-y: auto;
-  padding: 6px 10px;
-  scroll-behavior: smooth;
-}
-
-.log-line {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  padding: 1px 0;
-  line-height: 1.4;
-  border-bottom: 1px solid rgba(42, 46, 58, 0.3);
-}
-
-.log-line:last-child {
-  color: var(--text);
-}
-
-/* --- Dice Area --- */
+/* --- Dice Area (expanded) --- */
 #dice-area {
-  padding: 10px;
+  padding: 14px 10px;
   text-align: center;
   background: var(--bg-dark);
-  flex-shrink: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 140px;
 }
 
 #phase-label {
   font-family: 'Cinzel', serif;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--gold);
   letter-spacing: 0.15em;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 #dice-pool {
   display: flex;
   justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+#dice-actions {
+  display: flex;
   gap: 8px;
-  margin-bottom: 10px;
+  justify-content: center;
 }
 
 .die {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Cinzel', serif;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
   background: var(--die-bg);
   border: 2px solid var(--die-border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-bright);
   cursor: pointer;
   transition: all 0.15s;
@@ -323,8 +332,9 @@ html, body {
 
 .die.selected {
   border-color: var(--die-selected);
-  box-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
-  transform: translateY(-4px);
+  box-shadow: 0 0 14px rgba(201, 162, 39, 0.5);
+  transform: translateY(-5px);
+  background: #3a2e18;
 }
 
 .die.used {
@@ -332,10 +342,21 @@ html, body {
   border-color: transparent;
   color: #555;
   cursor: default;
+  opacity: 0.4;
 }
 
 .die.highlight {
   animation: die-highlight 0.8s;
+}
+
+.die.roll-in {
+  animation: die-roll-in 0.2s ease-out;
+}
+
+@keyframes die-roll-in {
+  0% { opacity: 0; transform: scale(0.3) rotateZ(-20deg); }
+  60% { opacity: 1; transform: scale(1.1) rotateZ(5deg); }
+  100% { opacity: 1; transform: scale(1) rotateZ(0); }
 }
 
 @keyframes die-highlight {
@@ -346,20 +367,20 @@ html, body {
 /* Die adjust buttons (Centurion passive) */
 .die-adjust {
   position: absolute;
-  top: -18px;
+  top: -20px;
   display: flex;
   gap: 2px;
 }
 
 .adjust-btn {
-  width: 18px;
-  height: 16px;
-  font-size: 0.65rem;
+  width: 20px;
+  height: 18px;
+  font-size: 0.7rem;
   font-weight: 700;
   background: var(--bg-card);
   color: var(--gold);
   border: 1px solid var(--gold-dim);
-  border-radius: 2px;
+  border-radius: 3px;
   cursor: pointer;
   padding: 0;
   line-height: 1;
@@ -368,6 +389,79 @@ html, body {
 .adjust-btn:active {
   background: var(--gold-dim);
   color: var(--bg-deep);
+}
+
+/* --- Dice hint --- */
+.dice-hint {
+  font-size: 0.68rem;
+  color: var(--gold);
+  margin-top: -4px;
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+}
+
+/* --- Combat Log (collapsed toggle) --- */
+.log-toggle-btn {
+  position: absolute;
+  top: 42px;
+  right: 8px;
+  z-index: 15;
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  padding: 4px 10px;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+}
+
+.log-toggle-btn:active {
+  background: var(--bg-card-hover);
+}
+
+#combat-log {
+  display: none;
+  position: absolute;
+  top: 38px;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  background: rgba(10, 10, 12, 0.95);
+  border-bottom: 1px solid var(--border);
+  z-index: 12;
+  overflow: hidden;
+  animation: log-slide 0.2s ease-out;
+}
+
+#combat-log.open {
+  display: block;
+}
+
+@keyframes log-slide {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#log-content {
+  height: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  scroll-behavior: smooth;
+}
+
+.log-line {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  padding: 2px 0;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(42, 46, 58, 0.2);
+}
+
+.log-line:last-child {
+  color: var(--text);
 }
 
 /* --- Party Area --- */
@@ -397,6 +491,10 @@ html, body {
   opacity: 0.4;
   border-color: var(--red);
   cursor: default;
+}
+
+.unit-card.acted {
+  opacity: 0.6;
 }
 
 .unit-card.targetable {
@@ -433,6 +531,7 @@ html, body {
   gap: 6px;
   align-items: center;
   margin-top: 2px;
+  flex-wrap: wrap;
 }
 
 .block-text {
@@ -447,24 +546,31 @@ html, body {
   letter-spacing: 0.05em;
 }
 
+.acted-text {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
 /* --- Skill Panel --- */
 #skill-panel {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  max-height: 55%;
+  max-height: 50%;
   background: var(--bg-dark);
   border-top: 2px solid var(--gold-dim);
   display: flex;
   flex-direction: column;
   z-index: 10;
-  animation: slide-up 0.2s ease-out;
+  animation: slide-up 0.15s ease-out;
 }
 
 @keyframes slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 #skill-panel.hidden {
@@ -475,7 +581,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -487,14 +593,7 @@ html, body {
 }
 
 #btn-close-skills {
-  width: 32px;
-  height: 32px;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 1.2rem;
-  cursor: pointer;
-  border-radius: 4px;
+  display: none; /* no close button — tapping another unit switches */
 }
 
 #skill-list {
@@ -510,7 +609,7 @@ html, body {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s;
-  min-height: 48px;
+  min-height: 44px;
 }
 
 .skill-btn:active:not(.disabled) {
@@ -518,21 +617,22 @@ html, body {
 }
 
 .skill-btn.disabled {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: default;
+  pointer-events: none;
 }
 
-.skill-btn.die-ready {
+/* Skill is staged (first click) — highlighted border */
+.skill-btn.staged {
+  border-color: var(--gold-dim);
+  background: rgba(201, 162, 39, 0.05);
+}
+
+/* Staged + dice are valid — ready to confirm */
+.skill-btn.confirm-ready {
   border-color: var(--gold);
-  background: rgba(201, 162, 39, 0.08);
-}
-
-.skill-btn.die-ready:active {
-  background: rgba(201, 162, 39, 0.15);
-}
-
-.skill-btn.multi-die {
-  border-color: var(--blue);
+  background: rgba(201, 162, 39, 0.12);
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.2);
 }
 
 .skill-name {
@@ -552,6 +652,20 @@ html, body {
   font-size: 0.68rem;
   color: var(--text-dim);
   line-height: 1.3;
+}
+
+.skill-confirm-hint {
+  font-size: 0.6rem;
+  color: var(--gold);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.skill-acted-msg {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  padding: 16px;
 }
 
 /* --- Result Screen --- */
@@ -607,33 +721,6 @@ html, body {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* --- Dice selection badge (multi-select) --- */
-.die-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 16px;
-  height: 16px;
-  background: var(--gold);
-  color: var(--bg-deep);
-  border-radius: 50%;
-  font-size: 0.55rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Inter', sans-serif;
-}
-
-/* --- Dice hint (selected count + sum) --- */
-.dice-hint {
-  font-size: 0.65rem;
-  color: var(--gold);
-  margin-top: -6px;
-  margin-bottom: 4px;
-  letter-spacing: 0.05em;
-}
-
 /* --- Enemy attack flash --- */
 .enemy-card.attacking {
   animation: enemy-attack 0.5s ease-out;
@@ -658,7 +745,7 @@ html, body {
 
 /* --- Damage number popup --- */
 .damage-popup {
-  position: absolute;
+  position: fixed;
   font-family: 'Cinzel', serif;
   font-size: 1.2rem;
   font-weight: 700;
@@ -684,35 +771,6 @@ html, body {
   100% { opacity: 0; transform: translateY(-40px); }
 }
 
-/* --- HP bar drain animation (two-layer) --- */
-.hp-bar {
-  height: 5px;
-  background: #1a1a1a;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 2px;
-  position: relative;
-}
-
-.hp-drain {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: #cc8844;
-  border-radius: 3px;
-  transition: width 0.8s ease-in 0.3s;
-}
-
-.hp-fill {
-  height: 100%;
-  background: var(--red);
-  border-radius: 3px;
-  position: relative;
-  z-index: 1;
-  transition: width 0.15s ease-out;
-}
-
 /* --- Scrollbar --- */
 ::-webkit-scrollbar {
   width: 4px;
@@ -729,11 +787,11 @@ html, body {
 
 /* --- Mobile adjustments --- */
 @media (max-height: 600px) {
-  #combat-log { max-height: 80px; }
-  .die { width: 42px; height: 42px; font-size: 1.1rem; }
+  #dice-area { min-height: 100px; padding: 8px; }
+  .die { width: 44px; height: 44px; font-size: 1.2rem; }
 }
 
 @media (min-width: 481px) {
-  .die { width: 56px; height: 56px; font-size: 1.5rem; }
+  .die { width: 58px; height: 58px; font-size: 1.6rem; }
   .enemy-card { max-width: 140px; }
 }

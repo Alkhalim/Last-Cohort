@@ -5,11 +5,13 @@
 class GameUI {
   constructor(engine) {
     this.engine = engine;
-    this.selectedDice = []; // array of die IDs for multi-select
-    this.selectedUnitIndex = null;
-    // Track previous HP for drain animation
+    this.selectedUnitIndex = 0; // default to first unit
+    this.stagedSkill = null;    // { skillId, diceIds[] } — skill clicked once, dice highlighted
     this.prevEnemyHp = {};
     this.prevUnitHp = {};
+    this.logOpen = false;
+    this.diceRevealed = 0;      // how many dice have been revealed so far
+    this.diceRevealTimer = null;
     this.init();
   }
 
@@ -28,13 +30,11 @@ class GameUI {
         this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
         break;
       case 'morale':
-        // Show morale change on the morale bar
         this.showDamagePopup('morale-bar', data.amount, 'morale');
         break;
     }
   }
 
-  // --- Screen management ---
   showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -47,8 +47,18 @@ class GameUI {
     this.renderDicePool();
     this.renderParty();
     this.renderPhaseUI();
-    this.renderLog();
     this.renderSkillPanel();
+  }
+
+  // --- Auto-select first alive unit if none selected ---
+  ensureUnitSelected() {
+    if (this.selectedUnitIndex !== null) {
+      const u = this.engine.party[this.selectedUnitIndex];
+      if (u && !u.downed && !u.actedThisTurn) return;
+    }
+    // Find first alive, non-acted unit
+    const idx = this.engine.party.findIndex(u => !u.downed && !u.actedThisTurn);
+    this.selectedUnitIndex = idx >= 0 ? idx : this.engine.party.findIndex(u => !u.downed);
   }
 
   // --- Morale ---
@@ -89,7 +99,6 @@ class GameUI {
         <div class="hp-text">${enemy.hp}/${enemy.maxHp}</div>
       `;
 
-      // Animate drain layer to match current HP after brief delay
       if (drainPct > hpPct) {
         requestAnimationFrame(() => {
           const drain = el.querySelector('.hp-drain');
@@ -101,14 +110,9 @@ class GameUI {
         el.addEventListener('click', () => this.onEnemyClick(enemy));
       }
 
-      if (enemy.row === 'front') {
-        frontSlots.appendChild(el);
-      } else {
-        backSlots.appendChild(el);
-      }
+      (enemy.row === 'front' ? frontSlots : backSlots).appendChild(el);
     });
 
-    // Hide back row if no back-row enemies exist (alive or dead)
     const backExists = this.engine.enemies.some(e => e.row === 'back');
     document.getElementById('enemy-row-back').classList.toggle('hidden', !backExists);
   }
@@ -121,6 +125,7 @@ class GameUI {
   onEnemyClick(enemy) {
     if (this.engine.targetMode && this.engine.targetMode.targetType === 'enemy') {
       this.engine.selectTarget(enemy);
+      this.stagedSkill = null;
     }
   }
 
@@ -129,8 +134,11 @@ class GameUI {
     const pool = document.getElementById('dice-pool');
     pool.innerHTML = '';
 
-    if (this.engine.phase === PHASE.ROLL || this.engine.phase === PHASE.PRE_COMBAT || this.engine.phase === PHASE.SPAWNING) {
-      for (let i = 0; i < 5; i++) {
+    // Remove old hints
+    document.querySelectorAll('.dice-hint').forEach(h => h.remove());
+
+    if (this.engine.phase === PHASE.PRE_COMBAT || this.engine.phase === PHASE.SPAWNING) {
+      for (let i = 0; i < this.engine.dicePool.count; i++) {
         const el = document.createElement('div');
         el.className = 'die empty';
         el.textContent = '?';
@@ -139,27 +147,39 @@ class GameUI {
       return;
     }
 
+    // Rolling phase: reveal dice one by one
+    if (this.engine.phase === PHASE.ROLLING) {
+      this.engine.dicePool.dice.forEach((die, i) => {
+        const el = document.createElement('div');
+        if (i < this.diceRevealed) {
+          el.className = 'die roll-in';
+          el.textContent = die.value;
+        } else {
+          el.className = 'die empty';
+          el.textContent = '?';
+        }
+        pool.appendChild(el);
+      });
+      return;
+    }
+
+    // Player turn: show all dice with staged highlighting
+    const stagedDiceIds = this.stagedSkill ? this.stagedSkill.diceIds : [];
+
     this.engine.dicePool.dice.forEach(die => {
-      const isSelected = this.selectedDice.includes(die.id);
+      const isStaged = stagedDiceIds.includes(die.id);
       const el = document.createElement('div');
-      el.className = `die${die.used ? ' used' : ''}${isSelected ? ' selected' : ''}`;
+      el.className = `die${die.used ? ' used' : ''}${isStaged ? ' selected' : ''}`;
       el.textContent = die.value;
       el.dataset.dieId = die.id;
 
-      // Show selection order badge for multi-select
-      if (isSelected && this.selectedDice.length > 1) {
-        const badge = document.createElement('span');
-        badge.className = 'die-badge';
-        badge.textContent = this.selectedDice.indexOf(die.id) + 1;
-        el.appendChild(badge);
+      if (!die.used && this.engine.phase === PHASE.PLAYER_TURN && this.stagedSkill) {
+        // In staged mode: click dice to swap them in/out of the staged set
+        el.addEventListener('click', () => this.onDieClickStaged(die));
       }
 
-      if (!die.used && this.engine.phase === PHASE.PLAYER_TURN) {
-        el.addEventListener('click', () => this.onDieClick(die));
-      }
-
-      // Adjust buttons for Centurion passive
-      if (!die.used && this.engine.canAdjustDie() && this.engine.phase === PHASE.PLAYER_TURN) {
+      // Centurion adjust buttons
+      if (!die.used && this.engine.canAdjustDie() && this.engine.phase === PHASE.PLAYER_TURN && !this.stagedSkill) {
         const adjustContainer = document.createElement('div');
         adjustContainer.className = 'die-adjust';
         if (die.value < 6) {
@@ -182,40 +202,54 @@ class GameUI {
       pool.appendChild(el);
     });
 
-    // Show selected dice count hint
-    if (this.selectedDice.length > 0) {
+    // Show staged dice hint
+    if (stagedDiceIds.length > 0) {
       const hint = document.createElement('div');
       hint.className = 'dice-hint';
-      const sum = this.selectedDice.reduce((s, id) => {
+      const sum = stagedDiceIds.reduce((s, id) => {
         const d = this.engine.dicePool.dice.find(x => x.id === id);
         return s + (d ? d.value : 0);
       }, 0);
-      hint.textContent = `${this.selectedDice.length} dice selected (sum: ${sum})`;
+      const skill = this.stagedSkill ? this.engine.party[this.selectedUnitIndex].skills.find(s => s.id === this.stagedSkill.skillId) : null;
+      hint.textContent = skill ? `${skill.name}: ${stagedDiceIds.length} dice (sum: ${sum}) — tap skill to confirm` : '';
       pool.parentElement.insertBefore(hint, pool.nextSibling);
     }
-    // Remove old hints
-    const oldHint = document.querySelector('.dice-hint');
-    if (oldHint && this.selectedDice.length === 0) oldHint.remove();
   }
 
-  onDieClick(die) {
-    if (die.used) return;
-    const idx = this.selectedDice.indexOf(die.id);
+  onDieClickStaged(die) {
+    if (!this.stagedSkill || die.used) return;
+    const idx = this.stagedSkill.diceIds.indexOf(die.id);
+    const skill = this.engine.party[this.selectedUnitIndex].skills.find(s => s.id === this.stagedSkill.skillId);
+    const neededDice = skill.cost.dice;
+
     if (idx >= 0) {
-      // Deselect
-      this.selectedDice.splice(idx, 1);
+      // Deselect this die
+      this.stagedSkill.diceIds.splice(idx, 1);
     } else {
-      // Select (add to selection)
-      this.selectedDice.push(die.id);
+      // If at capacity, remove oldest and add new
+      if (this.stagedSkill.diceIds.length >= neededDice) {
+        this.stagedSkill.diceIds.shift();
+      }
+      this.stagedSkill.diceIds.push(die.id);
     }
     this.render();
   }
 
-  clearDiceSelection() {
-    this.selectedDice = [];
-    // Remove hint if present
-    const hint = document.querySelector('.dice-hint');
-    if (hint) hint.remove();
+  // Dice reveal animation for rolling phase
+  startDiceReveal() {
+    this.diceRevealed = 0;
+    this.render();
+    const revealNext = () => {
+      if (this.diceRevealed >= this.engine.dicePool.count) {
+        // All revealed
+        setTimeout(() => this.engine.onDiceRevealed(), 200);
+        return;
+      }
+      this.diceRevealed++;
+      this.render();
+      setTimeout(revealNext, 120);
+    };
+    setTimeout(revealNext, 300);
   }
 
   // --- Party ---
@@ -226,7 +260,8 @@ class GameUI {
     this.engine.party.forEach((unit, i) => {
       const el = document.createElement('div');
       const isTargetable = this.engine.targetMode && this.engine.targetMode.targetType === 'ally' && !unit.downed;
-      el.className = `unit-card${unit.downed ? ' downed' : ''}${this.selectedUnitIndex === i ? ' selected' : ''}${isTargetable ? ' targetable' : ''}`;
+      const isSelected = this.selectedUnitIndex === i;
+      el.className = `unit-card${unit.downed ? ' downed' : ''}${isSelected ? ' selected' : ''}${isTargetable ? ' targetable' : ''}${unit.actedThisTurn ? ' acted' : ''}`;
       el.id = `unit-${i}`;
 
       const hpPct = (unit.hp / unit.maxHp) * 100;
@@ -247,10 +282,10 @@ class GameUI {
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
           ${unit.block > 0 ? `<span class="block-text">Block: ${unit.block}</span>` : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
+          ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
         </div>
       `;
 
-      // Animate drain
       if (drainPct > hpPct) {
         requestAnimationFrame(() => {
           const drain = el.querySelector('.hp-drain');
@@ -258,10 +293,13 @@ class GameUI {
         });
       }
 
-      if (!unit.downed && this.engine.phase === PHASE.PLAYER_TURN) {
+      if (this.engine.phase === PHASE.PLAYER_TURN) {
         if (isTargetable) {
-          el.addEventListener('click', () => this.engine.selectTarget(unit));
-        } else {
+          el.addEventListener('click', () => {
+            this.engine.selectTarget(unit);
+            this.stagedSkill = null;
+          });
+        } else if (!unit.downed) {
           el.addEventListener('click', () => this.onUnitClick(i));
         }
       }
@@ -272,11 +310,8 @@ class GameUI {
 
   onUnitClick(unitIndex) {
     if (this.engine.targetMode) return;
-    if (this.selectedUnitIndex === unitIndex) {
-      this.selectedUnitIndex = null;
-    } else {
-      this.selectedUnitIndex = unitIndex;
-    }
+    this.selectedUnitIndex = unitIndex;
+    this.stagedSkill = null; // clear staged skill when switching units
     this.render();
   }
 
@@ -286,87 +321,94 @@ class GameUI {
     const list = document.getElementById('skill-list');
     const nameEl = document.getElementById('skill-unit-name');
 
-    if (this.selectedUnitIndex === null || this.engine.phase !== PHASE.PLAYER_TURN) {
+    if (this.engine.phase !== PHASE.PLAYER_TURN) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    // Auto-select a unit if needed
+    this.ensureUnitSelected();
+
+    if (this.selectedUnitIndex === null || this.selectedUnitIndex < 0) {
       panel.classList.add('hidden');
       return;
     }
 
     const unit = this.engine.party[this.selectedUnitIndex];
-    if (unit.downed) {
+    if (!unit || unit.downed) {
       panel.classList.add('hidden');
       return;
     }
 
     panel.classList.remove('hidden');
-    nameEl.textContent = `${unit.name} — Skills`;
+
+    if (unit.actedThisTurn) {
+      nameEl.textContent = `${unit.name} — Done`;
+      list.innerHTML = '<div class="skill-acted-msg">This unit has already acted this turn.</div>';
+      return;
+    }
+
+    nameEl.textContent = `${unit.name}`;
     list.innerHTML = '';
 
     const skills = this.engine.getValidSkills(this.selectedUnitIndex);
-    const selectedCount = this.selectedDice.length;
 
     skills.forEach(skill => {
       const el = document.createElement('div');
-      el.className = `skill-btn${skill.canUse ? '' : ' disabled'}`;
+      const isStaged = this.stagedSkill && this.stagedSkill.skillId === skill.id;
 
-      // Check if currently selected dice satisfy this skill's cost
-      let diceMatch = false;
-      if (selectedCount > 0 && skill.canUse && selectedCount === skill.cost.dice) {
-        diceMatch = this.engine.dicePool.canPayCost(skill.cost, this.selectedDice);
+      // Check if staged dice are valid for confirmation
+      let canConfirm = false;
+      if (isStaged) {
+        canConfirm = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
       }
+
+      el.className = `skill-btn${skill.canUse ? '' : ' disabled'}${isStaged ? ' staged' : ''}${canConfirm ? ' confirm-ready' : ''}`;
 
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span></div>
         <div class="skill-desc">${skill.description}</div>
+        ${canConfirm ? '<div class="skill-confirm-hint">Tap to confirm</div>' : ''}
       `;
 
-      if (diceMatch) {
-        // Selected dice match — tap to activate
-        el.classList.add('die-ready');
-        el.addEventListener('click', () => {
-          const diceIds = [...this.selectedDice];
-          this.engine.beginSkillTarget(this.selectedUnitIndex, skill.id, diceIds);
-          this.clearDiceSelection();
-          this.selectedUnitIndex = null;
-        });
-      } else if (skill.canUse) {
-        // Skill is usable but dice don't match yet — highlight valid dice
-        el.addEventListener('click', () => this.highlightValidDice(skill));
+      if (skill.canUse) {
+        el.addEventListener('click', () => this.onSkillClick(skill, isStaged, canConfirm));
       }
 
       list.appendChild(el);
     });
-
-    // Close button
-    document.getElementById('btn-close-skills').onclick = () => {
-      this.selectedUnitIndex = null;
-      this.render();
-    };
   }
 
-  highlightValidDice(skill) {
-    const available = this.engine.dicePool.getAvailable();
-    if (skill.cost.dice === 1) {
-      // Highlight individual valid dice
-      available.forEach(d => {
-        if (this.engine.dicePool.canPayCost(skill.cost, [d.id])) {
-          const el = document.querySelector(`.die[data-die-id="${d.id}"]`);
-          if (el) {
-            el.classList.add('highlight');
-            setTimeout(() => el.classList.remove('highlight'), 800);
-          }
-        }
-      });
+  onSkillClick(skill, isStaged, canConfirm) {
+    if (isStaged && canConfirm) {
+      // Second click with valid dice — execute!
+      const diceIds = [...this.stagedSkill.diceIds];
+      const unitIndex = this.selectedUnitIndex;
+      this.stagedSkill = null;
+      this.engine.beginSkillTarget(unitIndex, skill.id, diceIds);
+      // Auto-advance to next non-acted unit
+      this.autoAdvanceUnit();
+    } else if (isStaged && !canConfirm) {
+      // Staged but dice swapped to invalid — unstage
+      this.stagedSkill = null;
+      this.render();
     } else {
-      // For multi-die skills, flash all unused dice as a hint
-      available.forEach(d => {
-        const el = document.querySelector(`.die[data-die-id="${d.id}"]`);
-        if (el) {
-          el.classList.add('highlight');
-          setTimeout(() => el.classList.remove('highlight'), 800);
-        }
-      });
-      this.engine.addLog(`Select ${skill.cost.dice} dice for ${skill.name} (${skill.cost.label}).`);
-      this.renderLog();
+      // First click — auto-pick dice and stage
+      const autoDice = this.engine.autoPick(skill);
+      if (autoDice.length > 0) {
+        this.stagedSkill = { skillId: skill.id, diceIds: autoDice };
+      } else {
+        this.stagedSkill = { skillId: skill.id, diceIds: [] };
+      }
+      this.render();
+    }
+  }
+
+  autoAdvanceUnit() {
+    // Move to next unit that hasn't acted
+    const next = this.engine.party.findIndex(u => !u.downed && !u.actedThisTurn);
+    if (next >= 0) {
+      this.selectedUnitIndex = next;
     }
   }
 
@@ -375,6 +417,7 @@ class GameUI {
     const phaseLabel = document.getElementById('phase-label');
     const rollBtn = document.getElementById('btn-roll');
     const endBtn = document.getElementById('btn-end-turn');
+    const logToggle = document.getElementById('btn-log-toggle');
 
     rollBtn.classList.add('hidden');
     endBtn.classList.add('hidden');
@@ -389,11 +432,12 @@ class GameUI {
       case PHASE.SPAWNING:
         phaseLabel.textContent = 'ENEMIES APPEAR...';
         break;
-      case PHASE.ROLL:
-        phaseLabel.textContent = `TURN ${this.engine.turn} — ROLL`;
-        rollBtn.classList.remove('hidden');
-        rollBtn.textContent = 'Roll Dice';
-        rollBtn.onclick = () => this.engine.rollDice();
+      case PHASE.ROLLING:
+        phaseLabel.textContent = `TURN ${this.engine.turn}`;
+        // Start dice reveal animation
+        if (this.diceRevealed === 0) {
+          this.startDiceReveal();
+        }
         break;
       case PHASE.PLAYER_TURN:
         if (this.engine.targetMode) {
@@ -401,12 +445,12 @@ class GameUI {
           phaseLabel.textContent = `SELECT TARGET FOR ${tm.skill.name.toUpperCase()}`;
           endBtn.classList.remove('hidden');
           endBtn.textContent = 'Cancel';
-          endBtn.onclick = () => { this.engine.cancelTarget(); this.clearDiceSelection(); };
+          endBtn.onclick = () => { this.engine.cancelTarget(); this.stagedSkill = null; };
         } else {
-          phaseLabel.textContent = `TURN ${this.engine.turn} — ASSIGN DICE`;
+          phaseLabel.textContent = `TURN ${this.engine.turn}`;
           endBtn.classList.remove('hidden');
           endBtn.textContent = 'End Turn';
-          endBtn.onclick = () => { this.clearDiceSelection(); this.engine.endPlayerTurn(); };
+          endBtn.onclick = () => { this.stagedSkill = null; this.engine.endPlayerTurn(); };
         }
         break;
       case PHASE.ENEMY_TURN:
@@ -425,18 +469,25 @@ class GameUI {
         endBtn.onclick = () => this.onDefeat();
         break;
     }
+
+    // Log toggle button
+    logToggle.onclick = () => this.toggleLog();
   }
 
-  // --- Combat Log ---
+  // --- Combat Log (toggle) ---
+  toggleLog() {
+    this.logOpen = !this.logOpen;
+    const logEl = document.getElementById('combat-log');
+    logEl.classList.toggle('open', this.logOpen);
+    if (this.logOpen) {
+      this.renderLog();
+    }
+  }
+
   renderLog() {
     const content = document.getElementById('log-content');
     content.innerHTML = this.engine.log.map(l => `<div class="log-line">${l}</div>`).join('');
     content.scrollTop = content.scrollHeight;
-  }
-
-  addLog(text) {
-    this.engine.addLog(text);
-    this.renderLog();
   }
 
   // --- Visual effects ---
