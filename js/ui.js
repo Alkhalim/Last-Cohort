@@ -755,6 +755,10 @@ class GameUI {
     this.renderMapPartyBar();
     this.renderMapMorale();
     this.renderMap();
+    // Resume gameplay music if coming back from boss
+    if (window.game && window.game.musicMode === 'boss') {
+      window.game.resumeGameplayMusic();
+    }
   }
 
   renderMapPartyBar() {
@@ -902,6 +906,7 @@ class GameUI {
     if (node.type === 'combat') {
       this.startCombatNode(node);
     } else if (node.type === 'boss') {
+      window.game.startBossMusic();
       this.startCombatNode(node);
     } else if (node.type === 'event') {
       this.startEventNode(node);
