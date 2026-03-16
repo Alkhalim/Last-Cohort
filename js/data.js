@@ -319,6 +319,52 @@ const ENEMY_DATA = {
       { name: 'Frenzy', damage: 8, chance: 0.2, text: 'attacks in a frenzy', aoe: true },
     ],
   },
+  // --- Caster: morale-focused back-row enemy ---
+  bog_seer: {
+    id: 'bog_seer',
+    name: 'Bog Seer',
+    maxHp: 10, row: 'back',
+    damage: [2, 3], speed: 1, xpValue: 5,
+    description: 'A hunched figure draped in moss, chanting from the treeline. Attacks the mind.',
+    ai: 'sniper',
+    actions: [
+      { name: 'Curse of Dread', damage: 0, morale: -10, chance: 0.4, text: 'chants a dreadful curse' },
+      { name: 'Marsh Hex', damage: 3, morale: -5, chance: 0.3, text: 'hurls a hex of swamp fire', ignoreRow: true },
+      { name: 'Wail of the Dead', damage: 0, morale: -15, chance: 0.2, text: 'screams with the voices of the dead' },
+      { name: 'Bone Shard', damage: 5, chance: 0.1, text: 'flings a shard of bone', ignoreRow: true },
+    ],
+  },
+  // --- Mini-boss: elite front-row warrior ---
+  oak_shield: {
+    id: 'oak_shield',
+    name: 'Oak Shield',
+    maxHp: 35, row: 'front',
+    damage: [6, 10], speed: 1, xpValue: 10,
+    isElite: true,
+    description: 'A massive warrior carrying a shield hewn from a single oak. Commands respect and fear.',
+    ai: 'aggressive',
+    actions: [
+      { name: 'Oak Smash', damage: 8, chance: 0.4, text: 'smashes with the great oak shield' },
+      { name: 'Shieldwall Charge', damage: 6, chance: 0.25, text: 'charges behind the oak shield', aoe: true },
+      { name: 'Rallying Roar', damage: 0, morale: -8, chance: 0.15, text: 'roars, rallying nearby warriors' },
+      { name: 'Crushing Overhead', damage: 12, chance: 0.2, text: 'brings a devastating overhead blow' },
+    ],
+  },
+  // --- Second boss ---
+  grove_witch: {
+    id: 'grove_witch',
+    name: 'Grove Witch',
+    maxHp: 45, row: 'back',
+    damage: [5, 10], speed: 1, xpValue: 22,
+    isBoss: true,
+    ai: 'boss',
+    actions: [
+      { name: 'Thorn Volley', damage: 5, chance: 0.3, text: 'sends a volley of blackened thorns', aoe: true },
+      { name: 'Soul Drain', damage: 7, morale: -8, chance: 0.25, text: 'drains the life and will from a soldier', ignoreRow: true },
+      { name: 'Swamp Call', damage: 0, morale: -15, chance: 0.2, text: 'calls upon the swamp spirits' },
+      { name: 'Root Grasp', damage: 9, chance: 0.25, text: 'commands roots to crush a soldier', ignoreRow: true },
+    ],
+  },
 };
 
 // --- Encounter templates ---
@@ -340,6 +386,11 @@ const BOSS_ENCOUNTERS = [
     enemies: ['arminius_champion', 'cheruscan_raider'],
     intro: "A towering Germanic champion steps from the treeline, flanked by his guard. The final test.",
   },
+  {
+    name: 'The Grove Witch',
+    enemies: ['grove_witch', 'bog_seer', 'marsh_wolf'],
+    intro: "The trees twist apart to reveal a figure wreathed in green flame. The forest itself fights against you.",
+  },
 ];
 
 // --- Encounter generation by threat level ---
@@ -348,6 +399,7 @@ function generateEncounterByThreat(threat) {
     const easy = [
       { name: 'Forest Scouts', enemies: ['cheruscan_raider', 'sling_hunter'], intro: 'A pair of scouts spot your column and attack.' },
       { name: 'Lone Wolves', enemies: ['marsh_wolf', 'marsh_wolf'], intro: 'Wolves slink from the undergrowth, hungry and desperate.' },
+      { name: 'Eerie Chanting', enemies: ['bog_seer', 'cheruscan_raider'], intro: 'Chanting drifts from the fog. A seer and his guard block your path.' },
     ];
     return easy[Math.floor(Math.random() * easy.length)];
   } else if (threat === 2) {
@@ -355,12 +407,17 @@ function generateEncounterByThreat(threat) {
       { name: 'Ambush on the Trail', enemies: ['cheruscan_raider', 'cheruscan_raider', 'sling_hunter'], intro: 'Shapes burst from the undergrowth \u2014 Germanic warriors block the path.' },
       { name: 'Raiding Party', enemies: ['cheruscan_raider', 'sling_hunter', 'sling_hunter'], intro: 'Stones whistle past. A raiding party has found your trail.' },
       { name: 'Wolf Pack', enemies: ['marsh_wolf', 'marsh_wolf', 'marsh_wolf'], intro: 'A whole wolf pack emerges from the fog. There is no retreat.' },
+      { name: 'Cursed Hollow', enemies: ['bog_seer', 'bog_seer', 'cheruscan_raider'], intro: 'Two seers stand in a hollow, their chanting shaking the air. A warrior guards them.' },
+      { name: 'Wolves and Whispers', enemies: ['marsh_wolf', 'marsh_wolf', 'bog_seer'], intro: 'Wolves circle in the mist while eerie chanting echoes from behind the trees.' },
     ];
     return mid[Math.floor(Math.random() * mid.length)];
   } else {
     const hard = [
       { name: 'The Clearing', enemies: ['cheruscan_raider', 'cheruscan_raider', 'marsh_wolf', 'sling_hunter'], intro: 'You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you.' },
       { name: 'War Band', enemies: ['cheruscan_raider', 'cheruscan_raider', 'cheruscan_raider', 'sling_hunter'], intro: 'A full war band charges from the trees. Prepare for a desperate fight.' },
+      { name: 'The Oak Shield', enemies: ['oak_shield', 'cheruscan_raider', 'sling_hunter'], intro: 'A massive warrior blocks the trail, oak shield raised. His warband flanks you.' },
+      { name: 'Ritual Guard', enemies: ['oak_shield', 'bog_seer', 'bog_seer'], intro: 'An elite warrior guards two seers performing a dark ritual. Stop them or be consumed.' },
+      { name: 'The Hunting Party', enemies: ['oak_shield', 'marsh_wolf', 'marsh_wolf'], intro: 'An elite warrior commands a pair of trained war wolves. They advance as one.' },
     ];
     return hard[Math.floor(Math.random() * hard.length)];
   }
@@ -525,6 +582,28 @@ const DROP_TABLES = {
     ],
   },
   arminius_champion: {
+    nothingChance: 0.0,
+    tiers: [
+      { chance: 1.0, items: BOSS_DROP_POOL },
+    ],
+  },
+  bog_seer: {
+    nothingChance: 0.30,
+    tiers: [
+      { chance: 0.40, items: ['herb_pouch', 'bone_needle_kit'] },
+      { chance: 0.20, items: ['woad_charm', 'fang_necklace'] },
+      { chance: 0.10, items: ['runic_stone'] },
+    ],
+  },
+  oak_shield: {
+    nothingChance: 0.10,
+    tiers: [
+      { chance: 0.40, items: ['iron_gladius', 'raider_shield', 'wolf_pelt'] },
+      { chance: 0.35, items: ['woad_charm', 'fang_necklace', 'hunters_cloak'] },
+      { chance: 0.15, items: ['chiefs_spear', 'runic_stone'] },
+    ],
+  },
+  grove_witch: {
     nothingChance: 0.0,
     tiers: [
       { chance: 1.0, items: BOSS_DROP_POOL },
