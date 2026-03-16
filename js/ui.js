@@ -33,15 +33,15 @@ class GameUI {
       const band = getMoraleBand(this.engine.morale);
       let effects = '';
       if (this.engine.morale >= 75) {
-        effects = 'Inspired: Slight damage and resistance bonuses. Command skills improved.';
+        effects = 'Inspired: +1 damage to all attacks. Command skills improved.';
       } else if (this.engine.morale >= 25) {
-        effects = 'Steady: Minor reliability bonus. Baseline performance.';
+        effects = 'Steady: Baseline performance. No modifiers.';
       } else if (this.engine.morale >= -24) {
         effects = 'Shaken: No major modifiers. Neutral state.';
       } else if (this.engine.morale >= -74) {
-        effects = 'Distressed: Softer defense. Higher vulnerability to fear and curses.';
+        effects = 'Distressed: Higher vulnerability to fear and curses.';
       } else {
-        effects = 'Broken: Severe vulnerability. Distorted enemy perception. Worse event outcomes.';
+        effects = 'Broken: -1 damage to all attacks. Worse event outcomes.';
       }
       tooltip.textContent = effects;
       tooltip.classList.remove('hidden');
@@ -492,7 +492,8 @@ class GameUI {
     const equipBlock = unit.equipBlock || 0;
     const equipHeal = unit.equipHeal || 0;
     const buffDmg = (unit.buffs || []).reduce((s, b) => s + (b.damage || 0), 0);
-    const totalBonusDmg = equipDmg + buffDmg;
+    const moraleDmg = this.engine.morale >= 75 ? 1 : this.engine.morale <= -75 ? -1 : 0;
+    const totalBonusDmg = equipDmg + buffDmg + moraleDmg;
 
     skills.forEach(skill => {
       const el = document.createElement('div');

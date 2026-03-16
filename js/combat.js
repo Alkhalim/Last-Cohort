@@ -380,9 +380,13 @@ class CombatEngine {
 
   applySkillResult(unit, skill, result) {
     const parts = [];
+    // Morale damage modifier: +1 at Inspired, -1 at Broken
+    let moraleDmg = 0;
+    if (this.morale >= 75) moraleDmg = 1;
+    else if (this.morale <= -75) moraleDmg = -1;
     // Consume buff damage only when actually dealing damage
     const buffDmg = (result.damage && result.target) ? this.consumeBuffDamage(unit) : 0;
-    const bonusDmg = buffDmg + (unit.equipDamage || 0);
+    const bonusDmg = buffDmg + (unit.equipDamage || 0) + moraleDmg;
     const bonusBlock = unit.equipBlock || 0;
     const bonusHeal = unit.equipHeal || 0;
 
