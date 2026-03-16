@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Last Cohort</title>
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+  <div id="game">
+    <!-- Title Screen -->
+    <div id="title-screen" class="screen active">
+      <div class="title-content">
+        <h1>LAST COHORT</h1>
+        <p class="subtitle">Teutoburg Forest, 9 AD</p>
+        <button id="btn-start" class="btn-primary">Begin March</button>
+      </div>
+    </div>
+
+    <!-- Combat Screen -->
+    <div id="combat-screen" class="screen">
+      <!-- Morale Bar -->
+      <div id="morale-bar">
+        <div id="morale-label">STEADY</div>
+        <div id="morale-track"><div id="morale-fill"></div></div>
+      </div>
+
+      <!-- Enemy Area -->
+      <div id="enemy-area">
+        <div id="enemy-row-back" class="enemy-row">
+          <div class="row-label">Back</div>
+          <div class="enemy-slots"></div>
+        </div>
+        <div id="enemy-row-front" class="enemy-row">
+          <div class="row-label">Front</div>
+          <div class="enemy-slots"></div>
+        </div>
+      </div>
+
+      <!-- Combat Log -->
+      <div id="combat-log">
+        <div id="log-content"></div>
+      </div>
+
+      <!-- Dice Pool -->
+      <div id="dice-area">
+        <div id="phase-label">ROLL PHASE</div>
+        <div id="dice-pool"></div>
+        <button id="btn-roll" class="btn-primary">Roll Dice</button>
+        <button id="btn-end-turn" class="btn-primary hidden">End Turn</button>
+      </div>
+
+      <!-- Party Area -->
+      <div id="party-area"></div>
+
+      <!-- Skill Panel (shown when a unit is selected) -->
+      <div id="skill-panel" class="hidden">
+        <div id="skill-panel-header">
+          <span id="skill-unit-name"></span>
+          <button id="btn-close-skills">&times;</button>
+        </div>
+        <div id="skill-list"></div>
+      </div>
+    </div>
+
+    <!-- Encounter Result Screen -->
+    <div id="result-screen" class="screen">
+      <div class="result-content">
+        <h2 id="result-title"></h2>
+        <p id="result-text"></p>
+        <div id="result-party-status"></div>
+        <button id="btn-next" class="btn-primary">Continue March</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/dice.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
