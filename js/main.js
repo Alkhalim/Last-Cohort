@@ -10,9 +10,28 @@ class Game {
     this.ui = new GameUI(this.engine);
     this.lifetimeRenown = this.loadLifetimeRenown();
     this.difficulty = 1;
-    this.marchCount = 0; // how many times we've gone deeper this run
+    this.marchCount = 0;
+    this.music = null;
+    this.musicStarted = false;
     this.showHomeScreen();
     this.bindStartScreen();
+  }
+
+  initMusic() {
+    if (this.music) return;
+    this.music = new Audio('assets/music.mp3');
+    this.music.loop = true;
+    this.music.volume = 0.35;
+  }
+
+  startMusic() {
+    if (this.musicStarted) return;
+    this.initMusic();
+    this.music.play().then(() => {
+      this.musicStarted = true;
+    }).catch(() => {
+      // Browser blocked autoplay — will retry on next interaction
+    });
   }
 
   loadLifetimeRenown() {
@@ -47,6 +66,7 @@ class Game {
 
   bindStartScreen() {
     document.getElementById('btn-start').addEventListener('click', () => {
+      this.startMusic();
       this.startNewRun();
     });
   }
