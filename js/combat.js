@@ -194,7 +194,7 @@ class CombatEngine {
     });
 
     // Morale decay — escalates each turn. Turn 1: -1, Turn 2: -2, etc.
-    const moraleDecay = Math.min(this.turn, 8); // caps at -8 per turn
+    const moraleDecay = this.turn; // no cap — scales indefinitely
     this.morale = Math.max(-100, this.morale - moraleDecay);
     if (moraleDecay > 0) {
       this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
