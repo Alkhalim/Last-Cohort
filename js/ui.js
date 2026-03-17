@@ -1067,6 +1067,7 @@ class GameUI {
   }
 
   startCombatNode(node) {
+    this.currentNodeThreat = node.threat || 1;
     this.engine.initEncounter(node.encounter);
     this.showScreen('combat-screen');
     this.selectedUnitIndex = null;
@@ -1361,17 +1362,38 @@ class GameUI {
     // Grant one skill pick after each combat encounter
     this.engine.grantSkillPick();
 
-    // Roll drops — filter to items at least one party member can use
-    this.pendingLoot = [];
+    // Roll drops — filter by usability and enforce rarity caps by threat
+    const allDrops = [];
     for (const enemyId of this.engine.killedEnemies) {
-      const isBossEnemy = ENEMY_DATA[enemyId] && ENEMY_DATA[enemyId].isBoss;
       const itemId = rollDrop(enemyId, this.engine.party);
       if (!itemId) continue;
       const item = getItemData(itemId);
       if (!item) continue;
-      // Only drop if someone in the party can equip it
       const canUse = this.engine.party.some(u => canEquipItem(u, item));
-      if (canUse) this.pendingLoot.push(itemId);
+      if (canUse) allDrops.push(itemId);
+    }
+
+    // Rarity caps by threat: easy=common only, mid=1 uncommon, hard=2 uncommon + 1 rare
+    const threat = this.currentNodeThreat || 1;
+    let maxUncommon = 0, maxRare = 0;
+    if (threat <= 1) { maxUncommon = 0; maxRare = 0; }
+    else if (threat === 2) { maxUncommon = 1; maxRare = 0; }
+    else { maxUncommon = 2; maxRare = 1; }
+    if (isBossVictory) { maxUncommon = 99; maxRare = 99; } // no cap for bosses
+
+    let uncommonCount = 0, rareCount = 0;
+    this.pendingLoot = [];
+    for (const itemId of allDrops) {
+      const item = getItemData(itemId);
+      if (!item) continue;
+      if (item.rarity === 'rare') {
+        if (rareCount >= maxRare) continue;
+        rareCount++;
+      } else if (item.rarity === 'uncommon') {
+        if (uncommonCount >= maxUncommon) continue;
+        uncommonCount++;
+      }
+      this.pendingLoot.push(itemId);
     }
 
     // Boss guaranteed rare drop if nothing dropped
@@ -1437,6 +1459,7 @@ class GameUI {
           </div>
           <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
           <div class="loot-item-desc">${item.description}</div>
+          ${item.special ? `<div class="loot-item-special">${item.special}</div>` : ''}
           <div class="loot-item-skip">Skip: +${{ common: 2, uncommon: 5, rare: 10 }[item.rarity] || 2} Renown</div>
           <div class="loot-equip-actions">${equipBtns}</div>
         `;
@@ -1527,6 +1550,7 @@ class GameUI {
       <div class="item-tooltip-name rarity-${item.rarity}">${item.name}</div>
       <div class="item-tooltip-meta">${item.slot} &middot; ${item.rarity} ${renderTagPips(item.classTags)}</div>
       <div class="item-tooltip-stats">${formatItemStats(item.stats)}</div>
+      ${item.special ? `<div class="item-tooltip-special">${item.special}</div>` : ''}
       <div class="item-tooltip-desc">${item.description}</div>
     `;
 

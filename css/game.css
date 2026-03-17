@@ -1503,6 +1503,24 @@ html, body {
   cursor: pointer;
 }
 
+.loot-item-special {
+  font-size: 0.68rem;
+  color: var(--gold);
+  font-style: italic;
+  margin-bottom: 4px;
+  padding: 3px 6px;
+  background: rgba(201, 162, 39, 0.06);
+  border-left: 2px solid var(--gold-dim);
+  border-radius: 2px;
+}
+
+.item-tooltip-special {
+  font-size: 0.68rem;
+  color: var(--gold);
+  font-style: italic;
+  margin-bottom: 4px;
+}
+
 .loot-item-skip {
   font-size: 0.6rem;
   color: var(--gold-dim);

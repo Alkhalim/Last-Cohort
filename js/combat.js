@@ -83,6 +83,13 @@ class CombatEngine {
       if (u.passive) u.passive.triggered = false;
       this.computeEquipmentStats(u);
     });
+
+    // Special: Arm Ring of Arminius — +10 morale at encounter start
+    if (this.partyHasItem('arm_ring_of_arminius')) {
+      this.morale = Math.min(100, this.morale + 10);
+      this.addLog('The Arm Ring of Arminius fills the men with defiance. (+10 Morale)');
+    }
+
     this.addLog(encounterDef.intro);
   }
 
@@ -194,11 +201,29 @@ class CombatEngine {
     });
 
     // Morale decay — escalates each turn. Turn 1: -1, Turn 2: -2, etc.
-    const moraleDecay = this.turn; // no cap — scales indefinitely
+    // Champion's Helm reduces decay by 1 per helm equipped
+    const helmReduction = this.party.filter(u => !u.downed && this.unitHasItem(u, 'champions_helm')).length;
+    const moraleDecay = Math.max(0, this.turn - helmReduction);
     this.morale = Math.max(-100, this.morale - moraleDecay);
     if (moraleDecay > 0) {
       this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
       if (this.onVisual) this.onVisual('morale', { amount: -moraleDecay });
+    }
+
+    // Special: Wicker Ash — enemies take 1 damage per ash equipped at start of turn
+    const wickerAshCount = this.party.filter(u => !u.downed && this.unitHasItem(u, 'wicker_ash')).length;
+    if (wickerAshCount > 0) {
+      this.enemies.forEach(e => {
+        if (!e.dead) {
+          e.hp = Math.max(0, e.hp - wickerAshCount);
+        }
+      });
+      this.addLog(`Wicker ash burns — all enemies take ${wickerAshCount} damage.`);
+      this.checkEnemyDeaths();
+      if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
+        this.triggerVictory();
+        return;
+      }
     }
 
     this.party.forEach(u => {
@@ -465,11 +490,13 @@ class CombatEngine {
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);
-      // Enemy block
+      // Enemy block (Warlord's Blade deals 2 extra damage to block)
       if (result.target.block && result.target.block > 0) {
-        const absorbed = Math.min(result.target.block, total);
+        let blockDmg = total;
+        if (this.unitHasItem(unit, 'warlords_blade')) blockDmg += 2;
+        const absorbed = Math.min(result.target.block, blockDmg);
         result.target.block -= absorbed;
-        total -= absorbed;
+        total -= Math.min(total, absorbed);
         if (absorbed > 0) parts.push(`${result.target.name}'s block absorbs ${absorbed}.`);
       }
       result.target.hp = Math.max(0, result.target.hp - total);
@@ -488,6 +515,11 @@ class CombatEngine {
       if (actual > 0 && this.onVisual) {
         this.onVisual('unitHeal', { unitIndex: result.target.index, amount: actual });
       }
+      // Special: Marsh Fang — healing clears 1 poison from target
+      if (this.unitHasItem(unit, 'marsh_fang') && result.target.poison > 0) {
+        result.target.poison = Math.max(0, result.target.poison - 1);
+        parts.push('Marsh Fang purges 1 poison.');
+      }
     }
     if (result.selfDamage) {
       unit.hp = Math.max(1, unit.hp - result.selfDamage);
@@ -503,6 +535,16 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: result.target.index, amount: totalBlock });
+      // Special: Oak Splinter — block skills grant +2 block to all other allies
+      if (this.unitHasItem(unit, 'oak_splinter')) {
+        this.party.forEach(u => {
+          if (!u.downed && u !== result.target) {
+            u.block = (u.block || 0) + 2;
+            if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: 2 });
+          }
+        });
+        parts.push('Oak Splinter spreads +2 Block to allies.');
+      }
     }
     if (result.taunt) {
       unit.taunt = true;
@@ -602,6 +644,8 @@ class CombatEngine {
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
           let moraleRestore = e.isBoss ? 35 : (baseHp > 10 ? 6 : 4);
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
+          // Special: Chieftain's Spear — +3 extra morale per kill
+          if (this.partyHasItem('chiefs_spear')) moraleRestore += 3;
           this.morale = Math.min(100, this.morale + moraleRestore);
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
@@ -877,7 +921,18 @@ class CombatEngine {
     }
   }
 
-  // --- Equipment (2 weapon, 2 armor, 3 trinket) ---
+  // --- Equipment helpers ---
+  unitHasItem(unit, itemId) {
+    for (const slot of ['weapon', 'armor', 'trinket']) {
+      if (unit.equipment[slot].includes(itemId)) return true;
+    }
+    return false;
+  }
+
+  partyHasItem(itemId) {
+    return this.party.some(u => !u.downed && this.unitHasItem(u, itemId));
+  }
+
   computeEquipmentStats(unit) {
     unit.equipDamage = 0;
     unit.equipBlock = 0;
