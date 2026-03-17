@@ -70,15 +70,47 @@ class Game {
     }
     try {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Lowpass filter
       this.lowpassFilter = this.audioCtx.createBiquadFilter();
       this.lowpassFilter.type = 'lowpass';
       this.lowpassFilter.frequency.value = 20000;
       this.lowpassFilter.Q.value = 0.7;
-      this.lowpassFilter.connect(this.audioCtx.destination);
+
+      // Convolver reverb (generated impulse response)
+      this.reverbNode = this.audioCtx.createConvolver();
+      this.reverbNode.buffer = this.createReverbImpulse(2.5, 3.0); // 2.5s decay, dark
+      this.reverbGain = this.audioCtx.createGain();
+      this.reverbGain.gain.value = 0; // starts dry (no reverb)
+
+      // Dry path: source → lowpass → destination
+      // Wet path: source → lowpass → reverb → reverbGain → destination
+      this.dryGain = this.audioCtx.createGain();
+      this.dryGain.gain.value = 1.0;
+
+      this.lowpassFilter.connect(this.dryGain);
+      this.dryGain.connect(this.audioCtx.destination);
+
+      this.lowpassFilter.connect(this.reverbNode);
+      this.reverbNode.connect(this.reverbGain);
+      this.reverbGain.connect(this.audioCtx.destination);
     } catch (e) {
       this.audioCtx = null;
       this.audioFilterActive = false;
     }
+  }
+
+  createReverbImpulse(duration, decay) {
+    const rate = this.audioCtx.sampleRate;
+    const length = rate * duration;
+    const buffer = this.audioCtx.createBuffer(2, length, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    return buffer;
   }
 
   connectTrackToFilter(audio) {
@@ -95,25 +127,39 @@ class Game {
 
   updateMoraleLowpass(morale) {
     if (this.audioFilterActive && this.lowpassFilter && this.audioCtx) {
-      // Web Audio API lowpass — stronger cutoff at low morale
+      const t = this.audioCtx.currentTime;
+
+      // Lowpass — stronger cutoff at low morale
       let freq;
       if (morale >= 50) freq = 20000;
-      else if (morale >= 0) freq = 4000 + (morale / 50) * 16000; // 4000 to 20000
-      else freq = 400 + ((morale + 100) / 100) * 3600; // 400 to 4000
-      this.lowpassFilter.frequency.setTargetAtTime(freq, this.audioCtx.currentTime, 0.8);
+      else if (morale >= 0) freq = 4000 + (morale / 50) * 16000;
+      else freq = 400 + ((morale + 100) / 100) * 3600;
+      this.lowpassFilter.frequency.setTargetAtTime(freq, t, 0.8);
 
-      // Boost volume to compensate for muffling — louder but duller
+      // Reverb — wet mix increases at low morale (cavernous, haunted)
+      if (this.reverbGain && this.dryGain) {
+        let wetAmount = 0;
+        let dryAmount = 1.0;
+        if (morale < 0) {
+          wetAmount = (Math.abs(morale) / 100) * 0.45; // up to 0.45 wet at -100
+          dryAmount = 1.0 - wetAmount * 0.3; // slight dry reduction
+        }
+        this.reverbGain.gain.setTargetAtTime(wetAmount, t, 0.8);
+        this.dryGain.gain.setTargetAtTime(dryAmount, t, 0.8);
+      }
+
+      // Volume boost to compensate for muffling
       if (this.currentTrack) {
         const baseVol = this.getMusicVolume();
         let volBoost = 1.0;
-        if (morale < 0) volBoost = 1.0 + (Math.abs(morale) / 100) * 0.6; // up to 1.6x at -100
+        if (morale < 0) volBoost = 1.0 + (Math.abs(morale) / 100) * 0.5;
         this.currentTrack.volume = Math.min(1.0, baseVol * volBoost);
       }
 
-      // Slow down playback slightly at low morale — eerie detuned feel
+      // Pitch down at low morale — subtle detune
       if (this.currentTrack) {
         let rate = 1.0;
-        if (morale < 0) rate = 1.0 - (Math.abs(morale) / 100) * 0.12; // down to 0.88x at -100
+        if (morale < 0) rate = 1.0 - (Math.abs(morale) / 100) * 0.06; // down to 0.94x at -100
         this.currentTrack.playbackRate = rate;
       }
     } else if (this.currentTrack) {
@@ -123,7 +169,7 @@ class Game {
       let rate = 1.0;
       if (morale < 0) {
         volMult = 1.0 + (Math.abs(morale) / 100) * 0.3; // slightly louder
-        rate = 1.0 - (Math.abs(morale) / 100) * 0.12; // slow down
+        rate = 1.0 - (Math.abs(morale) / 100) * 0.06; // subtle pitch-down
       }
       this.currentTrack.volume = Math.min(1.0, baseVol * volMult);
       this.currentTrack.playbackRate = rate;
