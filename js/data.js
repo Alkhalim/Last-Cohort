@@ -201,45 +201,27 @@ function buildDropTables(rawDropTables, bossPool) {
   return result;
 }
 
-// --- Load all game data from JSON files ---
-async function loadGameData() {
-  const [classesRes, enemiesRes, itemsRes, eventsRes, encountersRes, configRes] = await Promise.all([
-    fetch('data/classes.json'),
-    fetch('data/enemies.json'),
-    fetch('data/items.json'),
-    fetch('data/events.json'),
-    fetch('data/encounters.json'),
-    fetch('data/config.json'),
-  ]);
-
-  const [rawClasses, rawEnemies, rawItems, rawEvents, rawEncounters, rawConfig] = await Promise.all([
-    classesRes.json(),
-    enemiesRes.json(),
-    itemsRes.json(),
-    eventsRes.json(),
-    encountersRes.json(),
-    configRes.json(),
-  ]);
-
+// --- Load all game data from embedded globals (gamedata.js) ---
+function loadGameData() {
   // Build runtime data
-  CLASS_DATA = buildClassData(rawClasses);
-  ENEMY_DATA = rawEnemies;
-  ITEM_DATA = rawItems;
-  EVENT_DATA = rawEvents;
+  CLASS_DATA = buildClassData(RAW_CLASSES);
+  ENEMY_DATA = RAW_ENEMIES;
+  ITEM_DATA = RAW_ITEMS;
+  EVENT_DATA = RAW_EVENTS;
 
   // Config
-  MORALE_BANDS = rawConfig.moraleBands;
-  EQUIP_SLOTS = rawConfig.equipSlots;
-  BOSS_DROP_POOL = rawConfig.bossDropPool;
-  BASE_DICE_COUNT = rawConfig.baseDiceCount;
+  MORALE_BANDS = RAW_CONFIG.moraleBands;
+  EQUIP_SLOTS = RAW_CONFIG.equipSlots;
+  BOSS_DROP_POOL = RAW_CONFIG.bossDropPool;
+  BASE_DICE_COUNT = RAW_CONFIG.baseDiceCount;
 
   // Encounters
-  ENCOUNTERS = rawEncounters.templates;
-  BOSS_ENCOUNTERS = rawEncounters.bossEncounters;
-  _encounterThreatData = rawEncounters.threatLevels;
+  ENCOUNTERS = RAW_ENCOUNTERS.templates;
+  BOSS_ENCOUNTERS = RAW_ENCOUNTERS.bossEncounters;
+  _encounterThreatData = RAW_ENCOUNTERS.threatLevels;
 
   // Drop tables (resolve boss pool references)
-  DROP_TABLES = buildDropTables(rawEncounters.dropTables, BOSS_DROP_POOL);
+  DROP_TABLES = buildDropTables(RAW_ENCOUNTERS.dropTables, BOSS_DROP_POOL);
 }
 
 // --- Encounter generation by threat level ---
