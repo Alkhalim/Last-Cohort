@@ -4,6 +4,8 @@
 
 const RENOWN_STORAGE_KEY = 'lastCohort_renown';
 const SETTINGS_STORAGE_KEY = 'lastCohort_settings';
+const STATS_STORAGE_KEY = 'lastCohort_stats';
+const ACHIEVEMENTS_STORAGE_KEY = 'lastCohort_achievements';
 
 const MUSIC_MENU = 'assets/music.mp3';
 const MUSIC_GAMEPLAY = [
@@ -23,6 +25,8 @@ class Game {
     this.ui = new GameUI(this.engine);
     this.lifetimeRenown = this.loadLifetimeRenown();
     this.settings = this.loadSettings();
+    this.stats = this.loadStats();
+    this.achievements = this.loadAchievements();
     this.difficulty = 1;
     this.marchCount = 0;
 
@@ -376,6 +380,197 @@ class Game {
       soundVal.textContent = v + '%';
       this.setSoundVolume(v);
     });
+
+    // Stats & Achievements buttons
+    document.getElementById('btn-stats').addEventListener('click', () => this.showStatsScreen());
+    document.getElementById('btn-stats-back').addEventListener('click', () => this.showHomeScreen());
+    document.getElementById('btn-achievements').addEventListener('click', () => this.showAchievementsScreen());
+    document.getElementById('btn-achievements-back').addEventListener('click', () => this.showHomeScreen());
+  }
+
+  // --- Stats ---
+  loadStats() {
+    try {
+      const stored = localStorage.getItem(STATS_STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return { enemiesKilled: {}, totalDamageDealt: 0, totalHealingDone: 0, totalBlockGenerated: 0, totalDamageTaken: 0, totalMoraleRestored: 0, encountersWon: 0, bossesKilled: 0, runsCompleted: 0, runsLost: 0, highestDifficulty: 1 };
+  }
+
+  saveStats() {
+    try { localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(this.stats)); } catch (e) {}
+  }
+
+  trackEncounterStats() {
+    // Called after each combat victory
+    this.engine.party.forEach(u => {
+      this.stats.totalDamageDealt += u.stats.damageDealt || 0;
+      this.stats.totalHealingDone += u.stats.healingDone || 0;
+      this.stats.totalBlockGenerated += u.stats.blockGenerated || 0;
+      this.stats.totalDamageTaken += u.stats.damageTaken || 0;
+      this.stats.totalMoraleRestored += u.stats.moraleRestored || 0;
+    });
+    this.engine.killedEnemies.forEach(eid => {
+      this.stats.enemiesKilled[eid] = (this.stats.enemiesKilled[eid] || 0) + 1;
+    });
+    this.stats.encountersWon++;
+    if (this.engine.hasBossEnemy()) this.stats.bossesKilled++;
+    if (this.difficulty > this.stats.highestDifficulty) this.stats.highestDifficulty = this.difficulty;
+    this.saveStats();
+  }
+
+  trackRunEnd(victory) {
+    if (victory) this.stats.runsCompleted++;
+    else this.stats.runsLost++;
+    this.saveStats();
+    this.checkAchievements();
+  }
+
+  showStatsScreen() {
+    this.ui.showScreen('stats-screen');
+    const content = document.getElementById('stats-content');
+    const s = this.stats;
+
+    let html = '<div class="stats-section">';
+    html += `<div class="stats-row"><span>Encounters Won</span><span>${s.encountersWon}</span></div>`;
+    html += `<div class="stats-row"><span>Bosses Killed</span><span>${s.bossesKilled}</span></div>`;
+    html += `<div class="stats-row"><span>Runs Completed</span><span>${s.runsCompleted}</span></div>`;
+    html += `<div class="stats-row"><span>Runs Lost</span><span>${s.runsLost}</span></div>`;
+    html += `<div class="stats-row"><span>Highest March</span><span>${s.highestDifficulty}</span></div>`;
+    html += `<div class="stats-row"><span>Total Damage Dealt</span><span>${s.totalDamageDealt}</span></div>`;
+    html += `<div class="stats-row"><span>Total Healing Done</span><span>${s.totalHealingDone}</span></div>`;
+    html += `<div class="stats-row"><span>Total Block Generated</span><span>${s.totalBlockGenerated}</span></div>`;
+    html += `<div class="stats-row"><span>Total Damage Taken</span><span>${s.totalDamageTaken}</span></div>`;
+    html += `<div class="stats-row"><span>Total Morale Restored</span><span>${s.totalMoraleRestored}</span></div>`;
+    html += '</div>';
+
+    // Enemy kill counts
+    const enemyIds = Object.keys(s.enemiesKilled).sort((a, b) => s.enemiesKilled[b] - s.enemiesKilled[a]);
+    if (enemyIds.length > 0) {
+      html += '<div class="stats-section-title">ENEMIES SLAIN</div><div class="stats-section">';
+      enemyIds.forEach(eid => {
+        const data = ENEMY_DATA[eid];
+        const name = data ? data.name : eid;
+        html += `<div class="stats-row"><span>${name}</span><span>${s.enemiesKilled[eid]}</span></div>`;
+      });
+      html += '</div>';
+    }
+
+    content.innerHTML = html;
+  }
+
+  // --- Achievements ---
+  loadAchievements() {
+    try {
+      const stored = localStorage.getItem(ACHIEVEMENTS_STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return {};
+  }
+
+  saveAchievements() {
+    try { localStorage.setItem(ACHIEVEMENTS_STORAGE_KEY, JSON.stringify(this.achievements)); } catch (e) {}
+  }
+
+  checkAchievements() {
+    const s = this.stats;
+    const a = this.achievements;
+
+    // Boss kill achievements (3 kills each)
+    const bossIds = ['arminius_champion', 'grove_witch', 'silent_huntsman', 'mire_mother', 'bone_speaker'];
+    bossIds.forEach(bid => {
+      const key = 'boss_' + bid + '_x3';
+      if (!a[key] && (s.enemiesKilled[bid] || 0) >= 3) {
+        a[key] = true;
+        const data = ENEMY_DATA[bid];
+        this.addNotification(`Achievement: Defeated ${data ? data.name : bid} 3 times!`);
+      }
+    });
+
+    // Check party equipment for rare achievements (at run end)
+    if (this.engine && this.engine.party) {
+      // One hero with 3 rare items
+      const hasThreeRares = this.engine.party.some(u => {
+        let rareCount = 0;
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (id) { const item = getItemData(id); if (item && item.rarity === 'rare') rareCount++; }
+          });
+        }
+        return rareCount >= 3;
+      });
+      if (hasThreeRares && !a.hero_three_rares) {
+        a.hero_three_rares = true;
+        this.addNotification('Achievement: A hero equipped 3 rare items!');
+      }
+
+      // One hero with only rare items (all slots filled, all rare)
+      const hasOnlyRares = this.engine.party.some(u => {
+        let total = 0, rares = 0;
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (id) { total++; const item = getItemData(id); if (item && item.rarity === 'rare') rares++; }
+          });
+        }
+        return total >= 5 && rares === total;
+      });
+      if (hasOnlyRares && !a.hero_only_rares) {
+        a.hero_only_rares = true;
+        this.addNotification('Achievement: A hero equipped ONLY rare items!');
+      }
+
+      // Full party with only rare items
+      const allOnlyRares = this.engine.party.every(u => {
+        let total = 0, rares = 0;
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (id) { total++; const item = getItemData(id); if (item && item.rarity === 'rare') rares++; }
+          });
+        }
+        return total >= 5 && rares === total;
+      });
+      if (allOnlyRares && !a.party_all_rares) {
+        a.party_all_rares = true;
+        this.addNotification('Achievement: Entire party equipped with only rare items!');
+      }
+    }
+
+    this.saveAchievements();
+  }
+
+  addNotification(text) {
+    // Simple log for now — could be a toast popup later
+    console.log('[ACHIEVEMENT] ' + text);
+  }
+
+  showAchievementsScreen() {
+    this.ui.showScreen('achievements-screen');
+    const content = document.getElementById('achievements-content');
+    const a = this.achievements;
+    const s = this.stats;
+
+    const ACHIEVEMENT_DEFS = [
+      { key: 'boss_arminius_champion_x3', name: "Champion Slayer", desc: "Defeat Arminius's Champion 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion'] || 0) + '/3' },
+      { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch'] || 0) + '/3' },
+      { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman'] || 0) + '/3' },
+      { key: 'boss_mire_mother_x3', name: "Beast Tamer", desc: "Defeat the Mire Mother 3 times.", progress: () => Math.min(3, s.enemiesKilled['mire_mother'] || 0) + '/3' },
+      { key: 'boss_bone_speaker_x3', name: "Silence the Dead", desc: "Defeat the Bone Speaker 3 times.", progress: () => Math.min(3, s.enemiesKilled['bone_speaker'] || 0) + '/3' },
+      { key: 'hero_three_rares', name: "Collector", desc: "Have one hero equipped with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
+      { key: 'hero_only_rares', name: "Gilded Warrior", desc: "Have one hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },
+      { key: 'party_all_rares', name: "Legion of Gold", desc: "Entire party equipped with only rare items.", progress: () => a.party_all_rares ? 'Done' : 'Not yet' },
+    ];
+
+    let html = '';
+    ACHIEVEMENT_DEFS.forEach(def => {
+      const unlocked = !!a[def.key];
+      html += `<div class="achievement-slot ${unlocked ? 'unlocked' : 'locked'}">
+        <div class="achievement-name">${unlocked ? '&#9733; ' : ''}${def.name}</div>
+        <div class="achievement-desc">${def.desc}</div>
+        <div class="achievement-progress">${def.progress()}</div>
+      </div>`;
+    });
+
+    content.innerHTML = html;
   }
 
   // --- Run management ---

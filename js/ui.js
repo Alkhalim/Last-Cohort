@@ -1501,6 +1501,9 @@ class GameUI {
       ? "Arminius's Champion lies defeated. The path is clear."
       : 'The enemy falls. You press deeper into the forest.';
 
+    // Track stats
+    if (window.game) window.game.trackEncounterStats();
+
     // Calculate renown for this encounter
     const renownEarned = this.engine.calculateRenown();
     this.engine.totalRenownEarned += renownEarned;
@@ -1886,6 +1889,7 @@ class GameUI {
   }
 
   showPostBossChoice() {
+    if (window.game) window.game.trackRunEnd(true);
     this.showScreen('run-complete-screen');
 
     const diff = window.game.difficulty || 1;
@@ -1940,6 +1944,7 @@ class GameUI {
   }
 
   showRunSummary(isVictory) {
+    if (window.game) window.game.trackRunEnd(false);
     this.showScreen('run-complete-screen');
 
     document.getElementById('run-complete-title').textContent = 'DEFEAT';

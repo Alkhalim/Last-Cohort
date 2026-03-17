@@ -2073,6 +2073,86 @@ html, body {
   display: none !important;
 }
 
+/* --- Stats Screen --- */
+#stats-screen,
+#achievements-screen {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #141820 50%, #1a1410 100%);
+  overflow-y: auto;
+}
+
+.stats-section {
+  margin-bottom: 16px;
+}
+
+.stats-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--gold-dim);
+  letter-spacing: 0.15em;
+  text-align: center;
+  margin: 12px 0 8px;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-bottom: 3px;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.stats-row span:last-child {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+/* --- Achievements --- */
+.achievement-slot {
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  opacity: 0.5;
+}
+
+.achievement-slot.unlocked {
+  opacity: 1;
+  border-color: var(--gold-dim);
+}
+
+.achievement-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 2px;
+}
+
+.achievement-slot.unlocked .achievement-name {
+  color: var(--gold);
+}
+
+.achievement-desc {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.achievement-progress {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+}
+
+.achievement-slot.unlocked .achievement-progress {
+  color: var(--gold-dim);
+}
+
 /* --- Level Up Screen --- */
 #levelup-screen {
   justify-content: center;
