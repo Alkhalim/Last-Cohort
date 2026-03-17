@@ -2215,6 +2215,52 @@ html, body {
   background: #0a0808;
 }
 
+/* Ensure text readability at low morale */
+#game.mood-distressed #morale-label,
+#game.mood-broken #morale-label {
+  color: var(--text-bright) !important;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+#game.mood-distressed .hp-text,
+#game.mood-broken .hp-text,
+#game.mood-distressed .unit-name,
+#game.mood-broken .unit-name,
+#game.mood-distressed .skill-name,
+#game.mood-broken .skill-name,
+#game.mood-distressed .skill-desc,
+#game.mood-broken .skill-desc,
+#game.mood-distressed .phase-label,
+#game.mood-broken .phase-label,
+#game.mood-distressed .log-line,
+#game.mood-broken .log-line,
+#game.mood-distressed .block-text,
+#game.mood-broken .block-text,
+#game.mood-distressed .poison-text,
+#game.mood-broken .poison-text,
+#game.mood-distressed .buff-text,
+#game.mood-broken .buff-text {
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+#game.mood-distressed #phase-label,
+#game.mood-broken #phase-label {
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+#game.mood-distressed .map-party-name,
+#game.mood-broken .map-party-name,
+#game.mood-distressed #map-title,
+#game.mood-broken #map-title,
+#game.mood-distressed #map-morale-label,
+#game.mood-broken #map-morale-label,
+#game.mood-distressed .summary-unit-name,
+#game.mood-broken .summary-unit-name,
+#game.mood-distressed .event-content,
+#game.mood-broken .event-content {
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
 /* Apply mood filter to combat content (not the overlay) */
 #game.mood-inspired .screen {
   filter: var(--mood-filter, none);

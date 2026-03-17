@@ -132,8 +132,8 @@ class Game {
       // Lowpass — stronger cutoff at low morale
       let freq;
       if (morale >= 50) freq = 20000;
-      else if (morale >= 0) freq = 4000 + (morale / 50) * 16000;
-      else freq = 400 + ((morale + 100) / 100) * 3600;
+      else if (morale >= 0) freq = 3000 + (morale / 50) * 17000;
+      else freq = 250 + ((morale + 100) / 100) * 2750;
       this.lowpassFilter.frequency.setTargetAtTime(freq, t, 0.8);
 
       // Reverb — wet mix increases at low morale (cavernous, haunted)
@@ -159,7 +159,7 @@ class Game {
       // Pitch down at low morale — subtle detune
       if (this.currentTrack) {
         let rate = 1.0;
-        if (morale < 0) rate = 1.0 - (Math.abs(morale) / 100) * 0.06; // down to 0.94x at -100
+        if (morale < 0) rate = 1.0 - (Math.abs(morale) / 100) * 0.04; // down to 0.96x at -100
         this.currentTrack.playbackRate = rate;
       }
     } else if (this.currentTrack) {
@@ -169,7 +169,7 @@ class Game {
       let rate = 1.0;
       if (morale < 0) {
         volMult = 1.0 + (Math.abs(morale) / 100) * 0.3; // slightly louder
-        rate = 1.0 - (Math.abs(morale) / 100) * 0.06; // subtle pitch-down
+        rate = 1.0 - (Math.abs(morale) / 100) * 0.04; // subtle pitch-down
       }
       this.currentTrack.volume = Math.min(1.0, baseVol * volMult);
       this.currentTrack.playbackRate = rate;
