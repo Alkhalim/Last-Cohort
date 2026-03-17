@@ -95,20 +95,38 @@ class Game {
 
   updateMoraleLowpass(morale) {
     if (this.audioFilterActive && this.lowpassFilter && this.audioCtx) {
-      // Web Audio API lowpass — full frequency control
+      // Web Audio API lowpass — stronger cutoff at low morale
       let freq;
       if (morale >= 50) freq = 20000;
-      else if (morale >= 0) freq = 8000 + (morale / 50) * 12000;
-      else freq = 800 + ((morale + 100) / 100) * 7200;
-      this.lowpassFilter.frequency.setTargetAtTime(freq, this.audioCtx.currentTime, 0.5);
+      else if (morale >= 0) freq = 4000 + (morale / 50) * 16000; // 4000 to 20000
+      else freq = 400 + ((morale + 100) / 100) * 3600; // 400 to 4000
+      this.lowpassFilter.frequency.setTargetAtTime(freq, this.audioCtx.currentTime, 0.8);
+
+      // Boost volume to compensate for muffling — louder but duller
+      if (this.currentTrack) {
+        const baseVol = this.getMusicVolume();
+        let volBoost = 1.0;
+        if (morale < 0) volBoost = 1.0 + (Math.abs(morale) / 100) * 0.6; // up to 1.6x at -100
+        this.currentTrack.volume = Math.min(1.0, baseVol * volBoost);
+      }
+
+      // Slow down playback slightly at low morale — eerie detuned feel
+      if (this.currentTrack) {
+        let rate = 1.0;
+        if (morale < 0) rate = 1.0 - (Math.abs(morale) / 100) * 0.12; // down to 0.88x at -100
+        this.currentTrack.playbackRate = rate;
+      }
     } else if (this.currentTrack) {
-      // Fallback: reduce volume at low morale to simulate muffling
+      // Fallback without Web Audio: volume + slowdown only
       const baseVol = this.getMusicVolume();
       let volMult = 1.0;
+      let rate = 1.0;
       if (morale < 0) {
-        volMult = 1.0 + (morale / 200); // at -100: 0.5x volume
+        volMult = 1.0 + (Math.abs(morale) / 100) * 0.3; // slightly louder
+        rate = 1.0 - (Math.abs(morale) / 100) * 0.12; // slow down
       }
-      this.currentTrack.volume = baseVol * Math.max(0.3, volMult);
+      this.currentTrack.volume = Math.min(1.0, baseVol * volMult);
+      this.currentTrack.playbackRate = rate;
     }
   }
 
