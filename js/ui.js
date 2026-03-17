@@ -151,26 +151,7 @@ class GameUI {
     const pct = (this.engine.morale + 100) / 200 * 100;
     fill.style.width = pct + '%';
 
-    // Apply mood class to #game container so it affects ALL screens
-    const gameEl = document.getElementById('game');
-    if (!gameEl) return;
-    const morale = this.engine.morale;
-    gameEl.classList.remove('mood-inspired', 'mood-steady', 'mood-shaken', 'mood-distressed', 'mood-broken');
-
-    if (morale >= 75) {
-      gameEl.classList.add('mood-inspired');
-    } else if (morale >= 25) {
-      gameEl.classList.add('mood-steady');
-    } else if (morale >= -24) {
-      gameEl.classList.add('mood-shaken');
-    } else if (morale >= -74) {
-      gameEl.classList.add('mood-distressed');
-    } else {
-      gameEl.classList.add('mood-broken');
-    }
-
-    // Update music lowpass filter based on morale
-    if (window.game) window.game.updateMoraleLowpass(morale);
+    this.updateMoodClass();
   }
 
   // --- Enemies ---
@@ -940,6 +921,23 @@ class GameUI {
     const band = getMoraleBand(this.engine.morale);
     label.textContent = `${band.label} (${this.engine.morale})`;
     label.style.color = band.color;
+
+    // Update mood class on #game for map/event/summary screens too
+    this.updateMoodClass();
+  }
+
+  updateMoodClass() {
+    const gameEl = document.getElementById('game');
+    if (!gameEl) return;
+    const morale = this.engine.morale;
+    gameEl.classList.remove('mood-inspired', 'mood-steady', 'mood-shaken', 'mood-distressed', 'mood-broken');
+    if (morale >= 75) gameEl.classList.add('mood-inspired');
+    else if (morale >= 25) gameEl.classList.add('mood-steady');
+    else if (morale >= -24) gameEl.classList.add('mood-shaken');
+    else if (morale >= -74) gameEl.classList.add('mood-distressed');
+    else gameEl.classList.add('mood-broken');
+
+    if (window.game) window.game.updateMoraleLowpass(morale);
   }
 
   renderMap() {

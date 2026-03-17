@@ -2157,7 +2157,7 @@ html, body {
 }
 
 /* --- Mood: Shaken (morale -24 to 24) --- */
-#combat-screen.mood-shaken {
+#game.mood-shaken {
   --mood-filter: saturate(0.85);
 }
 
@@ -2167,7 +2167,7 @@ html, body {
 }
 
 /* --- Mood: Distressed (morale -25 to -74) --- */
-#combat-screen.mood-distressed {
+#game.mood-distressed {
   --mood-filter: saturate(0.6);
 }
 
@@ -2186,7 +2186,7 @@ html, body {
 }
 
 /* --- Mood: Broken (morale -75 to -100) --- */
-#combat-screen.mood-broken {
+#game.mood-broken {
   --mood-filter: saturate(0.35) contrast(1.1);
 }
 
@@ -2216,31 +2216,19 @@ html, body {
 }
 
 /* Apply mood filter to combat content (not the overlay) */
-#combat-screen.mood-inspired #morale-bar,
-#combat-screen.mood-inspired #enemy-area,
-#combat-screen.mood-inspired #dice-area,
-#combat-screen.mood-inspired #bottom-section {
+#game.mood-inspired .screen {
   filter: var(--mood-filter, none);
 }
 
-#combat-screen.mood-shaken #morale-bar,
-#combat-screen.mood-shaken #enemy-area,
-#combat-screen.mood-shaken #dice-area,
-#combat-screen.mood-shaken #bottom-section {
+#game.mood-shaken .screen {
   filter: var(--mood-filter, none);
 }
 
-#combat-screen.mood-distressed #morale-bar,
-#combat-screen.mood-distressed #enemy-area,
-#combat-screen.mood-distressed #dice-area,
-#combat-screen.mood-distressed #bottom-section {
+#game.mood-distressed .screen {
   filter: var(--mood-filter, none);
 }
 
-#combat-screen.mood-broken #morale-bar,
-#combat-screen.mood-broken #enemy-area,
-#combat-screen.mood-broken #dice-area,
-#combat-screen.mood-broken #bottom-section {
+#game.mood-broken .screen {
   filter: var(--mood-filter, none);
 }
 
