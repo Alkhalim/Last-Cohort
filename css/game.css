@@ -1457,6 +1457,52 @@ html, body {
   margin-bottom: 8px;
 }
 
+/* --- Item tooltip on equipped items --- */
+.item-tooltip {
+  position: absolute;
+  z-index: 50;
+  background: rgba(10, 10, 12, 0.96);
+  border: 1px solid var(--border-highlight);
+  border-radius: 4px;
+  padding: 10px 12px;
+  max-width: 260px;
+  pointer-events: none;
+  animation: tooltip-in 0.15s ease-out;
+}
+
+.item-tooltip-name {
+  font-weight: 600;
+  font-size: 0.82rem;
+  margin-bottom: 3px;
+}
+
+.item-tooltip-name.rarity-common { color: var(--text-bright); }
+.item-tooltip-name.rarity-uncommon { color: var(--blue-bright); }
+.item-tooltip-name.rarity-rare { color: var(--gold); }
+
+.item-tooltip-meta {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  text-transform: capitalize;
+}
+
+.item-tooltip-stats {
+  font-size: 0.72rem;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.item-tooltip-desc {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.equip-slot-item[data-item-id] {
+  cursor: pointer;
+}
+
 .loot-item-skip {
   font-size: 0.6rem;
   color: var(--gold-dim);

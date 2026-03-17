@@ -74,9 +74,8 @@ class CombatEngine {
     this.targetMode = null;
     this.killedEnemies = [];
     this.party.forEach(u => {
-      u.block = 0;
+      // Preserve camp-granted block and buffs, only reset combat-specific state
       u.taunt = false;
-      u.buffs = [];
       u.poison = 0;
       u.passiveTriggered = false;
       u.actedThisTurn = false;
@@ -150,9 +149,7 @@ class CombatEngine {
     // Safety: check if all enemies already dead before starting new turn
     this.checkEnemyDeaths();
     if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
-      this.phase = PHASE.VICTORY;
-      this.addLog('All enemies defeated!');
-      this.update();
+      this.triggerVictory();
       return;
     }
 
@@ -171,9 +168,7 @@ class CombatEngine {
     });
     // Check if all enemies died to poison
     if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
-      this.phase = PHASE.VICTORY;
-      this.addLog('All enemies defeated!');
-      this.update();
+      this.triggerVictory();
       return;
     }
     // Poison tick on allies
@@ -413,9 +408,7 @@ class CombatEngine {
 
     this.checkEnemyDeaths();
     if (this.enemies.every(e => e.dead)) {
-      this.phase = PHASE.VICTORY;
-      this.addLog('All enemies defeated!');
-      this.update();
+      this.triggerVictory();
       return;
     }
 
@@ -583,6 +576,14 @@ class CombatEngine {
     return parts.join(' ');
   }
 
+  triggerVictory() {
+    this.phase = PHASE.VICTORY;
+    this.morale = Math.min(100, this.morale + 5);
+    this.addLog('All enemies defeated! (+5 Morale)');
+    if (this.onVisual) this.onVisual('morale', { amount: 5 });
+    this.update();
+  }
+
   checkEnemyDeaths() {
     // Loop until no new deaths — death effects can chain-kill other enemies
     let hadDeath = true;
@@ -597,8 +598,9 @@ class CombatEngine {
           this.totalEnemiesKilled++;
           this.addLog(`${e.name} falls!`);
 
-          // Morale restored on kill — bigger enemies give more
-          const moraleRestore = e.isBoss ? 12 : e.isElite ? 8 : 4;
+          // Morale restored on kill — based on enemy base maxHp
+          const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
+          const moraleRestore = e.isBoss ? 35 : baseHp > 10 ? 5 : 3;
           this.morale = Math.min(100, this.morale + moraleRestore);
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
@@ -645,6 +647,8 @@ class CombatEngine {
 
   // --- Enemy turn (sequential) ---
   executeEnemyTurn() {
+    // Clear enemy block at start of their turn
+    this.enemies.forEach(e => { if (!e.dead) e.block = 0; });
     const alive = this.enemies.filter(e => !e.dead);
     if (alive.length === 0) return;
     this.executeEnemySequence(alive, 0);
@@ -824,7 +828,8 @@ class CombatEngine {
         u.downed = true;
         u.hp = 0;
         this.addLog(`${u.name} is downed!`);
-        this.morale = Math.max(-100, this.morale - 15);
+        this.morale = Math.max(-100, this.morale - 20);
+        if (this.onVisual) this.onVisual('morale', { amount: -20 });
         const medicus = this.party.find(p => p.classId === 'medicus' && !p.downed && p !== u);
         if (medicus) {
           this.addLog('Field Triage: Medicus gains a free Bind Wounds.');
@@ -863,11 +868,10 @@ class CombatEngine {
     }
   }
 
-  // Grant one skill pick after each combat encounter
+  // Grant one skill pick after each combat encounter (always grants — HP if maxed)
   grantSkillPick() {
-    // Only if someone has unlearned skills
-    const hasUnlearned = this.party.some(u => this.getUnlearnedSkills(u).length > 0);
-    if (hasUnlearned) {
+    const hasAnyUse = this.party.some(u => !u.downed);
+    if (hasAnyUse) {
       this.pendingSkillPicks++;
     }
   }

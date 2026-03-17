@@ -626,12 +626,14 @@ class GameUI {
 
       el.className = `skill-btn${skill.canUse ? '' : ' disabled'}${isStaged ? ' staged' : ''}`;
 
-      // Build modified description showing bonuses
+      // Build modified description showing bonuses with itemized breakdown
       let desc = skill.description;
-      if (totalBonusDmg > 0) {
+
+      if (totalBonusDmg !== 0) {
         desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
-          const total = parseInt(base) + totalBonusDmg;
-          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}+${totalBonusDmg})</span>`;
+          const total = Math.max(0, parseInt(base) + totalBonusDmg);
+          const sign = totalBonusDmg > 0 ? '+' : '';
+          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}${sign}${totalBonusDmg})</span>`;
         });
       }
       if (equipBlock > 0) {
@@ -645,7 +647,6 @@ class GameUI {
         });
       }
       if (totalBonusHeal !== 0) {
-        // Match patterns like "Heal an ally for 3 HP", "heal 1 HP", "Heal all allies for 4 HP"
         desc = desc.replace(/[Hh]eal[^]*?(\d+) HP/g, (match, base) => {
           const total = Math.max(0, parseInt(base) + totalBonusHeal);
           const sign = totalBonusHeal > 0 ? '+' : '';
@@ -1180,31 +1181,108 @@ class GameUI {
   // ================================================================
 
   startRestNode(node) {
+    this.campActionsLeft = 2;
+    this.campLog = [];
+    this.showCampScreen();
+  }
+
+  showCampScreen() {
     this.showScreen('event-screen');
-    document.getElementById('event-title').textContent = 'Rest';
-    document.getElementById('event-intro').textContent = 'Your cohort finds a sheltered spot to rest. Wounds are tended, weapons sharpened, spirits lifted.';
-    document.getElementById('event-choices').innerHTML = '';
-    document.getElementById('event-outcome').classList.remove('hidden');
+    document.getElementById('event-title').textContent = `CAMP (${this.campActionsLeft} actions left)`;
 
-    // Heal all party 30% maxHP
-    let healed = false;
-    this.engine.party.forEach(u => {
-      if (!u.downed) {
-        const healAmt = Math.floor(u.maxHp * 0.3);
-        const before = u.hp;
-        u.hp = Math.min(u.maxHp, u.hp + healAmt);
-        if (u.hp > before) healed = true;
+    // Build intro with camp log
+    let introText = 'Your cohort finds a sheltered spot among the trees. The fire crackles low.';
+    if (this.campLog.length > 0) {
+      introText += '\n\n' + this.campLog.join('\n');
+    }
+    document.getElementById('event-intro').textContent = introText;
+    document.getElementById('event-intro').style.whiteSpace = 'pre-line';
+
+    const choicesEl = document.getElementById('event-choices');
+    choicesEl.innerHTML = '';
+    document.getElementById('event-outcome').classList.add('hidden');
+
+    if (this.campActionsLeft <= 0) {
+      // No actions left — show summary and continue
+      document.getElementById('event-title').textContent = 'CAMP — DAWN BREAKS';
+      document.getElementById('event-outcome').classList.remove('hidden');
+      document.getElementById('event-outcome-text').textContent = 'Your soldiers pack up and prepare to march.';
+      document.getElementById('btn-event-continue').onclick = () => {
+        this.showMapScreen();
+      };
+      return;
+    }
+
+    const campActions = [
+      {
+        name: 'Tend Wounds',
+        desc: 'Heal all soldiers for 15% max HP.',
+        action: () => {
+          this.engine.party.forEach(u => {
+            if (!u.downed) {
+              const amt = Math.floor(u.maxHp * 0.15);
+              u.hp = Math.min(u.maxHp, u.hp + amt);
+            }
+          });
+          this.campLog.push('Wounds were tended. (All healed 15% max HP)');
+        }
+      },
+      {
+        name: 'Rally the Men',
+        desc: 'Restore 15 Morale.',
+        action: () => {
+          this.engine.morale = Math.min(100, this.engine.morale + 15);
+          this.campLog.push('Words of courage by the fire. (+15 Morale)');
+        }
+      },
+      {
+        name: 'Sharpen Weapons',
+        desc: 'All soldiers gain +1 damage for next 2 attacks in the next fight.',
+        action: () => {
+          this.engine.party.forEach(u => {
+            if (!u.downed) u.buffs.push({ damage: 1, attacksLeft: 2 });
+          });
+          this.campLog.push('Blades sharpened to a fine edge. (+1 damage, 2 attacks)');
+        }
+      },
+      {
+        name: 'Fortify Position',
+        desc: 'All soldiers start the next fight with 4 Block.',
+        action: () => {
+          this.engine.party.forEach(u => {
+            if (!u.downed) u.block = (u.block || 0) + 4;
+          });
+          this.campLog.push('Makeshift barricades built. (+4 Block each)');
+        }
+      },
+      {
+        name: 'Stand Watch',
+        desc: 'Restore 8 Morale and heal 8% max HP.',
+        action: () => {
+          this.engine.morale = Math.min(100, this.engine.morale + 8);
+          this.engine.party.forEach(u => {
+            if (!u.downed) {
+              const amt = Math.floor(u.maxHp * 0.08);
+              u.hp = Math.min(u.maxHp, u.hp + amt);
+            }
+          });
+          this.campLog.push('A quiet watch. The men sleep a little easier. (+8 Morale, healed 8%)');
+        }
       }
+    ];
+
+    campActions.forEach(ca => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-event-choice';
+      btn.innerHTML = `<strong>${ca.name}</strong><br><span style="font-size:0.75rem;color:var(--text-dim)">${ca.desc}</span>`;
+      btn.addEventListener('click', () => {
+        ca.action();
+        this.campActionsLeft--;
+        this.updateMoodClass();
+        this.showCampScreen();
+      });
+      choicesEl.appendChild(btn);
     });
-
-    const text = healed
-      ? 'The rest does the cohort good. Everyone recovers some strength.'
-      : 'The cohort is already in good shape. The rest is brief but welcome.';
-    document.getElementById('event-outcome-text').textContent = text + ' (Party healed 30% max HP)';
-
-    document.getElementById('btn-event-continue').onclick = () => {
-      this.showMapScreen();
-    };
   }
 
   // ================================================================
@@ -1374,7 +1452,7 @@ class GameUI {
       const slotHtml = ['weapon', 'armor', 'trinket'].map(slot => {
         const items = u.equipment[slot].map((id, si) => {
           const item = id ? getItemData(id) : null;
-          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}">${item ? renderTagPips(item.classTags) + ' ' + item.name : '\u2014'}</span>`;
+          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}" ${item ? `data-item-id="${id}"` : ''}>${item ? renderTagPips(item.classTags) + ' ' + item.name : '\u2014'}</span>`;
         }).join(', ');
         return `<div class="equip-slot-row">
           <span class="equip-slot-label">${slot} (${EQUIP_SLOTS[slot]})</span>
@@ -1390,6 +1468,19 @@ class GameUI {
         ${slotHtml}
       </div>`;
     }).join('');
+
+    // Bind item tooltips on equipped items
+    equipListEl.querySelectorAll('.equip-slot-item[data-item-id]').forEach(el => {
+      const itemId = el.dataset.itemId;
+      el.addEventListener('mouseenter', (e) => this.showItemTooltip(itemId, el));
+      el.addEventListener('mouseleave', () => this.hideItemTooltip());
+      let holdTimer = null;
+      el.addEventListener('touchstart', () => {
+        holdTimer = setTimeout(() => this.showItemTooltip(itemId, el), 300);
+      }, { passive: true });
+      el.addEventListener('touchend', () => { clearTimeout(holdTimer); this.hideItemTooltip(); });
+      el.addEventListener('touchcancel', () => { clearTimeout(holdTimer); this.hideItemTooltip(); });
+    });
 
     const afterLoot = () => {
       // Convert unpicked items to Renown
@@ -1416,6 +1507,34 @@ class GameUI {
     continueBtn.onclick = afterLoot;
   }
 
+  showItemTooltip(itemId, el) {
+    this.hideItemTooltip();
+    const item = getItemData(itemId);
+    if (!item) return;
+
+    const tooltip = document.createElement('div');
+    tooltip.id = 'item-tooltip';
+    tooltip.className = 'item-tooltip';
+    tooltip.innerHTML = `
+      <div class="item-tooltip-name rarity-${item.rarity}">${item.name}</div>
+      <div class="item-tooltip-meta">${item.slot} &middot; ${item.rarity} ${renderTagPips(item.classTags)}</div>
+      <div class="item-tooltip-stats">${formatItemStats(item.stats)}</div>
+      <div class="item-tooltip-desc">${item.description}</div>
+    `;
+
+    const rect = el.getBoundingClientRect();
+    const gameRect = document.getElementById('game').getBoundingClientRect();
+    tooltip.style.left = Math.max(4, rect.left - gameRect.left) + 'px';
+    tooltip.style.bottom = (gameRect.bottom - rect.top + 4) + 'px';
+
+    document.getElementById('loot-screen').appendChild(tooltip);
+  }
+
+  hideItemTooltip() {
+    const existing = document.getElementById('item-tooltip');
+    if (existing) existing.remove();
+  }
+
   equipLootItem(lootIndex, unitIndex) {
     const itemId = this.pendingLoot[lootIndex];
     if (!itemId) return;
@@ -1439,26 +1558,42 @@ class GameUI {
     const content = document.getElementById('levelup-content');
     const title = document.getElementById('levelup-title');
     const desc = document.getElementById('levelup-desc');
+    const MAX_SKILLS = 5;
 
-    title.textContent = 'NEW SKILL';
-    desc.textContent = 'Choose a soldier to learn a new skill.';
+    title.textContent = 'TRAINING';
+    desc.textContent = 'Choose a soldier to train.';
 
-    // Show units that have unlearned skills
-    const eligible = this.engine.party.filter(u => !u.downed && this.engine.getUnlearnedSkills(u).length > 0);
+    const alive = this.engine.party.filter(u => !u.downed);
 
-    if (eligible.length === 0) {
-      // Everyone has all skills — skip
+    if (alive.length === 0) {
       this.engine.pendingSkillPicks = 0;
       this.afterLevelUps();
       return;
     }
 
     content.innerHTML = '';
-    eligible.forEach(u => {
+    alive.forEach(u => {
+      const canLearn = u.skills.length < MAX_SKILLS && this.engine.getUnlearnedSkills(u).length > 0;
       const btn = document.createElement('button');
       btn.className = 'btn-primary levelup-unit-btn';
-      btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} (${u.skills.length}/${u.allSkills.length} skills)`;
-      btn.addEventListener('click', () => this.showSkillChoices(u.index));
+      if (canLearn) {
+        btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} (${u.skills.length}/${MAX_SKILLS} skills)`;
+        btn.addEventListener('click', () => this.showSkillChoices(u.index));
+      } else {
+        btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} — Toughen Up (+3 HP)`;
+        btn.addEventListener('click', () => {
+          u.maxHp += 3;
+          u.baseMaxHp += 3;
+          u.hp += 3;
+          this.engine.addLog(`${u.name} toughens up! (+3 max HP)`);
+          this.engine.pendingSkillPicks--;
+          if (this.engine.pendingSkillPicks > 0) {
+            this.showLevelUpScreen();
+          } else {
+            this.afterLevelUps();
+          }
+        });
+      }
       content.appendChild(btn);
     });
   }
@@ -1469,7 +1604,6 @@ class GameUI {
     const choices = this.engine.getSkillChoices(unit, 2);
 
     if (choices.length === 0) {
-      // No skills to learn — skip this unit
       this.showLevelUpScreen();
       return;
     }
@@ -1496,7 +1630,6 @@ class GameUI {
       content.appendChild(card);
     });
 
-    // Back button
     const backBtn = document.createElement('button');
     backBtn.className = 'btn-secondary';
     backBtn.textContent = 'Back';
