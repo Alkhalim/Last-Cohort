@@ -640,11 +640,12 @@ html, body {
   border-bottom: 1px solid var(--border);
 }
 
+/* phase-label base — overridden by dramatic rules below */
 #phase-label {
   font-family: 'Cinzel', serif;
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--gold);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
   margin-bottom: 12px;
 }
 
@@ -2037,6 +2038,381 @@ html, body {
 ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 2px;
+}
+
+/* ================================================================
+   SCREEN SHAKE
+   ================================================================ */
+
+@keyframes shake-small {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2px, 1px); }
+  20% { transform: translate(2px, -1px); }
+  30% { transform: translate(-1px, 2px); }
+  40% { transform: translate(1px, -1px); }
+  50% { transform: translate(-1px, 1px); }
+  60% { transform: translate(1px, 0); }
+  70% { transform: translate(-1px, -1px); }
+  80% { transform: translate(0, 1px); }
+  90% { transform: translate(1px, 0); }
+}
+
+@keyframes shake-medium {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-4px, 2px); }
+  20% { transform: translate(4px, -3px); }
+  30% { transform: translate(-3px, 4px); }
+  40% { transform: translate(3px, -2px); }
+  50% { transform: translate(-2px, 3px); }
+  60% { transform: translate(2px, -1px); }
+  70% { transform: translate(-1px, 2px); }
+  80% { transform: translate(1px, -1px); }
+  90% { transform: translate(-1px, 1px); }
+}
+
+@keyframes shake-heavy {
+  0%, 100% { transform: translate(0, 0); }
+  5% { transform: translate(-8px, 4px); }
+  10% { transform: translate(7px, -6px); }
+  15% { transform: translate(-6px, 7px); }
+  20% { transform: translate(8px, -4px); }
+  25% { transform: translate(-5px, 6px); }
+  30% { transform: translate(6px, -5px); }
+  40% { transform: translate(-4px, 3px); }
+  50% { transform: translate(3px, -3px); }
+  60% { transform: translate(-2px, 2px); }
+  70% { transform: translate(2px, -1px); }
+  80% { transform: translate(-1px, 1px); }
+  90% { transform: translate(1px, -1px); }
+}
+
+#combat-screen.shake-small {
+  animation: shake-small 0.3s ease-out;
+}
+
+#combat-screen.shake-medium {
+  animation: shake-medium 0.4s ease-out;
+}
+
+#combat-screen.shake-heavy {
+  animation: shake-heavy 0.5s ease-out;
+}
+
+/* ================================================================
+   COMBAT ATMOSPHERE OVERLAY (vignette + mood)
+   ================================================================ */
+
+#combat-atmosphere {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 30;
+  transition: box-shadow 1.2s ease, background 1.2s ease;
+}
+
+/* --- Mood: Inspired (morale 75+) --- */
+#combat-screen.mood-inspired {
+  --mood-filter: saturate(1.1) brightness(1.05);
+}
+
+#combat-screen.mood-inspired #combat-atmosphere {
+  box-shadow: inset 0 0 60px rgba(201, 162, 39, 0.08);
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(201, 162, 39, 0.04) 100%);
+}
+
+#combat-screen.mood-inspired #phase-label {
+  text-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
+}
+
+/* --- Mood: Steady (morale 25-74) --- */
+#combat-screen.mood-steady {
+  --mood-filter: none;
+}
+
+#combat-screen.mood-steady #combat-atmosphere {
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.15);
+  background: none;
+}
+
+/* --- Mood: Shaken (morale -24 to 24) --- */
+#combat-screen.mood-shaken {
+  --mood-filter: saturate(0.85) brightness(0.95);
+}
+
+#combat-screen.mood-shaken #combat-atmosphere {
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.35);
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.15) 100%);
+}
+
+/* --- Mood: Distressed (morale -25 to -74) --- */
+#combat-screen.mood-distressed {
+  --mood-filter: saturate(0.6) brightness(0.82);
+}
+
+#combat-screen.mood-distressed #combat-atmosphere {
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.55);
+  background: radial-gradient(ellipse at center, transparent 25%, rgba(40, 5, 5, 0.2) 80%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+#combat-screen.mood-distressed #enemy-area {
+  background: rgba(20, 5, 5, 0.3);
+}
+
+#combat-screen.mood-distressed .enemy-name {
+  color: #e0c0b0;
+  text-shadow: 0 0 4px rgba(160, 48, 48, 0.3);
+}
+
+/* --- Mood: Broken (morale -75 to -100) --- */
+#combat-screen.mood-broken {
+  --mood-filter: saturate(0.35) brightness(0.7) contrast(1.1);
+}
+
+#combat-screen.mood-broken #combat-atmosphere {
+  box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.7);
+  background: radial-gradient(ellipse at center, transparent 15%, rgba(60, 5, 5, 0.25) 60%, rgba(0, 0, 0, 0.5) 100%);
+  animation: broken-pulse 3s ease-in-out infinite;
+}
+
+@keyframes broken-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+#combat-screen.mood-broken #enemy-area {
+  background: rgba(30, 5, 5, 0.4);
+}
+
+#combat-screen.mood-broken .enemy-name {
+  color: #d0a0a0;
+  text-shadow: 0 0 8px rgba(160, 30, 30, 0.5);
+  letter-spacing: 0.08em;
+}
+
+#combat-screen.mood-broken #dice-area {
+  background: #0a0808;
+}
+
+/* Apply mood filter to combat content (not the overlay) */
+#combat-screen.mood-inspired #morale-bar,
+#combat-screen.mood-inspired #enemy-area,
+#combat-screen.mood-inspired #dice-area,
+#combat-screen.mood-inspired #bottom-section {
+  filter: var(--mood-filter, none);
+}
+
+#combat-screen.mood-shaken #morale-bar,
+#combat-screen.mood-shaken #enemy-area,
+#combat-screen.mood-shaken #dice-area,
+#combat-screen.mood-shaken #bottom-section {
+  filter: var(--mood-filter, none);
+}
+
+#combat-screen.mood-distressed #morale-bar,
+#combat-screen.mood-distressed #enemy-area,
+#combat-screen.mood-distressed #dice-area,
+#combat-screen.mood-distressed #bottom-section {
+  filter: var(--mood-filter, none);
+}
+
+#combat-screen.mood-broken #morale-bar,
+#combat-screen.mood-broken #enemy-area,
+#combat-screen.mood-broken #dice-area,
+#combat-screen.mood-broken #bottom-section {
+  filter: var(--mood-filter, none);
+}
+
+/* ================================================================
+   FOG / MIST EFFECT AT BOTTOM OF ENEMY AREA
+   ================================================================ */
+
+#enemy-area {
+  position: relative;
+}
+
+#enemy-area::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(to top, rgba(10, 10, 12, 0.7) 0%, rgba(10, 10, 12, 0.3) 40%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ================================================================
+   ENHANCED ENEMY CARDS — MENACING GLOW DURING ENEMY TURN
+   ================================================================ */
+
+#combat-screen.enemy-turn-active .enemy-card:not(.dead) {
+  box-shadow: 0 0 12px rgba(160, 30, 30, 0.35), inset 0 0 8px rgba(160, 30, 30, 0.1);
+  border-color: rgba(160, 48, 48, 0.5);
+}
+
+/* ================================================================
+   ENHANCED ENEMY ATTACK FLASH — more visible red pulse with scale
+   ================================================================ */
+
+.enemy-card.attacking {
+  animation: enemy-attack-enhanced 0.6s ease-out !important;
+}
+
+@keyframes enemy-attack-enhanced {
+  0% { transform: scale(1); box-shadow: none; }
+  15% { transform: scale(1.15) translateY(5px); box-shadow: 0 0 24px rgba(208, 64, 64, 0.7); border-color: var(--red-bright); background: rgba(160, 48, 48, 0.25); }
+  30% { transform: scale(1.08) translateY(2px); box-shadow: 0 0 16px rgba(208, 64, 64, 0.5); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+
+/* ================================================================
+   ENHANCED UNIT HIT FLASH — white flash then red
+   ================================================================ */
+
+.unit-card.hit {
+  animation: unit-hit-enhanced 0.6s ease-out !important;
+}
+
+@keyframes unit-hit-enhanced {
+  0% { background: var(--bg-card); transform: scale(1); }
+  10% { background: rgba(255, 255, 255, 0.5); transform: scale(1.03); border-color: #fff; }
+  25% { background: rgba(180, 40, 40, 0.5); transform: scale(0.97); border-color: var(--red-bright); }
+  50% { background: rgba(160, 48, 48, 0.3); transform: scale(1); }
+  100% { background: var(--bg-card); transform: scale(1); }
+}
+
+/* ================================================================
+   ENHANCED DAMAGE POPUPS — slightly larger, scale-up animation
+   ================================================================ */
+
+.damage-popup {
+  position: fixed;
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem !important;
+  font-weight: 700;
+  color: var(--red-bright);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(160, 48, 48, 0.4);
+  pointer-events: none;
+  z-index: 50;
+  animation: damage-float-enhanced 1s ease-out forwards !important;
+}
+
+.damage-popup.heal {
+  color: var(--green-bright);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(74, 170, 74, 0.4);
+}
+
+.damage-popup.block {
+  color: var(--blue-bright);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(74, 122, 186, 0.4);
+}
+
+@keyframes damage-float-enhanced {
+  0% { opacity: 1; transform: translateY(0) scale(1.4); }
+  15% { opacity: 1; transform: translateY(-5px) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
+}
+
+/* ================================================================
+   DRAMATIC PHASE LABELS
+   ================================================================ */
+
+/* Phase label flash animation for new phases */
+#phase-label.phase-flash {
+  animation: phase-flash-in 0.8s ease-out;
+}
+
+@keyframes phase-flash-in {
+  0% { opacity: 0; transform: scale(1.5); letter-spacing: 0.5em; }
+  30% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); letter-spacing: 0.2em; }
+}
+
+/* Victory phase label */
+#phase-label.phase-victory {
+  font-size: 1.4rem;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(201, 162, 39, 0.6), 0 0 40px rgba(201, 162, 39, 0.3);
+  animation: phase-victory-in 1s ease-out;
+}
+
+@keyframes phase-victory-in {
+  0% { opacity: 0; transform: scale(2); letter-spacing: 0.8em; }
+  40% { opacity: 1; transform: scale(1.15); text-shadow: 0 0 40px rgba(201, 162, 39, 0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Defeat phase label */
+#phase-label.phase-defeat {
+  font-size: 1.4rem;
+  color: var(--red-bright);
+  text-shadow: 0 0 20px rgba(160, 48, 48, 0.6), 0 0 40px rgba(160, 48, 48, 0.3);
+  animation: phase-defeat-in 1.2s ease-out;
+}
+
+@keyframes phase-defeat-in {
+  0% { opacity: 0; transform: scale(0.5); }
+  20% { opacity: 0.5; transform: scale(1.3); color: var(--red-critical); }
+  40% { opacity: 1; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Enemy turn label */
+#phase-label.phase-enemy-turn {
+  color: var(--red);
+  text-shadow: 0 0 10px rgba(160, 48, 48, 0.4);
+}
+
+/* ================================================================
+   ENEMY SPAWN SCREEN DARKEN
+   ================================================================ */
+
+#combat-screen.spawn-darken #combat-atmosphere {
+  background: rgba(0, 0, 0, 0.3) !important;
+  transition: background 0.3s ease;
+}
+
+/* ================================================================
+   DARKER / GRITTIER DICE AREA
+   ================================================================ */
+
+#dice-area {
+  background: linear-gradient(180deg, #0e0e12 0%, #0a0a0e 100%);
+  border-top: 1px solid rgba(42, 46, 58, 0.6);
+  border-bottom: 1px solid rgba(42, 46, 58, 0.6);
+}
+
+/* ================================================================
+   ENEMY TURN BACKGROUND PULSE (tension)
+   ================================================================ */
+
+#combat-screen.enemy-turn-active {
+  animation: enemy-turn-throb 1.5s ease-in-out infinite;
+}
+
+@keyframes enemy-turn-throb {
+  0%, 100% { background: var(--bg-deep); }
+  50% { background: #0e0808; }
+}
+
+/* Don't let the throb override shake */
+#combat-screen.shake-small.enemy-turn-active,
+#combat-screen.shake-medium.enemy-turn-active,
+#combat-screen.shake-heavy.enemy-turn-active {
+  background: var(--bg-deep);
+}
+
+/* ================================================================
+   DARKER COMBAT BACKGROUND
+   ================================================================ */
+
+#combat-screen {
+  background: linear-gradient(180deg, #080810 0%, #0a0a0c 40%, #0c0808 100%);
 }
 
 /* --- Mobile adjustments --- */

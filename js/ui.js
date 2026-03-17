@@ -65,11 +65,12 @@ class GameUI {
   handleVisual(type, data) {
     switch (type) {
       case 'enemyAttack':
-        this.flashElement(`enemy-${data.enemyIndex}`, 'attacking', 500);
+        this.flashElement(`enemy-${data.enemyIndex}`, 'attacking', 600);
         break;
       case 'unitHit':
-        this.flashElement(`unit-${data.unitIndex}`, 'hit', 500);
+        this.flashElement(`unit-${data.unitIndex}`, 'hit', 600);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
+        this.screenShake(data.damage);
         break;
       case 'unitHeal':
         this.flashElement(`unit-${data.unitIndex}`, 'healed', 600);
@@ -84,6 +85,33 @@ class GameUI {
         this.showDamagePopup('morale-bar', data.amount, 'morale');
         break;
     }
+  }
+
+  // Screen shake proportional to damage
+  screenShake(damage) {
+    const screen = document.getElementById('combat-screen');
+    if (!screen) return;
+
+    // Remove any existing shake class
+    screen.classList.remove('shake-small', 'shake-medium', 'shake-heavy');
+
+    // Force reflow so animation restarts
+    void screen.offsetWidth;
+
+    let shakeClass, duration;
+    if (damage >= 8) {
+      shakeClass = 'shake-heavy';
+      duration = 500;
+    } else if (damage >= 4) {
+      shakeClass = 'shake-medium';
+      duration = 400;
+    } else {
+      shakeClass = 'shake-small';
+      duration = 300;
+    }
+
+    screen.classList.add(shakeClass);
+    setTimeout(() => screen.classList.remove(shakeClass), duration);
   }
 
   showScreen(id) {
@@ -121,6 +149,24 @@ class GameUI {
     label.style.color = band.color;
     const pct = (this.engine.morale + 100) / 200 * 100;
     fill.style.width = pct + '%';
+
+    // Apply mood class to combat screen
+    const screen = document.getElementById('combat-screen');
+    if (!screen) return;
+    const morale = this.engine.morale;
+    screen.classList.remove('mood-inspired', 'mood-steady', 'mood-shaken', 'mood-distressed', 'mood-broken');
+
+    if (morale >= 75) {
+      screen.classList.add('mood-inspired');
+    } else if (morale >= 25) {
+      screen.classList.add('mood-steady');
+    } else if (morale >= -24) {
+      screen.classList.add('mood-shaken');
+    } else if (morale >= -74) {
+      screen.classList.add('mood-distressed');
+    } else {
+      screen.classList.add('mood-broken');
+    }
   }
 
   // --- Enemies ---
@@ -714,8 +760,13 @@ class GameUI {
     const phaseLabel = document.getElementById('phase-label');
     const rollBtn = document.getElementById('btn-roll');
     const logToggle = document.getElementById('btn-log-toggle');
+    const screen = document.getElementById('combat-screen');
 
     rollBtn.classList.add('hidden');
+
+    // Clear phase-specific classes
+    phaseLabel.classList.remove('phase-flash', 'phase-victory', 'phase-defeat', 'phase-enemy-turn');
+    screen.classList.remove('enemy-turn-active', 'spawn-darken');
 
     switch (this.engine.phase) {
       case PHASE.PRE_COMBAT:
@@ -726,9 +777,12 @@ class GameUI {
         break;
       case PHASE.SPAWNING:
         phaseLabel.textContent = 'ENEMIES APPEAR...';
+        screen.classList.add('spawn-darken');
+        this.triggerPhaseFlash(phaseLabel);
         break;
       case PHASE.ROLLING:
         phaseLabel.textContent = `TURN ${this.engine.turn}`;
+        this.triggerPhaseFlash(phaseLabel);
         if (!this.diceRevealRunning) {
           this.diceRevealRunning = true;
           setTimeout(() => this.startDiceReveal(), 50);
@@ -743,9 +797,13 @@ class GameUI {
         break;
       case PHASE.ENEMY_TURN:
         phaseLabel.textContent = 'ENEMY TURN';
+        phaseLabel.classList.add('phase-enemy-turn');
+        screen.classList.add('enemy-turn-active');
+        this.triggerPhaseFlash(phaseLabel);
         break;
       case PHASE.VICTORY:
         phaseLabel.textContent = 'VICTORY';
+        phaseLabel.classList.add('phase-victory');
         if (!this._victoryTimeout) {
           this._victoryTimeout = setTimeout(() => {
             this._victoryTimeout = null;
@@ -755,6 +813,7 @@ class GameUI {
         break;
       case PHASE.DEFEAT:
         phaseLabel.textContent = 'DEFEAT';
+        phaseLabel.classList.add('phase-defeat');
         if (!this._defeatTimeout) {
           this._defeatTimeout = setTimeout(() => {
             this._defeatTimeout = null;
@@ -765,6 +824,13 @@ class GameUI {
     }
 
     logToggle.onclick = () => this.toggleLog();
+  }
+
+  // Trigger the phase flash animation (force restart)
+  triggerPhaseFlash(el) {
+    el.classList.remove('phase-flash');
+    void el.offsetWidth;
+    el.classList.add('phase-flash');
   }
 
   // --- Combat Log (toggle) ---
