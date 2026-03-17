@@ -495,6 +495,11 @@ class GameUI {
       const drainPct = (prevHp / unit.maxHp) * 100;
       this.prevUnitHp[i] = unit.hp;
 
+      const isHealing = hpPct > drainPct;
+      const isDamaged = drainPct > hpPct;
+      // For healing: start fill at old %, animate up. For damage: drain trails behind.
+      const fillStartPct = isHealing ? drainPct : hpPct;
+
       el.innerHTML = `
         <div class="unit-header">
           <span class="unit-title">${unit.title}</span>
@@ -502,7 +507,7 @@ class GameUI {
         </div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
-          <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
+          <div class="hp-fill ${isHealing ? 'healing' : ''} ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${fillStartPct}%"></div>
         </div>
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
@@ -514,8 +519,15 @@ class GameUI {
         </div>
       `;
 
-      if (drainPct > hpPct) {
+      if (isDamaged) {
         requestAnimationFrame(() => {
+          const drain = el.querySelector('.hp-drain');
+          if (drain) drain.style.width = hpPct + '%';
+        });
+      } else if (isHealing) {
+        requestAnimationFrame(() => {
+          const fill = el.querySelector('.hp-fill');
+          if (fill) fill.style.width = hpPct + '%';
           const drain = el.querySelector('.hp-drain');
           if (drain) drain.style.width = hpPct + '%';
         });
@@ -652,7 +664,8 @@ class GameUI {
         });
       }
       if (totalBonusHeal !== 0) {
-        desc = desc.replace(/Heal.*?for (\d+) HP/g, (match, base) => {
+        // Match patterns like "Heal an ally for 3 HP", "heal 1 HP", "Heal all allies for 4 HP"
+        desc = desc.replace(/[Hh]eal[^]*?(\d+) HP/g, (match, base) => {
           const total = Math.max(0, parseInt(base) + totalBonusHeal);
           const sign = totalBonusHeal > 0 ? '+' : '';
           return match.replace(base + ' HP', `<span class="mod-value">${total}</span> HP <span class="mod-bonus">(${base}${sign}${totalBonusHeal})</span>`);
