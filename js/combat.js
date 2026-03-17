@@ -90,11 +90,6 @@ class CombatEngine {
       this.addLog('The Arm Ring of Arminius fills the men with defiance. (+10 Morale)');
     }
 
-    // Signifer passive: Rally the Standard — +5 morale at encounter start
-    if (this.party.some(u => !u.downed && u.classId === 'signifer')) {
-      this.morale = Math.min(100, this.morale + 5);
-      this.addLog('The Signifer raises the standard! (+5 Morale)');
-    }
 
     // Curse: Death's Whisper — start each encounter at -10 morale
     if (this.getActiveCurses().includes('deaths_whisper')) {
@@ -250,6 +245,7 @@ class CombatEngine {
       u.actedThisTurn = false;
     });
     this.dicePool.adjustUsed = false;
+    this.dicePool.rerollUsed = false;
     this.targetMode = null;
     this.addLog(`\u2014 Turn ${this.turn} \u2014`);
 
@@ -603,15 +599,18 @@ class CombatEngine {
     }
     // Poison (single target)
     if (result.poison && result.target) {
-      result.target.poison = (result.target.poison || 0) + result.poison;
-      parts.push(`Applies ${result.poison} Poison.`);
+      const totalPoison = result.poison + (unit.equipPoison || 0);
+      result.target.poison = (result.target.poison || 0) + totalPoison;
+      const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
+      parts.push(`Applies ${totalPoison}${bonusStr} Poison.`);
     }
     // Poison all enemies
     if (result.poisonAll) {
+      const totalPoison = result.poisonAll + (unit.equipPoison || 0);
       this.enemies.forEach(e => {
-        if (!e.dead) e.poison = (e.poison || 0) + result.poisonAll;
+        if (!e.dead) e.poison = (e.poison || 0) + totalPoison;
       });
-      parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${result.poisonAll} Poison to all enemies.`);
+      parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${totalPoison} Poison to all enemies.`);
     }
     // Damage all enemies (AoE)
     if (result.damageAll) {
@@ -999,6 +998,7 @@ class CombatEngine {
     unit.equipDamage = 0;
     unit.equipBlock = 0;
     unit.equipHeal = 0;
+    unit.equipPoison = 0;
     unit.equipExtraDice = 0;
     for (const slot of ['weapon', 'armor', 'trinket']) {
       for (const itemId of unit.equipment[slot]) {
@@ -1008,6 +1008,7 @@ class CombatEngine {
         if (item.stats.damage) unit.equipDamage += item.stats.damage;
         if (item.stats.block) unit.equipBlock += item.stats.block;
         if (item.stats.heal) unit.equipHeal += item.stats.heal;
+        if (item.stats.poison) unit.equipPoison += item.stats.poison;
         if (item.stats.extraDice) unit.equipExtraDice += item.stats.extraDice;
       }
     }
@@ -1016,9 +1017,34 @@ class CombatEngine {
   getExtraDiceCount() {
     let extra = 0;
     this.party.forEach(u => {
-      if (!u.downed) extra += (u.equipExtraDice || 0);
+      if (!u.downed) {
+        extra += (u.equipExtraDice || 0);
+        // Signifer passive: +1 extra die
+        if (u.classId === 'signifer') extra += 1;
+      }
     });
     return extra;
+  }
+
+  // Cornicen passive: can reroll 1 die per turn (never same value)
+  canRerollDie() {
+    if (this.dicePool.rerollUsed) return false;
+    return this.party.some(u => u.classId === 'cornicen' && !u.downed);
+  }
+
+  rerollDie(dieId) {
+    if (!this.canRerollDie()) return false;
+    const die = this.dicePool.dice.find(d => d.id === dieId);
+    if (!die || die.used) return false;
+    const oldVal = die.value;
+    // Reroll — never same value
+    let newVal;
+    do { newVal = Math.floor(Math.random() * 6) + 1; } while (newVal === oldVal);
+    die.value = newVal;
+    this.dicePool.rerollUsed = true;
+    this.addLog(`Cornicen rerolls die: ${oldVal} → ${newVal}`);
+    this.update();
+    return true;
   }
 
   equipItem(unitIndex, itemId) {

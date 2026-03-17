@@ -218,12 +218,15 @@ class GameUI {
 
     const actions = enemy.actions.map(a => {
       let desc = a.name;
-      if (a.damage > 0) desc += ` (${a.damage} dmg`;
-      if (a.poisonTarget) desc += (a.damage > 0 ? `, ` : ' (') + `${a.poisonTarget} poison`;
-      if (a.morale) desc += (a.damage > 0 || a.poisonTarget ? ', ' : ' (') + `${a.morale} morale`;
-      if (a.aoe) desc += ', AOE';
-      if (a.ignoreRow) desc += ', any row';
-      if (a.damage > 0 || a.poisonTarget || a.morale) desc += ')';
+      const details = [];
+      if (a.damage > 0) details.push(`${a.damage} dmg`);
+      if (a.poisonTarget) details.push(`${a.poisonTarget} poison`);
+      if (a.morale) details.push(`${a.morale} morale`);
+      if (a.blockAllEnemies) details.push(`+${a.blockAllEnemies} block to allies`);
+      if (a.spawn) details.push('spawns unit');
+      if (a.aoe) details.push('AOE');
+      if (a.ignoreRow) details.push('any row');
+      if (details.length > 0) desc += ` (${details.join(', ')})`;
       return `<div class="enemy-tooltip-action">${desc}</div>`;
     }).join('');
 
@@ -394,6 +397,15 @@ class GameUI {
           adjustContainer.appendChild(down);
         }
         el.appendChild(adjustContainer);
+      }
+
+      // Cornicen reroll button
+      if (!die.used && this.engine.canRerollDie() && this.engine.phase === PHASE.PLAYER_TURN && !this.stagedSkill) {
+        const rerollBtn = document.createElement('button');
+        rerollBtn.className = 'reroll-btn';
+        rerollBtn.textContent = '↻';
+        rerollBtn.addEventListener('click', (e) => { e.stopPropagation(); this.engine.rerollDie(die.id); });
+        el.appendChild(rerollBtn);
       }
 
       pool.appendChild(el);
@@ -1843,7 +1855,12 @@ class GameUI {
   showSkillChoices(unitIndex) {
     const content = document.getElementById('levelup-content');
     const unit = this.engine.party[unitIndex];
-    const choices = this.engine.getSkillChoices(unit, 2);
+    // Cache choices so Back button doesn't reroll
+    if (!this._cachedSkillChoices || this._cachedSkillChoicesUnit !== unitIndex) {
+      this._cachedSkillChoices = this.engine.getSkillChoices(unit, 2);
+      this._cachedSkillChoicesUnit = unitIndex;
+    }
+    const choices = this._cachedSkillChoices;
 
     if (choices.length === 0) {
       this.showLevelUpScreen();
@@ -1861,6 +1878,8 @@ class GameUI {
         <div class="skill-desc">${skill.description}</div>
       `;
       card.addEventListener('click', () => {
+        this._cachedSkillChoices = null;
+        this._cachedSkillChoicesUnit = null;
         this.engine.teachSkill(unitIndex, skill.id);
         this.engine.pendingSkillPicks--;
         if (this.engine.pendingSkillPicks > 0) {

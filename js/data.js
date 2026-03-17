@@ -368,6 +368,7 @@ function formatItemStats(stats) {
   if (stats.block) parts.push(`+${stats.block} block`);
   if (stats.maxHp) parts.push(`+${stats.maxHp} HP`);
   if (stats.heal) parts.push(`+${stats.heal} heal`);
+  if (stats.poison) parts.push(`+${stats.poison} poison`);
   if (stats.extraDice) parts.push(`+${stats.extraDice} die`);
   return parts.join(', ');
 }

@@ -776,6 +776,29 @@ html, body {
   color: var(--bg-deep);
 }
 
+.reroll-btn {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  color: var(--class-support);
+  border: 1px solid var(--class-support);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.reroll-btn:active {
+  background: var(--class-support);
+  color: var(--bg-deep);
+}
+
 /* --- Dice hint (fixed height to prevent layout shift) --- */
 .dice-hint {
   font-size: 0.68rem;
@@ -2723,6 +2746,13 @@ html, body {
   margin-left: auto;
   display: flex;
   gap: 3px;
+}
+
+.ps-class-desc {
+  font-size: 0.72rem;
+  color: var(--text);
+  margin-bottom: 3px;
+  line-height: 1.3;
 }
 
 .ps-class-hp {

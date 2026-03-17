@@ -57,8 +57,8 @@ const RAW_CLASSES = {
       {
         "id": "shield_wall", "name": "Shield Wall",
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 8+. All allies gain 6 Block.",
-        "effects": { "blockAll": 6 }
+        "description": "2 dice totaling 8+. All allies gain 5 Block.",
+        "effects": { "blockAll": 5 }
       }
     ]
   },
@@ -101,8 +101,8 @@ const RAW_CLASSES = {
       {
         "id": "measured_advance", "name": "Measured Advance",
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 7+. Deals 11 damage.",
-        "effects": { "damage": 11 }
+        "description": "2 dice totaling 7+. Deals 8 damage and all allies gain 3 Block.",
+        "effects": { "damage": 8, "blockAll": 3 }
       },
       {
         "id": "no_retreat", "name": "No Retreat",
@@ -158,8 +158,8 @@ const RAW_CLASSES = {
       {
         "id": "emergency_draught", "name": "Emergency Draught",
         "cost": { "type": "threshold", "min": 5 }, "target": "single_ally",
-        "description": "Heal an ally for 9 HP.",
-        "effects": { "heal": 9 }
+        "description": "Heal an ally for 7 HP.",
+        "effects": { "heal": 7 }
       },
       {
         "id": "plague_flask", "name": "Plague Flask",
@@ -170,8 +170,8 @@ const RAW_CLASSES = {
       {
         "id": "sawbones_choice", "name": "Sawbones' Choice",
         "cost": { "type": "exact", "val": 1 }, "target": "single_ally",
-        "description": "Sacrifice 4 HP to heal ally for 8 HP.",
-        "effects": { "heal": 8, "selfDamage": 4 }
+        "description": "Sacrifice 4 HP to heal ally for 10 HP and grant 3 Block.",
+        "effects": { "heal": 10, "selfDamage": 4, "block": 3 }
       },
       {
         "id": "field_surgery", "name": "Field Surgery",
@@ -311,9 +311,9 @@ const RAW_CLASSES = {
     "tags": ["support", "roman"],
     "description": "Trumpeter. Debuffs enemies and supports allies with sound.",
     "passive": {
-      "name": "Demoralizing Horn",
-      "description": "Enemy morale attacks deal 3 less morale damage.",
-      "triggered": false
+      "name": "Discordant Tune",
+      "description": "Reroll 1 die per turn. Rerolls never repeat the same value.",
+      "reroll": true
     },
     "skills": [
       {

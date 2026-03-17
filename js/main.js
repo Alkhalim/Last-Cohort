@@ -395,6 +395,7 @@ class Game {
           <span class="ps-class-title">${data.title}</span>
           <span class="ps-class-tags">${tagPips}</span>
         </div>
+        <div class="ps-class-desc">${data.description}</div>
         <div class="ps-class-hp">HP: ${data.maxHp}</div>
         <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
         <div class="ps-class-skills">${skillList}</div>
