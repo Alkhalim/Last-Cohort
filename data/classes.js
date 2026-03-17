@@ -45,8 +45,8 @@ const RAW_CLASSES = {
         "id": "pilum_cast", "name": "Pilum Cast",
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Throw pilum at any row. Deals 9 damage.",
-        "effects": { "damage": 9, "ignoreRow": true }
+        "description": "Throw pilum at any row. Deals 7 damage.",
+        "effects": { "damage": 7, "ignoreRow": true }
       },
       {
         "id": "twin_slash", "name": "Twin Slash",

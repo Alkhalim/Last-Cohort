@@ -600,7 +600,7 @@ class CombatEngine {
 
           // Morale restored on kill — based on enemy base maxHp, doubled for seers
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
-          let moraleRestore = e.isBoss ? 35 : (baseHp > 10 ? 5 : 3) + 2;
+          let moraleRestore = e.isBoss ? 35 : (baseHp > 10 ? 6 : 4);
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
           this.morale = Math.min(100, this.morale + moraleRestore);
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
