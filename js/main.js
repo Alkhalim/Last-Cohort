@@ -359,7 +359,14 @@ class Game {
         this.musicStarted = true;
         this.musicMode = 'menu';
       }
-      this.showPartySelectScreen();
+      // First run: default party. Subsequent runs: party selection.
+      if (this.stats.runsCompleted + this.stats.runsLost === 0) {
+        this.selectedPartyClasses = ['legionary', 'centurion', 'medicus'];
+        this.activeCurses = [];
+        this.startNewRun();
+      } else {
+        this.showPartySelectScreen();
+      }
     });
   }
 
