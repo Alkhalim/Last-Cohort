@@ -146,7 +146,7 @@ class GameUI {
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
-        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.poison > 0 ? ` <span class="poison-text">P:${enemy.poison}</span>` : ''}</div>
+        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-text">B:${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-text">P:${enemy.poison}</span>` : ''}</div>
       `;
 
       if (drainPct > hpPct) {
@@ -232,9 +232,11 @@ class GameUI {
       const unit = this.engine.party[this.selectedUnitIndex];
       if (!unit) return false;
       const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
-      if (!skill || skill.target !== TARGET.SINGLE_ENEMY) return false;
+      if (!skill) return false;
+      if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES) return false;
       const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
       if (!canPay) return false;
+      if (skill.target === TARGET.ALL_ENEMIES) return true;
       return this.engine.getValidEnemyTargets(skill).includes(enemy);
     }
     return false;
@@ -243,7 +245,9 @@ class GameUI {
   isEnemyPreview(enemy) {
     if (enemy.dead) return false;
     const skill = this.getPreviewSkill();
-    if (!skill || skill.target !== TARGET.SINGLE_ENEMY) return false;
+    if (!skill) return false;
+    if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES) return false;
+    if (skill.target === TARGET.ALL_ENEMIES) return true;
     return this.engine.getValidEnemyTargets(skill).includes(enemy);
   }
 
@@ -266,7 +270,11 @@ class GameUI {
       const caster = this.engine.party[this.selectedUnitIndex];
       if (!caster) return false;
       const skill = caster.skills.find(s => s.id === this.stagedSkill.skillId);
-      if (!skill || skill.target !== TARGET.SINGLE_ALLY) return false;
+      if (!skill) return false;
+      const validTargets = [TARGET.SINGLE_ALLY, TARGET.ALL_ALLIES, TARGET.SELF];
+      if (!validTargets.includes(skill.target)) return false;
+      // Self-target: only the caster is targetable
+      if (skill.target === TARGET.SELF && unit.index !== caster.index) return false;
       const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
       return canPay;
     }
@@ -276,8 +284,12 @@ class GameUI {
   isAllyPreview(unit) {
     if (unit.downed) return false;
     const skill = this.getPreviewSkill();
-    if (!skill || skill.target !== TARGET.SINGLE_ALLY) return false;
-    return true;
+    if (!skill) return false;
+    if (skill.target === TARGET.SELF) {
+      const caster = this.engine.party[this.selectedUnitIndex];
+      return caster && unit.index === caster.index;
+    }
+    return skill.target === TARGET.SINGLE_ALLY || skill.target === TARGET.ALL_ALLIES;
   }
 
   // --- Dice Pool ---
@@ -652,7 +664,7 @@ class GameUI {
   }
 
   onSkillClick(skill) {
-    this.previewSkillId = null; // clear preview on click
+    this.previewSkillId = null;
     if (this.stagedSkill && this.stagedSkill.skillId === skill.id) {
       // Clicking same skill again — unstage
       this.stagedSkill = null;
@@ -660,21 +672,10 @@ class GameUI {
       return;
     }
 
-    // Stage this skill with auto-picked dice
+    // Stage this skill with auto-picked dice — always stage, never execute immediately
     const autoDice = this.engine.autoPick(skill);
     this.stagedSkill = { skillId: skill.id, diceIds: autoDice };
-
-    // For self/all-target skills, execute immediately (no target to click)
-    const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
-    if (canPay && (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES)) {
-      const diceIds = [...this.stagedSkill.diceIds];
-      this.stagedSkill = null;
-      this.engine.beginSkillTarget(this.selectedUnitIndex, skill.id, diceIds);
-      this.autoAdvanceUnit();
-      return;
-    }
-
-    // For targeted skills, render so enemies/allies light up
+    // Render so targets light up (self, allies, or enemies)
     this.render();
   }
 
@@ -691,7 +692,13 @@ class GameUI {
     const diceIds = [...this.stagedSkill.diceIds];
     const unitIndex = this.selectedUnitIndex;
     this.stagedSkill = null;
-    this.engine.executeSkill(unitIndex, skill.id, diceIds, [target]);
+
+    // For self/all-target skills, pass appropriate targets
+    if (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES) {
+      this.engine.beginSkillTarget(unitIndex, skill.id, diceIds);
+    } else {
+      this.engine.executeSkill(unitIndex, skill.id, diceIds, [target]);
+    }
     this.autoAdvanceUnit();
   }
 

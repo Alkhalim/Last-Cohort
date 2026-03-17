@@ -291,6 +291,7 @@ class Game {
 }
 
 // Boot
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadGameData();
   window.game = new Game();
 });

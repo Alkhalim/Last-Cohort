@@ -103,10 +103,10 @@ class CombatEngine {
     const data = ENEMY_DATA[eid];
     // Difficulty scaling: +20% HP and +1 damage per action per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.2));
+    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.4));
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? a.damage + diffBonus : 0,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.25)) : 0,
     }));
     const enemy = {
       index: this.spawnIndex,
@@ -116,6 +116,7 @@ class CombatEngine {
       actions: scaledActions,
       dead: false,
       poison: 0,
+      block: 0,
       justSpawned: true,
     };
     this.enemies.push(enemy);
@@ -165,6 +166,19 @@ class CombatEngine {
         u.hp = Math.max(1, u.hp - u.poison);
         this.addLog(`${u.name} takes ${u.poison} poison damage.`);
         u.poison = Math.max(0, u.poison - 1);
+      }
+    });
+
+    // Structure aura damage (Wicker Man: turnDamageAll)
+    this.enemies.forEach(e => {
+      if (!e.dead && e.turnDamageAll) {
+        this.party.forEach(u => {
+          if (!u.downed) {
+            u.hp = Math.max(1, u.hp - e.turnDamageAll);
+            u.stats.damageTaken += e.turnDamageAll;
+          }
+        });
+        this.addLog(`${e.name} burns — all soldiers take ${e.turnDamageAll} damage!`);
       }
     });
 
@@ -385,6 +399,17 @@ class CombatEngine {
     this.update();
   }
 
+  // Check if any alive enemy has a damage reduction aura protecting the target
+  getAuraDamageReduction(target) {
+    let reduction = 0;
+    this.enemies.forEach(e => {
+      if (!e.dead && e.aura && e.aura.damageReduction && e !== target) {
+        reduction += e.aura.damageReduction;
+      }
+    });
+    return reduction;
+  }
+
   consumeBuffDamage(unit) {
     let total = 0;
     for (let i = unit.buffs.length - 1; i >= 0; i--) {
@@ -413,10 +438,20 @@ class CombatEngine {
     const bonusHeal = (unit.equipHeal || 0) + moraleMod;
 
     if (result.damage && result.target && result.target.hp !== undefined) {
-      const total = result.damage + bonusDmg;
+      let total = result.damage + bonusDmg;
+      // Aura damage reduction (e.g. Wicker Man protects other enemies)
+      const auraReduction = this.getAuraDamageReduction(result.target);
+      if (auraReduction > 0) total = Math.max(1, total - auraReduction);
+      // Enemy block
+      if (result.target.block && result.target.block > 0) {
+        const absorbed = Math.min(result.target.block, total);
+        result.target.block -= absorbed;
+        total -= absorbed;
+        if (absorbed > 0) parts.push(`${result.target.name}'s block absorbs ${absorbed}.`);
+      }
       result.target.hp = Math.max(0, result.target.hp - total);
       unit.stats.damageDealt += total;
-      const bonusStr = bonusDmg > 0 ? ` (${result.damage}+${bonusDmg})` : '';
+      const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
     }
     if (result.heal && result.target) {
@@ -526,6 +561,26 @@ class CombatEngine {
         this.killedEnemies.push(e.id);
         this.totalEnemiesKilled++;
         this.addLog(`${e.name} falls!`);
+
+        // Death poison (Mire Leech): poison all party members
+        if (e.deathPoison) {
+          this.party.forEach(u => {
+            if (!u.downed) {
+              u.poison = (u.poison || 0) + e.deathPoison;
+            }
+          });
+          this.addLog(`${e.name} bursts — toxic innards spray the party! (+${e.deathPoison} Poison to all)`);
+        }
+
+        // Death damage to random enemy (Wicker Man collapse)
+        if (e.deathDamageEnemy) {
+          const aliveEnemies = this.enemies.filter(oe => !oe.dead && oe !== e);
+          if (aliveEnemies.length > 0) {
+            const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+            victim.hp = Math.max(0, victim.hp - e.deathDamageEnemy);
+            this.addLog(`${e.name} collapses onto ${victim.name} for ${e.deathDamageEnemy} damage!`);
+          }
+        }
       }
     });
   }
@@ -588,6 +643,12 @@ class CombatEngine {
   }
 
   executeEnemySingleAction(enemy) {
+    // Structures (Wicker Man) don't take actions — their damage is passive via turnDamageAll
+    if (enemy.isStructure) {
+      this.addLog(`${enemy.name} ${enemy.actions[0].text}.`);
+      return;
+    }
+
     const roll = Math.random();
     let cumulative = 0;
     let action = enemy.actions[0];
@@ -653,6 +714,53 @@ class CombatEngine {
         }
       });
       this.addLog(`${enemy.name}'s attack hits the whole line!`);
+    }
+
+    // Shieldbearer: grant block to all other enemies
+    if (action.blockAllEnemies) {
+      this.enemies.forEach(e => {
+        if (!e.dead && e !== enemy) {
+          e.block = (e.block || 0) + action.blockAllEnemies;
+        }
+      });
+      this.addLog(`${enemy.name} ${action.text}. All enemies gain ${action.blockAllEnemies} Block.`);
+    }
+
+    // Mire Leech: spawn another enemy
+    if (action.spawn) {
+      const alreadySpawned = enemy._hasSpawned;
+      const totalEnemies = this.enemies.filter(e => !e.dead).length;
+      if (!alreadySpawned && totalEnemies < 5) {
+        enemy._hasSpawned = true;
+        const data = ENEMY_DATA[action.spawn];
+        if (data) {
+          const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.4));
+          const scaledActions = data.actions.map(a => ({
+            ...a,
+            damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.25)) : 0,
+          }));
+          const spawned = {
+            index: this.enemies.length,
+            ...data,
+            maxHp: scaledMaxHp,
+            hp: scaledMaxHp,
+            actions: scaledActions,
+            dead: false,
+            poison: 0,
+            block: 0,
+            justSpawned: true,
+          };
+          this.enemies.push(spawned);
+          this.addLog(`${enemy.name} ${action.text}! A new ${data.name} appears!`);
+          setTimeout(() => { spawned.justSpawned = false; this.update(); }, 500);
+        }
+      } else if (!alreadySpawned) {
+        this.addLog(`${enemy.name} tries to multiply but there's no room.`);
+      } else {
+        // Already spawned, do a basic attack instead
+        this.addLog(`${enemy.name} writhes but cannot spawn again.`);
+      }
     }
   }
 

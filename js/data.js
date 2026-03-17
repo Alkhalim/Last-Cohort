@@ -1,5 +1,5 @@
 // ============================================================
-// Last Cohort – Game Data
+// Last Cohort – Game Data (loads from JSON files)
 // ============================================================
 
 // --- Skill cost types ---
@@ -21,383 +21,242 @@ const TARGET = {
   ALL_ALLIES: 'all_allies',
 };
 
+// --- Runtime data containers (populated by loadGameData) ---
+let CLASS_DATA = {};
+let ENEMY_DATA = {};
+let ITEM_DATA = {};
+let EVENT_DATA = [];
+let ENCOUNTERS = [];
+let BOSS_ENCOUNTERS = [];
+let MORALE_BANDS = [];
+let EQUIP_SLOTS = {};
+let BOSS_DROP_POOL = [];
+let DROP_TABLES = {};
+let BASE_DICE_COUNT = 4;
 
-// --- Class definitions ---
-// Skills have `unlockLevel` — available from that level onward.
-// Skills return base values; the combat engine adds equipment/buff bonuses and builds the log text.
-const CLASS_DATA = {
-  legionary: {
-    name: 'Legionary',
-    title: 'LEG',
-    maxHp: 32,
-    tags: ['heavy', 'roman'],
-    description: 'Heavy infantry. Reliable damage and strong defense.',
-    passive: {
-      name: 'Shield Discipline',
-      description: 'First defensive action with a 4+ die each encounter grants +4 extra Block.',
-      triggered: false,
-    },
-    skills: [
-      // --- Starting skills ---
-      {
-        id: 'strike', name: 'Strike', starter: true,
-        cost: COST.any(), target: TARGET.SINGLE_ENEMY,
-        description: 'Basic sword strike. Deals 3 damage.',
-        execute(unit, targets, dice) { return { damage: 3, baseDamage: 3, target: targets[0] }; },
-      },
-      {
-        id: 'shield_brace', name: 'Shield Brace', starter: true,
-        cost: COST.threshold(2), target: TARGET.SELF,
-        description: 'Gain 5 Block. (4+ triggers Shield Discipline for +4.)',
-        execute(unit, targets, dice) {
-          let block = 5;
-          if (dice[0] && dice[0].value >= 4 && !unit.passiveTriggered) { block += 4; unit.passiveTriggered = true; }
-          return { block, target: unit };
-        },
-      },
-      {
-        id: 'gladius_thrust', name: 'Gladius Thrust', starter: true,
-        cost: COST.threshold(3), target: TARGET.SINGLE_ENEMY,
-        description: 'Precise thrust. Deals 6 damage.',
-        execute(unit, targets, dice) { return { damage: 6, baseDamage: 6, target: targets[0] }; },
-      },
-      // --- Unlockable skills ---
-      {
-        id: 'hold_fast', name: 'Hold Fast',
-        cost: COST.exact(4), target: TARGET.SELF,
-        description: 'Gain 8 Block and Taunt (enemies target this unit).',
-        execute(unit, targets, dice) { return { block: 8, taunt: true, target: unit }; },
-      },
-      {
-        id: 'pilum_cast', name: 'Pilum Cast',
-        cost: COST.threshold(5), target: TARGET.SINGLE_ENEMY,
-        ignoreRow: true,
-        description: 'Throw pilum at any row. Deals 9 damage.',
-        execute(unit, targets, dice) { return { damage: 9, baseDamage: 9, target: targets[0], ignoreRow: true }; },
-      },
-      {
-        id: 'twin_slash', name: 'Twin Slash',
-        cost: COST.combined(5, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling 5+. Deals 10 damage.',
-        execute(unit, targets, dice) { return { damage: 10, baseDamage: 10, target: targets[0] }; },
-      },
-      {
-        id: 'shield_wall', name: 'Shield Wall',
-        cost: COST.combined(8, 2), target: TARGET.ALL_ALLIES,
-        description: '2 dice totaling 8+. All allies gain 6 Block.',
-        execute(unit, targets, dice) { return { blockAll: 6 }; },
-      },
-    ],
-  },
+// Raw JSON data for encounter generation
+let _encounterThreatData = {};
 
-  centurion: {
-    name: 'Centurion',
-    title: 'CEN',
-    maxHp: 28,
-    tags: ['command', 'roman'],
-    description: 'Officer. Buffs allies and controls the battlefield.',
-    passive: {
-      name: 'Discipline of Office',
-      description: 'Once per turn, adjust one die by +1 or -1.',
-      usedThisTurn: false,
-    },
-    skills: [
-      {
-        id: 'strike', name: 'Strike', starter: true,
-        cost: COST.any(), target: TARGET.SINGLE_ENEMY,
-        description: 'Basic strike. Deals 2 damage.',
-        execute(unit, targets, dice) { return { damage: 2, baseDamage: 2, target: targets[0] }; },
-      },
-      {
-        id: 'commanding_shout', name: 'Commanding Shout', starter: true,
-        cost: COST.exact(3), target: TARGET.ALL_ALLIES,
-        description: 'All allies gain +2 damage on their next attack.',
-        execute(unit, targets, dice) { return { buffAllies: { bonusDamage: 2, attacks: 1 } }; },
-      },
-      {
-        id: 'reform_the_line', name: 'Reform the Line', starter: true,
-        cost: COST.threshold(4), target: TARGET.ALL_ALLIES,
-        description: 'All allies gain 3 Block.',
-        execute(unit, targets, dice) { return { blockAll: 3 }; },
-      },
-      {
-        id: 'measured_advance', name: 'Measured Advance',
-        cost: COST.combined(7, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling 7+. Deals 11 damage.',
-        execute(unit, targets, dice) { return { damage: 11, baseDamage: 11, target: targets[0] }; },
-      },
-      {
-        id: 'no_retreat', name: 'No Retreat',
-        cost: COST.exact(6), target: TARGET.ALL_ALLIES,
-        description: 'All allies gain 5 Block and +10 Morale.',
-        execute(unit, targets, dice) { return { blockAll: 5, morale: 10 }; },
-      },
-      {
-        id: 'rally_cry', name: 'Rally Cry',
-        cost: COST.combined(6, 2), target: TARGET.ALL_ALLIES,
-        description: '2 dice totaling 6+. +15 Morale and +1 damage for next 2 attacks.',
-        execute(unit, targets, dice) { return { morale: 15, buffAllies: { bonusDamage: 1, attacks: 2 } }; },
-      },
-      {
-        id: 'decimation_strike', name: 'Decimation Strike',
-        cost: COST.combinedExact(7, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling exactly 7. Deals 15 damage.',
-        execute(unit, targets, dice) { return { damage: 15, baseDamage: 15, target: targets[0] }; },
-      },
-    ],
-  },
+// --- Build a COST object from JSON cost data ---
+function buildCost(costData) {
+  switch (costData.type) {
+    case 'any':
+      return COST.any();
+    case 'threshold':
+      return COST.threshold(costData.min);
+    case 'exact':
+      return COST.exact(costData.val);
+    case 'combined':
+      return COST.combined(costData.min, costData.dice || 2);
+    case 'combinedExact':
+      return COST.combinedExact(costData.val, costData.dice || 2);
+    default:
+      return COST.any();
+  }
+}
 
-  medicus: {
-    name: 'Medicus',
-    title: 'MED',
-    maxHp: 22,
-    tags: ['support', 'roman'],
-    description: 'Field surgeon. Heals, poisons, and manages attrition.',
-    passive: {
-      name: 'Field Triage',
-      description: 'When an ally is downed, gain one free Bind Wounds this encounter.',
-      freeHealAvailable: false,
-    },
-    skills: [
-      // --- Starting skills ---
-      {
-        id: 'bind_wounds', name: 'Bind Wounds', starter: true,
-        cost: COST.threshold(2), target: TARGET.SINGLE_ALLY,
-        description: 'Heal an ally for 5 HP.',
-        execute(unit, targets, dice) { return { heal: 5, baseHeal: 5, target: targets[0] }; },
-      },
-      {
-        id: 'aconitum', name: 'Aconitum', starter: true,
-        cost: COST.any(), target: TARGET.SINGLE_ENEMY,
-        description: 'Deals 2 damage and applies 2 Poison.',
-        execute(unit, targets, dice) { return { damage: 2, baseDamage: 2, poison: 2, target: targets[0] }; },
-      },
-      {
-        id: 'triage', name: 'Triage', starter: true,
-        cost: COST.exact(4), target: TARGET.SINGLE_ALLY,
-        description: 'Heal an ally for 9 HP. Clears poison.',
-        execute(unit, targets, dice) { return { heal: 9, baseHeal: 9, cleanse: true, target: targets[0] }; },
-      },
-      // --- Unlockable skills ---
-      {
-        id: 'emergency_draught', name: 'Emergency Draught',
-        cost: COST.threshold(5), target: TARGET.SINGLE_ALLY,
-        description: 'Heal an ally for 13 HP.',
-        execute(unit, targets, dice) { return { heal: 13, baseHeal: 13, target: targets[0] }; },
-      },
-      {
-        id: 'plague_flask', name: 'Plague Flask',
-        cost: COST.threshold(3), target: TARGET.ALL_ENEMIES,
-        description: 'Apply 3 Poison to all enemies.',
-        execute(unit, targets, dice) { return { poisonAll: 3 }; },
-      },
-      {
-        id: 'sawbones_choice', name: "Sawbones' Choice",
-        cost: COST.exact(1), target: TARGET.SINGLE_ALLY,
-        description: 'Sacrifice 4 HP to heal ally for 11 HP.',
-        execute(unit, targets, dice) { return { heal: 11, baseHeal: 11, selfDamage: 4, target: targets[0] }; },
-      },
-      {
-        id: 'field_surgery', name: 'Field Surgery',
-        cost: COST.combined(6, 2), target: TARGET.ALL_ALLIES,
-        description: '2 dice totaling 6+. Heal all allies for 7 HP.',
-        execute(unit, targets, dice) { return { healAll: 7, baseHeal: 7 }; },
-      },
-      {
-        id: 'venom_strike', name: 'Venom Strike',
-        cost: COST.combined(5, 2), target: TARGET.SINGLE_ENEMY,
-        description: '2 dice totaling 5+. Deals 4 damage and applies 4 Poison.',
-        execute(unit, targets, dice) { return { damage: 4, baseDamage: 4, poison: 4, target: targets[0] }; },
-      },
-    ],
-  },
-};
+// --- Build an execute function from skill effect data ---
+function buildSkillExecute(skillData) {
+  const effects = skillData.effects;
+  const passiveTrigger = skillData.passiveTrigger;
 
-// --- Enemy definitions ---
-const ENEMY_DATA = {
-  cheruscan_raider: {
-    id: 'cheruscan_raider',
-    name: 'Cheruscan Raider',
-    maxHp: 18, row: 'front',
-    damage: [4, 7], speed: 1, xpValue: 5,
-    description: 'Germanic warrior. Aggressive melee fighter.',
-    ai: 'aggressive',
-    actions: [
-      { name: 'Spear Thrust', damage: 5, chance: 0.6, text: 'thrusts spear' },
-      { name: 'Wild Slash', damage: 7, chance: 0.3, text: 'slashes wildly' },
-      { name: 'War Cry', damage: 0, morale: -5, chance: 0.1, text: 'lets out a war cry' },
-    ],
-  },
-  sling_hunter: {
-    id: 'sling_hunter',
-    name: 'Sling Hunter',
-    maxHp: 12, row: 'back',
-    damage: [3, 5], speed: 2, xpValue: 4,
-    description: 'Ranged skirmisher. Targets weakest unit.',
-    ai: 'sniper',
-    actions: [
-      { name: 'Sling Stone', damage: 4, chance: 0.7, text: 'hurls a sling stone', ignoreRow: true },
-      { name: 'Aimed Shot', damage: 6, chance: 0.2, text: 'takes careful aim', ignoreRow: true },
-      { name: 'Scatter Shot', damage: 3, chance: 0.1, text: 'fires scatter shot at the line', aoe: true },
-    ],
-  },
-  marsh_wolf: {
-    id: 'marsh_wolf',
-    name: 'Marsh Wolf',
-    maxHp: 14, row: 'front',
-    damage: [3, 6], speed: 3, xpValue: 4,
-    description: 'Fast predator. Attacks twice when wounded.',
-    ai: 'aggressive',
-    actions: [
-      { name: 'Bite', damage: 4, chance: 0.5, text: 'lunges with snapping jaws' },
-      { name: 'Pounce', damage: 6, chance: 0.3, text: 'pounces' },
-      { name: 'Howl', damage: 0, morale: -8, chance: 0.2, text: 'howls into the mist' },
-    ],
-  },
-  arminius_champion: {
-    id: 'arminius_champion',
-    name: "Arminius's Champion",
-    maxHp: 55, row: 'front',
-    damage: [8, 14], speed: 2, xpValue: 20,
-    isBoss: true,
-    ai: 'boss',
-    actions: [
-      { name: 'Crushing Blow', damage: 10, chance: 0.4, text: 'brings down a crushing blow' },
-      { name: 'Shield Bash', damage: 6, chance: 0.25, text: 'bashes with iron shield' },
-      { name: 'War Cry', damage: 0, morale: -12, chance: 0.15, text: 'roars a war cry' },
-      { name: 'Frenzy', damage: 8, chance: 0.2, text: 'attacks in a frenzy', aoe: true },
-    ],
-  },
-  // --- Poison enemy ---
-  fen_viper: {
-    id: 'fen_viper',
-    name: 'Fen Viper',
-    maxHp: 11, row: 'front',
-    damage: [2, 4], speed: 4, xpValue: 4,
-    description: 'A venomous marsh snake. Its bite festers.',
-    ai: 'aggressive',
-    actions: [
-      { name: 'Venomous Bite', damage: 2, poisonTarget: 3, chance: 0.5, text: 'sinks venomous fangs' },
-      { name: 'Spit Venom', damage: 1, poisonTarget: 2, chance: 0.3, text: 'spits venom', ignoreRow: true },
-      { name: 'Coil Strike', damage: 5, chance: 0.2, text: 'lashes out with a coiled strike' },
-    ],
-  },
-  // --- Caster: morale-focused back-row enemy ---
-  bog_seer: {
-    id: 'bog_seer',
-    name: 'Bog Seer',
-    maxHp: 10, row: 'back',
-    damage: [2, 3], speed: 1, xpValue: 5,
-    description: 'A hunched figure draped in moss, chanting from the treeline. Attacks the mind.',
-    ai: 'sniper',
-    actions: [
-      { name: 'Curse of Dread', damage: 0, morale: -10, chance: 0.4, text: 'chants a dreadful curse' },
-      { name: 'Marsh Hex', damage: 3, morale: -5, chance: 0.3, text: 'hurls a hex of swamp fire', ignoreRow: true },
-      { name: 'Wail of the Dead', damage: 0, morale: -15, chance: 0.2, text: 'screams with the voices of the dead' },
-      { name: 'Bone Shard', damage: 5, chance: 0.1, text: 'flings a shard of bone', ignoreRow: true },
-    ],
-  },
-  // --- Mini-boss: elite front-row warrior ---
-  oak_shield: {
-    id: 'oak_shield',
-    name: 'Oak Shield',
-    maxHp: 35, row: 'front',
-    damage: [6, 10], speed: 1, xpValue: 10,
-    isElite: true,
-    description: 'A massive warrior carrying a shield hewn from a single oak. Commands respect and fear.',
-    ai: 'aggressive',
-    actions: [
-      { name: 'Oak Smash', damage: 8, chance: 0.4, text: 'smashes with the great oak shield' },
-      { name: 'Shieldwall Charge', damage: 6, chance: 0.25, text: 'charges behind the oak shield', aoe: true },
-      { name: 'Rallying Roar', damage: 0, morale: -8, chance: 0.15, text: 'roars, rallying nearby warriors' },
-      { name: 'Crushing Overhead', damage: 12, chance: 0.2, text: 'brings a devastating overhead blow' },
-    ],
-  },
-  // --- Second boss ---
-  grove_witch: {
-    id: 'grove_witch',
-    name: 'Grove Witch',
-    maxHp: 45, row: 'back',
-    damage: [5, 10], speed: 1, xpValue: 22,
-    isBoss: true,
-    ai: 'boss',
-    actions: [
-      { name: 'Thorn Volley', damage: 5, chance: 0.3, text: 'sends a volley of blackened thorns', aoe: true },
-      { name: 'Soul Drain', damage: 7, morale: -8, chance: 0.25, text: 'drains the life and will from a soldier', ignoreRow: true },
-      { name: 'Swamp Call', damage: 0, morale: -15, chance: 0.2, text: 'calls upon the swamp spirits' },
-      { name: 'Root Grasp', damage: 9, chance: 0.25, text: 'commands roots to crush a soldier', ignoreRow: true },
-    ],
-  },
-};
+  return function execute(unit, targets, dice) {
+    const result = {};
 
-// --- Encounter templates ---
-const ENCOUNTERS = [
-  { name: 'Ambush on the Trail', enemies: ['cheruscan_raider', 'cheruscan_raider', 'sling_hunter'],
-    intro: 'Shapes burst from the undergrowth \u2014 Germanic warriors block the path.' },
-  { name: 'Wolves in the Mire', enemies: ['marsh_wolf', 'marsh_wolf'],
-    intro: 'Low growls echo from the fog. Yellow eyes track your every step.' },
-  { name: 'Raiding Party', enemies: ['cheruscan_raider', 'sling_hunter', 'sling_hunter'],
-    intro: 'Stones whistle past. A raiding party has found your trail.' },
-  { name: 'The Clearing', enemies: ['cheruscan_raider', 'cheruscan_raider', 'marsh_wolf', 'sling_hunter'],
-    intro: 'You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you.' },
-];
+    // Damage (single target)
+    if (effects.damage !== undefined) {
+      result.damage = effects.damage;
+      result.baseDamage = effects.damage;
+      if (targets[0]) result.target = targets[0];
+    }
 
-// --- Boss encounters ---
-const BOSS_ENCOUNTERS = [
-  {
-    name: "Arminius's Champion",
-    enemies: ['arminius_champion', 'cheruscan_raider'],
-    intro: "A towering Germanic champion steps from the treeline, flanked by his guard. The final test.",
-  },
-  {
-    name: 'The Grove Witch',
-    enemies: ['grove_witch', 'bog_seer', 'marsh_wolf'],
-    intro: "The trees twist apart to reveal a figure wreathed in green flame. The forest itself fights against you.",
-  },
-];
+    // Heal (single target)
+    if (effects.heal !== undefined) {
+      result.heal = effects.heal;
+      result.baseHeal = effects.heal;
+      if (targets[0]) result.target = targets[0];
+    }
+
+    // Heal all allies
+    if (effects.healAll !== undefined) {
+      result.healAll = effects.healAll;
+      result.baseHeal = effects.healAll;
+    }
+
+    // Block (self)
+    if (effects.block !== undefined) {
+      let block = effects.block;
+      // Handle passive trigger (Shield Brace + Shield Discipline)
+      if (passiveTrigger) {
+        if (dice[0] && dice[0].value >= passiveTrigger.dieMin && !unit.passiveTriggered) {
+          block += passiveTrigger.bonusBlock;
+          unit.passiveTriggered = true;
+        }
+      }
+      result.block = block;
+      result.target = unit;
+    }
+
+    // Block all allies
+    if (effects.blockAll !== undefined) {
+      result.blockAll = effects.blockAll;
+    }
+
+    // Taunt
+    if (effects.taunt) {
+      result.taunt = true;
+      // If block was set, target is already unit; otherwise set it
+      if (result.target === undefined) result.target = unit;
+    }
+
+    // Poison (single target)
+    if (effects.poison !== undefined) {
+      result.poison = effects.poison;
+      if (targets[0] && !result.target) result.target = targets[0];
+    }
+
+    // Poison all enemies
+    if (effects.poisonAll !== undefined) {
+      result.poisonAll = effects.poisonAll;
+    }
+
+    // Morale
+    if (effects.morale !== undefined) {
+      result.morale = effects.morale;
+    }
+
+    // Buff allies
+    if (effects.buffAllies !== undefined) {
+      result.buffAllies = {
+        bonusDamage: effects.buffAllies.bonusDamage,
+        attacks: effects.buffAllies.attacks || 1,
+      };
+    }
+
+    // Self damage
+    if (effects.selfDamage !== undefined) {
+      result.selfDamage = effects.selfDamage;
+      if (targets[0] && !result.target) result.target = targets[0];
+    }
+
+    // Cleanse
+    if (effects.cleanse) {
+      result.cleanse = true;
+      if (targets[0] && !result.target) result.target = targets[0];
+    }
+
+    // Ignore row (for result object, skill-level ignoreRow is separate)
+    if (effects.ignoreRow) {
+      result.ignoreRow = true;
+    }
+
+    return result;
+  };
+}
+
+// --- Build a complete skill object from JSON skill data ---
+function buildSkill(skillData) {
+  const skill = {
+    id: skillData.id,
+    name: skillData.name,
+    cost: buildCost(skillData.cost),
+    target: skillData.target,
+    description: skillData.description,
+    execute: buildSkillExecute(skillData),
+  };
+  if (skillData.starter) skill.starter = true;
+  if (skillData.ignoreRow) skill.ignoreRow = true;
+  return skill;
+}
+
+// --- Build CLASS_DATA from JSON ---
+function buildClassData(rawClasses) {
+  const result = {};
+  for (const [classId, rawClass] of Object.entries(rawClasses)) {
+    result[classId] = {
+      name: rawClass.name,
+      title: rawClass.title,
+      maxHp: rawClass.maxHp,
+      tags: rawClass.tags,
+      description: rawClass.description,
+      passive: { ...rawClass.passive },
+      skills: rawClass.skills.map(s => buildSkill(s)),
+    };
+  }
+  return result;
+}
+
+// --- Build DROP_TABLES from JSON, resolving boss pool references ---
+function buildDropTables(rawDropTables, bossPool) {
+  const result = {};
+  for (const [enemyId, rawTable] of Object.entries(rawDropTables)) {
+    result[enemyId] = {
+      nothingChance: rawTable.nothingChance,
+      tiers: rawTable.tiers.map(tier => ({
+        chance: tier.chance,
+        items: tier.items === '__BOSS_DROP_POOL__' ? bossPool : tier.items,
+      })),
+    };
+  }
+  return result;
+}
+
+// --- Load all game data from JSON files ---
+async function loadGameData() {
+  const [classesRes, enemiesRes, itemsRes, eventsRes, encountersRes, configRes] = await Promise.all([
+    fetch('data/classes.json'),
+    fetch('data/enemies.json'),
+    fetch('data/items.json'),
+    fetch('data/events.json'),
+    fetch('data/encounters.json'),
+    fetch('data/config.json'),
+  ]);
+
+  const [rawClasses, rawEnemies, rawItems, rawEvents, rawEncounters, rawConfig] = await Promise.all([
+    classesRes.json(),
+    enemiesRes.json(),
+    itemsRes.json(),
+    eventsRes.json(),
+    encountersRes.json(),
+    configRes.json(),
+  ]);
+
+  // Build runtime data
+  CLASS_DATA = buildClassData(rawClasses);
+  ENEMY_DATA = rawEnemies;
+  ITEM_DATA = rawItems;
+  EVENT_DATA = rawEvents;
+
+  // Config
+  MORALE_BANDS = rawConfig.moraleBands;
+  EQUIP_SLOTS = rawConfig.equipSlots;
+  BOSS_DROP_POOL = rawConfig.bossDropPool;
+  BASE_DICE_COUNT = rawConfig.baseDiceCount;
+
+  // Encounters
+  ENCOUNTERS = rawEncounters.templates;
+  BOSS_ENCOUNTERS = rawEncounters.bossEncounters;
+  _encounterThreatData = rawEncounters.threatLevels;
+
+  // Drop tables (resolve boss pool references)
+  DROP_TABLES = buildDropTables(rawEncounters.dropTables, BOSS_DROP_POOL);
+}
 
 // --- Encounter generation by threat level ---
 function generateEncounterByThreat(threat) {
   if (threat <= 1) {
-    const easy = [
-      { name: 'Forest Scouts', enemies: ['cheruscan_raider', 'sling_hunter'], intro: 'A pair of scouts spot your column and attack.' },
-      { name: 'Lone Wolves', enemies: ['marsh_wolf', 'marsh_wolf'], intro: 'Wolves slink from the undergrowth, hungry and desperate.' },
-      { name: 'Eerie Chanting', enemies: ['bog_seer', 'cheruscan_raider'], intro: 'Chanting drifts from the fog. A seer and his guard block your path.' },
-      { name: 'Viper Nest', enemies: ['fen_viper', 'fen_viper'], intro: 'You step into a nest of marsh vipers. They strike without warning.' },
-    ];
+    const easy = _encounterThreatData.easy;
     return easy[Math.floor(Math.random() * easy.length)];
   } else if (threat === 2) {
-    const mid = [
-      { name: 'Ambush on the Trail', enemies: ['cheruscan_raider', 'cheruscan_raider', 'sling_hunter'], intro: 'Shapes burst from the undergrowth \u2014 Germanic warriors block the path.' },
-      { name: 'Raiding Party', enemies: ['cheruscan_raider', 'sling_hunter', 'sling_hunter'], intro: 'Stones whistle past. A raiding party has found your trail.' },
-      { name: 'Wolf Pack', enemies: ['marsh_wolf', 'marsh_wolf', 'marsh_wolf'], intro: 'A whole wolf pack emerges from the fog. There is no retreat.' },
-      { name: 'Cursed Hollow', enemies: ['bog_seer', 'bog_seer', 'cheruscan_raider'], intro: 'Two seers stand in a hollow, their chanting shaking the air. A warrior guards them.' },
-      { name: 'Wolves and Whispers', enemies: ['marsh_wolf', 'marsh_wolf', 'bog_seer'], intro: 'Wolves circle in the mist while eerie chanting echoes from behind the trees.' },
-      { name: 'Venomous Ambush', enemies: ['fen_viper', 'fen_viper', 'sling_hunter'], intro: 'Vipers and slingers attack from the swamp in a coordinated ambush.' },
-    ];
+    const mid = _encounterThreatData.mid;
     return mid[Math.floor(Math.random() * mid.length)];
   } else {
-    const hard = [
-      { name: 'The Clearing', enemies: ['cheruscan_raider', 'cheruscan_raider', 'marsh_wolf', 'sling_hunter'], intro: 'You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you.' },
-      { name: 'War Band', enemies: ['cheruscan_raider', 'cheruscan_raider', 'cheruscan_raider', 'sling_hunter'], intro: 'A full war band charges from the trees. Prepare for a desperate fight.' },
-      { name: 'The Oak Shield', enemies: ['oak_shield', 'cheruscan_raider', 'sling_hunter'], intro: 'A massive warrior blocks the trail, oak shield raised. His warband flanks you.' },
-      { name: 'Ritual Guard', enemies: ['oak_shield', 'bog_seer', 'bog_seer'], intro: 'An elite warrior guards two seers performing a dark ritual. Stop them or be consumed.' },
-      { name: 'The Hunting Party', enemies: ['oak_shield', 'marsh_wolf', 'marsh_wolf'], intro: 'An elite warrior commands a pair of trained war wolves. They advance as one.' },
-      { name: 'Poison Grove', enemies: ['fen_viper', 'fen_viper', 'bog_seer', 'cheruscan_raider'], intro: 'Vipers slither among the roots as a seer chants protection. A warrior guards the approach.' },
-    ];
+    const hard = _encounterThreatData.hard;
     return hard[Math.floor(Math.random() * hard.length)];
   }
 }
 
-// --- Morale thresholds ---
-const MORALE_BANDS = [
-  { min: 75, label: 'INSPIRED', color: '#c9a227' },
-  { min: 25, label: 'STEADY', color: '#6b8f4a' },
-  { min: -24, label: 'SHAKEN', color: '#8a8a7a' },
-  { min: -74, label: 'DISTRESSED', color: '#a0522d' },
-  { min: -100, label: 'BROKEN', color: '#6b1a1a' },
-];
-
+// --- Morale helpers ---
 function getMoraleBand(morale) {
   for (const band of MORALE_BANDS) {
     if (morale >= band.min) return band;
@@ -405,186 +264,12 @@ function getMoraleBand(morale) {
   return MORALE_BANDS[MORALE_BANDS.length - 1];
 }
 
-// --- Equipment slot counts ---
-const EQUIP_SLOTS = {
-  weapon: 2,
-  armor: 2,
-  trinket: 3,
-};
-
-// --- Item definitions ---
-const ITEM_DATA = {
-  iron_gladius: {
-    id: 'iron_gladius', name: 'Iron Gladius', slot: 'weapon', rarity: 'common',
-    classTags: ['heavy', 'command'],
-    stats: { damage: 2 },
-    description: 'A sturdy blade taken from a fallen raider.',
-  },
-  raider_shield: {
-    id: 'raider_shield', name: "Raider's Shield", slot: 'armor', rarity: 'common',
-    classTags: ['roman'],
-    stats: { block: 2 },
-    description: 'Rough wood and hide, but it turns a blade.',
-  },
-  wolf_pelt: {
-    id: 'wolf_pelt', name: 'Wolf Pelt', slot: 'armor', rarity: 'common',
-    classTags: ['roman'],
-    stats: { maxHp: 4 },
-    description: 'Thick fur that wards off the cold and softens blows.',
-  },
-  sling_stones: {
-    id: 'sling_stones', name: 'Sling Stones', slot: 'weapon', rarity: 'common',
-    classTags: ['command', 'support'],
-    stats: { damage: 1 },
-    description: 'Smooth river stones, still in their pouch.',
-  },
-  bone_needle_kit: {
-    id: 'bone_needle_kit', name: 'Bone Needle Kit', slot: 'trinket', rarity: 'common',
-    classTags: ['support'],
-    stats: { heal: 3 },
-    description: 'Germanic surgical tools. Crude but effective.',
-  },
-  herb_pouch: {
-    id: 'herb_pouch', name: 'Herb Pouch', slot: 'trinket', rarity: 'common',
-    classTags: ['command', 'support'],
-    stats: { heal: 2 },
-    description: 'Dried marsh herbs with surprising potency.',
-  },
-  woad_charm: {
-    id: 'woad_charm', name: 'Woad Charm', slot: 'trinket', rarity: 'uncommon',
-    classTags: ['roman'],
-    stats: { maxHp: 3, block: 1 },
-    description: 'A blue-stained bone token. It feels warm to the touch.',
-  },
-  hunters_cloak: {
-    id: 'hunters_cloak', name: "Hunter's Cloak", slot: 'armor', rarity: 'uncommon',
-    classTags: ['command', 'support'],
-    stats: { maxHp: 5 },
-    description: 'Woven from marsh reeds and wolf hair. Surprisingly tough.',
-  },
-  fang_necklace: {
-    id: 'fang_necklace', name: 'Fang Necklace', slot: 'trinket', rarity: 'uncommon',
-    classTags: ['roman'],
-    stats: { damage: 1, maxHp: 2 },
-    description: 'A string of wolf fangs. The men eye it uneasily.',
-  },
-  chiefs_spear: {
-    id: 'chiefs_spear', name: "Chieftain's Spear", slot: 'weapon', rarity: 'rare',
-    classTags: ['heavy'],
-    stats: { damage: 4 },
-    description: 'Ash-hafted and iron-tipped. Taken from a war chief.',
-  },
-  marsh_fang: {
-    id: 'marsh_fang', name: 'Marsh Fang', slot: 'trinket', rarity: 'rare',
-    classTags: ['support'],
-    stats: { heal: 5, maxHp: 3 },
-    description: 'A hollowed fang filled with dark salve. Potent medicine.',
-  },
-  runic_stone: {
-    id: 'runic_stone', name: 'Runic Stone', slot: 'trinket', rarity: 'rare',
-    classTags: ['roman'],
-    stats: { extraDice: 1 },
-    description: 'A stone carved with strange runes. It hums faintly. (+1 die per turn)',
-  },
-  scouts_sling: {
-    id: 'scouts_sling', name: "Scout's Sling", slot: 'weapon', rarity: 'uncommon',
-    classTags: ['support'],
-    stats: { damage: 2 },
-    description: 'A well-worn sling. Even the surgeon can fight.',
-  },
-  // Boss-exclusive items
-  champions_helm: {
-    id: 'champions_helm', name: "Champion's Helm", slot: 'armor', rarity: 'rare',
-    classTags: ['heavy', 'command'],
-    stats: { maxHp: 6, block: 2 },
-    description: 'A heavy iron helm ripped from the champion. It reeks of blood.',
-  },
-  arm_ring_of_arminius: {
-    id: 'arm_ring_of_arminius', name: 'Arm Ring of Arminius', slot: 'trinket', rarity: 'rare',
-    classTags: ['roman'],
-    stats: { damage: 2, maxHp: 3 },
-    description: 'A gold arm ring inscribed with Germanic runes. Power radiates from it.',
-  },
-  warlords_blade: {
-    id: 'warlords_blade', name: "Warlord's Blade", slot: 'weapon', rarity: 'rare',
-    classTags: ['heavy'],
-    stats: { damage: 5 },
-    description: 'A massive iron sword. Only the strongest can wield it.',
-  },
-};
-
-// Boss-exclusive drop pool
-const BOSS_DROP_POOL = ['champions_helm', 'arm_ring_of_arminius', 'warlords_blade'];
-
 // --- canEquipItem helper ---
 function canEquipItem(unit, item) {
   return item.classTags.some(tag => CLASS_DATA[unit.classId].tags.includes(tag));
 }
 
-// --- Drop tables per enemy ---
-const DROP_TABLES = {
-  cheruscan_raider: {
-    nothingChance: 0.25,
-    tiers: [
-      { chance: 0.45, items: ['iron_gladius', 'raider_shield', 'herb_pouch'] },
-      { chance: 0.20, items: ['woad_charm', 'fang_necklace'] },
-      { chance: 0.05, items: ['chiefs_spear', 'runic_stone'] },
-    ],
-  },
-  sling_hunter: {
-    nothingChance: 0.30,
-    tiers: [
-      { chance: 0.40, items: ['sling_stones', 'bone_needle_kit', 'raider_shield'] },
-      { chance: 0.20, items: ['hunters_cloak', 'scouts_sling'] },
-      { chance: 0.05, items: ['woad_charm', 'runic_stone'] },
-    ],
-  },
-  marsh_wolf: {
-    nothingChance: 0.25,
-    tiers: [
-      { chance: 0.40, items: ['wolf_pelt', 'herb_pouch'] },
-      { chance: 0.25, items: ['fang_necklace'] },
-      { chance: 0.10, items: ['marsh_fang', 'runic_stone'] },
-    ],
-  },
-  arminius_champion: {
-    nothingChance: 0.0,
-    tiers: [
-      { chance: 1.0, items: BOSS_DROP_POOL },
-    ],
-  },
-  fen_viper: {
-    nothingChance: 0.40,
-    tiers: [
-      { chance: 0.40, items: ['herb_pouch', 'bone_needle_kit'] },
-      { chance: 0.15, items: ['fang_necklace'] },
-      { chance: 0.05, items: ['marsh_fang'] },
-    ],
-  },
-  bog_seer: {
-    nothingChance: 0.30,
-    tiers: [
-      { chance: 0.40, items: ['herb_pouch', 'bone_needle_kit'] },
-      { chance: 0.20, items: ['woad_charm', 'fang_necklace'] },
-      { chance: 0.10, items: ['runic_stone'] },
-    ],
-  },
-  oak_shield: {
-    nothingChance: 0.10,
-    tiers: [
-      { chance: 0.40, items: ['iron_gladius', 'raider_shield', 'wolf_pelt'] },
-      { chance: 0.35, items: ['woad_charm', 'fang_necklace', 'hunters_cloak'] },
-      { chance: 0.15, items: ['chiefs_spear', 'runic_stone'] },
-    ],
-  },
-  grove_witch: {
-    nothingChance: 0.0,
-    tiers: [
-      { chance: 1.0, items: BOSS_DROP_POOL },
-    ],
-  },
-};
-
+// --- Drop / loot helpers ---
 function rollDrop(enemyId, party) {
   const table = DROP_TABLES[enemyId];
   if (!table) return null;
@@ -644,189 +329,3 @@ function formatItemStats(stats) {
   if (stats.extraDice) parts.push(`+${stats.extraDice} die`);
   return parts.join(', ');
 }
-
-// --- Event Data ---
-const EVENT_DATA = [
-  {
-    id: 'roadside_shrine',
-    name: 'Roadside Shrine',
-    intro: 'You come upon a weathered shrine to some forgotten god. Offerings of fruit and bone litter the base. The men look to you for guidance.',
-    choices: [
-      {
-        text: 'Leave an offering and pray.',
-        outcomes: [
-          { weight: 0.5, text: 'A warm light fills the glade. The men feel renewed.', effects: { healAll: 8, morale: 10 } },
-          { weight: 0.3, text: 'Nothing happens. The gods are silent.', effects: {} },
-          { weight: 0.2, text: 'A cold wind sweeps through. The shrine crumbles. An ill omen.', effects: { morale: -10 } },
-        ],
-      },
-      {
-        text: 'Smash the shrine and take the offerings.',
-        outcomes: [
-          { weight: 0.4, text: 'You find a charm hidden among the bones.', effects: { grantItem: 'woad_charm' } },
-          { weight: 0.3, text: 'The men cheer at the defiance, but the forest seems to darken.', effects: { morale: 5 } },
-          { weight: 0.3, text: 'A trap! Poisoned thorns cut your hands.', effects: { damageAll: 5, morale: -5 } },
-        ],
-      },
-      {
-        text: 'Pass by without stopping.',
-        outcomes: [
-          { weight: 1.0, text: 'You march on. The shrine watches in silence.', effects: {} },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'fallen_legionary',
-    name: 'Fallen Legionary',
-    intro: 'A Roman soldier lies against a tree, barely alive. His armor is shattered and his eyes are dim. He clutches a leather satchel.',
-    choices: [
-      {
-        text: 'Tend to his wounds and take the satchel.',
-        outcomes: [
-          { weight: 0.6, text: 'He dies in your arms, but the satchel holds useful supplies.', effects: { grantItem: 'herb_pouch', morale: -5 } },
-          { weight: 0.4, text: 'He revives briefly and whispers a warning about the path ahead. The satchel holds medicine.', effects: { healAll: 6, morale: 5 } },
-        ],
-      },
-      {
-        text: 'Take his equipment and move on.',
-        outcomes: [
-          { weight: 0.5, text: 'His gladius is still sharp.', effects: { grantItem: 'iron_gladius' } },
-          { weight: 0.5, text: 'Nothing of value remains. The men grow quiet.', effects: { morale: -8 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'river_crossing',
-    name: 'River Crossing',
-    intro: 'A swollen river blocks your path. The current is fast and the water dark. Upstream, a narrow fallen log offers a precarious bridge.',
-    choices: [
-      {
-        text: 'Ford the river directly.',
-        outcomes: [
-          { weight: 0.4, text: 'You push through the freezing water. Everyone makes it, barely.', effects: { damageAll: 4, morale: -5 } },
-          { weight: 0.3, text: 'The crossing goes smoothly. The cold water numbs old wounds.', effects: { healAll: 3 } },
-          { weight: 0.3, text: 'The current is stronger than expected. Equipment is lost.', effects: { damageAll: 6, morale: -10 } },
-        ],
-      },
-      {
-        text: 'Cross on the fallen log.',
-        outcomes: [
-          { weight: 0.5, text: 'Careful footing gets everyone across safely.', effects: { morale: 5 } },
-          { weight: 0.3, text: 'The log holds. You find a cache on the far bank.', effects: { grantItem: 'fang_necklace' } },
-          { weight: 0.2, text: 'The log snaps! Several soldiers tumble into the rapids.', effects: { damageAll: 8, morale: -8 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'captured_scout',
-    name: 'Captured Scout',
-    intro: 'Your men drag a struggling Germanic scout from the bushes. He spits and snarls but is clearly terrified.',
-    choices: [
-      {
-        text: 'Interrogate him for information.',
-        outcomes: [
-          { weight: 0.5, text: 'He reveals a hidden supply cache before escaping.', effects: { grantItem: 'herb_pouch', morale: 5 } },
-          { weight: 0.3, text: 'He tells you nothing useful and manages to bite a soldier.', effects: { damageAll: 2 } },
-          { weight: 0.2, text: 'He breaks free and screams an alarm. You must move quickly.', effects: { morale: -12 } },
-        ],
-      },
-      {
-        text: 'Release him as a show of mercy.',
-        outcomes: [
-          { weight: 0.6, text: 'The men question your judgment, but the gesture feels right.', effects: { morale: 8 } },
-          { weight: 0.4, text: 'He returns later with friends. You were foolish.', effects: { morale: -15 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'foragers_cache',
-    name: "Forager's Cache",
-    intro: 'Behind a fallen oak, you discover a hidden cache of supplies \u2014 likely left by a Germanic foraging party. Dried meat, herbs, and a few weapons.',
-    choices: [
-      {
-        text: 'Take everything.',
-        outcomes: [
-          { weight: 0.6, text: 'A good haul. The men eat well tonight.', effects: { healAll: 10, morale: 8 } },
-          { weight: 0.4, text: 'You find excellent supplies and a fine weapon among the cache.', effects: { healAll: 6, grantItem: 'iron_gladius' } },
-        ],
-      },
-      {
-        text: 'Take only the medicine and leave the rest.',
-        outcomes: [
-          { weight: 0.7, text: 'The herbs are potent. Your wounded recover.', effects: { healAll: 12 } },
-          { weight: 0.3, text: 'Among the herbs you find something special.', effects: { healAll: 8, grantItem: 'bone_needle_kit' } },
-        ],
-      },
-      {
-        text: 'Leave it \u2014 it could be a trap.',
-        outcomes: [
-          { weight: 0.5, text: 'Prudent. The men grumble but respect your caution.', effects: { morale: -3 } },
-          { weight: 0.5, text: 'As you leave, you hear a tripwire snap behind you. Good instincts.', effects: { morale: 10 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'deserter_camp',
-    name: 'Deserter Camp',
-    intro: 'You stumble upon a makeshift camp. Roman equipment is scattered about, but the soldiers here have abandoned their colors. They eye you warily, hands on weapons.',
-    choices: [
-      {
-        text: 'Demand they rejoin the column.',
-        outcomes: [
-          { weight: 0.4, text: 'They fall in line, ashamed. Your men stand a little taller.', effects: { morale: 15 } },
-          { weight: 0.3, text: 'They refuse and flee into the forest, but leave useful supplies behind.', effects: { healAll: 6, grantItem: 'iron_gladius' } },
-          { weight: 0.3, text: 'They attack in desperation. You put them down, but the fight costs you.', effects: { damageAll: 5, morale: -10 } },
-        ],
-      },
-      {
-        text: 'Trade supplies with them.',
-        outcomes: [
-          { weight: 0.6, text: 'They share medicine and a warm meal. A brief taste of civilization.', effects: { healAll: 10, morale: 5 } },
-          { weight: 0.4, text: 'They trade you a curious trinket for your last rations.', effects: { grantItem: 'woad_charm', damageAll: 3 } },
-        ],
-      },
-      {
-        text: 'Leave them. You have enough problems.',
-        outcomes: [
-          { weight: 1.0, text: 'You slip past. The deserters watch you go in silence.', effects: {} },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'ancient_oak',
-    name: 'The Ancient Oak',
-    intro: 'A colossal oak tree dominates a clearing, its trunk carved with faces that seem to shift in the firelight. Offerings hang from its branches \u2014 weapons, bones, and Roman standards.',
-    choices: [
-      {
-        text: 'Take back the Roman standards.',
-        outcomes: [
-          { weight: 0.5, text: 'Your men cheer. The standards still carry weight, even here.', effects: { morale: 20 } },
-          { weight: 0.3, text: 'As you pull the last standard free, the tree groans. Something watches.', effects: { morale: 10, damageAll: 3 } },
-          { weight: 0.2, text: 'The offerings were trapped. Poison thorns slice your hands.', effects: { damageAll: 6, morale: -5 } },
-        ],
-      },
-      {
-        text: 'Search the offerings for useful equipment.',
-        outcomes: [
-          { weight: 0.5, text: 'Among the bones you find a weapon, still sharp.', effects: { grantItem: 'chiefs_spear' } },
-          { weight: 0.3, text: 'You find herbs wrapped in leather. Good medicine.', effects: { healAll: 8, grantItem: 'herb_pouch' } },
-          { weight: 0.2, text: 'Nothing but rot and bone. The men grow uneasy.', effects: { morale: -8 } },
-        ],
-      },
-      {
-        text: 'Burn the tree.',
-        outcomes: [
-          { weight: 0.4, text: 'The fire catches fast. The carved faces scream as they burn. Your men feel a dark satisfaction.', effects: { morale: 5 } },
-          { weight: 0.3, text: 'The fire reveals a hidden cache at the roots.', effects: { grantItem: 'runic_stone', morale: 5 } },
-          { weight: 0.3, text: 'The smoke draws attention. You hear war horns in the distance.', effects: { morale: -12 } },
-        ],
-      },
-    ],
-  },
-];

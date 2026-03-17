@@ -1,0 +1,16 @@
+{
+  "moraleBands": [
+    { "min": 75, "label": "INSPIRED", "color": "#c9a227" },
+    { "min": 25, "label": "STEADY", "color": "#6b8f4a" },
+    { "min": -24, "label": "SHAKEN", "color": "#8a8a7a" },
+    { "min": -74, "label": "DISTRESSED", "color": "#a0522d" },
+    { "min": -100, "label": "BROKEN", "color": "#6b1a1a" }
+  ],
+  "equipSlots": {
+    "weapon": 2,
+    "armor": 2,
+    "trinket": 3
+  },
+  "bossDropPool": ["champions_helm", "arm_ring_of_arminius", "warlords_blade"],
+  "baseDiceCount": 4
+}
