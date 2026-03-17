@@ -642,7 +642,7 @@ class CombatEngine {
 
           // Morale restored on kill — based on enemy base maxHp, doubled for seers
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
-          let moraleRestore = e.isBoss ? 35 : (baseHp > 10 ? 6 : 4);
+          let moraleRestore = e.isBoss ? 75 : (baseHp > 10 ? 6 : 4);
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
           // Special: Chieftain's Spear — +3 extra morale per kill
           if (this.partyHasItem('chiefs_spear')) moraleRestore += 3;

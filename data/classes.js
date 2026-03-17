@@ -19,8 +19,8 @@ const RAW_CLASSES = {
       {
         "id": "strike", "name": "Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Basic sword strike. Deals 3 damage.",
-        "effects": { "damage": 3 }
+        "description": "Basic sword strike. Deals 4 damage.",
+        "effects": { "damage": 4 }
       },
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
@@ -77,8 +77,8 @@ const RAW_CLASSES = {
       {
         "id": "strike", "name": "Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Basic strike. Deals 2 damage.",
-        "effects": { "damage": 2 }
+        "description": "Basic strike. Deals 3 damage.",
+        "effects": { "damage": 3 }
       },
       {
         "id": "commanding_shout", "name": "Commanding Shout", "starter": true,
@@ -145,7 +145,8 @@ const RAW_CLASSES = {
       {
         "id": "aconitum", "name": "Aconitum", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Applies 3 Poison to an enemy.",
+        "ignoreRow": true,
+        "description": "Applies 3 Poison to any enemy.",
         "effects": { "poison": 3 }
       },
       {

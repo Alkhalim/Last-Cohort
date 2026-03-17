@@ -629,11 +629,23 @@ class GameUI {
       // Build modified description showing bonuses with itemized breakdown
       let desc = skill.description;
 
-      if (totalBonusDmg !== 0) {
+      // Check for enemy damage reduction aura (Wicker Man)
+      const auraReduction = this.engine.enemies
+        ? this.engine.enemies.filter(e => !e.dead && e.aura && e.aura.damageReduction).reduce((s, e) => s + e.aura.damageReduction, 0)
+        : 0;
+      const effectiveBonusDmg = totalBonusDmg - auraReduction;
+
+      if (effectiveBonusDmg !== 0) {
         desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
-          const total = Math.max(0, parseInt(base) + totalBonusDmg);
-          const sign = totalBonusDmg > 0 ? '+' : '';
-          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}${sign}${totalBonusDmg})</span>`;
+          const total = Math.max(1, parseInt(base) + effectiveBonusDmg);
+          const sign = effectiveBonusDmg > 0 ? '+' : '';
+          const auraNote = auraReduction > 0 ? `, -${auraReduction} aura` : '';
+          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}${totalBonusDmg !== 0 ? (totalBonusDmg > 0 ? '+' : '') + totalBonusDmg : ''}${auraNote})</span>`;
+        });
+      } else if (auraReduction > 0) {
+        desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
+          const total = Math.max(1, parseInt(base) - auraReduction);
+          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}, -${auraReduction} aura)</span>`;
         });
       }
       if (equipBlock > 0) {
