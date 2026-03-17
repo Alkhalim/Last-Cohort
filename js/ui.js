@@ -121,6 +121,7 @@ class GameUI {
 
   // --- Main render ---
   render() {
+    this.hideEnemyTooltip();
     this.renderMorale();
     this.renderEnemies();
     this.renderDicePool();
