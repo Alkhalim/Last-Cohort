@@ -390,12 +390,6 @@ class Game {
       const selected = this.selectedPartyClasses.includes(classId);
       const primaryTag = data.tags.find(t => t !== 'roman') || 'roman';
       const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
-      const starterSkills = data.skills.filter(s => s.starter);
-      const skillList = starterSkills.map(s => {
-        const costLabel = s.cost.label || 'Any';
-        return `<div class="ps-skill"><span class="ps-skill-cost">[${costLabel}]</span> ${s.name} <span class="ps-skill-desc">${s.description}</span></div>`;
-      }).join('');
-
       html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
         <div class="ps-class-header">
           <span class="ps-class-name">${data.name}</span>
@@ -405,7 +399,6 @@ class Game {
         <div class="ps-class-desc">${data.description}</div>
         <div class="ps-class-hp">HP: ${data.maxHp}</div>
         <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
-        <div class="ps-class-skills">${skillList}</div>
       </div>`;
     }
     container.innerHTML = html;
