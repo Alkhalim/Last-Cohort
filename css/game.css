@@ -112,11 +112,13 @@ html, body {
 }
 
 .version-label {
-  font-size: 0.6rem;
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 0.55rem;
   color: var(--text-dim);
   letter-spacing: 0.1em;
-  margin-bottom: 1.5rem;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .home-renown {
@@ -2156,7 +2158,7 @@ html, body {
 
 /* --- Mood: Shaken (morale -24 to 24) --- */
 #combat-screen.mood-shaken {
-  --mood-filter: saturate(0.85) brightness(0.95);
+  --mood-filter: saturate(0.85);
 }
 
 #combat-screen.mood-shaken #combat-atmosphere {
@@ -2166,7 +2168,7 @@ html, body {
 
 /* --- Mood: Distressed (morale -25 to -74) --- */
 #combat-screen.mood-distressed {
-  --mood-filter: saturate(0.6) brightness(0.82);
+  --mood-filter: saturate(0.6);
 }
 
 #combat-screen.mood-distressed #combat-atmosphere {
@@ -2185,7 +2187,7 @@ html, body {
 
 /* --- Mood: Broken (morale -75 to -100) --- */
 #combat-screen.mood-broken {
-  --mood-filter: saturate(0.35) brightness(0.7) contrast(1.1);
+  --mood-filter: saturate(0.35) contrast(1.1);
 }
 
 #combat-screen.mood-broken #combat-atmosphere {
