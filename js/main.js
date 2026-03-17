@@ -94,21 +94,22 @@ class Game {
   }
 
   updateMoraleLowpass(morale) {
-    if (!this.lowpassFilter) return;
-    // Map morale (-100 to 100) to lowpass frequency
-    // 100 morale = 20000 Hz (fully open)
-    // 0 morale = 8000 Hz (slight muffle)
-    // -50 morale = 3000 Hz (noticeable muffle)
-    // -100 morale = 800 Hz (heavily muffled, underwater feeling)
-    let freq;
-    if (morale >= 50) {
-      freq = 20000;
-    } else if (morale >= 0) {
-      freq = 8000 + (morale / 50) * 12000; // 8000 to 20000
-    } else {
-      freq = 800 + ((morale + 100) / 100) * 7200; // 800 to 8000
+    if (this.audioFilterActive && this.lowpassFilter && this.audioCtx) {
+      // Web Audio API lowpass — full frequency control
+      let freq;
+      if (morale >= 50) freq = 20000;
+      else if (morale >= 0) freq = 8000 + (morale / 50) * 12000;
+      else freq = 800 + ((morale + 100) / 100) * 7200;
+      this.lowpassFilter.frequency.setTargetAtTime(freq, this.audioCtx.currentTime, 0.5);
+    } else if (this.currentTrack) {
+      // Fallback: reduce volume at low morale to simulate muffling
+      const baseVol = this.getMusicVolume();
+      let volMult = 1.0;
+      if (morale < 0) {
+        volMult = 1.0 + (morale / 200); // at -100: 0.5x volume
+      }
+      this.currentTrack.volume = baseVol * Math.max(0.3, volMult);
     }
-    this.lowpassFilter.frequency.setTargetAtTime(freq, this.audioCtx.currentTime, 0.5);
   }
 
   playTrack(src, loop = true) {

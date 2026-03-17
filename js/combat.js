@@ -147,6 +147,15 @@ class CombatEngine {
   }
 
   startRollPhase() {
+    // Safety: check if all enemies already dead before starting new turn
+    this.checkEnemyDeaths();
+    if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
+      this.phase = PHASE.VICTORY;
+      this.addLog('All enemies defeated!');
+      this.update();
+      return;
+    }
+
     this.turn++;
     this.turnCount++;
     this.phase = PHASE.ROLLING;
@@ -567,35 +576,37 @@ class CombatEngine {
   }
 
   checkEnemyDeaths() {
-    this.enemies.forEach(e => {
-      if (e.hp <= 0 && !e.dead) {
-        e.dead = true;
-        e.hp = 0;
-        this.killedEnemies.push(e.id);
-        this.totalEnemiesKilled++;
-        this.addLog(`${e.name} falls!`);
+    // Loop until no new deaths — death effects can chain-kill other enemies
+    let hadDeath = true;
+    while (hadDeath) {
+      hadDeath = false;
+      for (const e of this.enemies) {
+        if (e.hp <= 0 && !e.dead) {
+          e.dead = true;
+          e.hp = 0;
+          hadDeath = true;
+          this.killedEnemies.push(e.id);
+          this.totalEnemiesKilled++;
+          this.addLog(`${e.name} falls!`);
 
-        // Death poison (Mire Leech): poison all party members
-        if (e.deathPoison) {
-          this.party.forEach(u => {
-            if (!u.downed) {
-              u.poison = (u.poison || 0) + e.deathPoison;
+          if (e.deathPoison) {
+            this.party.forEach(u => {
+              if (!u.downed) u.poison = (u.poison || 0) + e.deathPoison;
+            });
+            this.addLog(`${e.name} bursts — toxic innards spray the party! (+${e.deathPoison} Poison to all)`);
+          }
+
+          if (e.deathDamageEnemy) {
+            const aliveEnemies = this.enemies.filter(oe => !oe.dead && oe !== e);
+            if (aliveEnemies.length > 0) {
+              const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+              victim.hp = Math.max(0, victim.hp - e.deathDamageEnemy);
+              this.addLog(`${e.name} collapses onto ${victim.name} for ${e.deathDamageEnemy} damage!`);
             }
-          });
-          this.addLog(`${e.name} bursts — toxic innards spray the party! (+${e.deathPoison} Poison to all)`);
-        }
-
-        // Death damage to random enemy (Wicker Man collapse)
-        if (e.deathDamageEnemy) {
-          const aliveEnemies = this.enemies.filter(oe => !oe.dead && oe !== e);
-          if (aliveEnemies.length > 0) {
-            const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-            victim.hp = Math.max(0, victim.hp - e.deathDamageEnemy);
-            this.addLog(`${e.name} collapses onto ${victim.name} for ${e.deathDamageEnemy} damage!`);
           }
         }
       }
-    });
+    }
   }
 
   shouldAutoEndTurn() {
@@ -637,6 +648,11 @@ class CombatEngine {
     }
 
     const enemy = enemies[index];
+    if (enemy.dead) {
+      // Skip dead enemies (could have died to another enemy's death effect)
+      setTimeout(() => this.executeEnemySequence(enemies, index + 1), 100);
+      return;
+    }
     this.executeEnemyAction(enemy);
 
     // Boss enrage: if boss is below 50% HP, attack twice

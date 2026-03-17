@@ -11,7 +11,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Spear Thrust", "damage": 5, "chance": 0.6, "text": "thrusts spear" },
       { "name": "Wild Slash", "damage": 7, "chance": 0.3, "text": "slashes wildly" },
-      { "name": "War Cry", "damage": 0, "morale": -5, "chance": 0.1, "text": "lets out a war cry" }
+      { "name": "War Cry", "damage": 0, "morale": -10, "chance": 0.1, "text": "lets out a war cry" }
     ]
   },
   "sling_hunter": {
@@ -31,7 +31,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Bite", "damage": 4, "chance": 0.5, "text": "lunges with snapping jaws" },
       { "name": "Pounce", "damage": 6, "chance": 0.3, "text": "pounces" },
-      { "name": "Howl", "damage": 0, "morale": -8, "chance": 0.2, "text": "howls into the mist" }
+      { "name": "Howl", "damage": 0, "morale": -15, "chance": 0.2, "text": "howls into the mist" }
     ]
   },
   "fen_viper": {
@@ -49,7 +49,7 @@ const RAW_ENEMIES = {
     "maxHp": 10, "row": "back", "damage": [2, 3], "speed": 1, "xpValue": 5,
     "description": "A hunched figure draped in moss, chanting from the treeline. Attacks the mind.", "ai": "sniper",
     "actions": [
-      { "name": "Curse of Dread", "damage": 0, "morale": -10, "chance": 0.4, "text": "chants a dreadful curse" },
+      { "name": "Curse of Dread", "damage": 0, "morale": -18, "chance": 0.4, "text": "chants a dreadful curse" },
       { "name": "Marsh Hex", "damage": 3, "morale": -5, "chance": 0.3, "text": "hurls a hex of swamp fire", "ignoreRow": true },
       { "name": "Wail of the Dead", "damage": 0, "morale": -15, "chance": 0.2, "text": "screams with the voices of the dead" },
       { "name": "Bone Shard", "damage": 5, "chance": 0.1, "text": "flings a shard of bone", "ignoreRow": true }

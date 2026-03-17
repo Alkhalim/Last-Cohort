@@ -517,14 +517,16 @@ html, body {
 
 .enemy-slots {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex: 1;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .enemy-card {
-  width: 100px;
-  flex-shrink: 0;
+  width: 90px;
+  min-width: 70px;
+  flex-shrink: 1;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 4px;
