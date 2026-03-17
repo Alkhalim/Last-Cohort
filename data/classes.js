@@ -32,8 +32,8 @@ const RAW_CLASSES = {
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "Precise thrust. Deals 6 damage.",
-        "effects": { "damage": 6 }
+        "description": "Precise thrust. Deals 7 damage.",
+        "effects": { "damage": 7 }
       },
       {
         "id": "hold_fast", "name": "Hold Fast",
@@ -45,8 +45,8 @@ const RAW_CLASSES = {
         "id": "pilum_cast", "name": "Pilum Cast",
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Throw pilum at any row. Deals 7 damage.",
-        "effects": { "damage": 7, "ignoreRow": true }
+        "description": "Throw pilum at any row. Deals 6 damage.",
+        "effects": { "damage": 6, "ignoreRow": true }
       },
       {
         "id": "twin_slash", "name": "Twin Slash",
@@ -255,9 +255,9 @@ const RAW_CLASSES = {
     "tags": ["command", "roman"],
     "description": "Standard Bearer. Rallies the cohort with morale and buffs.",
     "passive": {
-      "name": "Rally the Standard",
-      "description": "Party starts each encounter with +5 morale.",
-      "triggered": false
+      "name": "Standard of the Legion",
+      "description": "+1 extra die per turn. The standard inspires focus.",
+      "extraDice": true
     },
     "skills": [
       {
@@ -269,8 +269,8 @@ const RAW_CLASSES = {
       {
         "id": "raise_the_eagle", "name": "Raise the Eagle", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "Raise the eagle standard. +12 Morale.",
-        "effects": { "morale": 12 }
+        "description": "Raise the eagle standard. +8 Morale.",
+        "effects": { "morale": 8 }
       },
       {
         "id": "inspire", "name": "Inspire", "starter": true,
@@ -287,8 +287,8 @@ const RAW_CLASSES = {
       {
         "id": "battle_hymn", "name": "Battle Hymn",
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 7+. +20 Morale, all allies gain +2 damage for next attack.",
-        "effects": { "morale": 20, "buffAllies": { "bonusDamage": 2, "attacks": 1 } }
+        "description": "2 dice totaling 7+. +15 Morale, all allies gain +1 damage for next attack.",
+        "effects": { "morale": 15, "buffAllies": { "bonusDamage": 1, "attacks": 1 } }
       },
       {
         "id": "defiant_stand", "name": "Defiant Stand",
