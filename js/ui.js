@@ -206,8 +206,8 @@ class GameUI {
         el.addEventListener('click', () => this.onEnemyClick(enemy));
       }
 
-      // Enemy info tooltip on hover / long-press
-      if (!enemy.dead) {
+      // Enemy info tooltip on hover / long-press (not during spawn/pre-combat)
+      if (!enemy.dead && this.engine.phase !== PHASE.SPAWNING && this.engine.phase !== PHASE.PRE_COMBAT) {
         el.addEventListener('mouseenter', () => this.showEnemyTooltip(enemy, el));
         el.addEventListener('mouseleave', () => this.hideEnemyTooltip());
         let holdTimer = null;
