@@ -6,7 +6,8 @@
       "Bash(python:*)",
       "Bash(start:*)",
       "Bash(ls:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(grep:*)"
     ]
   }
 }

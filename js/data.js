@@ -307,6 +307,41 @@ function renderTagPips(classTags) {
   return classTags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
 }
 
+// Create a leveled copy of an item — each level adds +1 to a random stat (or -1 to negative stats)
+function createLeveledItem(itemId, bonusLevels) {
+  const base = ITEM_DATA[itemId];
+  if (!base || bonusLevels <= 0) return itemId; // return plain ID if no scaling
+
+  // Create a unique instance ID
+  const instanceId = itemId + '_lv' + (1 + bonusLevels) + '_' + Math.random().toString(36).substr(2, 4);
+
+  // Deep clone the item
+  const leveled = JSON.parse(JSON.stringify(base));
+  leveled.id = instanceId;
+  leveled.baseId = itemId;
+  leveled.level = 1 + bonusLevels;
+
+  // Apply bonus levels — each level adds +1 to a random stat
+  const statKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice');
+  for (let i = 0; i < bonusLevels; i++) {
+    if (statKeys.length === 0) break;
+    const key = statKeys[Math.floor(Math.random() * statKeys.length)];
+    if (leveled.stats[key] < 0) {
+      leveled.stats[key]--; // negative stats get more negative
+    } else {
+      leveled.stats[key]++;
+    }
+  }
+
+  // Update name to show level
+  leveled.name = base.name + ' +' + bonusLevels;
+
+  // Register in ITEM_DATA so getItemData works
+  ITEM_DATA[instanceId] = leveled;
+
+  return instanceId;
+}
+
 function formatItemStats(stats) {
   const parts = [];
   if (stats.damage) parts.push(`+${stats.damage} dmg`);

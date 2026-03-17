@@ -1567,6 +1567,7 @@ class GameUI {
     this.engine.grantSkillPick();
 
     // Roll drops — filter by usability and enforce rarity caps by threat
+    const difficulty = window.game ? window.game.difficulty : 1;
     const allDrops = [];
     for (const enemyId of this.engine.killedEnemies) {
       const itemId = rollDrop(enemyId, this.engine.party);
@@ -1577,13 +1578,12 @@ class GameUI {
       if (canUse) allDrops.push(itemId);
     }
 
-    // Rarity caps by threat: easy=common only, mid=1 uncommon, hard=2 uncommon + 1 rare
+    // Rarity caps by threat: easy=1 uncommon, mid=2 uncommon, hard=2 uncommon + 1 rare
     const threat = this.currentNodeThreat || 1;
-    let maxUncommon = 0, maxRare = 0;
-    if (threat <= 1) { maxUncommon = 0; maxRare = 0; }
-    else if (threat === 2) { maxUncommon = 1; maxRare = 0; }
-    else { maxUncommon = 2; maxRare = 1; }
-    if (isBossVictory) { maxUncommon = 99; maxRare = 99; } // no cap for bosses
+    let maxUncommon = 1, maxRare = 0;
+    if (threat === 2) { maxUncommon = 2; maxRare = 0; }
+    else if (threat >= 3) { maxUncommon = 2; maxRare = 1; }
+    if (isBossVictory) { maxUncommon = 99; maxRare = 99; }
 
     let uncommonCount = 0, rareCount = 0;
     this.pendingLoot = [];
@@ -1597,7 +1597,10 @@ class GameUI {
         if (uncommonCount >= maxUncommon) continue;
         uncommonCount++;
       }
-      this.pendingLoot.push(itemId);
+      // Scale item level by difficulty (difficulty 2 = +1 level, etc.)
+      const bonusLevels = Math.max(0, difficulty - 1);
+      const scaledId = bonusLevels > 0 ? createLeveledItem(itemId, bonusLevels) : itemId;
+      this.pendingLoot.push(scaledId);
     }
 
     // Boss guaranteed rare drop if nothing dropped
@@ -1659,7 +1662,7 @@ class GameUI {
         card.innerHTML = `
           <div class="loot-card-header">
             <span class="loot-item-name">${item.name}</span>
-            <span class="loot-rarity">${item.rarity.toUpperCase()}</span>
+            <span class="loot-rarity">${item.rarity.toUpperCase()}${item.level > 1 ? ` Lv${item.level}` : ''}</span>
           </div>
           <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
           <div class="loot-item-desc">${item.description}</div>
@@ -1752,7 +1755,7 @@ class GameUI {
     tooltip.className = 'item-tooltip';
     tooltip.innerHTML = `
       <div class="item-tooltip-name rarity-${item.rarity}">${item.name}</div>
-      <div class="item-tooltip-meta">${item.slot} &middot; ${item.rarity} ${renderTagPips(item.classTags)}</div>
+      <div class="item-tooltip-meta">${item.slot} &middot; ${item.rarity}${item.level > 1 ? ` Lv${item.level}` : ''} ${renderTagPips(item.classTags)}</div>
       <div class="item-tooltip-stats">${formatItemStats(item.stats)}</div>
       ${item.special ? `<div class="item-tooltip-special">${item.special}</div>` : ''}
       <div class="item-tooltip-desc">${item.description}</div>
