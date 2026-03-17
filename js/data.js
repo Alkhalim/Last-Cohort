@@ -168,6 +168,11 @@ function buildSkillExecute(skillData) {
       result.splashHalf = true;
     }
 
+    // Poison splash: apply X poison to all other enemies
+    if (effects.poisonSplash !== undefined) {
+      result.poisonSplash = effects.poisonSplash;
+    }
+
     // Splash: damage to all enemies in same row as target
     if (effects.splashRow) {
       result.splashRow = true;

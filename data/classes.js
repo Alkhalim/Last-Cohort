@@ -89,8 +89,8 @@ const RAW_CLASSES = {
       {
         "id": "reform_the_line", "name": "Reform the Line", "starter": true,
         "cost": { "type": "threshold", "min": 4 }, "target": "all_allies",
-        "description": "All allies gain 3 Block.",
-        "effects": { "blockAll": 3 }
+        "description": "All allies gain 4 Block.",
+        "effects": { "blockAll": 4 }
       },
       {
         "id": "officers_care", "name": "Officer's Care",
@@ -163,9 +163,10 @@ const RAW_CLASSES = {
       },
       {
         "id": "plague_flask", "name": "Plague Flask",
-        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "all_enemies",
-        "description": "Apply 2 Poison to all enemies.",
-        "effects": { "poisonAll": 2 }
+        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Hurl a flask of plague. 3 Poison to target, 1 Poison to all others.",
+        "effects": { "poison": 3, "poisonSplash": 1 }
       },
       {
         "id": "sawbones_choice", "name": "Sawbones' Choice",
@@ -210,8 +211,8 @@ const RAW_CLASSES = {
         "id": "aimed_shot", "name": "Aimed Shot", "starter": true,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Carefully aimed shot. Deals 6 damage.",
-        "effects": { "damage": 6 }
+        "description": "Carefully aimed shot. Deals 6 damage. Ignores block.",
+        "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
         "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true,
@@ -229,8 +230,8 @@ const RAW_CLASSES = {
       {
         "id": "arrow_volley", "name": "Arrow Volley",
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
-        "description": "2 dice totaling 6+. Deals 4 damage to all enemies.",
-        "effects": { "damageAll": 4 }
+        "description": "2 dice totaling 6+. Deals 3 damage to all enemies.",
+        "effects": { "damageAll": 3 }
       },
       {
         "id": "mark_target", "name": "Mark Target",
@@ -281,8 +282,8 @@ const RAW_CLASSES = {
       {
         "id": "hold_the_line", "name": "Hold the Line",
         "cost": { "type": "threshold", "min": 4 }, "target": "all_allies",
-        "description": "All allies gain 4 Block.",
-        "effects": { "blockAll": 4 }
+        "description": "All allies gain 3 Block. +5 Morale.",
+        "effects": { "blockAll": 3, "morale": 5 }
       },
       {
         "id": "battle_hymn", "name": "Battle Hymn",
@@ -331,8 +332,8 @@ const RAW_CLASSES = {
       {
         "id": "war_drums", "name": "War Drums", "starter": true,
         "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
-        "description": "Beat the war drums. All allies gain +2 damage for next attack. +5 Morale.",
-        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 1 }, "morale": 5 }
+        "description": "Beat the war drums. All allies gain +1 damage for next attack. +5 Morale.",
+        "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 1 }, "morale": 5 }
       },
       {
         "id": "dissonant_note", "name": "Dissonant Note",
@@ -349,8 +350,8 @@ const RAW_CLASSES = {
       {
         "id": "cacophony", "name": "Cacophony",
         "cost": { "type": "exact", "val": 1 }, "target": "all_enemies",
-        "description": "A cacophony of noise. Applies 2 Poison to all enemies.",
-        "effects": { "poisonAll": 2 }
+        "description": "A cacophony of noise. Deals 1 damage and applies 1 Poison to all enemies.",
+        "effects": { "damageAll": 1, "poisonAll": 1 }
       },
       {
         "id": "thunderous_blast", "name": "Thunderous Blast",

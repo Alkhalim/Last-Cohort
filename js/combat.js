@@ -636,6 +636,14 @@ class CombatEngine {
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
       parts.push(`Applies ${totalPoison}${bonusStr} Poison.`);
     }
+    // Poison splash: apply to all other enemies
+    if (result.poisonSplash && result.target) {
+      const splashPoison = result.poisonSplash;
+      this.enemies.forEach(e => {
+        if (!e.dead && e !== result.target) e.poison = (e.poison || 0) + splashPoison;
+      });
+      parts.push(`${splashPoison} Poison splashes to other enemies.`);
+    }
     // Poison all enemies
     if (result.poisonAll) {
       const totalPoison = result.poisonAll + (unit.equipPoison || 0);
