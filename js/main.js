@@ -63,12 +63,22 @@ class Game {
 
   initAudioContext() {
     if (this.audioCtx) return;
-    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    this.lowpassFilter = this.audioCtx.createBiquadFilter();
-    this.lowpassFilter.type = 'lowpass';
-    this.lowpassFilter.frequency.value = 20000; // fully open
-    this.lowpassFilter.Q.value = 0.7;
-    this.lowpassFilter.connect(this.audioCtx.destination);
+    // Skip Web Audio API on file:// protocol — it can't connect MediaElementSource
+    if (window.location.protocol === 'file:') {
+      this.audioFilterActive = false;
+      return;
+    }
+    try {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      this.lowpassFilter = this.audioCtx.createBiquadFilter();
+      this.lowpassFilter.type = 'lowpass';
+      this.lowpassFilter.frequency.value = 20000;
+      this.lowpassFilter.Q.value = 0.7;
+      this.lowpassFilter.connect(this.audioCtx.destination);
+    } catch (e) {
+      this.audioCtx = null;
+      this.audioFilterActive = false;
+    }
   }
 
   connectTrackToFilter(audio) {
@@ -77,8 +87,9 @@ class Game {
       const source = this.audioCtx.createMediaElementSource(audio);
       source.connect(this.lowpassFilter);
       this.currentSource = source;
+      this.audioFilterActive = true;
     } catch (e) {
-      // Already connected or not supported
+      this.audioFilterActive = false;
     }
   }
 
@@ -105,9 +116,11 @@ class Game {
     const audio = new Audio(src);
     audio.loop = loop;
     audio.volume = this.getMusicVolume();
-    audio.crossOrigin = 'anonymous';
+    // Connect to Web Audio API filter if available (not on file://)
+    if (this.audioCtx) {
+      this.connectTrackToFilter(audio);
+    }
     audio.play().catch(() => {});
-    this.connectTrackToFilter(audio);
     if (!loop) {
       audio.addEventListener('ended', () => {
         if (this.musicMode === 'gameplay') {
