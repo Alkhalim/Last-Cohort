@@ -167,6 +167,9 @@ class GameUI {
     } else {
       screen.classList.add('mood-broken');
     }
+
+    // Update music lowpass filter based on morale
+    if (window.game) window.game.updateMoraleLowpass(morale);
   }
 
   // --- Enemies ---

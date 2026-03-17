@@ -28,9 +28,9 @@ const RAW_CLASSES = {
         "id": "shield_brace",
         "name": "Shield Brace",
         "starter": true,
-        "cost": { "type": "threshold", "min": 2 },
+        "cost": { "type": "range", "min": 2, "max": 4 },
         "target": "self",
-        "description": "Gain 5 Block. (4+ triggers Shield Discipline for +4.)",
+        "description": "Gain 5 Block. (Die 4 triggers Shield Discipline for +4.)",
         "effects": { "block": 5 },
         "passiveTrigger": { "dieMin": 4, "bonusBlock": 4 }
       },
@@ -38,7 +38,7 @@ const RAW_CLASSES = {
         "id": "gladius_thrust",
         "name": "Gladius Thrust",
         "starter": true,
-        "cost": { "type": "threshold", "min": 3 },
+        "cost": { "type": "range", "min": 4, "max": 5 },
         "target": "single_enemy",
         "description": "Precise thrust. Deals 6 damage.",
         "effects": { "damage": 6 }
@@ -120,7 +120,7 @@ const RAW_CLASSES = {
       {
         "id": "officers_care",
         "name": "Officer's Care",
-        "cost": { "type": "threshold", "min": 2 },
+        "cost": { "type": "range", "min": 2, "max": 4 },
         "target": "all_allies",
         "description": "All allies heal 1 HP and gain +1 damage on next attack.",
         "effects": { "healAll": 1, "buffAllies": { "bonusDamage": 1, "attacks": 1 } }
@@ -175,7 +175,7 @@ const RAW_CLASSES = {
         "id": "bind_wounds",
         "name": "Bind Wounds",
         "starter": true,
-        "cost": { "type": "threshold", "min": 2 },
+        "cost": { "type": "range", "min": 2, "max": 4 },
         "target": "single_ally",
         "description": "Heal an ally for 3 HP.",
         "effects": { "heal": 3 }
@@ -209,7 +209,7 @@ const RAW_CLASSES = {
       {
         "id": "plague_flask",
         "name": "Plague Flask",
-        "cost": { "type": "threshold", "min": 3 },
+        "cost": { "type": "range", "min": 4, "max": 5 },
         "target": "all_enemies",
         "description": "Apply 2 Poison to all enemies.",
         "effects": { "poisonAll": 2 }

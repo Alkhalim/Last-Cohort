@@ -27,11 +27,14 @@ class Game {
     this.marchCount = 0;
 
     // Music system
-    this.currentTrack = null;   // Audio element currently playing
-    this.nextTrack = null;      // For crossfade
-    this.musicMode = 'none';    // 'menu' | 'gameplay' | 'boss'
+    this.currentTrack = null;
+    this.nextTrack = null;
+    this.musicMode = 'none';
     this.musicStarted = false;
     this.fadeInterval = null;
+    this.audioCtx = null;
+    this.lowpassFilter = null;
+    this.currentSource = null;
 
     this.showHomeScreen();
     this.bindStartScreen();
@@ -58,12 +61,53 @@ class Game {
     return this.settings.musicVolume / 100;
   }
 
+  initAudioContext() {
+    if (this.audioCtx) return;
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.lowpassFilter = this.audioCtx.createBiquadFilter();
+    this.lowpassFilter.type = 'lowpass';
+    this.lowpassFilter.frequency.value = 20000; // fully open
+    this.lowpassFilter.Q.value = 0.7;
+    this.lowpassFilter.connect(this.audioCtx.destination);
+  }
+
+  connectTrackToFilter(audio) {
+    if (!this.audioCtx) return;
+    try {
+      const source = this.audioCtx.createMediaElementSource(audio);
+      source.connect(this.lowpassFilter);
+      this.currentSource = source;
+    } catch (e) {
+      // Already connected or not supported
+    }
+  }
+
+  updateMoraleLowpass(morale) {
+    if (!this.lowpassFilter) return;
+    // Map morale (-100 to 100) to lowpass frequency
+    // 100 morale = 20000 Hz (fully open)
+    // 0 morale = 8000 Hz (slight muffle)
+    // -50 morale = 3000 Hz (noticeable muffle)
+    // -100 morale = 800 Hz (heavily muffled, underwater feeling)
+    let freq;
+    if (morale >= 50) {
+      freq = 20000;
+    } else if (morale >= 0) {
+      freq = 8000 + (morale / 50) * 12000; // 8000 to 20000
+    } else {
+      freq = 800 + ((morale + 100) / 100) * 7200; // 800 to 8000
+    }
+    this.lowpassFilter.frequency.setTargetAtTime(freq, this.audioCtx.currentTime, 0.5);
+  }
+
   playTrack(src, loop = true) {
+    this.initAudioContext();
     const audio = new Audio(src);
     audio.loop = loop;
     audio.volume = this.getMusicVolume();
+    audio.crossOrigin = 'anonymous';
     audio.play().catch(() => {});
-    // When a non-looping track ends, pick next gameplay track
+    this.connectTrackToFilter(audio);
     if (!loop) {
       audio.addEventListener('ended', () => {
         if (this.musicMode === 'gameplay') {

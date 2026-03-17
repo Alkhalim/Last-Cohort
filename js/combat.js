@@ -251,6 +251,8 @@ class CombatEngine {
         return available.length >= 1;
       case 'threshold':
         return available.some(d => d.value >= cost.min);
+      case 'range':
+        return available.some(d => d.value >= cost.min && d.value <= cost.max);
       case 'exact':
         return available.some(d => d.value === cost.val);
       case 'combined':
@@ -271,10 +273,14 @@ class CombatEngine {
       case 'any':
         // Pick lowest die
         return available.length > 0 ? [available.reduce((min, d) => d.value < min.value ? d : min, available[0]).id] : [];
-      case 'threshold':
-        // Pick lowest die that meets threshold
-        const valid = available.filter(d => d.value >= cost.min).sort((a, b) => a.value - b.value);
-        return valid.length > 0 ? [valid[0].id] : [];
+      case 'threshold': {
+        const validT = available.filter(d => d.value >= cost.min).sort((a, b) => a.value - b.value);
+        return validT.length > 0 ? [validT[0].id] : [];
+      }
+      case 'range': {
+        const validR = available.filter(d => d.value >= cost.min && d.value <= cost.max).sort((a, b) => a.value - b.value);
+        return validR.length > 0 ? [validR[0].id] : [];
+      }
       case 'exact':
         const exact = available.find(d => d.value === cost.val);
         return exact ? [exact.id] : [];
