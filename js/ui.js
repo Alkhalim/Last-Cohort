@@ -638,45 +638,42 @@ class GameUI {
 
       el.className = `skill-btn${skill.canUse ? '' : ' disabled'}${isStaged ? ' staged' : ''}`;
 
-      // Build modified description showing bonuses with itemized breakdown
+      // Build modified description — show only totals, color-coded
       let desc = skill.description;
 
-      // Check for enemy damage reduction aura (Wicker Man)
       const auraReduction = this.engine.enemies
         ? this.engine.enemies.filter(e => !e.dead && e.aura && e.aura.damageReduction).reduce((s, e) => s + e.aura.damageReduction, 0)
         : 0;
       const effectiveBonusDmg = totalBonusDmg - auraReduction;
 
-      if (effectiveBonusDmg !== 0) {
+      // Replace damage values with colored totals
+      if (effectiveBonusDmg !== 0 || auraReduction > 0) {
         desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
           const total = Math.max(1, parseInt(base) + effectiveBonusDmg);
-          const sign = effectiveBonusDmg > 0 ? '+' : '';
-          const auraNote = auraReduction > 0 ? `, -${auraReduction} aura` : '';
-          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}${totalBonusDmg !== 0 ? (totalBonusDmg > 0 ? '+' : '') + totalBonusDmg : ''}${auraNote})</span>`;
-        });
-      } else if (auraReduction > 0) {
-        desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
-          const total = Math.max(1, parseInt(base) - auraReduction);
-          return `Deals <span class="mod-value">${total}</span> damage <span class="mod-bonus">(${base}, -${auraReduction} aura)</span>`;
+          return `Deals <span class="stat-dmg">${total}</span> damage`;
         });
       }
+      // Replace block values
       if (equipBlock > 0) {
-        desc = desc.replace(/Gain (\d+) Block/g, (match, base) => {
+        desc = desc.replace(/(\d+) Block/g, (match, base) => {
           const total = parseInt(base) + equipBlock;
-          return `Gain <span class="mod-value">${total}</span> Block <span class="mod-bonus">(${base}+${equipBlock})</span>`;
-        });
-        desc = desc.replace(/All allies gain (\d+) Block/g, (match, base) => {
-          const total = parseInt(base) + equipBlock;
-          return `All allies gain <span class="mod-value">${total}</span> Block <span class="mod-bonus">(${base}+${equipBlock})</span>`;
+          return `<span class="stat-block">${total}</span> Block`;
         });
       }
+      // Replace heal values
       if (totalBonusHeal !== 0) {
-        desc = desc.replace(/[Hh]eal[^]*?(\d+) HP/g, (match, base) => {
+        desc = desc.replace(/(\d+) HP/g, (match, base) => {
           const total = Math.max(0, parseInt(base) + totalBonusHeal);
-          const sign = totalBonusHeal > 0 ? '+' : '';
-          return match.replace(base + ' HP', `<span class="mod-value">${total}</span> HP <span class="mod-bonus">(${base}${sign}${totalBonusHeal})</span>`);
+          return `<span class="stat-heal">${total}</span> HP`;
         });
       }
+
+      // Color-code base stat keywords even without bonuses
+      desc = desc.replace(/(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
+      desc = desc.replace(/(\d+) Block/g, '<span class="stat-block">$1</span> Block');
+      desc = desc.replace(/(\d+) HP/g, '<span class="stat-heal">$1</span> HP');
+      desc = desc.replace(/(\d+) Poison/g, '<span class="stat-poison">$1</span> Poison');
+      desc = desc.replace(/(\d+) Morale/g, '<span class="stat-morale-text">$1</span> Morale');
 
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span></div>

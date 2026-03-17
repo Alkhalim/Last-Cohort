@@ -1131,6 +1131,12 @@ html, body {
   font-size: 0.6rem;
 }
 
+.stat-dmg { color: var(--red-bright); font-weight: 600; }
+.stat-block { color: var(--blue-bright); font-weight: 600; }
+.stat-heal { color: var(--green-bright); font-weight: 600; }
+.stat-poison { color: #8a2; font-weight: 600; }
+.stat-morale-text { color: var(--gold); font-weight: 600; }
+
 /* --- Confirm Attack Button --- */
 .btn-confirm {
   display: block;
