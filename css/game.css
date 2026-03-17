@@ -111,6 +111,14 @@ html, body {
   margin-bottom: 1.5rem;
 }
 
+.version-label {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
 .home-renown {
   display: flex;
   flex-direction: column;
