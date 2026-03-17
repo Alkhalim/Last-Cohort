@@ -914,9 +914,17 @@ class CombatEngine {
     // Find empty slot
     let slotIdx = slots.indexOf(null);
     if (slotIdx === -1) {
-      // All full — replace the first slot
-      this.unequipSlot(unitIndex, item.slot, 0);
-      slotIdx = 0;
+      // All full — replace the lowest rarity item
+      const rarityOrder = { common: 0, uncommon: 1, rare: 2 };
+      let worstIdx = 0;
+      let worstRarity = 3;
+      slots.forEach((id, si) => {
+        const existing = id ? getItemData(id) : null;
+        const r = existing ? (rarityOrder[existing.rarity] || 0) : 0;
+        if (r < worstRarity) { worstRarity = r; worstIdx = si; }
+      });
+      this.unequipSlot(unitIndex, item.slot, worstIdx);
+      slotIdx = worstIdx;
     }
 
     slots[slotIdx] = itemId;

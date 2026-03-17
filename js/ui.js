@@ -1413,9 +1413,17 @@ class GameUI {
           const hasEmpty = slots.some(s => s === null);
           let replaceText = '';
           if (!hasEmpty) {
-            // Would replace first slot item
-            const firstItem = getItemData(slots[0]);
-            replaceText = firstItem ? `Replaces: ${firstItem.name}` : '';
+            // Find lowest rarity item that would be replaced
+            const rarityOrder = { common: 0, uncommon: 1, rare: 2 };
+            let worstIdx = 0;
+            let worstRarity = 3;
+            slots.forEach((id, si) => {
+              const existing = id ? getItemData(id) : null;
+              const r = existing ? (rarityOrder[existing.rarity] || 0) : 0;
+              if (r < worstRarity) { worstRarity = r; worstIdx = si; }
+            });
+            const worstItem = getItemData(slots[worstIdx]);
+            replaceText = worstItem ? `Replaces: ${worstItem.name}` : '';
           }
           return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}">
             Equip <span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>${replaceText ? `<span class="loot-replace">${replaceText}</span>` : ''}
