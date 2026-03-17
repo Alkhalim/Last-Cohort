@@ -1657,14 +1657,18 @@ class GameUI {
           const hasEmpty = slots.some(s => s === null);
           let replaceText = '';
           if (!hasEmpty) {
-            // Find lowest rarity item that would be replaced
+            // Find lowest rarity + lowest level item that would be replaced
             const rarityOrder = { common: 0, uncommon: 1, rare: 2 };
             let worstIdx = 0;
             let worstRarity = 3;
+            let worstLevel = 999;
             slots.forEach((id, si) => {
               const existing = id ? getItemData(id) : null;
               const r = existing ? (rarityOrder[existing.rarity] || 0) : 0;
-              if (r < worstRarity) { worstRarity = r; worstIdx = si; }
+              const lv = existing ? (existing.level || 1) : 0;
+              if (r < worstRarity || (r === worstRarity && lv < worstLevel)) {
+                worstRarity = r; worstLevel = lv; worstIdx = si;
+              }
             });
             const worstItem = getItemData(slots[worstIdx]);
             replaceText = worstItem ? `Replaces: ${worstItem.name}` : '';

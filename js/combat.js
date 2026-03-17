@@ -116,14 +116,14 @@ class CombatEngine {
     const data = ENEMY_DATA[eid];
     // Difficulty scaling: +20% HP and +1 damage per action per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.3));
+    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.45));
     // Curse: Champion's Mark — bosses have +20% HP
     if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
       scaledMaxHp = Math.round(scaledMaxHp * 1.2);
     }
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.15)) : 0,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
     }));
     const enemy = {
       index: this.spawnIndex,
@@ -888,10 +888,10 @@ class CombatEngine {
         const data = ENEMY_DATA[action.spawn];
         if (data) {
           const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.3));
+          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.45));
           const scaledActions = data.actions.map(a => ({
             ...a,
-            damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.15)) : 0,
+            damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
           }));
           const spawned = {
             index: this.enemies.length,
@@ -1057,14 +1057,18 @@ class CombatEngine {
     // Find empty slot
     let slotIdx = slots.indexOf(null);
     if (slotIdx === -1) {
-      // All full — replace the lowest rarity item
+      // All full — replace the lowest rarity, then lowest level item
       const rarityOrder = { common: 0, uncommon: 1, rare: 2 };
       let worstIdx = 0;
       let worstRarity = 3;
+      let worstLevel = 999;
       slots.forEach((id, si) => {
         const existing = id ? getItemData(id) : null;
         const r = existing ? (rarityOrder[existing.rarity] || 0) : 0;
-        if (r < worstRarity) { worstRarity = r; worstIdx = si; }
+        const lv = existing ? (existing.level || 1) : 0;
+        if (r < worstRarity || (r === worstRarity && lv < worstLevel)) {
+          worstRarity = r; worstLevel = lv; worstIdx = si;
+        }
       });
       this.unequipSlot(unitIndex, item.slot, worstIdx);
       slotIdx = worstIdx;
