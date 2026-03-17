@@ -359,5 +359,126 @@ const RAW_CLASSES = {
         "effects": { "damage": 5, "splashHalf": true, "morale": 10 }
       }
     ]
+  },
+  "equites": {
+    "name": "Equites",
+    "title": "EQU",
+    "maxHp": 26,
+    "tags": ["heavy", "roman"],
+    "description": "Roman cavalry. Devastating charge openers that can strike any target.",
+    "passive": {
+      "name": "Cavalry Charge",
+      "description": "First attack each encounter deals +50% damage."
+    },
+    "skills": [
+      {
+        "id": "lance_thrust", "name": "Lance Thrust", "starter": true,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Thrust with the lance at any target. Deals 3 damage.",
+        "effects": { "damage": 3 }
+      },
+      {
+        "id": "charging_strike", "name": "Charging Strike", "starter": true,
+        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "A powerful charging blow. Deals 7 damage.",
+        "effects": { "damage": 7 }
+      },
+      {
+        "id": "trample", "name": "Trample", "starter": true,
+        "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
+        "description": "Trample a front-line enemy. Deals 4 damage and 2 damage to adjacent row enemies.",
+        "effects": { "damage": 4, "splashRow": true }
+      },
+      {
+        "id": "hit_and_run", "name": "Hit and Run",
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Strike and wheel away. Deals 3 damage and gain 3 Block.",
+        "effects": { "damage": 3, "block": 3 }
+      },
+      {
+        "id": "devastating_charge", "name": "Devastating Charge",
+        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 7+. A thunderous charge. Deals 10 damage.",
+        "effects": { "damage": 10 }
+      },
+      {
+        "id": "shield_breaker", "name": "Shield Breaker",
+        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Smash through defenses. Deals 6 damage, ignores block.",
+        "effects": { "damage": 6, "pierceBlock": 99 }
+      },
+      {
+        "id": "rally_charge", "name": "Rally Charge",
+        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 8+. Deals 8 damage. +10 Morale.",
+        "effects": { "damage": 8, "morale": 10 }
+      }
+    ]
+  },
+  "ballistarius": {
+    "name": "Ballistarius",
+    "title": "BAL",
+    "maxHp": 20,
+    "tags": ["ranged", "support"],
+    "description": "Roman siege crossbowman. Every hit weakens the enemy, reducing their damage.",
+    "passive": {
+      "name": "Pinning Fire",
+      "description": "Enemies damaged by this unit deal 15% less damage on their next action."
+    },
+    "skills": [
+      {
+        "id": "crossbow_bolt", "name": "Crossbow Bolt", "starter": true,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Fire a bolt at any target. Deals 3 damage.",
+        "effects": { "damage": 3 }
+      },
+      {
+        "id": "pinning_shot", "name": "Pinning Shot", "starter": true,
+        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "A heavy bolt that pins the target. Deals 5 damage and applies 2 Poison.",
+        "effects": { "damage": 5, "poison": 2 }
+      },
+      {
+        "id": "suppressive_volley", "name": "Suppressive Volley", "starter": true,
+        "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
+        "description": "Rain bolts on a row. Deals 2 damage to target and all enemies in same row.",
+        "effects": { "damage": 2, "splashRow": true }
+      },
+      {
+        "id": "fire_bolt", "name": "Fire Bolt",
+        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "A flaming bolt. Deals 4 damage and applies 3 Poison.",
+        "effects": { "damage": 4, "poison": 3 }
+      },
+      {
+        "id": "armor_piercer", "name": "Armor Piercer",
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "A bolt designed to punch through shields. Deals 4 damage, ignores block.",
+        "effects": { "damage": 4, "pierceBlock": 99 }
+      },
+      {
+        "id": "scatter_bolts", "name": "Scatter Bolts",
+        "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
+        "description": "2 dice totaling 6+. Deals 3 damage to all enemies.",
+        "effects": { "damageAll": 3 }
+      },
+      {
+        "id": "siege_shot", "name": "Siege Shot",
+        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 8+. A devastating siege bolt. Deals 12 damage.",
+        "effects": { "damage": 12 }
+      }
+    ]
   }
 };

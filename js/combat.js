@@ -509,7 +509,18 @@ class CombatEngine {
     // Consume buff damage only when actually dealing damage
     const isDealingDamage = (result.damage && result.target) || result.damageAll;
     const buffDmg = isDealingDamage ? this.consumeBuffDamage(unit) : 0;
-    const bonusDmg = buffDmg + (unit.equipDamage || 0) + moraleMod;
+    let bonusDmg = buffDmg + (unit.equipDamage || 0) + moraleMod;
+
+    // Equites passive: Cavalry Charge — first attack each encounter deals +50% damage
+    let chargeBonus = 0;
+    if (isDealingDamage && unit.classId === 'equites' && !unit.passiveTriggered) {
+      const baseDmg = result.damage || result.damageAll || 0;
+      chargeBonus = Math.floor(baseDmg * 0.5);
+      bonusDmg += chargeBonus;
+      unit.passiveTriggered = true;
+      parts.push('Cavalry Charge!');
+    }
+
     const bonusBlock = unit.equipBlock || 0;
     const bonusHeal = (unit.equipHeal || 0) + moraleMod;
 
@@ -534,6 +545,11 @@ class CombatEngine {
       unit.stats.damageDealt += total;
       const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
+
+      // Ballistarius passive: Pinning Fire — target deals 15% less damage next action
+      if (unit.classId === 'ballistarius' && total > 0 && result.target.hp > 0) {
+        result.target._pinned = true;
+      }
 
       // Splash: half damage to all other enemies
       if (result.splashHalf) {
@@ -678,6 +694,8 @@ class CombatEngine {
           }
           e.hp = Math.max(0, e.hp - dmg);
           unit.stats.damageDealt += dmg;
+          // Ballistarius pinning on AoE
+          if (unit.classId === 'ballistarius' && dmg > 0 && e.hp > 0) e._pinned = true;
         }
       });
       parts.push(`${unit.name} uses ${skill.name} \u2014 deals ${aoeDmg} damage to all enemies.`);
@@ -862,6 +880,12 @@ class CombatEngine {
       // Curse: Hunter's Shadow — enemies deal +1 damage
       const curseBonusDmg = this.getActiveCurses().includes('hunters_shadow') ? 1 : 0;
       let dmg = action.damage + curseBonusDmg;
+      // Ballistarius passive: Pinning Fire — pinned enemies deal 15% less
+      if (enemy._pinned) {
+        const reduction = Math.max(1, Math.floor(dmg * 0.15));
+        dmg = Math.max(1, dmg - reduction);
+        enemy._pinned = false;
+      }
       if (target.block > 0) {
         const absorbed = Math.min(target.block, dmg);
         target.block -= absorbed;
