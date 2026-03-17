@@ -102,6 +102,22 @@
       </div>
     </div>
 
+    <!-- Party Selection Screen -->
+    <div id="party-select-screen" class="screen">
+      <div class="ps-content">
+        <h2 class="ps-title">CHOOSE YOUR COHORT</h2>
+        <p class="ps-subtitle">Select 3 classes to form your party.</p>
+        <p id="party-select-count" class="ps-count">0 / 3 selected</p>
+        <div id="party-select-classes" class="ps-classes"></div>
+        <div class="ps-curse-section">
+          <h3 class="ps-curse-title">CURSES</h3>
+          <p class="ps-curse-subtitle">Toggle modifiers for increased challenge.</p>
+          <div id="party-select-curses" class="ps-curses"></div>
+        </div>
+        <button id="btn-march" class="btn-primary ps-march-btn" disabled>March!</button>
+      </div>
+    </div>
+
     <!-- Map Screen -->
     <div id="map-screen" class="screen">
       <button id="btn-options-ingame" class="options-cog" onclick="window.game.showOptionsScreen()">&#9881;</button>

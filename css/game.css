@@ -34,6 +34,7 @@
   --class-command: #c9a227;
   --class-support: #4aaa6a;
   --class-roman: #8a8a7a;
+  --class-ranged: #4a8abf;
 }
 
 * {
@@ -932,15 +933,19 @@ html, body {
 .class-command .summary-unit-title { color: var(--class-command); }
 .class-support .unit-title,
 .class-support .summary-unit-title { color: var(--class-support); }
+.class-ranged .unit-title,
+.class-ranged .summary-unit-title { color: var(--class-ranged); }
 
 .unit-card.class-heavy.selected { border-color: var(--class-heavy); box-shadow: 0 0 8px rgba(196, 74, 58, 0.25); }
 .unit-card.class-command.selected { border-color: var(--class-command); box-shadow: 0 0 8px rgba(201, 162, 39, 0.25); }
 .unit-card.class-support.selected { border-color: var(--class-support); box-shadow: 0 0 8px rgba(74, 170, 106, 0.25); }
+.unit-card.class-ranged.selected { border-color: var(--class-ranged); box-shadow: 0 0 8px rgba(74, 138, 191, 0.25); }
 
 /* Skill panel header color matches selected unit */
 #skill-panel.class-heavy { border-top-color: var(--class-heavy); }
 #skill-panel.class-command { border-top-color: var(--class-command); }
 #skill-panel.class-support { border-top-color: var(--class-support); }
+#skill-panel.class-ranged { border-top-color: var(--class-ranged); }
 
 /* Item class tag pips */
 .tag-pip {
@@ -955,6 +960,7 @@ html, body {
 .tag-pip.tag-command { background: var(--class-command); }
 .tag-pip.tag-support { background: var(--class-support); }
 .tag-pip.tag-roman { background: var(--class-roman); }
+.tag-pip.tag-ranged { background: var(--class-ranged); }
 
 .loot-item-tags {
   display: inline-flex;
@@ -2621,4 +2627,216 @@ html, body {
 @media (min-width: 481px) {
   .die { width: 58px; height: 58px; font-size: 1.6rem; }
   .enemy-card { width: 120px; }
+}
+
+/* ============================================================
+   Party Selection Screen
+   ============================================================ */
+#party-select-screen {
+  justify-content: flex-start;
+  align-items: center;
+  background: linear-gradient(180deg, #0a0a0c 0%, #141820 40%, #1a1410 100%);
+  overflow-y: auto;
+}
+
+.ps-content {
+  width: 100%;
+  max-width: 460px;
+  padding: 1.5rem 1rem 2rem;
+  text-align: center;
+}
+
+.ps-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  color: var(--gold);
+  margin-bottom: 0.3rem;
+}
+
+.ps-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.ps-count {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+}
+
+.ps-classes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1.2rem;
+}
+
+.ps-class-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.ps-class-card:hover {
+  background: var(--bg-card-hover);
+}
+
+.ps-class-card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.3);
+  background: #1e2230;
+}
+
+.ps-class-card.selected.class-heavy { border-color: var(--class-heavy); box-shadow: 0 0 10px rgba(196, 74, 58, 0.3); }
+.ps-class-card.selected.class-command { border-color: var(--class-command); box-shadow: 0 0 10px rgba(201, 162, 39, 0.3); }
+.ps-class-card.selected.class-support { border-color: var(--class-support); box-shadow: 0 0 10px rgba(74, 170, 106, 0.3); }
+.ps-class-card.selected.class-ranged { border-color: var(--class-ranged); box-shadow: 0 0 10px rgba(74, 138, 191, 0.3); }
+
+.ps-class-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ps-class-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--text-bright);
+  font-weight: 700;
+}
+
+.ps-class-title {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.ps-class-tags {
+  margin-left: auto;
+  display: flex;
+  gap: 3px;
+}
+
+.ps-class-hp {
+  font-size: 0.75rem;
+  color: var(--red-bright);
+  margin-bottom: 3px;
+}
+
+.ps-class-passive {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+.ps-class-passive strong {
+  color: var(--gold-dim);
+}
+
+.ps-class-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ps-skill {
+  font-size: 0.68rem;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.ps-skill-cost {
+  color: var(--gold-dim);
+  font-weight: 600;
+  font-size: 0.65rem;
+}
+
+.ps-skill-desc {
+  color: var(--text-dim);
+  font-size: 0.62rem;
+}
+
+/* Curse section */
+.ps-curse-section {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.ps-curse-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  color: var(--red-bright);
+  margin-bottom: 0.2rem;
+}
+
+.ps-curse-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-bottom: 0.6rem;
+}
+
+.ps-curses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ps-curse-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ps-curse-card:hover {
+  background: var(--bg-card-hover);
+}
+
+.ps-curse-card.active {
+  border-color: var(--red-bright);
+  box-shadow: 0 0 8px rgba(208, 64, 64, 0.3);
+  background: #261a1a;
+}
+
+.ps-curse-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  color: var(--red-bright);
+  margin-bottom: 2px;
+}
+
+.ps-curse-desc {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  line-height: 1.25;
+}
+
+.ps-curse-none {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 10px;
+}
+
+.ps-march-btn {
+  margin-top: 0.8rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.ps-march-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

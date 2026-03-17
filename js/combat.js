@@ -90,6 +90,18 @@ class CombatEngine {
       this.addLog('The Arm Ring of Arminius fills the men with defiance. (+10 Morale)');
     }
 
+    // Signifer passive: Rally the Standard — +5 morale at encounter start
+    if (this.party.some(u => !u.downed && u.classId === 'signifer')) {
+      this.morale = Math.min(100, this.morale + 5);
+      this.addLog('The Signifer raises the standard! (+5 Morale)');
+    }
+
+    // Curse: Death's Whisper — start each encounter at -10 morale
+    if (this.getActiveCurses().includes('deaths_whisper')) {
+      this.morale = Math.max(-100, this.morale - 10);
+      this.addLog("Death's whisper chills the air. (-10 Morale)");
+    }
+
     this.addLog(encounterDef.intro);
   }
 
@@ -109,7 +121,11 @@ class CombatEngine {
     const data = ENEMY_DATA[eid];
     // Difficulty scaling: +20% HP and +1 damage per action per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.3));
+    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.3));
+    // Curse: Champion's Mark — bosses have +20% HP
+    if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
+      scaledMaxHp = Math.round(scaledMaxHp * 1.2);
+    }
     const scaledActions = data.actions.map(a => ({
       ...a,
       damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.15)) : 0,
@@ -202,8 +218,10 @@ class CombatEngine {
 
     // Morale decay — escalates each turn. Turn 1: -1, Turn 2: -2, etc.
     // Champion's Helm reduces decay by 1 per helm equipped
+    // Curse: Witch's Gaze — morale decay +2 per turn
     const helmReduction = this.party.filter(u => !u.downed && this.unitHasItem(u, 'champions_helm')).length;
-    const moraleDecay = Math.max(0, this.turn - helmReduction);
+    const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
+    const moraleDecay = Math.max(0, this.turn + curseDecay - helmReduction);
     this.morale = Math.max(-100, this.morale - moraleDecay);
     if (moraleDecay > 0) {
       this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
@@ -235,9 +253,11 @@ class CombatEngine {
     this.targetMode = null;
     this.addLog(`\u2014 Turn ${this.turn} \u2014`);
 
-    // Roll dice — base 5 + extra from equipment
+    // Roll dice — base 4 + extra from equipment
     const extraDice = this.getExtraDiceCount();
-    this.dicePool.count = 4 + extraDice;
+    // Curse: Golden Challenge — start with 1 fewer die
+    const curseDiceReduction = this.getActiveCurses().includes('golden_challenge') ? 1 : 0;
+    this.dicePool.count = Math.max(1, 4 + extraDice - curseDiceReduction);
     this.dicePool.roll();
     this.update();
   }
@@ -480,7 +500,8 @@ class CombatEngine {
     else if (this.morale <= -75) moraleMod = -2;
     else if (this.morale <= -50) moraleMod = -1;
     // Consume buff damage only when actually dealing damage
-    const buffDmg = (result.damage && result.target) ? this.consumeBuffDamage(unit) : 0;
+    const isDealingDamage = (result.damage && result.target) || result.damageAll;
+    const buffDmg = isDealingDamage ? this.consumeBuffDamage(unit) : 0;
     const bonusDmg = buffDmg + (unit.equipDamage || 0) + moraleMod;
     const bonusBlock = unit.equipBlock || 0;
     const bonusHeal = (unit.equipHeal || 0) + moraleMod;
@@ -490,14 +511,17 @@ class CombatEngine {
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);
+      // Pierce block: reduce effective block before absorbing
+      let pierceAmount = result.pierceBlock || 0;
       // Enemy block (Warlord's Blade deals 2 extra damage to block)
       if (result.target.block && result.target.block > 0) {
+        let effectiveBlock = Math.max(0, result.target.block - pierceAmount);
         let blockDmg = total;
         if (this.unitHasItem(unit, 'warlords_blade')) blockDmg += 2;
-        const absorbed = Math.min(result.target.block, blockDmg);
-        result.target.block -= absorbed;
+        const absorbed = Math.min(effectiveBlock, blockDmg);
+        result.target.block = Math.max(0, result.target.block - absorbed - pierceAmount);
         total -= Math.min(total, absorbed);
-        if (absorbed > 0) parts.push(`${result.target.name}'s block absorbs ${absorbed}.`);
+        if (absorbed > 0) parts.push(`${result.target.name}'s block absorbs ${absorbed}${pierceAmount > 0 ? ` (pierced ${pierceAmount})` : ''}.`);
       }
       result.target.hp = Math.max(0, result.target.hp - total);
       unit.stats.damageDealt += total;
@@ -588,6 +612,25 @@ class CombatEngine {
         if (!e.dead) e.poison = (e.poison || 0) + result.poisonAll;
       });
       parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${result.poisonAll} Poison to all enemies.`);
+    }
+    // Damage all enemies (AoE)
+    if (result.damageAll) {
+      const aoeDmg = result.damageAll + bonusDmg;
+      this.enemies.forEach(e => {
+        if (!e.dead) {
+          let dmg = aoeDmg;
+          const auraRed = this.getAuraDamageReduction(e);
+          if (auraRed > 0) dmg = Math.max(1, dmg - auraRed);
+          if (e.block && e.block > 0) {
+            const absorbed = Math.min(e.block, dmg);
+            e.block -= absorbed;
+            dmg -= absorbed;
+          }
+          e.hp = Math.max(0, e.hp - dmg);
+          unit.stats.damageDealt += dmg;
+        }
+      });
+      parts.push(`${unit.name} uses ${skill.name} \u2014 deals ${aoeDmg} damage to all enemies.`);
     }
     // Heal all allies
     if (result.healAll) {
@@ -766,7 +809,9 @@ class CombatEngine {
     }
 
     if (action.damage > 0) {
-      let dmg = action.damage;
+      // Curse: Hunter's Shadow — enemies deal +1 damage
+      const curseBonusDmg = this.getActiveCurses().includes('hunters_shadow') ? 1 : 0;
+      let dmg = action.damage + curseBonusDmg;
       if (target.block > 0) {
         const absorbed = Math.min(target.block, dmg);
         target.block -= absorbed;
@@ -777,7 +822,8 @@ class CombatEngine {
       }
       target.hp = Math.max(0, target.hp - dmg);
       target.stats.damageTaken += dmg;
-      this.addLog(`${enemy.name} ${action.text} at ${target.name} for ${action.damage} damage${dmg < action.damage ? ` (${dmg} after block)` : ''}.`);
+      const totalActionDmg = action.damage + curseBonusDmg;
+      this.addLog(`${enemy.name} ${action.text} at ${target.name} for ${totalActionDmg} damage${dmg < totalActionDmg ? ` (${dmg} after block)` : ''}.`);
 
       if (this.onVisual) {
         this.onVisual('unitHit', { unitIndex: target.index, damage: dmg });
@@ -791,10 +837,15 @@ class CombatEngine {
     }
 
     if (action.morale) {
-      this.morale = Math.max(-100, Math.min(100, this.morale + action.morale));
-      this.addLog(`${enemy.name} ${action.text}! Morale ${action.morale > 0 ? '+' : ''}${action.morale}.`);
+      let moraleDelta = action.morale;
+      // Cornicen passive: Demoralizing Horn — enemy morale attacks deal 3 less morale damage
+      if (moraleDelta < 0 && this.party.some(u => !u.downed && u.classId === 'cornicen')) {
+        moraleDelta = Math.min(0, moraleDelta + 3);
+      }
+      this.morale = Math.max(-100, Math.min(100, this.morale + moraleDelta));
+      this.addLog(`${enemy.name} ${action.text}! Morale ${moraleDelta > 0 ? '+' : ''}${moraleDelta}.`);
       if (this.onVisual) {
-        this.onVisual('morale', { amount: action.morale });
+        this.onVisual('morale', { amount: moraleDelta });
       }
     }
 
@@ -829,7 +880,9 @@ class CombatEngine {
 
     // Mire Leech: spawn another enemy
     if (action.spawn) {
-      const alreadySpawned = enemy._hasSpawned;
+      // Curse: Mother's Brood — enemies that can spawn always spawn on first opportunity
+      const mothersBrood = this.getActiveCurses().includes('mothers_brood');
+      const alreadySpawned = mothersBrood ? false : enemy._hasSpawned;
       const totalEnemies = this.enemies.filter(e => !e.dead).length;
       if (!alreadySpawned && totalEnemies < 5) {
         enemy._hasSpawned = true;
@@ -1029,6 +1082,11 @@ class CombatEngine {
   // Check if current encounter has a boss
   hasBossEnemy() {
     return this.enemies.some(e => e.isBoss);
+  }
+
+  // --- Curse helpers ---
+  getActiveCurses() {
+    return (window.game && window.game.activeCurses) ? window.game.activeCurses : [];
   }
 
   update() {

@@ -19,6 +19,18 @@ const MUSIC_GAMEPLAY = [
 ];
 const MUSIC_BOSS = 'assets/Shadow of Arminius.mp3';
 
+// --- Curse Definitions ---
+const CURSE_DEFS = [
+  { id: 'champions_mark', name: "Champion's Mark", achievement: 'boss_arminius_champion_x3', description: "Bosses have +20% HP." },
+  { id: 'witchs_gaze', name: "Witch's Gaze", achievement: 'boss_grove_witch_x3', description: "Morale decay +2 per turn." },
+  { id: 'hunters_shadow', name: "Hunter's Shadow", achievement: 'boss_silent_huntsman_x3', description: "Enemies deal +1 damage." },
+  { id: 'mothers_brood', name: "Mother's Brood", achievement: 'boss_mire_mother_x3', description: "Enemies that can spawn always spawn on first opportunity." },
+  { id: 'deaths_whisper', name: "Death's Whisper", achievement: 'boss_bone_speaker_x3', description: "Start each encounter at -10 morale." },
+  { id: 'rare_collector', name: "Rare Collector", achievement: 'hero_three_rares', description: "Uncommon/rare items drop 30% less." },
+  { id: 'golden_challenge', name: "Golden Challenge", achievement: 'hero_only_rares', description: "Start with 1 fewer die (3 instead of 4)." },
+  { id: 'ultimate_test', name: "Ultimate Test", achievement: 'party_all_rares', description: "All curses active simultaneously." },
+];
+
 class Game {
   constructor() {
     this.engine = new CombatEngine();
@@ -29,6 +41,8 @@ class Game {
     this.achievements = this.loadAchievements();
     this.difficulty = 1;
     this.marchCount = 0;
+    this.activeCurses = [];
+    this.selectedPartyClasses = [];
 
     // Music system
     this.currentTrack = null;
@@ -345,8 +359,118 @@ class Game {
         this.musicStarted = true;
         this.musicMode = 'menu';
       }
-      this.startNewRun();
+      this.showPartySelectScreen();
     });
+  }
+
+  // --- Party Selection Screen ---
+  showPartySelectScreen() {
+    this.selectedPartyClasses = [];
+    this.activeCurses = [];
+    this.ui.showScreen('party-select-screen');
+    this.renderPartySelect();
+  }
+
+  renderPartySelect() {
+    const container = document.getElementById('party-select-classes');
+    const curseContainer = document.getElementById('party-select-curses');
+    const marchBtn = document.getElementById('btn-march');
+    const countLabel = document.getElementById('party-select-count');
+
+    // Render class cards
+    let html = '';
+    for (const [classId, data] of Object.entries(CLASS_DATA)) {
+      const selected = this.selectedPartyClasses.includes(classId);
+      const primaryTag = data.tags.find(t => t !== 'roman') || 'roman';
+      const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
+      const starterSkills = data.skills.filter(s => s.starter);
+      const skillList = starterSkills.map(s => {
+        const costLabel = s.cost.label || 'Any';
+        return `<div class="ps-skill"><span class="ps-skill-cost">[${costLabel}]</span> ${s.name} <span class="ps-skill-desc">${s.description}</span></div>`;
+      }).join('');
+
+      html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
+        <div class="ps-class-header">
+          <span class="ps-class-name">${data.name}</span>
+          <span class="ps-class-title">${data.title}</span>
+          <span class="ps-class-tags">${tagPips}</span>
+        </div>
+        <div class="ps-class-hp">HP: ${data.maxHp}</div>
+        <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
+        <div class="ps-class-skills">${skillList}</div>
+      </div>`;
+    }
+    container.innerHTML = html;
+
+    // Bind class card clicks
+    container.querySelectorAll('.ps-class-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const cid = card.dataset.classId;
+        const idx = this.selectedPartyClasses.indexOf(cid);
+        if (idx >= 0) {
+          this.selectedPartyClasses.splice(idx, 1);
+        } else if (this.selectedPartyClasses.length < 3) {
+          this.selectedPartyClasses.push(cid);
+        }
+        this.renderPartySelect();
+      });
+    });
+
+    // Update count and button
+    countLabel.textContent = `${this.selectedPartyClasses.length} / 3 selected`;
+    marchBtn.disabled = this.selectedPartyClasses.length !== 3;
+
+    // Render curses
+    let curseHtml = '';
+    const unlockedAchievements = this.achievements;
+    let anyUnlocked = false;
+    CURSE_DEFS.forEach(curse => {
+      const unlocked = !!unlockedAchievements[curse.achievement];
+      if (!unlocked) return;
+      anyUnlocked = true;
+      const active = this.activeCurses.includes(curse.id);
+      curseHtml += `<div class="ps-curse-card ${active ? 'active' : ''}" data-curse-id="${curse.id}">
+        <div class="ps-curse-name">${curse.name}</div>
+        <div class="ps-curse-desc">${curse.description}</div>
+      </div>`;
+    });
+    if (!anyUnlocked) {
+      curseHtml = '<div class="ps-curse-none">No curses unlocked yet. Earn achievements to unlock modifiers.</div>';
+    }
+    curseContainer.innerHTML = curseHtml;
+
+    // Bind curse clicks
+    curseContainer.querySelectorAll('.ps-curse-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const cid = card.dataset.curseId;
+        // Ultimate Test: toggles all curses
+        if (cid === 'ultimate_test') {
+          if (this.activeCurses.includes('ultimate_test')) {
+            this.activeCurses = [];
+          } else {
+            this.activeCurses = CURSE_DEFS.filter(c => !!unlockedAchievements[c.achievement]).map(c => c.id);
+          }
+        } else {
+          const idx = this.activeCurses.indexOf(cid);
+          if (idx >= 0) {
+            this.activeCurses.splice(idx, 1);
+            // Remove ultimate_test if deselecting individual curse
+            const utIdx = this.activeCurses.indexOf('ultimate_test');
+            if (utIdx >= 0) this.activeCurses.splice(utIdx, 1);
+          } else {
+            this.activeCurses.push(cid);
+          }
+        }
+        this.renderPartySelect();
+      });
+    });
+
+    // March button handler (re-bind each render)
+    marchBtn.onclick = () => {
+      if (this.selectedPartyClasses.length === 3) {
+        this.startNewRun();
+      }
+    };
   }
 
   bindMenuButtons() {
@@ -583,7 +707,12 @@ class Game {
     this.engine.totalRenownEarned = 0;
     this.engine.pendingSkillPicks = 0;
     this.engine.difficulty = this.difficulty;
-    this.engine.initParty(['legionary', 'centurion', 'medicus']);
+
+    // Use selected party or fallback to defaults
+    const partyClasses = this.selectedPartyClasses.length === 3
+      ? [...this.selectedPartyClasses]
+      : ['legionary', 'centurion', 'medicus'];
+    this.engine.initParty(partyClasses);
 
     this.startGameplayMusic();
 

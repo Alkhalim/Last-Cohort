@@ -153,6 +153,16 @@ function buildSkillExecute(skillData) {
       result.ignoreRow = true;
     }
 
+    // Damage all enemies (AoE damage)
+    if (effects.damageAll !== undefined) {
+      result.damageAll = effects.damageAll;
+    }
+
+    // Pierce block (ignore X block on target)
+    if (effects.pierceBlock !== undefined) {
+      result.pierceBlock = effects.pierceBlock;
+    }
+
     return result;
   };
 }
@@ -260,6 +270,8 @@ function canEquipItem(unit, item) {
 function rollDrop(enemyId, party) {
   const table = DROP_TABLES[enemyId];
   if (!table) return null;
+  // Curse: Rare Collector — uncommon/rare items drop 30% less
+  const rareCollectorActive = window.game && window.game.activeCurses && window.game.activeCurses.includes('rare_collector');
   const roll = Math.random();
   let cumulative = table.nothingChance;
   if (roll < cumulative) return null;
@@ -286,7 +298,15 @@ function rollDrop(enemyId, party) {
         });
         if (candidates.length === 0) candidates = tier.items;
       }
-      return candidates[Math.floor(Math.random() * candidates.length)];
+      const picked = candidates[Math.floor(Math.random() * candidates.length)];
+      // Curse: Rare Collector — 30% chance to nullify uncommon/rare drops
+      if (rareCollectorActive && picked) {
+        const pickedItem = ITEM_DATA[picked];
+        if (pickedItem && (pickedItem.rarity === 'uncommon' || pickedItem.rarity === 'rare')) {
+          if (Math.random() < 0.3) return null;
+        }
+      }
+      return picked;
     }
   }
   return null;
