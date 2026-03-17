@@ -124,5 +124,21 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "The smoke draws attention. You hear war horns in the distance.", "effects": { "morale": -12 } }
       ]}
     ]
+  },
+  {
+    "id": "training_ground",
+    "name": "Training Ground",
+    "type": "skill_upgrade",
+    "minDifficulty": 2,
+    "weight": 2,
+    "intro": "You find a clearing where fallen trees form a natural arena. Your men could use this to hone their techniques. One soldier can push a skill beyond its limits."
+  },
+  {
+    "id": "wandering_smith",
+    "name": "Wandering Smith",
+    "type": "item_upgrade",
+    "minDifficulty": 2,
+    "weight": 2,
+    "intro": "A grizzled man sits by a makeshift forge, hammering at glowing metal. He was a Roman smith before the ambush. He offers to improve one piece of equipment."
   }
 ];

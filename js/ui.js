@@ -1095,9 +1095,19 @@ class GameUI {
   // ================================================================
 
   startEventNode(node) {
-    this.showScreen('event-screen');
     const event = node.encounter;
 
+    // Handle special event types
+    if (event.type === 'skill_upgrade') {
+      this.showSkillUpgradeEvent(event);
+      return;
+    }
+    if (event.type === 'item_upgrade') {
+      this.showItemUpgradeEvent(event);
+      return;
+    }
+
+    this.showScreen('event-screen');
     document.getElementById('event-title').textContent = event.name;
     document.getElementById('event-intro').textContent = event.intro;
     document.getElementById('event-outcome').classList.add('hidden');
@@ -1187,6 +1197,188 @@ class GameUI {
     this.lootReturnToMap = true;
     this.showScreen('loot-screen');
     this.renderLootScreen();
+  }
+
+  // ================================================================
+  // SKILL UPGRADE EVENT
+  // ================================================================
+
+  showSkillUpgradeEvent(event) {
+    this.showScreen('event-screen');
+    document.getElementById('event-title').textContent = event.name;
+    document.getElementById('event-intro').textContent = event.intro;
+    document.getElementById('event-outcome').classList.add('hidden');
+    const choicesEl = document.getElementById('event-choices');
+    choicesEl.innerHTML = '';
+
+    // Gather all learned skills from all units, pick 3 random
+    const allSkills = [];
+    this.engine.party.forEach(u => {
+      if (!u.downed) {
+        u.skills.forEach(s => {
+          // Find the base skill data to get base effects
+          const baseDef = u.allSkills.find(a => a.id === s.id);
+          if (baseDef) allSkills.push({ unit: u, skill: s, baseDef });
+        });
+      }
+    });
+
+    const shuffled = allSkills.sort(() => Math.random() - 0.5).slice(0, 3);
+
+    if (shuffled.length === 0) {
+      choicesEl.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No skills to improve.</div>';
+      document.getElementById('event-outcome').classList.remove('hidden');
+      document.getElementById('event-outcome-text').textContent = 'The clearing stands empty.';
+      document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+      return;
+    }
+
+    shuffled.forEach(({ unit, skill, baseDef }) => {
+      // Determine what to upgrade
+      const effects = baseDef.effects || {};
+      let upgradeText = '';
+      if (effects.damage) upgradeText = `+1 base damage (${effects.damage} → ${effects.damage + 1})`;
+      else if (effects.heal) upgradeText = `+1 base healing (${effects.heal} → ${effects.heal + 1})`;
+      else if (effects.healAll) upgradeText = `+1 base healing (${effects.healAll} → ${effects.healAll + 1})`;
+      else if (effects.block) upgradeText = `+1 base block (${effects.block} → ${effects.block + 1})`;
+      else if (effects.blockAll) upgradeText = `+1 base block (${effects.blockAll} → ${effects.blockAll + 1})`;
+      else if (effects.poison) upgradeText = `+1 base poison (${effects.poison} → ${effects.poison + 1})`;
+      else if (effects.poisonAll) upgradeText = `+1 base poison (${effects.poisonAll} → ${effects.poisonAll + 1})`;
+      else if (effects.morale) upgradeText = `+5 morale (${effects.morale} → ${effects.morale + 5})`;
+      else upgradeText = '+1 to primary effect';
+
+      const btn = document.createElement('button');
+      btn.className = 'btn-event-choice';
+      const tag = getPrimaryTag(unit.classId);
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+
+      btn.addEventListener('click', () => {
+        // Apply upgrade to the skill's effects on the baseDef (permanent)
+        if (effects.damage) baseDef.effects.damage++;
+        else if (effects.heal) baseDef.effects.heal++;
+        else if (effects.healAll) baseDef.effects.healAll++;
+        else if (effects.block) baseDef.effects.block++;
+        else if (effects.blockAll) baseDef.effects.blockAll++;
+        else if (effects.poison) baseDef.effects.poison++;
+        else if (effects.poisonAll) baseDef.effects.poisonAll++;
+        else if (effects.morale) baseDef.effects.morale += 5;
+
+        // Also update the runtime skill copy
+        const runtimeSkill = unit.skills.find(s => s.id === skill.id);
+        if (runtimeSkill && runtimeSkill.execute) {
+          // Rebuild execute from updated baseDef
+          // The execute is rebuilt from effects via buildSkillExecute
+        }
+
+        // Update description
+        const oldDesc = baseDef.description;
+        baseDef.description = oldDesc.replace(/\d+/, (m) => String(parseInt(m) + 1));
+
+        choicesEl.innerHTML = '';
+        document.getElementById('event-outcome').classList.remove('hidden');
+        document.getElementById('event-outcome-text').textContent = `${unit.name}'s ${skill.name} has been improved! ${upgradeText}`;
+        document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+      });
+
+      choicesEl.appendChild(btn);
+    });
+
+    // Skip option
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn-event-choice';
+    skipBtn.innerHTML = '<span style="color:var(--text-dim)">Leave the clearing.</span>';
+    skipBtn.addEventListener('click', () => this.showMapScreen());
+    choicesEl.appendChild(skipBtn);
+  }
+
+  // ================================================================
+  // ITEM UPGRADE EVENT
+  // ================================================================
+
+  showItemUpgradeEvent(event) {
+    this.showScreen('event-screen');
+    document.getElementById('event-title').textContent = event.name;
+    document.getElementById('event-intro').textContent = event.intro;
+    document.getElementById('event-outcome').classList.add('hidden');
+    const choicesEl = document.getElementById('event-choices');
+    choicesEl.innerHTML = '';
+
+    // Gather all equipped items
+    const allItems = [];
+    this.engine.party.forEach(u => {
+      if (!u.downed) {
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (!id) return;
+            const item = getItemData(id);
+            if (item) allItems.push({ unit: u, itemId: id, item });
+          });
+        }
+      }
+    });
+
+    // Pick up to 3 random items
+    const shuffled = allItems.sort(() => Math.random() - 0.5).slice(0, 3);
+
+    if (shuffled.length === 0) {
+      choicesEl.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No equipment to improve.</div>';
+      document.getElementById('event-outcome').classList.remove('hidden');
+      document.getElementById('event-outcome-text').textContent = 'The smith has nothing to work with.';
+      document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+      return;
+    }
+
+    shuffled.forEach(({ unit, itemId, item }) => {
+      // Determine upgrade: +1 to primary stat
+      const stats = item.stats;
+      let upgradeText = '';
+      let statKey = '';
+      if (stats.damage) { statKey = 'damage'; upgradeText = `+1 damage (${stats.damage} → ${stats.damage + 1})`; }
+      else if (stats.block) { statKey = 'block'; upgradeText = `+1 block (${stats.block} → ${stats.block + 1})`; }
+      else if (stats.heal) { statKey = 'heal'; upgradeText = `+1 heal (${stats.heal} → ${stats.heal + 1})`; }
+      else if (stats.maxHp) { statKey = 'maxHp'; upgradeText = `+2 HP (${stats.maxHp} → ${stats.maxHp + 2})`; }
+      else if (stats.extraDice) { upgradeText = 'Already at maximum power.'; statKey = ''; }
+      else { upgradeText = '+1 to primary stat'; statKey = Object.keys(stats)[0]; }
+
+      const tag = getPrimaryTag(unit.classId);
+      const btn = document.createElement('button');
+      btn.className = 'btn-event-choice';
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+
+      if (!statKey) {
+        btn.classList.add('disabled');
+        btn.style.opacity = '0.5';
+      } else {
+        btn.addEventListener('click', () => {
+          // Apply upgrade permanently to ITEM_DATA
+          if (statKey === 'maxHp') {
+            ITEM_DATA[itemId].stats[statKey] += 2;
+            // Also apply HP gain to the unit
+            unit.maxHp += 2;
+            unit.baseMaxHp += 2;
+            unit.hp += 2;
+          } else {
+            ITEM_DATA[itemId].stats[statKey]++;
+          }
+          // Recompute equipment stats
+          this.engine.computeEquipmentStats(unit);
+
+          choicesEl.innerHTML = '';
+          document.getElementById('event-outcome').classList.remove('hidden');
+          document.getElementById('event-outcome-text').textContent = `The smith improves ${item.name}! ${upgradeText}`;
+          document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+        });
+      }
+
+      choicesEl.appendChild(btn);
+    });
+
+    // Skip option
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn-event-choice';
+    skipBtn.innerHTML = '<span style="color:var(--text-dim)">Decline the smith\'s offer.</span>';
+    skipBtn.addEventListener('click', () => this.showMapScreen());
+    choicesEl.appendChild(skipBtn);
   }
 
   // ================================================================

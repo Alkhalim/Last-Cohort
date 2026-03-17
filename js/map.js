@@ -173,7 +173,18 @@ function generateMap(difficulty = 1) {
       const eligibleBosses = BOSS_ENCOUNTERS.filter(b => !b.minDifficulty || b.minDifficulty <= difficulty);
       node.encounter = eligibleBosses[Math.floor(Math.random() * eligibleBosses.length)];
     } else if (node.type === 'event') {
-      node.encounter = EVENT_DATA[Math.floor(Math.random() * EVENT_DATA.length)];
+      // Filter by difficulty, then weighted random selection
+      const eligible = EVENT_DATA.filter(e => !e.minDifficulty || e.minDifficulty <= difficulty);
+      // Build weighted pool — upgrade events get extra weight at higher difficulties
+      const pool = [];
+      eligible.forEach(e => {
+        const baseWeight = e.weight || 1;
+        // Upgrade events become more common at higher difficulties
+        const diffBonus = (e.minDifficulty && difficulty >= e.minDifficulty) ? Math.floor((difficulty - e.minDifficulty) / 1) : 0;
+        const totalWeight = baseWeight + diffBonus;
+        for (let w = 0; w < totalWeight; w++) pool.push(e);
+      });
+      node.encounter = pool[Math.floor(Math.random() * pool.length)];
     }
   }
 
