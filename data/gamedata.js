@@ -36,6 +36,7 @@ const RAW_ENCOUNTERS = {
       { "name": "Leech Swarm", "enemies": ["mire_leech", "mire_leech", "mire_leech"], "intro": "The ground writhes. Bloated leeches pour from the mud in a sickening wave." },
       { "name": "Berserker Charge", "minDifficulty": 2, "enemies": ["germanic_berserker", "cheruscan_raider", "sling_hunter"], "intro": "A foam-mouthed berserker charges from the trees, warriors at his back." },
       { "name": "War Hound Pack", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "cheruscan_raider"], "intro": "Armored hounds bound through the undergrowth, a handler driving them forward." },
+      { "name": "Runed Shield Line", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_shieldbearer", "cheruscan_raider"], "intro": "A runecarver crouches behind a shield line, carving wards into every surface." },
       { "name": "Cursed Patrol", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Black-veined warriors shamble through the mist. A seer chants behind them." }
     ],
     "hard": [
@@ -50,6 +51,7 @@ const RAW_ENCOUNTERS = {
       { "name": "Swamp Horror", "enemies": ["mire_leech", "mire_leech", "fen_viper", "bog_seer"], "intro": "The swamp itself attacks \u2014 leeches, vipers, and a chanting seer drive the assault." },
       { "name": "Berserker Warband", "minDifficulty": 2, "enemies": ["germanic_berserker", "germanic_berserker", "cheruscan_shieldbearer"], "intro": "Two berserkers charge screaming from the trees. A shieldbearer covers their flank." },
       { "name": "The Kennels", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "war_hound", "sling_hunter"], "intro": "A pack of armored war hounds pours from a makeshift kennel. A handler slings stones from behind." },
+      { "name": "Warded Warband", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Rune-warded warriors advance behind a wall of carved shields. Every blow glances off." },
       { "name": "Bone Court", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Three cursed warriors stand in a circle of bones. A seer orchestrates their suffering." }
     ]
   },
@@ -64,6 +66,7 @@ const RAW_ENCOUNTERS = {
     "mire_leech": { "nothingChance": 0.45, "tiers": [{ "chance": 0.30, "items": ["herb_pouch", "bone_needle_kit"] }, { "chance": 0.12, "items": ["fang_necklace", "marsh_fang"] }, { "chance": 0.13, "items": ["leech_bile_flask"] }] },
     "wicker_man": { "nothingChance": 0.05, "tiers": [{ "chance": 0.35, "items": ["woad_charm", "herb_pouch"] }, { "chance": 0.30, "items": ["runic_stone", "fang_necklace"] }, { "chance": 0.10, "items": ["chiefs_spear", "arm_ring_of_arminius"] }, { "chance": 0.20, "items": ["wicker_ash"] }] },
     "germanic_berserker": { "nothingChance": 0.15, "tiers": [{ "chance": 0.40, "items": ["iron_gladius", "wolf_pelt", "raider_shield"] }, { "chance": 0.20, "items": ["fang_necklace", "cheruscan_torc"] }, { "chance": 0.10, "items": ["chiefs_spear"] }, { "chance": 0.15, "items": ["berserker_mushroom"] }] },
+    "runecarver": { "nothingChance": 0.25, "tiers": [{ "chance": 0.40, "items": ["raider_shield", "woad_charm"] }, { "chance": 0.25, "items": ["seers_eye", "shieldbearers_grip"] }, { "chance": 0.10, "items": ["runic_stone"] }] },
     "war_hound": { "nothingChance": 0.20, "tiers": [{ "chance": 0.35, "items": ["wolf_pelt", "herb_pouch"] }, { "chance": 0.25, "items": ["fang_necklace", "wolf_fang_blade"] }, { "chance": 0.08, "items": ["marsh_fang"] }, { "chance": 0.12, "items": ["hound_collar"] }] },
     "cursed_warrior": { "nothingChance": 0.15, "tiers": [{ "chance": 0.35, "items": ["herb_pouch", "bone_needle_kit", "raider_shield"] }, { "chance": 0.25, "items": ["seers_eye", "woad_charm"] }, { "chance": 0.10, "items": ["runic_stone"] }, { "chance": 0.15, "items": ["cursed_bone_blade"] }] },
     "arminius_champion": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },

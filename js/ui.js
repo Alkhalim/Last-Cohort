@@ -1485,20 +1485,6 @@ class GameUI {
           });
           this.campLog.push('Makeshift barricades built. (+4 Block each)');
         }
-      },
-      {
-        name: 'Stand Watch',
-        desc: 'Restore 8 Morale and heal 8% max HP.',
-        action: () => {
-          this.engine.morale = Math.min(100, this.engine.morale + 8);
-          this.engine.party.forEach(u => {
-            if (!u.downed) {
-              const amt = Math.floor(u.maxHp * 0.08);
-              u.hp = Math.min(u.maxHp, u.hp + amt);
-            }
-          });
-          this.campLog.push('A quiet watch. The men sleep a little easier. (+8 Morale, healed 8%)');
-        }
       }
     ];
 

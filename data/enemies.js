@@ -152,6 +152,20 @@ const RAW_ENEMIES = {
 
   // === DIFFICULTY 3+ ENEMIES ===
 
+  "runecarver": {
+    "id": "runecarver", "name": "Runecarver",
+    "maxHp": 13, "row": "back", "damage": [2, 4], "speed": 1, "xpValue": 5,
+    "minDifficulty": 3,
+    "description": "A hunched Germanic craftsman who carves protective runes into shields before battle. His presence hardens the enemy line.",
+    "ai": "sniper",
+    "startBlockAllEnemies": 3,
+    "actions": [
+      { "name": "Rune Ward", "damage": 0, "chance": 0.5, "text": "carves a protective rune into a warrior's shield", "blockAllEnemies": 2 },
+      { "name": "Rune Shard", "damage": 4, "chance": 0.3, "text": "hurls a sharpened rune-stone", "ignoreRow": true },
+      { "name": "Curse Rune", "damage": 0, "morale": -8, "chance": 0.2, "text": "traces a curse rune in the air" }
+    ]
+  },
+
   "war_hound": {
     "id": "war_hound", "name": "War Hound",
     "maxHp": 16, "row": "front", "damage": [4, 7], "speed": 3, "xpValue": 5,

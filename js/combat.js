@@ -116,7 +116,7 @@ class CombatEngine {
     const data = ENEMY_DATA[eid];
     // Difficulty scaling: +20% HP and +1 damage per action per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.45));
+    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
     // Curse: Champion's Mark — bosses have +20% HP
     if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
       scaledMaxHp = Math.round(scaledMaxHp * 1.2);
@@ -138,6 +138,17 @@ class CombatEngine {
     };
     this.enemies.push(enemy);
     this.addLog(`${enemy.name} appears!`);
+
+    // Runecarver: grant block to all other enemies when spawning
+    if (data.startBlockAllEnemies) {
+      this.enemies.forEach(e => {
+        if (!e.dead && e !== enemy) {
+          e.block = (e.block || 0) + data.startBlockAllEnemies;
+        }
+      });
+      this.addLog(`${enemy.name} carves runes — all enemies gain ${data.startBlockAllEnemies} Block!`);
+    }
+
     this.spawnIndex++;
     this.update();
     setTimeout(() => {
@@ -928,7 +939,7 @@ class CombatEngine {
         const data = ENEMY_DATA[action.spawn];
         if (data) {
           const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.45));
+          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
           const scaledActions = data.actions.map(a => ({
             ...a,
             damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
