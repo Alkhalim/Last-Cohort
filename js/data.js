@@ -228,16 +228,18 @@ function loadGameData() {
 }
 
 // --- Encounter generation by threat level ---
-function generateEncounterByThreat(threat) {
+function generateEncounterByThreat(threat, difficulty) {
+  const diff = difficulty || 1;
+  const filterByDiff = (list) => list.filter(e => !e.minDifficulty || e.minDifficulty <= diff);
   if (threat <= 1) {
-    const easy = _encounterThreatData.easy;
-    return easy[Math.floor(Math.random() * easy.length)];
+    const pool = filterByDiff(_encounterThreatData.easy);
+    return pool[Math.floor(Math.random() * pool.length)];
   } else if (threat === 2) {
-    const mid = _encounterThreatData.mid;
-    return mid[Math.floor(Math.random() * mid.length)];
+    const pool = filterByDiff(_encounterThreatData.mid);
+    return pool[Math.floor(Math.random() * pool.length)];
   } else {
-    const hard = _encounterThreatData.hard;
-    return hard[Math.floor(Math.random() * hard.length)];
+    const pool = filterByDiff(_encounterThreatData.hard);
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 }
 

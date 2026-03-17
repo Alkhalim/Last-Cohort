@@ -30,5 +30,17 @@ const RAW_ITEMS = {
   "oak_splinter": { "id": "oak_splinter", "name": "Oak Splinter", "slot": "weapon", "rarity": "rare", "classTags": ["heavy", "command"], "stats": { "damage": 3, "block": 1 }, "special": "Grants +2 block to all allies when this unit uses a block skill.", "description": "A shard from the Oak Shield's great barrier. Dense as iron and sharp as spite." },
   "leech_bile_flask": { "id": "leech_bile_flask", "name": "Leech Bile Flask", "slot": "trinket", "rarity": "uncommon", "classTags": ["support"], "stats": { "heal": 2 }, "description": "Bile harvested from a mire leech. Foul-smelling but remarkably effective on wounds." },
   "wicker_ash": { "id": "wicker_ash", "name": "Wicker Ash", "slot": "trinket", "rarity": "rare", "classTags": ["roman"], "stats": { "damage": 1, "block": 2 }, "special": "Enemies take 1 damage at the start of each turn (burning aura).", "description": "Ash from a fallen wicker man, still warm. It smells of sacrifice and old power." },
-  "shieldbearers_grip": { "id": "shieldbearers_grip", "name": "Shieldbearer's Grip", "slot": "armor", "rarity": "uncommon", "classTags": ["heavy", "command"], "stats": { "block": 3 }, "description": "A leather hand-strap ripped from the shieldbearer's shield. Worn but sturdy." }
+  "shieldbearers_grip": { "id": "shieldbearers_grip", "name": "Shieldbearer's Grip", "slot": "armor", "rarity": "uncommon", "classTags": ["heavy", "command"], "stats": { "block": 3 }, "description": "A leather hand-strap ripped from the shieldbearer's shield. Worn but sturdy." },
+
+  // --- Difficulty 2+ unique drops ---
+  "berserker_mushroom": { "id": "berserker_mushroom", "name": "Berserker Mushroom", "slot": "trinket", "rarity": "uncommon", "classTags": ["heavy", "roman"], "stats": { "damage": 2, "maxHp": -2 }, "description": "The sacred mushroom of the berserkers. Grants fury at a cost." },
+  "huntsmans_arrow": { "id": "huntsmans_arrow", "name": "Huntsman's Arrow", "slot": "trinket", "rarity": "rare", "classTags": ["roman"], "stats": { "damage": 3 }, "special": "Attacks can target any row.", "description": "An arrow pulled from a Roman shield. It flew true from impossible distance." },
+
+  // --- Difficulty 3+ unique drops ---
+  "hound_collar": { "id": "hound_collar", "name": "War Hound Collar", "slot": "trinket", "rarity": "uncommon", "classTags": ["heavy", "command"], "stats": { "damage": 1, "maxHp": 3 }, "description": "A spiked collar from a war hound. Wearing it feels wrong, but it toughens the spirit." },
+  "mire_mothers_tusk": { "id": "mire_mothers_tusk", "name": "Mire Mother's Tusk", "slot": "weapon", "rarity": "rare", "classTags": ["heavy"], "stats": { "damage": 4, "maxHp": 2 }, "special": "Kills heal the wielder for 3 HP.", "description": "A massive tusk ripped from the Mire Mother. It pulses with feral vitality." },
+
+  // --- Difficulty 4+ unique drops ---
+  "cursed_bone_blade": { "id": "cursed_bone_blade", "name": "Cursed Bone Blade", "slot": "weapon", "rarity": "uncommon", "classTags": ["heavy", "command", "support"], "stats": { "damage": 2 }, "description": "A blade carved from human bone. It cuts deep but chills the hand." },
+  "bone_speakers_skull": { "id": "bone_speakers_skull", "name": "Bone Speaker's Skull", "slot": "trinket", "rarity": "rare", "classTags": ["roman"], "stats": { "maxHp": 4, "block": 2 }, "special": "Morale decay reduced by 2 per turn.", "description": "The skull of the Bone Speaker. Silencing it silences the dread." }
 };

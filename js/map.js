@@ -165,12 +165,13 @@ function generateMap(difficulty = 1) {
     }
   }
 
-  // Generate encounters for combat nodes
+  // Generate encounters for combat nodes (filtered by difficulty)
   for (const node of nodes) {
     if (node.type === 'combat') {
-      node.encounter = generateEncounterByThreat(node.threat);
+      node.encounter = generateEncounterByThreat(node.threat, difficulty);
     } else if (node.type === 'boss') {
-      node.encounter = BOSS_ENCOUNTERS[Math.floor(Math.random() * BOSS_ENCOUNTERS.length)];
+      const eligibleBosses = BOSS_ENCOUNTERS.filter(b => !b.minDifficulty || b.minDifficulty <= difficulty);
+      node.encounter = eligibleBosses[Math.floor(Math.random() * eligibleBosses.length)];
     } else if (node.type === 'event') {
       node.encounter = EVENT_DATA[Math.floor(Math.random() * EVENT_DATA.length)];
     }

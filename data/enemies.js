@@ -119,5 +119,91 @@ const RAW_ENEMIES = {
       { "name": "Swamp Call", "damage": 0, "morale": -25, "chance": 0.2, "text": "calls upon the swamp spirits" },
       { "name": "Root Grasp", "damage": 9, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true }
     ]
+  },
+
+  // === DIFFICULTY 2+ ENEMIES ===
+
+  "germanic_berserker": {
+    "id": "germanic_berserker", "name": "Germanic Berserker",
+    "maxHp": 22, "row": "front", "damage": [5, 9], "speed": 2, "xpValue": 6,
+    "minDifficulty": 2,
+    "description": "A wild-eyed warrior who has chewed the sacred mushroom. Feels no pain and fights like a demon.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Frenzied Slash", "damage": 7, "chance": 0.4, "text": "slashes in a wild frenzy" },
+      { "name": "Headbutt", "damage": 5, "morale": -5, "chance": 0.3, "text": "headbutts with a sickening crack" },
+      { "name": "Blood Rage", "damage": 9, "chance": 0.2, "text": "howls and strikes with terrible force" },
+      { "name": "Intimidating Scream", "damage": 0, "morale": -12, "chance": 0.1, "text": "screams, foam at the mouth" }
+    ]
+  },
+  "silent_huntsman": {
+    "id": "silent_huntsman", "name": "The Silent Huntsman",
+    "maxHp": 50, "row": "back", "damage": [7, 12], "speed": 1, "xpValue": 22,
+    "minDifficulty": 2,
+    "isBoss": true, "ai": "boss",
+    "description": "A scarred bowman who never misses. Trained by Arminius himself. His arrows find flesh through any defense.",
+    "actions": [
+      { "name": "Precise Shot", "damage": 8, "chance": 0.35, "text": "looses a precise arrow", "ignoreRow": true },
+      { "name": "Marked Shot", "damage": 12, "chance": 0.25, "text": "fires at a marked target — the arrow punches through armor", "ignoreRow": true },
+      { "name": "Arrow Rain", "damage": 5, "chance": 0.2, "text": "sends a volley of arrows into the Roman line", "aoe": true },
+      { "name": "Hunter's Silence", "damage": 0, "morale": -18, "chance": 0.2, "text": "vanishes into shadow — the silence is deafening" }
+    ]
+  },
+
+  // === DIFFICULTY 3+ ENEMIES ===
+
+  "war_hound": {
+    "id": "war_hound", "name": "War Hound",
+    "maxHp": 16, "row": "front", "damage": [4, 7], "speed": 3, "xpValue": 5,
+    "minDifficulty": 3,
+    "description": "A massive dog bred for war, armored in boiled leather. Faster and meaner than any wolf.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Savage Bite", "damage": 5, "chance": 0.5, "text": "lunges with armored jaws" },
+      { "name": "Hamstring", "damage": 4, "poisonTarget": 2, "chance": 0.3, "text": "tears at the legs, leaving a festering wound" },
+      { "name": "Pack Howl", "damage": 0, "morale": -10, "chance": 0.2, "text": "howls — more answer from the dark" }
+    ]
+  },
+  "mire_mother": {
+    "id": "mire_mother", "name": "The Mire Mother",
+    "maxHp": 60, "row": "front", "damage": [8, 14], "speed": 1, "xpValue": 25,
+    "minDifficulty": 3,
+    "isBoss": true, "ai": "boss",
+    "description": "A massive swamp predator — half boar, half nightmare. Her young swarm at her call. She fights harder when they fall.",
+    "actions": [
+      { "name": "Gore Charge", "damage": 10, "chance": 0.3, "text": "charges with lowered tusks" },
+      { "name": "Thrashing Fury", "damage": 7, "chance": 0.25, "text": "thrashes wildly, striking everything", "aoe": true },
+      { "name": "Call the Brood", "damage": 0, "chance": 0.25, "text": "bellows into the swamp — her young answer", "spawn": "marsh_wolf" },
+      { "name": "Mother's Wrath", "damage": 12, "morale": -10, "chance": 0.2, "text": "rears up and brings crushing weight down" }
+    ]
+  },
+
+  // === DIFFICULTY 4+ ENEMIES ===
+
+  "cursed_warrior": {
+    "id": "cursed_warrior", "name": "Cursed Warrior",
+    "maxHp": 20, "row": "front", "damage": [4, 8], "speed": 1, "xpValue": 6,
+    "minDifficulty": 4,
+    "deathPoison": 1,
+    "description": "A Germanic warrior marked by the Bone Speaker's rituals. Black veins crawl across his skin. Even in death, he poisons.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Cursed Blade", "damage": 5, "poisonTarget": 2, "chance": 0.4, "text": "strikes with a blackened blade" },
+      { "name": "Death Grip", "damage": 7, "chance": 0.3, "text": "grabs and squeezes with unnatural strength" },
+      { "name": "Bone Rattle", "damage": 0, "morale": -12, "chance": 0.3, "text": "rattles the bones woven into his armor" }
+    ]
+  },
+  "bone_speaker": {
+    "id": "bone_speaker", "name": "The Bone Speaker",
+    "maxHp": 40, "row": "back", "damage": [4, 8], "speed": 1, "xpValue": 25,
+    "minDifficulty": 4,
+    "isBoss": true, "ai": "boss",
+    "description": "An ancient death-priest draped in human bones. He weakens the body, drains the will, and curses weapons. The longer you fight, the weaker you become.",
+    "actions": [
+      { "name": "Bone Curse", "damage": 3, "morale": -15, "poisonTarget": 2, "chance": 0.3, "text": "speaks a bone curse — pain and dread wash over a soldier", "ignoreRow": true },
+      { "name": "Wither", "damage": 0, "morale": -20, "chance": 0.25, "text": "chants words of withering — your men feel their strength fade" },
+      { "name": "Soul Shackle", "damage": 6, "morale": -10, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true },
+      { "name": "Raise the Dead", "damage": 0, "chance": 0.2, "text": "raises a cursed warrior from the mud", "spawn": "cursed_warrior" }
+    ]
   }
 };
