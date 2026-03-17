@@ -523,6 +523,38 @@ class CombatEngine {
       unit.stats.damageDealt += total;
       const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
+
+      // Splash: half damage to all other enemies
+      if (result.splashHalf) {
+        const halfDmg = Math.max(1, Math.floor((result.damage + bonusDmg) / 2));
+        this.enemies.forEach(e => {
+          if (!e.dead && e !== result.target) {
+            let sDmg = halfDmg;
+            const sAura = this.getAuraDamageReduction(e);
+            if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
+            if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+            e.hp = Math.max(0, e.hp - sDmg);
+            unit.stats.damageDealt += sDmg;
+          }
+        });
+        parts.push(`Splash deals ${halfDmg} to other enemies.`);
+      }
+
+      // Splash: damage to all enemies in same row as target
+      if (result.splashRow && result.target.row) {
+        const rowDmg = result.damage + bonusDmg;
+        this.enemies.forEach(e => {
+          if (!e.dead && e !== result.target && e.row === result.target.row) {
+            let sDmg = rowDmg;
+            const sAura = this.getAuraDamageReduction(e);
+            if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
+            if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+            e.hp = Math.max(0, e.hp - sDmg);
+            unit.stats.damageDealt += sDmg;
+          }
+        });
+        parts.push(`Hits all ${result.target.row}-row enemies.`);
+      }
     }
     if (result.heal && result.target) {
       const totalHeal = result.heal + bonusHeal;

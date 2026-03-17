@@ -1166,7 +1166,16 @@ class GameUI {
       this.engine.morale = Math.max(-100, Math.min(100, this.engine.morale + effects.morale));
     }
     if (effects.grantItem) {
-      this.pendingEventItem = effects.grantItem;
+      const grantedItem = getItemData(effects.grantItem);
+      const canUse = grantedItem && this.engine.party.some(u => canEquipItem(u, grantedItem));
+      if (canUse) {
+        this.pendingEventItem = effects.grantItem;
+      } else {
+        // Nobody can use it — convert to Renown
+        this.pendingEventItem = null;
+        const renownGain = { common: 2, uncommon: 5, rare: 10 }[grantedItem ? grantedItem.rarity : 'common'] || 2;
+        this.engine.totalRenownEarned += renownGain;
+      }
     } else {
       this.pendingEventItem = null;
     }
@@ -1182,7 +1191,12 @@ class GameUI {
     if (effects.morale && effects.morale < 0) outcomeText += ` (${effects.morale} Morale)`;
     if (effects.grantItem) {
       const item = getItemData(effects.grantItem);
-      if (item) outcomeText += ` (Found: ${item.name})`;
+      if (this.pendingEventItem) {
+        if (item) outcomeText += ` (Found: ${item.name})`;
+      } else {
+        const renownGain = { common: 2, uncommon: 5, rare: 10 }[item ? item.rarity : 'common'] || 2;
+        outcomeText += ` (No one can use ${item ? item.name : 'this'} — +${renownGain} Renown)`;
+      }
     }
 
     document.getElementById('event-outcome-text').textContent = outcomeText;
@@ -1618,10 +1632,19 @@ class GameUI {
       this.pendingLoot.push(scaledId);
     }
 
-    // Boss guaranteed rare drop if nothing dropped
+    // Boss guaranteed rare drop if nothing dropped — filtered to usable items
     if (isBossVictory && this.pendingLoot.length === 0) {
-      const bossItem = BOSS_DROP_POOL[Math.floor(Math.random() * BOSS_DROP_POOL.length)];
-      this.pendingLoot.push(bossItem);
+      const usableBossItems = BOSS_DROP_POOL.filter(id => {
+        const item = getItemData(id);
+        return item && this.engine.party.some(u => canEquipItem(u, item));
+      });
+      if (usableBossItems.length > 0) {
+        this.pendingLoot.push(usableBossItems[Math.floor(Math.random() * usableBossItems.length)]);
+      } else {
+        // No usable boss items — grant Renown instead
+        this.engine.totalRenownEarned += 10;
+        this.engine.addLog('No usable spoils found — +10 Renown instead.');
+      }
     }
 
     this.lootScreenFinal = isBossVictory;

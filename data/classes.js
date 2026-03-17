@@ -215,9 +215,9 @@ const RAW_CLASSES = {
       },
       {
         "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true,
-        "cost": { "type": "exact", "val": 3 }, "target": "all_enemies",
-        "description": "Rain arrows on all enemies. Deals 2 damage to each.",
-        "effects": { "damageAll": 2 }
+        "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
+        "description": "Rain arrows on a row. Deals 2 damage to target and all enemies in the same row.",
+        "effects": { "damage": 2, "splashRow": true }
       },
       {
         "id": "piercing_shot", "name": "Piercing Shot",
@@ -354,9 +354,9 @@ const RAW_CLASSES = {
       },
       {
         "id": "thunderous_blast", "name": "Thunderous Blast",
-        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "all_enemies",
-        "description": "2 dice totaling 7+. Deals 5 damage to all enemies. +10 Morale.",
-        "effects": { "damageAll": 5, "morale": 10 }
+        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
+        "description": "2 dice totaling 7+. Deals 5 damage to target, half to others. +10 Morale.",
+        "effects": { "damage": 5, "splashHalf": true, "morale": 10 }
       }
     ]
   }

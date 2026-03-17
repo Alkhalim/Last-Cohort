@@ -163,6 +163,16 @@ function buildSkillExecute(skillData) {
       result.pierceBlock = effects.pierceBlock;
     }
 
+    // Splash: half damage to other enemies
+    if (effects.splashHalf) {
+      result.splashHalf = true;
+    }
+
+    // Splash: damage to all enemies in same row as target
+    if (effects.splashRow) {
+      result.splashRow = true;
+    }
+
     return result;
   };
 }
