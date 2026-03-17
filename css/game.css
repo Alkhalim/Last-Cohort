@@ -2133,7 +2133,7 @@ html, body {
 }
 
 /* --- Mood: Inspired (morale 75+) --- */
-#combat-screen.mood-inspired {
+#game.mood-inspired {
   --mood-filter: saturate(1.1) brightness(1.05);
 }
 
@@ -2147,7 +2147,7 @@ html, body {
 }
 
 /* --- Mood: Steady (morale 25-74) --- */
-#combat-screen.mood-steady {
+#game.mood-steady {
   --mood-filter: none;
 }
 

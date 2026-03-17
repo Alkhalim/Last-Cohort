@@ -151,22 +151,22 @@ class GameUI {
     const pct = (this.engine.morale + 100) / 200 * 100;
     fill.style.width = pct + '%';
 
-    // Apply mood class to combat screen
-    const screen = document.getElementById('combat-screen');
-    if (!screen) return;
+    // Apply mood class to #game container so it affects ALL screens
+    const gameEl = document.getElementById('game');
+    if (!gameEl) return;
     const morale = this.engine.morale;
-    screen.classList.remove('mood-inspired', 'mood-steady', 'mood-shaken', 'mood-distressed', 'mood-broken');
+    gameEl.classList.remove('mood-inspired', 'mood-steady', 'mood-shaken', 'mood-distressed', 'mood-broken');
 
     if (morale >= 75) {
-      screen.classList.add('mood-inspired');
+      gameEl.classList.add('mood-inspired');
     } else if (morale >= 25) {
-      screen.classList.add('mood-steady');
+      gameEl.classList.add('mood-steady');
     } else if (morale >= -24) {
-      screen.classList.add('mood-shaken');
+      gameEl.classList.add('mood-shaken');
     } else if (morale >= -74) {
-      screen.classList.add('mood-distressed');
+      gameEl.classList.add('mood-distressed');
     } else {
-      screen.classList.add('mood-broken');
+      gameEl.classList.add('mood-broken');
     }
 
     // Update music lowpass filter based on morale
