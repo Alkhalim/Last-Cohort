@@ -47,7 +47,8 @@ const RAW_ENEMIES = {
   "bog_seer": {
     "id": "bog_seer", "name": "Bog Seer",
     "maxHp": 10, "row": "back", "damage": [2, 3], "speed": 1, "xpValue": 5,
-    "description": "A hunched figure draped in moss, chanting from the treeline. Attacks the mind.", "ai": "sniper",
+    "description": "A hunched figure draped in moss, chanting from the treeline. Attacks the mind. Killing one lifts a great weight.", "ai": "sniper",
+    "deathMoraleMultiplier": 2,
     "actions": [
       { "name": "Curse of Dread", "damage": 0, "morale": -18, "chance": 0.4, "text": "chants a dreadful curse" },
       { "name": "Marsh Hex", "damage": 3, "morale": -10, "chance": 0.3, "text": "hurls a hex of swamp fire", "ignoreRow": true },

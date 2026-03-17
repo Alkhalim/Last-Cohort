@@ -202,7 +202,7 @@ class CombatEngine {
     }
 
     this.party.forEach(u => {
-      u.block = 0;
+      if (this.turn > 1) u.block = 0; // preserve camp block on turn 1
       u.taunt = false;
       u.actedThisTurn = false;
     });
@@ -578,9 +578,9 @@ class CombatEngine {
 
   triggerVictory() {
     this.phase = PHASE.VICTORY;
-    this.morale = Math.min(100, this.morale + 5);
-    this.addLog('All enemies defeated! (+5 Morale)');
-    if (this.onVisual) this.onVisual('morale', { amount: 5 });
+    this.morale = Math.min(100, this.morale + 7);
+    this.addLog('All enemies defeated! (+7 Morale)');
+    if (this.onVisual) this.onVisual('morale', { amount: 7 });
     this.update();
   }
 
@@ -598,9 +598,10 @@ class CombatEngine {
           this.totalEnemiesKilled++;
           this.addLog(`${e.name} falls!`);
 
-          // Morale restored on kill — based on enemy base maxHp
+          // Morale restored on kill — based on enemy base maxHp, doubled for seers
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
-          const moraleRestore = e.isBoss ? 35 : baseHp > 10 ? 5 : 3;
+          let moraleRestore = e.isBoss ? 35 : (baseHp > 10 ? 5 : 3) + 2;
+          if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
           this.morale = Math.min(100, this.morale + moraleRestore);
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
