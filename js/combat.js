@@ -198,6 +198,14 @@ class CombatEngine {
       }
     });
 
+    // Morale decay — escalates each turn. Turn 1: -1, Turn 2: -2, etc.
+    const moraleDecay = Math.min(this.turn, 8); // caps at -8 per turn
+    this.morale = Math.max(-100, this.morale - moraleDecay);
+    if (moraleDecay > 0) {
+      this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
+      if (this.onVisual) this.onVisual('morale', { amount: -moraleDecay });
+    }
+
     this.party.forEach(u => {
       u.block = 0;
       u.taunt = false;
@@ -588,6 +596,12 @@ class CombatEngine {
           this.killedEnemies.push(e.id);
           this.totalEnemiesKilled++;
           this.addLog(`${e.name} falls!`);
+
+          // Morale restored on kill — bigger enemies give more
+          const moraleRestore = e.isBoss ? 25 : e.isElite ? 15 : 8;
+          this.morale = Math.min(100, this.morale + moraleRestore);
+          this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
+          if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
 
           if (e.deathPoison) {
             this.party.forEach(u => {
