@@ -999,6 +999,11 @@ class GameUI {
     // If no current node, the start node (depth 0) is reachable
     const startReachable = this.currentNodeId === null;
 
+    // Fog of war: only show nodes within 2 depths of current position, or visited
+    const currentNode = this.currentNodeId !== null ? this.mapNodes.find(n => n.id === this.currentNodeId) : null;
+    const currentDepth = currentNode ? currentNode.depth : 0;
+    const visibleRange = 2;
+
     // Position nodes: bottom = start (depth 0), top = boss (depth 8)
     const nodePositions = {};
     for (const node of this.mapNodes) {
@@ -1012,13 +1017,18 @@ class GameUI {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineWidth = 2;
 
+    // Helper: is a node visible (within range or visited)
+    const isVisible = (node) => node.visited || (node.depth >= currentDepth && node.depth <= currentDepth + visibleRange);
+
     for (const node of this.mapNodes) {
+      if (!isVisible(node)) continue;
       const from = nodePositions[node.id];
       for (const childId of node.children) {
+        const childNode = this.mapNodes.find(n => n.id === childId);
+        if (!childNode || !isVisible(childNode)) continue;
         const to = nodePositions[childId];
         if (!to) continue;
 
-        const childNode = this.mapNodes.find(n => n.id === childId);
         const isReachableLine = (node.id === this.currentNodeId) ||
           (startReachable && node.depth === 0);
 
@@ -1032,6 +1042,7 @@ class GameUI {
 
     // Render node elements
     for (const node of this.mapNodes) {
+      if (!isVisible(node)) continue;
       const pos = nodePositions[node.id];
       const el = document.createElement('div');
 

@@ -25,9 +25,8 @@ const RAW_CLASSES = {
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
-        "description": "Gain 5 Block. (Die 4 triggers Shield Discipline for +4.)",
-        "effects": { "block": 5 },
-        "passiveTrigger": { "dieMin": 4, "bonusBlock": 4 }
+        "description": "Gain 5 Block.",
+        "effects": { "block": 5 }
       },
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
