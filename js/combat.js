@@ -157,9 +157,16 @@ class CombatEngine {
         e.hp = Math.max(0, e.hp - e.poison);
         this.addLog(`${e.name} takes ${e.poison} poison damage.`);
         e.poison = Math.max(0, e.poison - 1);
-        if (e.hp <= 0) { e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.addLog(`${e.name} falls to poison!`); }
+        if (e.hp <= 0) { e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++; this.addLog(`${e.name} falls to poison!`); }
       }
     });
+    // Check if all enemies died to poison
+    if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
+      this.phase = PHASE.VICTORY;
+      this.addLog('All enemies defeated!');
+      this.update();
+      return;
+    }
     // Poison tick on allies
     this.party.forEach(u => {
       if (!u.downed && u.poison > 0) {

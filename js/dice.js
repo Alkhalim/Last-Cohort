@@ -79,6 +79,8 @@ class DicePool {
         return selected.length === 1;
       case 'threshold':
         return selected.length === 1 && selected[0].value >= cost.min;
+      case 'range':
+        return selected.length === 1 && selected[0].value >= cost.min && selected[0].value <= cost.max;
       case 'exact':
         return selected.length === 1 && selected[0].value === cost.val;
       case 'combined':

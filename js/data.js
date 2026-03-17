@@ -5,6 +5,7 @@
 // --- Skill cost types ---
 const COST = {
   threshold: (min) => ({ type: 'threshold', min, dice: 1, label: `${min}+` }),
+  range: (min, max) => ({ type: 'range', min, max, dice: 1, label: `${min}-${max}` }),
   exact: (val) => ({ type: 'exact', val, dice: 1, label: `=${val}` }),
   any: () => ({ type: 'any', dice: 1, label: 'Any' }),
   combined: (min, count = 2) => ({ type: 'combined', min, dice: count, label: `${count}d ${min}+` }),
@@ -44,6 +45,8 @@ function buildCost(costData) {
       return COST.any();
     case 'threshold':
       return COST.threshold(costData.min);
+    case 'range':
+      return COST.range(costData.min, costData.max);
     case 'exact':
       return COST.exact(costData.val);
     case 'combined':
