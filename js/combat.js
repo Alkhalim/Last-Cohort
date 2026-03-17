@@ -598,7 +598,7 @@ class CombatEngine {
           this.addLog(`${e.name} falls!`);
 
           // Morale restored on kill — bigger enemies give more
-          const moraleRestore = e.isBoss ? 25 : e.isElite ? 15 : 8;
+          const moraleRestore = e.isBoss ? 12 : e.isElite ? 8 : 4;
           this.morale = Math.min(100, this.morale + moraleRestore);
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
