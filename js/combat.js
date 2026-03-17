@@ -109,10 +109,10 @@ class CombatEngine {
     const data = ENEMY_DATA[eid];
     // Difficulty scaling: +20% HP and +1 damage per action per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.4));
+    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.3));
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.25)) : 0,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.15)) : 0,
     }));
     const enemy = {
       index: this.spawnIndex,
@@ -642,9 +642,18 @@ class CombatEngine {
 
           // Morale restored on kill — based on enemy base maxHp, doubled for seers
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
-          let moraleRestore = e.isBoss ? 75 : (baseHp > 10 ? 6 : 4);
+          let moraleRestore;
+          if (e.isBoss) {
+            // Boss: restore to 50, or +25 if already 26+
+            if (this.morale >= 26) {
+              moraleRestore = 25;
+            } else {
+              moraleRestore = 50 - this.morale;
+            }
+          } else {
+            moraleRestore = baseHp > 10 ? 6 : 4;
+          }
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
-          // Special: Chieftain's Spear — +3 extra morale per kill
           if (this.partyHasItem('chiefs_spear')) moraleRestore += 3;
           this.morale = Math.min(100, this.morale + moraleRestore);
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
@@ -827,10 +836,10 @@ class CombatEngine {
         const data = ENEMY_DATA[action.spawn];
         if (data) {
           const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.4));
+          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.3));
           const scaledActions = data.actions.map(a => ({
             ...a,
-            damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.25)) : 0,
+            damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.15)) : 0,
           }));
           const spawned = {
             index: this.enemies.length,
