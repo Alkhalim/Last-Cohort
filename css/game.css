@@ -1445,6 +1445,13 @@ html, body {
   margin-bottom: 8px;
 }
 
+.loot-item-skip {
+  font-size: 0.6rem;
+  color: var(--gold-dim);
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
 .loot-equip-actions {
   display: flex;
   flex-wrap: wrap;

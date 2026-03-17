@@ -513,7 +513,7 @@ class GameUI {
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
           ${unit.block > 0 ? `<span class="block-text">Block: ${unit.block}</span>` : ''}
           ${unit.poison > 0 ? `<span class="poison-text">Poison: ${unit.poison}</span>` : ''}
-          ${unit.buffs && unit.buffs.length > 0 ? unit.buffs.map(b => `<span class="buff-text">+${b.damage} (${b.attacksLeft})</span>`).join('') : ''}
+          ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg} dmg (${minAtk})</span>`; })() : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
           ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
         </div>
@@ -1353,6 +1353,7 @@ class GameUI {
           </div>
           <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
           <div class="loot-item-desc">${item.description}</div>
+          <div class="loot-item-skip">Skip: +${{ common: 2, uncommon: 5, rare: 10 }[item.rarity] || 2} Renown</div>
           <div class="loot-equip-actions">${equipBtns}</div>
         `;
 
@@ -1393,6 +1394,17 @@ class GameUI {
     }).join('');
 
     const afterLoot = () => {
+      // Convert unpicked items to Renown
+      if (this.pendingLoot.length > 0) {
+        const renownPerRarity = { common: 2, uncommon: 5, rare: 10 };
+        let bonusRenown = 0;
+        this.pendingLoot.forEach(itemId => {
+          const item = getItemData(itemId);
+          if (item) bonusRenown += renownPerRarity[item.rarity] || 2;
+        });
+        this.engine.totalRenownEarned += bonusRenown;
+        this.pendingLoot = [];
+      }
       if (this.engine.pendingSkillPicks > 0) {
         this.showLevelUpScreen();
       } else if (this.lootScreenFinal) {
