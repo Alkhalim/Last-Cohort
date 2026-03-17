@@ -186,8 +186,8 @@ const RAW_CLASSES = {
         "starter": true,
         "cost": { "type": "any" },
         "target": "single_enemy",
-        "description": "Applies 4 Poison to an enemy.",
-        "effects": { "poison": 4 }
+        "description": "Applies 3 Poison to an enemy.",
+        "effects": { "poison": 3 }
       },
       {
         "id": "triage",
@@ -211,8 +211,8 @@ const RAW_CLASSES = {
         "name": "Plague Flask",
         "cost": { "type": "threshold", "min": 3 },
         "target": "all_enemies",
-        "description": "Apply 3 Poison to all enemies.",
-        "effects": { "poisonAll": 3 }
+        "description": "Apply 2 Poison to all enemies.",
+        "effects": { "poisonAll": 2 }
       },
       {
         "id": "sawbones_choice",
