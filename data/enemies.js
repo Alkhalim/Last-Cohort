@@ -50,8 +50,8 @@ const RAW_ENEMIES = {
     "description": "A hunched figure draped in moss, chanting from the treeline. Attacks the mind.", "ai": "sniper",
     "actions": [
       { "name": "Curse of Dread", "damage": 0, "morale": -18, "chance": 0.4, "text": "chants a dreadful curse" },
-      { "name": "Marsh Hex", "damage": 3, "morale": -5, "chance": 0.3, "text": "hurls a hex of swamp fire", "ignoreRow": true },
-      { "name": "Wail of the Dead", "damage": 0, "morale": -15, "chance": 0.2, "text": "screams with the voices of the dead" },
+      { "name": "Marsh Hex", "damage": 3, "morale": -10, "chance": 0.3, "text": "hurls a hex of swamp fire", "ignoreRow": true },
+      { "name": "Wail of the Dead", "damage": 0, "morale": -25, "chance": 0.2, "text": "screams with the voices of the dead" },
       { "name": "Bone Shard", "damage": 5, "chance": 0.1, "text": "flings a shard of bone", "ignoreRow": true }
     ]
   },
@@ -63,7 +63,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Oak Smash", "damage": 8, "chance": 0.4, "text": "smashes with the great oak shield" },
       { "name": "Shieldwall Charge", "damage": 6, "chance": 0.25, "text": "charges behind the oak shield", "aoe": true },
-      { "name": "Rallying Roar", "damage": 0, "morale": -8, "chance": 0.15, "text": "roars, rallying nearby warriors" },
+      { "name": "Rallying Roar", "damage": 0, "morale": -15, "chance": 0.15, "text": "roars, rallying nearby warriors" },
       { "name": "Crushing Overhead", "damage": 12, "chance": 0.2, "text": "brings a devastating overhead blow" }
     ]
   },
@@ -74,7 +74,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Wall of Shields", "damage": 0, "chance": 0.4, "text": "raises the great shield, protecting nearby warriors", "blockAllEnemies": 3 },
       { "name": "Shield Slam", "damage": 5, "chance": 0.35, "text": "slams forward with the heavy shield" },
-      { "name": "Taunt of Thusnelda", "damage": 0, "morale": -8, "chance": 0.25, "text": "screams the name of Arminius\u2019s wife \u2014 your men flinch" }
+      { "name": "Taunt of Thusnelda", "damage": 0, "morale": -15, "chance": 0.25, "text": "screams the name of Arminius\u2019s wife \u2014 your men flinch" }
     ]
   },
   "mire_leech": {
@@ -104,7 +104,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Crushing Blow", "damage": 10, "chance": 0.4, "text": "brings down a crushing blow" },
       { "name": "Shield Bash", "damage": 6, "chance": 0.25, "text": "bashes with iron shield" },
-      { "name": "War Cry", "damage": 0, "morale": -12, "chance": 0.15, "text": "roars a war cry" },
+      { "name": "War Cry", "damage": 0, "morale": -20, "chance": 0.15, "text": "roars a war cry" },
       { "name": "Frenzy", "damage": 8, "chance": 0.2, "text": "attacks in a frenzy", "aoe": true }
     ]
   },
@@ -114,8 +114,8 @@ const RAW_ENEMIES = {
     "isBoss": true, "ai": "boss",
     "actions": [
       { "name": "Thorn Volley", "damage": 5, "chance": 0.3, "text": "sends a volley of blackened thorns", "aoe": true },
-      { "name": "Soul Drain", "damage": 7, "morale": -8, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
-      { "name": "Swamp Call", "damage": 0, "morale": -15, "chance": 0.2, "text": "calls upon the swamp spirits" },
+      { "name": "Soul Drain", "damage": 7, "morale": -15, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
+      { "name": "Swamp Call", "damage": 0, "morale": -25, "chance": 0.2, "text": "calls upon the swamp spirits" },
       { "name": "Root Grasp", "damage": 9, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true }
     ]
   }
