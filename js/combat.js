@@ -82,6 +82,7 @@ class CombatEngine {
       u.taunt = false;
       u.poison = 0;
       u.passiveTriggered = false;
+      u.skills.forEach(s => { s.cooldownLeft = 0; });
       u.actedThisTurn = false;
       u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 };
       if (u.passive) u.passive.triggered = false;
