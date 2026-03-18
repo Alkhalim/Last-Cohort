@@ -249,11 +249,13 @@ class CombatEngine {
     });
 
     // Morale decay — escalates each turn. Turn 1: -1, Turn 2: -2, etc.
+    // Difficulty adds +1 base decay per level above 1 (diff 2 = +1, diff 3 = +2, etc.)
     // Champion's Helm reduces decay by 1 per helm equipped
     // Curse: Witch's Gaze — morale decay +2 per turn
     const helmReduction = this.party.filter(u => !u.downed && this.unitHasItem(u, 'champions_helm')).length;
+    const diffDecay = Math.max(0, (this.difficulty || 1) - 1);
     const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
-    const moraleDecay = Math.max(0, this.turn + curseDecay - helmReduction);
+    const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
     this.morale = Math.max(-100, this.morale - moraleDecay);
     if (moraleDecay > 0) {
       this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
