@@ -516,7 +516,7 @@ class CombatEngine {
     }
 
     if (skill.target === TARGET.SINGLE_ENEMY) {
-      const validTargets = this.getValidEnemyTargets(skill);
+      const validTargets = this.getValidEnemyTargets(skill, unit);
       if (validTargets.length === 1) {
         this.executeSkill(unitIndex, skillId, diceIds, [validTargets[0]]);
       } else if (validTargets.length > 1) {
@@ -548,9 +548,11 @@ class CombatEngine {
     this.update();
   }
 
-  getValidEnemyTargets(skill) {
+  getValidEnemyTargets(skill, unit) {
     const alive = this.enemies.filter(e => !e.dead);
     if (skill.ignoreRow) return alive;
+    // Huntsman's Arrow: attacks can target any row
+    if (unit && this.unitHasItem(unit, 'huntsmans_arrow')) return alive;
     const front = alive.filter(e => e.row === 'front');
     if (front.length > 0) return front;
     return alive;

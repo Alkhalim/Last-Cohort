@@ -313,7 +313,8 @@ class GameUI {
   isEnemyTargetable(enemy) {
     if (enemy.dead) return false;
     if (this.engine.targetMode && this.engine.targetMode.targetType === 'enemy') {
-      return this.engine.getValidEnemyTargets(this.engine.targetMode.skill).includes(enemy);
+      const tmUnit = this.engine.party[this.engine.targetMode.unitIndex];
+      return this.engine.getValidEnemyTargets(this.engine.targetMode.skill, tmUnit).includes(enemy);
     }
     // Staged skill targeting
     if (this.stagedSkill && this.selectedUnitIndex !== null) {
@@ -325,7 +326,7 @@ class GameUI {
       const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
       if (!canPay) return false;
       if (skill.target === TARGET.ALL_ENEMIES) return true;
-      return this.engine.getValidEnemyTargets(skill).includes(enemy);
+      return this.engine.getValidEnemyTargets(skill, unit).includes(enemy);
     }
     return false;
   }
@@ -336,7 +337,8 @@ class GameUI {
     if (!skill) return false;
     if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES) return false;
     if (skill.target === TARGET.ALL_ENEMIES) return true;
-    return this.engine.getValidEnemyTargets(skill).includes(enemy);
+    const unit = this.selectedUnitIndex !== null ? this.engine.party[this.selectedUnitIndex] : null;
+    return this.engine.getValidEnemyTargets(skill, unit).includes(enemy);
   }
 
   onEnemyClick(enemy) {
