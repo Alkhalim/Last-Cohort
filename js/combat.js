@@ -191,7 +191,10 @@ class CombatEngine {
       return sum + (data ? (data.xpValue || 0) * 2 : 0);
     }, 0);
     const bonusMultiplier = Math.max(0.5, 1.5 - (this.turnCount * 0.1));
-    return Math.round(baseRenown * bonusMultiplier);
+    // Active curses increase renown yield: +15% per active curse
+    const curseCount = this.getActiveCurses().length;
+    const curseMultiplier = 1 + curseCount * 0.15;
+    return Math.round(baseRenown * bonusMultiplier * curseMultiplier);
   }
 
   startRollPhase() {
