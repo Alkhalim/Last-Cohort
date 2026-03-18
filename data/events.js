@@ -260,5 +260,53 @@ const RAW_EVENTS = [
         { "weight": 1.0, "text": "The wolf watches you go. The forest is full of suffering.", "effects": {} }
       ]}
     ]
+  },
+  {
+    "id": "fog_bank",
+    "name": "The Fog Bank",
+    "intro": "A wall of fog rolls through the trees, thick as wool and cold as the grave. Shapes move in the murk \u2014 or maybe they don't. Your men freeze. Visibility drops to nothing.",
+    "choices": [
+      { "text": "Push through quickly.", "outcomes": [
+        { "weight": 0.4, "text": "You burst through the far side, gasping but intact. The sun breaks through.", "effects": { "healAll": 4, "morale": 5 } },
+        { "weight": 0.3, "text": "Branches and bogs batter the column. Men stumble and curse in the dark.", "effects": { "damageAll": 6, "morale": -8 } },
+        { "weight": 0.3, "text": "Minor scrapes, but you made it through.", "effects": { "damageAll": 4 } }
+      ]},
+      { "text": "Your scout guides the way through.", "requiresTag": "ranged", "outcomes": [
+        { "weight": 0.6, "text": "Sharp eyes find the path through the murk. Everyone crosses safely.", "effects": { "morale": 12 } },
+        { "weight": 0.4, "text": "The scout finds the path \u2014 and something glinting in the mud.", "effects": { "morale": 8, "grantItem": "fang_necklace" } }
+      ]},
+      { "text": "Your medicus prepares torches and salves.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.6, "text": "The torches cut through the fog. Your medicus treats the chill before it sets in.", "effects": { "healAll": 8, "morale": 5 } },
+        { "weight": 0.4, "text": "The warmth steadies nerves. Your men march through with purpose.", "effects": { "healAll": 6, "morale": 8 } }
+      ]},
+      { "text": "Wait for it to pass.", "outcomes": [
+        { "weight": 0.5, "text": "Hours crawl by. The men grow restless, but the fog lifts.", "effects": { "morale": -3 } },
+        { "weight": 0.5, "text": "Something finds you in the fog. Claws and teeth in the dark.", "effects": { "damageAll": 3, "morale": -8 } }
+      ]}
+    ]
+  },
+  {
+    "id": "hanging_grove",
+    "name": "The Hanging Grove",
+    "minDifficulty": 4,
+    "intro": "The trees ahead are heavy with a grim harvest. Roman soldiers \u2014 your countrymen \u2014 hang from ropes, stripped of armor. A warning from Arminius. Some of your men turn away. Others stare.",
+    "choices": [
+      { "text": "Cut them down and bury them.", "outcomes": [
+        { "weight": 0.6, "text": "Your men work in silence. When it's done, they stand a little taller. Dignity in death.", "effects": { "morale": 18 } },
+        { "weight": 0.4, "text": "The ropes were trapped. Poisoned thorns slash your hands as you cut.", "effects": { "damageAll": 3, "morale": -10 } }
+      ]},
+      { "text": "Search the bodies for equipment.", "outcomes": [
+        { "weight": 0.5, "text": "A gladius, still sharp. The dead have no need of it.", "effects": { "grantItem": "iron_gladius", "morale": -12 } },
+        { "weight": 0.3, "text": "A wolf pelt cloak, stiff with frost. It'll keep someone warm.", "effects": { "grantItem": "wolf_pelt", "morale": -8 } },
+        { "weight": 0.2, "text": "Nothing but rot. The men stare at you with hollow eyes.", "effects": { "morale": -20 } }
+      ]},
+      { "text": "Your centurion leads funeral rites.", "requiresClass": "centurion", "outcomes": [
+        { "weight": 0.7, "text": "The centurion speaks the words of Rome. Every man stands at attention. For a moment, the forest is silent.", "effects": { "morale": 22, "healAll": 5 } },
+        { "weight": 0.3, "text": "The rites bring peace. Your men find strength in tradition.", "effects": { "morale": 15 } }
+      ]},
+      { "text": "March past in silence.", "outcomes": [
+        { "weight": 1.0, "text": "No one speaks. The forest swallows the dead behind you.", "effects": { "morale": -5 } }
+      ]}
+    ]
   }
 ];
