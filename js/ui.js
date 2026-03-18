@@ -84,6 +84,17 @@ class GameUI {
         this.flashElement('morale-bar', data.amount > 0 ? 'morale-up' : 'morale-down', 600);
         this.showDamagePopup('morale-bar', data.amount, 'morale');
         break;
+      case 'dicePassive':
+        if (data.triggers) {
+          data.triggers.forEach(t => {
+            const dieEl = document.querySelector(`.die[data-die-id="${t.dieId}"]`);
+            if (dieEl) {
+              dieEl.classList.add('passive-trigger', `passive-${t.type}`);
+              setTimeout(() => dieEl.classList.remove('passive-trigger', `passive-${t.type}`), 1200);
+            }
+          });
+        }
+        break;
     }
   }
 

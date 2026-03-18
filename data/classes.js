@@ -11,9 +11,8 @@ const RAW_CLASSES = {
     "tags": ["melee", "roman"],
     "description": "Heavy infantry. Reliable damage and strong defense.",
     "passive": {
-      "name": "Shield Discipline",
-      "description": "First defensive action with a 4+ die each encounter grants +4 extra Block.",
-      "triggered": false
+      "name": "Disciplined Formation",
+      "description": "Whenever a natural pair is rolled, gain +2 Block."
     },
     "skills": [
       {
@@ -131,7 +130,7 @@ const RAW_CLASSES = {
     "description": "Field surgeon. Heals, poisons, and manages attrition.",
     "passive": {
       "name": "Healer's Instinct",
-      "description": "Whenever a 1 is rolled, heal a random damaged ally for 2 HP."
+      "description": "Whenever a 1 is rolled, heal a random damaged ally for 1 HP."
     },
     "skills": [
       {
@@ -194,7 +193,7 @@ const RAW_CLASSES = {
     "description": "Roman archer. Fragile but strikes any row with precision.",
     "passive": {
       "name": "Eagle Eye",
-      "description": "Whenever a 6 is rolled, deal 2 damage to a random enemy."
+      "description": "Whenever a 6 is rolled, deal 1 damage to a random enemy."
     },
     "skills": [
       {

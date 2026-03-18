@@ -284,6 +284,9 @@ class CombatEngine {
   processDicePassives() {
     const hasMedicus = this.party.some(u => u.classId === 'medicus' && !u.downed);
     const hasSagittarius = this.party.some(u => u.classId === 'sagittarius' && !u.downed);
+    const legionary = this.party.find(u => u.classId === 'legionary' && !u.downed);
+
+    const triggeredDice = []; // { dieId, type } for UI flash
 
     for (const die of this.dicePool.dice) {
       // Medicus: heal random damaged ally on each 1
@@ -291,10 +294,10 @@ class CombatEngine {
         const damaged = this.party.filter(u => !u.downed && u.hp < u.maxHp);
         if (damaged.length > 0) {
           const target = damaged[Math.floor(Math.random() * damaged.length)];
-          const healAmt = 2;
-          target.hp = Math.min(target.maxHp, target.hp + healAmt);
-          this.addLog(`Healer's Instinct: ${target.name} healed ${healAmt} HP.`);
-          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: healAmt });
+          target.hp = Math.min(target.maxHp, target.hp + 1);
+          this.addLog(`Healer's Instinct: ${target.name} healed 1 HP.`);
+          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: 1 });
+          triggeredDice.push({ dieId: die.id, type: 'heal' });
         }
       }
 
@@ -303,11 +306,37 @@ class CombatEngine {
         const alive = this.enemies.filter(e => !e.dead);
         if (alive.length > 0) {
           const target = alive[Math.floor(Math.random() * alive.length)];
-          const dmg = 2;
-          target.hp = Math.max(0, target.hp - dmg);
-          this.addLog(`Eagle Eye: ${target.name} takes ${dmg} damage.`);
+          target.hp = Math.max(0, target.hp - 1);
+          this.addLog(`Eagle Eye: ${target.name} takes 1 damage.`);
+          triggeredDice.push({ dieId: die.id, type: 'damage' });
         }
       }
+    }
+
+    // Legionary: Disciplined Formation — gain +2 Block on natural pairs
+    if (legionary) {
+      const values = this.dicePool.dice.map(d => d.value);
+      const seen = {};
+      const pairValues = [];
+      values.forEach((v, i) => {
+        if (seen[v] !== undefined && !pairValues.includes(v)) {
+          pairValues.push(v);
+          triggeredDice.push({ dieId: this.dicePool.dice[seen[v]].id, type: 'block' });
+          triggeredDice.push({ dieId: this.dicePool.dice[i].id, type: 'block' });
+        }
+        if (seen[v] === undefined) seen[v] = i;
+      });
+      if (pairValues.length > 0) {
+        const blockGain = pairValues.length * 2;
+        legionary.block = (legionary.block || 0) + blockGain;
+        this.addLog(`Disciplined Formation: ${legionary.name} gains ${blockGain} Block (${pairValues.length} pair${pairValues.length > 1 ? 's' : ''}).`);
+        if (this.onVisual) this.onVisual('unitBlock', { unitIndex: legionary.index, amount: blockGain });
+      }
+    }
+
+    // Notify UI about triggered dice for flashing
+    if (triggeredDice.length > 0 && this.onVisual) {
+      this.onVisual('dicePassive', { triggers: triggeredDice });
     }
 
     // Check if any enemy died from Sagittarius passive

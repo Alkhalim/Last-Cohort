@@ -777,6 +777,34 @@ html, body {
   color: var(--bg-deep);
 }
 
+/* --- Dice passive trigger flash --- */
+.die.passive-trigger {
+  animation: die-passive-flash 1.2s ease-out;
+  z-index: 5;
+}
+
+.die.passive-heal {
+  border-color: var(--green-bright) !important;
+  box-shadow: 0 0 14px rgba(74, 170, 74, 0.6) !important;
+}
+
+.die.passive-damage {
+  border-color: var(--red-bright) !important;
+  box-shadow: 0 0 14px rgba(208, 64, 64, 0.6) !important;
+}
+
+.die.passive-block {
+  border-color: var(--blue-bright) !important;
+  box-shadow: 0 0 14px rgba(74, 122, 186, 0.6) !important;
+}
+
+@keyframes die-passive-flash {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.2); }
+  30% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
 .reroll-btn {
   position: absolute;
   bottom: -18px;
