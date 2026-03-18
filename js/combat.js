@@ -668,6 +668,12 @@ class CombatEngine {
         result.target._pinned = true;
       }
 
+      // Special: Legion Composite Bow — attacks apply 1 Poison
+      if (this.unitHasItem(unit, 'legion_composite_bow') && total > 0 && result.target.hp > 0) {
+        result.target.poison = (result.target.poison || 0) + 1;
+        parts.push('The festering arrow poisons the target. (+1 Poison)');
+      }
+
       // Arminius's Champion: 15% damage reflection
       if (result.target.id === 'arminius_champion' && total > 0 && result.target.hp > 0) {
         const reflected = Math.max(1, Math.floor(total * 0.15));

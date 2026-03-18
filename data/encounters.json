@@ -194,16 +194,16 @@
       "nothingChance": 0.30,
       "tiers": [
         { "chance": 0.40, "items": ["herb_pouch", "bone_needle_kit"] },
-        { "chance": 0.20, "items": ["woad_charm", "fang_necklace"] },
-        { "chance": 0.10, "items": ["runic_stone"] }
+        { "chance": 0.20, "items": ["woad_charm", "fang_necklace", "scorpio_crossbow"] },
+        { "chance": 0.10, "items": ["runic_stone", "legion_composite_bow"] }
       ]
     },
     "oak_shield": {
       "nothingChance": 0.10,
       "tiers": [
         { "chance": 0.40, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
-        { "chance": 0.35, "items": ["woad_charm", "fang_necklace", "hunters_cloak"] },
-        { "chance": 0.15, "items": ["chiefs_spear", "runic_stone"] }
+        { "chance": 0.35, "items": ["woad_charm", "fang_necklace", "hunters_cloak", "scorpio_crossbow"] },
+        { "chance": 0.15, "items": ["chiefs_spear", "runic_stone", "legion_composite_bow"] }
       ]
     },
     "grove_witch": {
