@@ -302,12 +302,57 @@ class GameUI {
     tooltip.style.left = Math.max(4, rect.left - gameRect.left) + 'px';
     tooltip.style.top = (rect.bottom - gameRect.top + 4) + 'px';
 
+    // Show target intent: who would this enemy attack?
+    if (!enemy.dead && !enemy.isStructure && this.engine.phase === PHASE.PLAYER_TURN) {
+      const alive = this.engine.party.filter(u => !u.downed);
+      const taunting = alive.find(u => u.taunt);
+      const hasAoe = enemy.actions.some(a => a.aoe && a.damage > 0);
+      let targetIndices = [];
+
+      if (taunting) {
+        targetIndices = [taunting.index];
+      } else if (enemy.ai === 'sniper') {
+        const lowest = alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
+        targetIndices = [lowest.index];
+      } else {
+        // Aggressive / default: could hit anyone
+        targetIndices = alive.map(u => u.index);
+      }
+
+      // If enemy has AoE, mark everyone
+      if (hasAoe) {
+        targetIndices = alive.map(u => u.index);
+      }
+
+      // Add intent label to tooltip
+      let intentText = '';
+      if (taunting) {
+        intentText = `Targeting: <span style="color:var(--red-bright)">${taunting.name}</span> (Taunted)`;
+      } else if (enemy.ai === 'sniper' && targetIndices.length === 1) {
+        const t = alive.find(u => u.index === targetIndices[0]);
+        intentText = `Targeting: <span style="color:var(--red-bright)">${t ? t.name : '?'}</span> (Lowest HP)`;
+      } else if (hasAoe) {
+        intentText = 'Targeting: <span style="color:var(--red-bright)">All soldiers</span>';
+      } else {
+        intentText = 'Targeting: <span style="color:var(--text-dim)">Random soldier</span>';
+      }
+      tooltip.innerHTML += `<div class="enemy-tooltip-intent">${intentText}</div>`;
+
+      // Highlight targeted unit cards
+      targetIndices.forEach(idx => {
+        const unitEl = document.getElementById(`unit-${idx}`);
+        if (unitEl) unitEl.classList.add('enemy-target-highlight');
+      });
+    }
+
     document.getElementById('combat-screen').appendChild(tooltip);
   }
 
   hideEnemyTooltip() {
     const existing = document.getElementById('enemy-tooltip');
     if (existing) existing.remove();
+    // Clear target highlights
+    document.querySelectorAll('.enemy-target-highlight').forEach(el => el.classList.remove('enemy-target-highlight'));
   }
 
   isEnemyTargetable(enemy) {
@@ -1119,7 +1164,7 @@ class GameUI {
     // Fog of war: only show nodes within 2 depths of current position, or visited
     const currentNode = this.currentNodeId !== null ? this.mapNodes.find(n => n.id === this.currentNodeId) : null;
     const currentDepth = currentNode ? currentNode.depth : 0;
-    const visibleRange = 2;
+    const visibleRange = 3;
 
     // Compute all nodes reachable via forward paths from current position
     const futureReachable = new Set();

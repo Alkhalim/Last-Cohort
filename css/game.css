@@ -484,6 +484,24 @@ html, body {
   padding: 1px 0;
 }
 
+.enemy-tooltip-intent {
+  font-size: 0.65rem;
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border);
+}
+
+.enemy-target-highlight {
+  box-shadow: 0 0 12px rgba(200, 50, 50, 0.6), inset 0 0 8px rgba(200, 50, 50, 0.15) !important;
+  border-color: var(--red-bright) !important;
+  animation: target-pulse 1s infinite alternate;
+}
+
+@keyframes target-pulse {
+  0% { box-shadow: 0 0 8px rgba(200, 50, 50, 0.4), inset 0 0 6px rgba(200, 50, 50, 0.1); }
+  100% { box-shadow: 0 0 16px rgba(200, 50, 50, 0.7), inset 0 0 10px rgba(200, 50, 50, 0.2); }
+}
+
 /* ================================================================
    BOSS INTRO SPLASH
    ================================================================ */
