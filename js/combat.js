@@ -714,6 +714,11 @@ class CombatEngine {
     if (result.damage && result.target && result.target.hp !== undefined) {
       // Split damage: calculate total first, then halve for each target
       let total = (result.splitDamage ? Math.floor((result.damage + bonusDmg) / 2) : result.damage + bonusDmg);
+      // Execute: double damage to enemies below 25% HP
+      if (result.execute && result.target.hp <= result.target.maxHp * 0.25) {
+        total *= 2;
+        parts.push('EXECUTE!');
+      }
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);

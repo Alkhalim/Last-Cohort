@@ -206,6 +206,11 @@ function buildSkillExecute(skillData) {
       result.splashBackRow = true;
     }
 
+    // Execute: double damage to enemies below 25% HP
+    if (effects.execute) {
+      result.execute = true;
+    }
+
     // Knockback: shove front-row enemy to back row
     if (effects.knockback) {
       result.knockback = true;

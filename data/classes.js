@@ -217,7 +217,7 @@ const RAW_CLASSES = {
       {
         "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true, "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Rain arrows on a row. Deals 2 damage to target and all enemies in the same row.",
+        "description": "Rain arrows on the front row. Deals 2 damage to target and all enemies in the same row.",
         "effects": { "damage": 2, "splashRow": true }
       },
       {
@@ -454,7 +454,7 @@ const RAW_CLASSES = {
       {
         "id": "suppressive_volley", "name": "Suppressive Volley", "starter": true,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Rain bolts on a row. Deals 2 damage to target and all enemies in same row.",
+        "description": "Rain bolts on the front row. Deals 2 damage to target and all enemies in the same row.",
         "effects": { "damage": 2, "splashRow": true }
       },
       {
@@ -534,8 +534,8 @@ const RAW_CLASSES = {
         "id": "execute", "name": "Execute", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Execute a weakened foe. Deals 6 damage. Ignores block.",
-        "effects": { "damage": 6, "pierceBlock": 99 }
+        "description": "Execute a weakened foe. Deals 6 damage, ignores block. Double damage to enemies below 25% HP.",
+        "effects": { "damage": 6, "pierceBlock": 99, "execute": true }
       },
       {
         "id": "roman_discipline", "name": "Roman Discipline", "cooldown": 2,
