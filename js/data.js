@@ -74,7 +74,7 @@ function buildSkillExecute(skillData) {
     if (effects.damage !== undefined) {
       if (effects.splitDamage && targets.length >= 2) {
         result.splitDamage = true;
-        result.damage = Math.floor(effects.damage / 2);
+        result.damage = effects.damage; // full base damage — will be split after bonuses in applySkillResult
         result.baseDamage = effects.damage;
         result.target = targets[0];
         result.secondTarget = targets[1];

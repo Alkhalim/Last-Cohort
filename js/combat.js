@@ -209,8 +209,10 @@ class CombatEngine {
     // Poison tick on enemies
     this.enemies.forEach(e => {
       if (!e.dead && e.poison > 0) {
-        e.hp = Math.max(0, e.hp - e.poison);
-        this.addLog(`${e.name} takes ${e.poison} poison damage.`);
+        const poisonDmg = e.poison;
+        e.hp = Math.max(0, e.hp - poisonDmg);
+        this.addLog(`${e.name} takes ${poisonDmg} poison damage.`);
+        if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: e.index, type: 'poison' });
         e.poison = Math.max(0, e.poison - 1);
         if (e.hp <= 0) { e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++; this.addLog(`${e.name} falls to poison!`); }
       }
@@ -223,8 +225,10 @@ class CombatEngine {
     // Poison tick on allies
     this.party.forEach(u => {
       if (!u.downed && u.poison > 0) {
-        u.hp = Math.max(1, u.hp - u.poison);
-        this.addLog(`${u.name} takes ${u.poison} poison damage.`);
+        const poisonDmg = u.poison;
+        u.hp = Math.max(1, u.hp - poisonDmg);
+        this.addLog(`${u.name} takes ${poisonDmg} poison damage.`);
+        if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: poisonDmg, type: 'poison' });
         u.poison = Math.max(0, u.poison - 1);
       }
     });
@@ -236,6 +240,7 @@ class CombatEngine {
           if (!u.downed) {
             u.hp = Math.max(1, u.hp - e.turnDamageAll);
             u.stats.damageTaken += e.turnDamageAll;
+            if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: e.turnDamageAll, type: 'burn' });
           }
         });
         this.addLog(`${e.name} burns — all soldiers take ${e.turnDamageAll} damage!`);
