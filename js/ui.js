@@ -1322,22 +1322,38 @@ class GameUI {
       // Check class/tag requirements
       const party = this.engine.party;
       const aliveParty = party.filter(u => !u.downed);
+      let meetsRequirement = true;
+      let requirementLabel = '';
+
       if (choice.requiresClass) {
         const hasClass = aliveParty.some(u => u.classId === choice.requiresClass);
-        if (!hasClass) return; // skip this choice entirely
+        if (!hasClass) {
+          meetsRequirement = false;
+          const classData = CLASS_DATA[choice.requiresClass];
+          requirementLabel = classData ? classData.name : choice.requiresClass;
+        }
       }
       if (choice.requiresTag) {
         const hasTag = aliveParty.some(u => {
           const tags = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags : [];
           return tags.includes(choice.requiresTag);
         });
-        if (!hasTag) return;
+        if (!hasTag) {
+          meetsRequirement = false;
+          requirementLabel = choice.requiresTag;
+        }
       }
 
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
-      btn.textContent = choice.text;
-      btn.addEventListener('click', () => this.resolveEventChoice(event, choice));
+      if (!meetsRequirement) {
+        btn.classList.add('event-choice-locked');
+        btn.innerHTML = `${choice.text} <span class="event-requires">(Requires ${requirementLabel})</span>`;
+        btn.disabled = true;
+      } else {
+        btn.textContent = choice.text;
+        btn.addEventListener('click', () => this.resolveEventChoice(event, choice));
+      }
       choicesEl.appendChild(btn);
     });
   }

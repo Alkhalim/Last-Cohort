@@ -2240,6 +2240,25 @@ html, body {
   border-color: var(--gold);
 }
 
+.btn-event-choice.event-choice-locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+
+.btn-event-choice.event-choice-locked:hover {
+  border-color: var(--border);
+  background: var(--bg-card);
+}
+
+.event-requires {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  color: #aa6666;
+  font-style: italic;
+}
+
 #event-outcome {
   text-align: center;
   padding: 1rem 0;
