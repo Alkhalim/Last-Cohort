@@ -325,6 +325,22 @@ function canEquipItem(unit, item) {
   return item.classTags.some(tag => tag === 'roman' || unitTags.includes(tag));
 }
 
+// --- Get all item base IDs currently owned by the party ---
+function getOwnedItemBaseIds(party) {
+  const owned = new Set();
+  if (!party) return owned;
+  party.forEach(u => {
+    for (const slot of ['weapon', 'armor', 'trinket']) {
+      u.equipment[slot].forEach(id => {
+        if (!id) return;
+        const item = ITEM_DATA[id];
+        owned.add(item && item.baseId ? item.baseId : id);
+      });
+    }
+  });
+  return owned;
+}
+
 // --- Drop / loot helpers ---
 function rollDrop(enemyId, party, difficulty) {
   const table = DROP_TABLES[enemyId];
@@ -361,6 +377,25 @@ function rollDrop(enemyId, party, difficulty) {
         weighted.push(itemId);
         if (isNew) weighted.push(itemId); // double chance
       });
+      // Duplicate filtering: avoid dropping items the party already owns
+      const ownedIds = getOwnedItemBaseIds(party);
+      if (diff <= 1) {
+        // Stage 1: never drop an item the party already has
+        const noDupes = weighted.filter(id => !ownedIds.has(id));
+        if (noDupes.length > 0) {
+          weighted.length = 0;
+          noDupes.forEach(id => weighted.push(id));
+        }
+      } else {
+        // Stage 2+: prefer items not already owned (3x weight for non-owned)
+        const boosted = [];
+        weighted.forEach(id => {
+          boosted.push(id);
+          if (!ownedIds.has(id)) { boosted.push(id); boosted.push(id); }
+        });
+        weighted.length = 0;
+        boosted.forEach(id => weighted.push(id));
+      }
       // Smart drop filtering: reduce chance if slot is full on all eligible characters
       if (party && party.length > 0) {
         let filtered = weighted.filter(itemId => {
