@@ -166,6 +166,7 @@ function generateMap(difficulty = 1) {
   }
 
   // Generate encounters for combat nodes (filtered by difficulty)
+  const usedEventIds = new Set();
   for (const node of nodes) {
     if (node.type === 'combat') {
       node.encounter = generateEncounterByThreat(node.threat, difficulty);
@@ -173,18 +174,26 @@ function generateMap(difficulty = 1) {
       const eligibleBosses = BOSS_ENCOUNTERS.filter(b => !b.minDifficulty || b.minDifficulty <= difficulty);
       node.encounter = eligibleBosses[Math.floor(Math.random() * eligibleBosses.length)];
     } else if (node.type === 'event') {
-      // Filter by difficulty, then weighted random selection
+      // Filter by difficulty, then weighted random — no regular event repeats per march
+      const repeatable = ['skill_upgrade', 'item_upgrade']; // these can repeat
       const eligible = EVENT_DATA.filter(e => !e.minDifficulty || e.minDifficulty <= difficulty);
-      // Build weighted pool — upgrade events get extra weight at higher difficulties
+      // Remove already-used non-repeatable events
+      const available = eligible.filter(e => {
+        if (repeatable.includes(e.type)) return true;
+        return !usedEventIds.has(e.id);
+      });
+      const source = available.length > 0 ? available : eligible;
+      // Build weighted pool
       const pool = [];
-      eligible.forEach(e => {
+      source.forEach(e => {
         const baseWeight = e.weight || 1;
-        // Upgrade events become more common at higher difficulties
         const diffBonus = (e.minDifficulty && difficulty >= e.minDifficulty) ? Math.floor((difficulty - e.minDifficulty) / 1) : 0;
         const totalWeight = baseWeight + diffBonus;
         for (let w = 0; w < totalWeight; w++) pool.push(e);
       });
-      node.encounter = pool[Math.floor(Math.random() * pool.length)];
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      node.encounter = chosen;
+      if (chosen && !repeatable.includes(chosen.type)) usedEventIds.add(chosen.id);
     }
   }
 

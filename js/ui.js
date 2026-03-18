@@ -1873,7 +1873,7 @@ class GameUI {
           return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}" ${item ? `data-item-id="${id}"` : ''}>${item ? renderTagPips(item.classTags) + ' ' + item.name : '\u2014'}</span>`;
         }).join(', ');
         return `<div class="equip-slot-row">
-          <span class="equip-slot-label">${slot} (${EQUIP_SLOTS[slot]})</span>
+          <span class="equip-slot-label">${slot} (${u.equipment[slot].length})</span>
           ${items}
         </div>`;
       }).join('');

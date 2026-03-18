@@ -9,6 +9,7 @@ const RAW_CLASSES = {
     "title": "LEG",
     "maxHp": 32,
     "tags": ["melee", "roman"],
+    "equipSlots": { "weapon": 2, "armor": 3, "trinket": 2 },
     "description": "Heavy infantry. Reliable damage and strong defense.",
     "passive": {
       "name": "Disciplined Formation",
@@ -65,6 +66,7 @@ const RAW_CLASSES = {
     "title": "CEN",
     "maxHp": 28,
     "tags": ["command", "roman"],
+    "equipSlots": { "weapon": 2, "armor": 2, "trinket": 3 },
     "description": "Officer. Buffs allies and controls the battlefield.",
     "passive": {
       "name": "Discipline of Office",
@@ -127,6 +129,7 @@ const RAW_CLASSES = {
     "title": "MED",
     "maxHp": 22,
     "tags": ["support", "roman"],
+    "equipSlots": { "weapon": 1, "armor": 1, "trinket": 5 },
     "description": "Field surgeon. Heals, poisons, and manages attrition.",
     "passive": {
       "name": "Healer's Instinct",
@@ -190,6 +193,7 @@ const RAW_CLASSES = {
     "title": "SAG",
     "maxHp": 20,
     "tags": ["ranged", "roman"],
+    "equipSlots": { "weapon": 3, "armor": 1, "trinket": 3 },
     "description": "Roman archer. Fragile but strikes any row with precision.",
     "passive": {
       "name": "Eagle Eye",
@@ -250,6 +254,7 @@ const RAW_CLASSES = {
     "title": "SIG",
     "maxHp": 25,
     "tags": ["command", "roman"],
+    "equipSlots": { "weapon": 1, "armor": 3, "trinket": 3 },
     "description": "Standard Bearer. Rallies the cohort with morale and buffs.",
     "passive": {
       "name": "Standard of the Legion",
@@ -306,6 +311,7 @@ const RAW_CLASSES = {
     "title": "COR",
     "maxHp": 23,
     "tags": ["support", "roman"],
+    "equipSlots": { "weapon": 1, "armor": 2, "trinket": 4 },
     "description": "Trumpeter. Debuffs enemies and supports allies with sound.",
     "passive": {
       "name": "Discordant Tune",
@@ -362,6 +368,7 @@ const RAW_CLASSES = {
     "title": "EQU",
     "maxHp": 26,
     "tags": ["melee", "roman"],
+    "equipSlots": { "weapon": 3, "armor": 2, "trinket": 2 },
     "description": "Roman cavalry. Devastating charge openers that can strike any target.",
     "passive": {
       "name": "Cavalry Charge",
@@ -423,6 +430,7 @@ const RAW_CLASSES = {
     "title": "BAL",
     "maxHp": 20,
     "tags": ["ranged", "roman"],
+    "equipSlots": { "weapon": 2, "armor": 1, "trinket": 4 },
     "description": "Roman siege crossbowman. Every hit weakens the enemy, reducing their damage.",
     "passive": {
       "name": "Pinning Fire",
@@ -489,6 +497,7 @@ const RAW_CLASSES = {
     "title": "PRA",
     "maxHp": 30,
     "tags": ["melee", "elite", "roman"],
+    "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
     "unlockCondition": "Beat March 5",
     "description": "Imperial bodyguard. The Emperor's finest, forged in blood and loyalty.",

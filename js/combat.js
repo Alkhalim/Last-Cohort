@@ -54,7 +54,11 @@ class CombatEngine {
         taunt: false,
         actedThisTurn: false,
         conditions: [],
-        equipment: { weapon: [null, null], armor: [null, null], trinket: [null, null, null] },
+        equipment: {
+          weapon: Array(data.equipSlots ? data.equipSlots.weapon : 2).fill(null),
+          armor: Array(data.equipSlots ? data.equipSlots.armor : 2).fill(null),
+          trinket: Array(data.equipSlots ? data.equipSlots.trinket : 3).fill(null),
+        },
         equipDamage: 0, equipBlock: 0, equipHeal: 0, equipExtraDice: 0,
         stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 },
       };
