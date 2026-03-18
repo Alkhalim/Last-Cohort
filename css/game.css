@@ -1844,6 +1844,15 @@ html, body {
   font-style: italic;
 }
 
+.loot-replace-stats {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.5rem;
+  color: #886666;
+  font-style: normal;
+  margin-top: 1px;
+}
+
 /* --- Equipment summary --- */
 #loot-equipment {
   margin-bottom: 16px;

@@ -1877,7 +1877,7 @@ class GameUI {
         const equipBtns = eligible.map(u => {
           const slots = u.equipment[item.slot];
           const hasEmpty = slots.some(s => s === null);
-          let replaceText = '';
+          let replaceHtml = '';
           if (!hasEmpty) {
             // Find lowest rarity + lowest level item that would be replaced
             const rarityOrder = { common: 0, uncommon: 1, rare: 2 };
@@ -1893,10 +1893,14 @@ class GameUI {
               }
             });
             const worstItem = getItemData(slots[worstIdx]);
-            replaceText = worstItem ? `Replaces: ${worstItem.name}` : '';
+            if (worstItem) {
+              const worstStats = formatItemStats(worstItem.stats);
+              const worstSpecial = worstItem.special ? ` | ${worstItem.special}` : '';
+              replaceHtml = `<span class="loot-replace">Replaces: ${worstItem.name}</span><span class="loot-replace-stats">${worstStats}${worstSpecial}</span>`;
+            }
           }
           return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}">
-            Equip <span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>${replaceText ? `<span class="loot-replace">${replaceText}</span>` : ''}
+            Equip <span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>${replaceHtml}
           </button>`;
         }).join('');
 
