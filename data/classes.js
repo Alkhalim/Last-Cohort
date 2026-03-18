@@ -58,6 +58,18 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 8+. All allies gain 5 Block.",
         "effects": { "blockAll": 5 }
+      },
+      {
+        "id": "counter_stance", "name": "Counter Stance", "cooldown": 1,
+        "cost": { "type": "exact", "val": 3 }, "target": "self",
+        "description": "Enter counter stance. If hit this enemy turn, deal 6 damage back to the attacker.",
+        "effects": { "counterStance": 6 }
+      },
+      {
+        "id": "shieldbreak", "name": "Shieldbreak",
+        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "description": "Smash through defenses. Remove all block from target and deal 3 damage.",
+        "effects": { "damage": 3, "shieldbreak": true }
       }
     ]
   },
@@ -121,6 +133,18 @@ const RAW_CLASSES = {
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling exactly 7. Deals 15 damage.",
         "effects": { "damage": 15 }
+      },
+      {
+        "id": "overwatch", "name": "Overwatch", "cooldown": 1,
+        "cost": { "type": "exact", "val": 5 }, "target": "self",
+        "description": "Set a watch. The next enemy to deal damage this turn takes 5 damage.",
+        "effects": { "overwatch": 5 }
+      },
+      {
+        "id": "press_advantage", "name": "Press the Advantage", "cooldown": 2,
+        "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
+        "description": "2 dice totaling 6+. Suppress target: deals 40% less damage for 2 turns.",
+        "effects": { "suppress": 2 }
       }
     ]
   },
@@ -185,6 +209,18 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deals 4 damage and applies 4 Poison.",
         "effects": { "damage": 4, "poison": 4 }
+      },
+      {
+        "id": "stimulant", "name": "Stimulant", "cooldown": 2,
+        "cost": { "type": "exact", "val": 6 }, "target": "single_ally",
+        "description": "Inject a stimulant. Target ally can act again this turn. Costs 3 HP.",
+        "effects": { "stimulant": true, "selfDamage": 3 }
+      },
+      {
+        "id": "transfusion", "name": "Transfusion",
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
+        "description": "Transfer up to 6 HP from yourself to target ally.",
+        "effects": { "transfusion": 6 }
       }
     ]
   },
@@ -246,6 +282,19 @@ const RAW_CLASSES = {
         "ignoreRow": true,
         "description": "2 dice totaling 8+. Deals 7 damage and applies 3 Poison.",
         "effects": { "damage": 7, "poison": 3 }
+      },
+      {
+        "id": "crippling_shot", "name": "Crippling Shot", "cooldown": 1,
+        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Deal 3 damage. Target deals 30% less damage for next 2 actions.",
+        "effects": { "damage": 3, "cripple": 2 }
+      },
+      {
+        "id": "snare_trap", "name": "Snare Trap", "cooldown": 1,
+        "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
+        "description": "Set a trap. If target attacks this turn, it takes 4 damage and is stunned next turn.",
+        "effects": { "snareTrap": 4 }
       }
     ]
   },
@@ -303,6 +352,18 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deals 8 damage and +8 Morale.",
         "effects": { "damage": 8, "morale": 8 }
+      },
+      {
+        "id": "rally_fallen", "name": "Rally the Fallen", "cooldown": 2,
+        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_ally",
+        "description": "2 dice totaling 8+. Revive a downed ally at 25% HP. -15 Morale.",
+        "effects": { "revive": true, "morale": -15 }
+      },
+      {
+        "id": "sacrifice_standard", "name": "Sacrifice the Standard", "cooldown": 2,
+        "cost": { "type": "any" }, "target": "all_enemies",
+        "description": "Spend 20 Morale to deal 8 damage to all enemies.",
+        "effects": { "damageAll": 8, "moraleCost": 20 }
       }
     ]
   },
@@ -360,6 +421,19 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 7+. Deals 5 damage to target, half to all others. +7 Morale.",
         "effects": { "damage": 5, "splashHalf": true, "morale": 7 }
+      },
+      {
+        "id": "deafening_blast", "name": "Deafening Blast", "cooldown": 2,
+        "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Deal 2 damage. Target's morale attacks have no effect for 2 turns.",
+        "effects": { "damage": 2, "deafen": 2 }
+      },
+      {
+        "id": "resonance", "name": "Resonance", "cooldown": 1,
+        "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_ally",
+        "description": "Mark an ally. The next heal they receive is doubled. Grant 2 Block.",
+        "effects": { "resonance": true, "block": 2 }
       }
     ]
   },
@@ -422,6 +496,19 @@ const RAW_CLASSES = {
         "ignoreRow": true,
         "description": "2 dice totaling 8+. Deals 8 damage. +10 Morale.",
         "effects": { "damage": 8, "morale": 10 }
+      },
+      {
+        "id": "lasso", "name": "Lasso", "cooldown": 1,
+        "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Pull a back-row enemy to the front row. Deal 2 damage.",
+        "effects": { "damage": 2, "pullToFront": true }
+      },
+      {
+        "id": "cavalry_escape", "name": "Cavalry Escape", "cooldown": 2,
+        "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "all_allies",
+        "description": "2 dice totaling 5+. All allies take 50% less damage during the next enemy turn.",
+        "effects": { "damageShield": 0.5 }
       }
     ]
   },
@@ -489,6 +576,19 @@ const RAW_CLASSES = {
         "ignoreRow": true,
         "description": "2 dice totaling 8+. A devastating siege bolt. Deals 12 damage.",
         "effects": { "damage": 12 }
+      },
+      {
+        "id": "tripwire_bolt", "name": "Tripwire Bolt", "cooldown": 1,
+        "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
+        "description": "Trap a front-row enemy. If it attacks this turn, it takes 5 damage and is stunned next turn.",
+        "effects": { "snareTrap": 5 }
+      },
+      {
+        "id": "smoke_bolt", "name": "Smoke Bolt", "cooldown": 2,
+        "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
+        "ignoreRow": true,
+        "description": "2 dice totaling 6+. All enemies have 40% chance to miss their next attack.",
+        "effects": { "smokeScreen": 0.4 }
       }
     ]
   },
@@ -549,6 +649,19 @@ const RAW_CLASSES = {
         "ignoreRow": true,
         "description": "2 dice totaling 9+. The full fury of Rome. Deals 14 damage. Ignores block.",
         "effects": { "damage": 14, "pierceBlock": 99 }
+      },
+      {
+        "id": "sacrificial_guard", "name": "Sacrificial Guard", "cooldown": 1,
+        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "self",
+        "description": "Intercept the next attack on any ally. Take half damage, reflect half back, stun attacker.",
+        "effects": { "intercept": true }
+      },
+      {
+        "id": "avengers_oath", "name": "Avenger's Oath", "cooldown": 2,
+        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 8+. Deal 10 damage. If any ally is downed, deal 16 instead and ignore block.",
+        "effects": { "damage": 10, "avengeDamage": 16, "pierceBlock": 0 }
       }
     ]
   }

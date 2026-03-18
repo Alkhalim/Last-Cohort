@@ -221,6 +221,57 @@ function buildSkillExecute(skillData) {
       result.knockback = true;
     }
 
+    // Counter Stance: retaliatory damage when hit
+    if (effects.counterStance) result.counterStance = effects.counterStance;
+
+    // Shieldbreak: remove all block from target
+    if (effects.shieldbreak) result.shieldbreak = true;
+
+    // Overwatch: damage next attacker
+    if (effects.overwatch) result.overwatch = effects.overwatch;
+
+    // Suppress: target deals less damage
+    if (effects.suppress) result.suppress = effects.suppress;
+
+    // Stimulant: target acts again
+    if (effects.stimulant) result.stimulant = true;
+
+    // Transfusion: transfer HP
+    if (effects.transfusion) result.transfusion = effects.transfusion;
+
+    // Cripple: target deals less damage per action
+    if (effects.cripple) result.cripple = effects.cripple;
+
+    // Snare Trap: trap on enemy
+    if (effects.snareTrap) result.snareTrap = effects.snareTrap;
+
+    // Revive: bring back downed ally
+    if (effects.revive) result.revive = true;
+
+    // Morale Cost: spend morale
+    if (effects.moraleCost) result.moraleCost = effects.moraleCost;
+
+    // Deafen: nullify morale attacks
+    if (effects.deafen) result.deafen = effects.deafen;
+
+    // Resonance: double next heal
+    if (effects.resonance) result.resonance = true;
+
+    // Pull to Front: move enemy to front row
+    if (effects.pullToFront) result.pullToFront = true;
+
+    // Damage Shield: reduce incoming damage
+    if (effects.damageShield) result.damageShield = effects.damageShield;
+
+    // Smoke Screen: chance to miss
+    if (effects.smokeScreen) result.smokeScreen = effects.smokeScreen;
+
+    // Intercept: take hit for ally
+    if (effects.intercept) result.intercept = true;
+
+    // Avenger's Oath: bonus damage if ally downed
+    if (effects.avengeDamage) result.avengeDamage = effects.avengeDamage;
+
     return result;
   };
 }
@@ -234,6 +285,7 @@ function buildSkill(skillData) {
     target: skillData.target,
     description: skillData.description,
     execute: buildSkillExecute(skillData),
+    effects: skillData.effects || {},
   };
   if (skillData.starter) skill.starter = true;
   if (skillData.cooldown) skill.cooldown = skillData.cooldown;

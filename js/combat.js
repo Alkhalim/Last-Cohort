@@ -296,6 +296,10 @@ class CombatEngine {
     this.party.forEach(u => {
       if (this.turn > 1) u.block = 0;
       u.taunt = false;
+      u._counterStance = 0;
+      u._overwatch = 0;
+      u._damageShield = 0;
+      u._intercept = false;
       // Bone Totem stun: skip this turn
       if (u._stunNextTurn) {
         u.actedThisTurn = true;
@@ -303,6 +307,13 @@ class CombatEngine {
         this.addLog(`${u.name} is stunned and cannot act!`);
       } else {
         u.actedThisTurn = false;
+      }
+    });
+    // Clear per-turn enemy effects
+    this.enemies.forEach(e => {
+      if (!e.dead) {
+        e._smokeScreen = 0;
+        e._snareTrap = 0;
       }
     });
     this.dicePool.adjustUsed = false;
@@ -464,6 +475,16 @@ class CombatEngine {
     // Cooldown check
     if (skill.cooldownLeft && skill.cooldownLeft > 0) return false;
 
+    // Revive skills need a downed ally
+    if (skill.effects && skill.effects.revive) {
+      if (!this.party.some(u => u.downed)) return false;
+    }
+
+    // Morale cost skills need enough morale
+    if (skill.effects && skill.effects.moraleCost) {
+      if (this.morale < skill.effects.moraleCost) return false;
+    }
+
     // Disable pure heal skills when nobody is damaged
     const eff = skill.effects || {};
     const isHealOnly = (eff.heal || eff.healAll) &&
@@ -604,11 +625,12 @@ class CombatEngine {
         this.update();
       }
     } else if (skill.target === TARGET.SINGLE_ALLY) {
-      const aliveAllies = this.party.filter(u => !u.downed);
+      const isRevive = skill.effects && skill.effects.revive;
+      const aliveAllies = isRevive ? this.party.filter(u => u.downed) : this.party.filter(u => !u.downed);
       if (aliveAllies.length === 1) {
         this.executeSkill(unitIndex, skillId, diceIds, [aliveAllies[0]]);
-      } else {
-        this.targetMode = { unitIndex, skillId, diceIds, skill, targetType: 'ally' };
+      } else if (aliveAllies.length > 1) {
+        this.targetMode = { unitIndex, skillId, diceIds, skill, targetType: isRevive ? 'ally_downed' : 'ally' };
         this.update();
       }
     } else {
@@ -902,7 +924,13 @@ class CombatEngine {
       }
     }
     if (result.heal && result.target) {
-      const totalHeal = result.heal + bonusHeal;
+      let totalHeal = result.heal + bonusHeal;
+      // Resonance: double the heal
+      if (result.target._resonance) {
+        totalHeal *= 2;
+        result.target._resonance = false;
+        parts.push('Resonance doubles the heal!');
+      }
       const before = result.target.hp;
       result.target.hp = Math.min(result.target.maxHp, result.target.hp + totalHeal);
       const actual = result.target.hp - before;
@@ -1035,9 +1063,16 @@ class CombatEngine {
     }
     // Heal all allies
     if (result.healAll) {
-      const totalHeal = result.healAll + bonusHeal;
+      const baseHealAll = result.healAll + bonusHeal;
       this.party.forEach(u => {
         if (!u.downed) {
+          let totalHeal = baseHealAll;
+          // Resonance: double the heal for this unit
+          if (u._resonance) {
+            totalHeal *= 2;
+            u._resonance = false;
+            parts.push(`Resonance doubles healing on ${u.name}!`);
+          }
           const before = u.hp;
           u.hp = Math.min(u.maxHp, u.hp + totalHeal);
           unit.stats.healingDone += u.hp - before;
@@ -1058,6 +1093,130 @@ class CombatEngine {
       parts.push(`+${result.morale} Morale.`);
       if (this.onVisual) this.onVisual('morale', { amount: result.morale });
     }
+
+    // Counter Stance: set flag on unit, checked during enemy damage
+    if (result.counterStance) {
+      unit._counterStance = result.counterStance;
+      parts.push(`${unit.name} enters counter stance! (${result.counterStance} retaliatory damage)`);
+    }
+
+    // Shieldbreak: remove all block from target
+    if (result.shieldbreak && result.target) {
+      const removedBlock = result.target.block || 0;
+      result.target.block = 0;
+      if (removedBlock > 0) parts.push(`${result.target.name}'s block shattered! (-${removedBlock} Block)`);
+    }
+
+    // Overwatch: set flag on unit, checked during enemy damage
+    if (result.overwatch) {
+      unit._overwatch = result.overwatch;
+      parts.push(`${unit.name} sets an overwatch! (${result.overwatch} damage to next attacker)`);
+    }
+
+    // Suppress: target deals 40% less damage for N turns
+    if (result.suppress && result.target) {
+      result.target._suppressed = result.suppress;
+      parts.push(`${result.target.name} is suppressed! (-40% damage for ${result.suppress} turns)`);
+    }
+
+    // Stimulant: target ally can act again
+    if (result.stimulant && result.target) {
+      result.target.actedThisTurn = false;
+      parts.push(`${result.target.name} is reinvigorated! Can act again this turn.`);
+    }
+
+    // Transfusion: transfer HP from self to target
+    if (result.transfusion && result.target) {
+      const maxTransfer = Math.min(result.transfusion, unit.hp - 1, result.target.maxHp - result.target.hp);
+      if (maxTransfer > 0) {
+        unit.hp -= maxTransfer;
+        result.target.hp += maxTransfer;
+        unit.stats.healingDone += maxTransfer;
+        parts.push(`${unit.name} transfers ${maxTransfer} HP to ${result.target.name}.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: result.target.index, amount: maxTransfer });
+      } else {
+        parts.push('No HP to transfer.');
+      }
+    }
+
+    // Cripple: target deals 30% less damage for N actions
+    if (result.cripple && result.target) {
+      result.target._crippled = result.cripple;
+      parts.push(`${result.target.name} is crippled! (-30% damage for ${result.cripple} actions)`);
+    }
+
+    // Snare Trap: if target attacks this turn, takes damage and is stunned
+    if (result.snareTrap && result.target) {
+      result.target._snareTrap = result.snareTrap;
+      parts.push(`A trap is set on ${result.target.name}!`);
+    }
+
+    // Revive: bring a downed ally back
+    if (result.revive && result.target && result.target.downed) {
+      result.target.downed = false;
+      result.target.hp = Math.max(1, Math.floor(result.target.maxHp * 0.25));
+      parts.push(`${result.target.name} is revived at ${result.target.hp} HP!`);
+      if (this.onVisual) this.onVisual('unitHeal', { unitIndex: result.target.index, amount: result.target.hp });
+    }
+
+    // Morale Cost: spend morale to use the skill
+    if (result.moraleCost) {
+      this.morale = Math.max(-100, this.morale - result.moraleCost);
+      parts.push(`(-${result.moraleCost} Morale)`);
+      if (this.onVisual) this.onVisual('morale', { amount: -result.moraleCost });
+    }
+
+    // Deafen: target's morale attacks have no effect for N turns
+    if (result.deafen && result.target) {
+      result.target._deafened = result.deafen;
+      parts.push(`${result.target.name} is deafened! Morale attacks nullified for ${result.deafen} turns.`);
+    }
+
+    // Resonance: mark ally, next heal doubled + grant block
+    if (result.resonance && result.target) {
+      result.target._resonance = true;
+      parts.push(`${result.target.name} resonates with healing energy! Next heal doubled.`);
+    }
+
+    // Pull to Front: move enemy to front row
+    if (result.pullToFront && result.target && result.target.row === 'back') {
+      result.target.row = 'front';
+      parts.push(`${result.target.name} is pulled to the front row!`);
+    }
+
+    // Damage Shield: all allies take X% less damage next enemy turn
+    if (result.damageShield) {
+      this.party.forEach(u => { if (!u.downed) u._damageShield = result.damageShield; });
+      const pct = Math.round((1 - result.damageShield) * 100);
+      parts.push(`All allies take ${pct}% less damage next enemy turn.`);
+    }
+
+    // Smoke Screen: all enemies have X% chance to miss
+    if (result.smokeScreen) {
+      this.enemies.forEach(e => { if (!e.dead) e._smokeScreen = result.smokeScreen; });
+      const pct = Math.round(result.smokeScreen * 100);
+      parts.push(`Smoke covers the field! Enemies have ${pct}% chance to miss.`);
+    }
+
+    // Intercept: next attack on any ally hits this unit instead at half damage, reflects half, stuns attacker
+    if (result.intercept) {
+      unit._intercept = true;
+      parts.push(`${unit.name} stands ready to intercept the next attack!`);
+    }
+
+    // Avenger's Oath: bonus damage if ally is downed
+    if (result.avengeDamage && result.target) {
+      const anyDowned = this.party.some(u => u.downed);
+      if (anyDowned) {
+        const extraDmg = result.avengeDamage - (result.damage || 0);
+        if (extraDmg > 0) {
+          result.target.hp = Math.max(0, result.target.hp - extraDmg);
+          unit.stats.damageDealt += extraDmg;
+          parts.push(`AVENGER'S OATH! (+${extraDmg} bonus damage, ignores block)`);
+        }
+      }
+    }
+
     if (parts.length === 0) parts.push(`${unit.name} uses ${skill.name}.`);
     return parts.join(' ');
   }
@@ -1299,6 +1458,13 @@ class CombatEngine {
   }
 
   executeEnemySingleAction(enemy) {
+    // Stunned enemy: skip action
+    if (enemy._skipNextAction) {
+      enemy._skipNextAction = false;
+      this.addLog(`${enemy.name} is stunned and cannot act!`);
+      return;
+    }
+
     // Structures (Wicker Man) don't take actions — their damage is passive via turnDamageAll
     if (enemy.isStructure) {
       this.addLog(`${enemy.name} ${enemy.actions[0].text}.`);
@@ -1347,6 +1513,13 @@ class CombatEngine {
     const target = this.pickEnemyTarget(enemy, action);
     if (!target) return;
 
+    // Smoke Screen: chance to miss entirely
+    if (enemy._smokeScreen && Math.random() < enemy._smokeScreen) {
+      enemy._smokeScreen = 0;
+      this.addLog(`${enemy.name}'s attack misses in the smoke!`);
+      return;
+    }
+
     if (this.onVisual) {
       this.onVisual('enemyAttack', { enemyIndex: enemy.index });
     }
@@ -1377,6 +1550,38 @@ class CombatEngine {
         dmg = Math.max(1, dmg - reduction);
         enemy._pinned = false;
       }
+      // Suppress: -40% damage
+      if (enemy._suppressed && enemy._suppressed > 0) {
+        const suppReduction = Math.max(1, Math.floor(dmg * 0.4));
+        dmg = Math.max(1, dmg - suppReduction);
+        enemy._suppressed--;
+      }
+      // Cripple: -30% damage for N actions
+      if (enemy._crippled && enemy._crippled > 0) {
+        const cripReduction = Math.max(1, Math.floor(dmg * 0.3));
+        dmg = Math.max(1, dmg - cripReduction);
+        enemy._crippled--;
+      }
+      // Intercept: Praetorian takes the hit instead
+      const interceptor = this.party.find(u => !u.downed && u._intercept && u !== target);
+      if (interceptor && dmg > 0) {
+        interceptor._intercept = false;
+        const halfDmg = Math.max(1, Math.floor(dmg / 2));
+        interceptor.hp = Math.max(0, interceptor.hp - halfDmg);
+        interceptor.stats.damageTaken += halfDmg;
+        enemy.hp = Math.max(0, enemy.hp - halfDmg);
+        enemy._skipNextAction = true;
+        this.addLog(`${interceptor.name} intercepts! Takes ${halfDmg} damage, reflects ${halfDmg} back. ${enemy.name} is stunned!`);
+        if (this.onVisual) {
+          this.onVisual('unitHit', { unitIndex: interceptor.index, damage: halfDmg });
+        }
+        dmg = 0;
+      }
+      // Damage Shield: reduce incoming damage
+      if (target._damageShield && dmg > 0) {
+        dmg = Math.max(1, Math.round(dmg * target._damageShield));
+        target._damageShield = 0;
+      }
       if (target.block > 0) {
         const absorbed = Math.min(target.block, dmg);
         target.block -= absorbed;
@@ -1393,6 +1598,33 @@ class CombatEngine {
       if (this.onVisual) {
         this.onVisual('unitHit', { unitIndex: target.index, damage: dmg });
       }
+
+      // Counter Stance: retaliate damage
+      if (target._counterStance && dmg > 0) {
+        const counterDmg = target._counterStance;
+        enemy.hp = Math.max(0, enemy.hp - counterDmg);
+        target._counterStance = 0;
+        this.addLog(`${target.name} retaliates for ${counterDmg} damage!`);
+      }
+
+      // Overwatch: check all allies for overwatch
+      this.party.forEach(u => {
+        if (!u.downed && u._overwatch && u._overwatch > 0) {
+          const owDmg = u._overwatch;
+          enemy.hp = Math.max(0, enemy.hp - owDmg);
+          u._overwatch = 0;
+          this.addLog(`${u.name}'s overwatch fires! ${enemy.name} takes ${owDmg} damage.`);
+        }
+      });
+
+      // Snare Trap: if this enemy has a trap and attacked, trigger it
+      if (enemy._snareTrap && dmg > 0) {
+        const trapDmg = enemy._snareTrap;
+        enemy.hp = Math.max(0, enemy.hp - trapDmg);
+        enemy._skipNextAction = true;
+        enemy._snareTrap = 0;
+        this.addLog(`The trap springs! ${enemy.name} takes ${trapDmg} damage and is stunned!`);
+      }
     }
 
     // Enemy poison on target
@@ -1403,14 +1635,22 @@ class CombatEngine {
 
     if (action.morale) {
       let moraleDelta = action.morale;
+      // Deafened: morale attacks have no effect
+      if (enemy._deafened && enemy._deafened > 0 && moraleDelta < 0) {
+        enemy._deafened--;
+        this.addLog(`${enemy.name} is deafened — morale attack has no effect!`);
+        moraleDelta = 0;
+      }
       // Cornicen passive: Demoralizing Horn — enemy morale attacks deal 3 less morale damage
       if (moraleDelta < 0 && this.party.some(u => !u.downed && u.classId === 'cornicen')) {
         moraleDelta = Math.min(0, moraleDelta + 3);
       }
-      this.morale = Math.max(-100, Math.min(100, this.morale + moraleDelta));
-      this.addLog(`${enemy.name} ${action.text}! Morale ${moraleDelta > 0 ? '+' : ''}${moraleDelta}.`);
-      if (this.onVisual) {
-        this.onVisual('morale', { amount: moraleDelta });
+      if (moraleDelta !== 0) {
+        this.morale = Math.max(-100, Math.min(100, this.morale + moraleDelta));
+        this.addLog(`${enemy.name} ${action.text}! Morale ${moraleDelta > 0 ? '+' : ''}${moraleDelta}.`);
+        if (this.onVisual) {
+          this.onVisual('morale', { amount: moraleDelta });
+        }
       }
     }
 
