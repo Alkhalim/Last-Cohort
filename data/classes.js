@@ -540,8 +540,8 @@ const RAW_CLASSES = {
       {
         "id": "roman_discipline", "name": "Roman Discipline", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 6+. All allies gain 3 Block, +1 damage for next 2 attacks, +8 Morale.",
-        "effects": { "blockAll": 3, "buffAllies": { "bonusDamage": 1, "attacks": 2 }, "morale": 8 }
+        "description": "2 dice totaling 6+. All allies gain 3 Block, +5 damage for next attack, +8 Morale.",
+        "effects": { "blockAll": 3, "buffAllies": { "bonusDamage": 5, "attacks": 1 }, "morale": 8 }
       },
       {
         "id": "wrath_of_rome", "name": "Wrath of Rome", "cooldown": 2,
