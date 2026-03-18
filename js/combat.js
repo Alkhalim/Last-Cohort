@@ -1042,6 +1042,21 @@ class CombatEngine {
     this.morale = Math.min(100, this.morale + 7);
     this.addLog('All enemies defeated! (+7 Morale)');
     if (this.onVisual) this.onVisual('morale', { amount: 7 });
+
+    // Boss encounter bonus: if a boss was killed but minions survived after it,
+    // grant an additional morale boost at victory
+    const killedBoss = this.enemies.find(e => e.isBoss && e.dead);
+    if (killedBoss) {
+      // Check if any non-boss enemies are also dead (meaning they died after/alongside the boss)
+      const nonBossKills = this.enemies.filter(e => !e.isBoss && e.dead && !e.isStructure);
+      if (nonBossKills.length > 0) {
+        const bossBonus = 15;
+        this.morale = Math.min(100, this.morale + bossBonus);
+        this.addLog(`The champion is slain! Your men roar in triumph! (+${bossBonus} Morale)`);
+        if (this.onVisual) this.onVisual('morale', { amount: bossBonus });
+      }
+    }
+
     this.update();
   }
 
