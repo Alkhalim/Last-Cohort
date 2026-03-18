@@ -278,7 +278,9 @@ function getMoraleBand(morale) {
 
 // --- canEquipItem helper ---
 function canEquipItem(unit, item) {
-  return item.classTags.some(tag => CLASS_DATA[unit.classId].tags.includes(tag));
+  // All units implicitly have the "roman" tag as a base
+  const unitTags = CLASS_DATA[unit.classId].tags;
+  return item.classTags.some(tag => tag === 'roman' || unitTags.includes(tag));
 }
 
 // --- Drop / loot helpers ---
