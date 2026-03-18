@@ -44,6 +44,11 @@ class Game {
     this.activeCurses = [];
     this.selectedPartyClasses = [];
 
+    // Disable umami if tracking opt-out
+    if (!this.settings.trackingEnabled) {
+      window['umami.disabled'] = true;
+    }
+
     // Music system
     this.currentTrack = null;
     this.nextTrack = null;
@@ -65,7 +70,7 @@ class Game {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return { musicVolume: 15, soundVolume: 50 };
+    return { musicVolume: 15, soundVolume: 50, trackingEnabled: true };
   }
 
   saveSettings() {
@@ -354,6 +359,9 @@ class Game {
     document.getElementById('opt-music-val').textContent = this.settings.musicVolume + '%';
     document.getElementById('opt-sound-vol').value = this.settings.soundVolume;
     document.getElementById('opt-sound-val').textContent = this.settings.soundVolume + '%';
+    const trackingCheckbox = document.getElementById('opt-tracking');
+    trackingCheckbox.checked = this.isTrackingEnabled();
+    document.getElementById('opt-tracking-val').textContent = this.isTrackingEnabled() ? 'On' : 'Off';
   }
 
   // --- Bindings ---
@@ -515,6 +523,14 @@ class Game {
       this.setSoundVolume(v);
     });
 
+    // Tracking toggle
+    const trackingCheckbox = document.getElementById('opt-tracking');
+    const trackingVal = document.getElementById('opt-tracking-val');
+    trackingCheckbox.addEventListener('change', () => {
+      this.setTracking(trackingCheckbox.checked);
+      trackingVal.textContent = trackingCheckbox.checked ? 'On' : 'Off';
+    });
+
     // Stats & Achievements buttons
     document.getElementById('btn-stats').addEventListener('click', () => this.showStatsScreen());
     document.getElementById('btn-stats-back').addEventListener('click', () => this.showHomeScreen());
@@ -558,6 +574,49 @@ class Game {
     else this.stats.runsLost++;
     this.saveStats();
     this.checkAchievements();
+    this.sendAnalytics(victory);
+  }
+
+  // --- Analytics (Umami) ---
+  sendAnalytics(victory) {
+    if (!this.settings.trackingEnabled) return;
+    if (typeof umami === 'undefined' || !umami.track) return;
+
+    try {
+      const party = this.engine.party.map(u => u.classId);
+      const data = {
+        result: victory ? 'victory' : 'defeat',
+        difficulty: this.difficulty,
+        marchCount: this.marchCount + 1,
+        party: party.join(','),
+        encountersCompleted: this.engine.encountersCompleted,
+        enemiesKilled: this.engine.totalEnemiesKilled,
+        renownEarned: this.engine.totalRenownEarned,
+        finalMorale: this.engine.morale,
+        cursesActive: this.activeCurses.length,
+        curses: this.activeCurses.join(',') || 'none',
+        skillUsage: JSON.stringify(this.engine.skillUsageStats || {}),
+      };
+
+      umami.track('run-end', data);
+    } catch (e) {
+      // Silently fail — analytics should never break gameplay
+    }
+  }
+
+  isTrackingEnabled() {
+    return this.settings.trackingEnabled !== false;
+  }
+
+  setTracking(enabled) {
+    this.settings.trackingEnabled = enabled;
+    this.saveSettings();
+    // Disable umami if tracking is off
+    if (!enabled && typeof umami !== 'undefined') {
+      window['umami.disabled'] = true;
+    } else {
+      window['umami.disabled'] = false;
+    }
   }
 
   showStatsScreen() {
@@ -717,6 +776,7 @@ class Game {
     this.engine.encountersCompleted = 0;
     this.engine.totalRenownEarned = 0;
     this.engine.pendingSkillPicks = 0;
+    this.engine.skillUsageStats = {};
     this.engine.difficulty = this.difficulty;
 
     // Use selected party or fallback to defaults

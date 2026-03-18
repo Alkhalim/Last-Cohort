@@ -274,6 +274,27 @@ html, body {
   text-align: right;
 }
 
+.option-toggle {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.option-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.option-hint {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin: -4px 0 0;
+  padding: 0 8px;
+}
+
 /* --- Unlock slots (shared between home and unlocks screen) --- */
 
 .home-unlock-slot {

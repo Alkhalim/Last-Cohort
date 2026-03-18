@@ -7,6 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Last Cohort</title>
   <link rel="stylesheet" href="css/game.css">
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="bf9f632c-1afa-4d9d-a606-9d7a04a3eacb"></script>
 </head>
 <body>
   <div id="game">
@@ -79,6 +80,12 @@
             <input type="range" id="opt-sound-vol" class="option-slider" min="0" max="100" value="70">
             <span id="opt-sound-val" class="option-value">70%</span>
           </label>
+          <label class="option-label option-toggle">
+            <span class="option-name">Usage Analytics</span>
+            <input type="checkbox" id="opt-tracking" checked>
+            <span id="opt-tracking-val" class="option-value">On</span>
+          </label>
+          <p class="option-hint">Anonymous gameplay stats only. No personal data is collected.</p>
         </div>
         <button id="btn-options-back" class="btn-secondary submenu-back">Back</button>
       </div>

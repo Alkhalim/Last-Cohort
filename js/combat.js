@@ -31,6 +31,7 @@ class CombatEngine {
     this.totalRenownEarned = 0;
     this.pendingSkillPicks = 0;
     this.encounterXP = 0; // XP bar: grants skill pick every 3 encounters
+    this.skillUsageStats = {}; // track skill usage for analytics
   }
 
   // --- Setup ---
@@ -629,6 +630,11 @@ class CombatEngine {
   executeSkill(unitIndex, skillId, diceIds, targets) {
     const unit = this.party[unitIndex];
     const skill = unit.skills.find(s => s.id === skillId);
+
+    // Track skill usage for analytics
+    if (!this.skillUsageStats) this.skillUsageStats = {};
+    const key = `${unit.classId}:${skillId}`;
+    this.skillUsageStats[key] = (this.skillUsageStats[key] || 0) + 1;
 
     diceIds.forEach(id => this.dicePool.useDie(id));
     const result = skill.execute(unit, targets, diceIds.map(id => this.dicePool.dice.find(d => d.id === id)));
