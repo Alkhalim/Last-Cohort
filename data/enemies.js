@@ -95,7 +95,7 @@ const RAW_ENEMIES = {
     "description": "A towering effigy of woven branches, set ablaze by Germanic priests. The smoke chokes the air and shields nearby warriors.", "ai": "passive",
     "isStructure": true, "aura": { "damageReduction": 2 }, "turnDamageAll": 2, "deathDamageEnemy": 6,
     "actions": [
-      { "name": "Burning Effigy", "damage": 0, "chance": 1.0, "text": "burns, choking the air with smoke" }
+      { "name": "Burning Effigy", "damage": 0, "chance": 1.0, "text": "burns — all soldiers take 2 damage per turn, and nearby enemies take 2 less damage from attacks" }
     ]
   },
   "arminius_champion": {
