@@ -334,8 +334,8 @@ const RAW_CLASSES = {
       {
         "id": "war_drums", "name": "War Drums", "cooldown": 2, "starter": true,
         "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
-        "description": "Beat the war drums. All allies gain +1 damage for next attack. +5 Morale.",
-        "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 1 }, "morale": 5 }
+        "description": "Beat the war drums. All allies gain +1 damage for next attack. +6 Morale.",
+        "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 1 }, "morale": 6 }
       },
       {
         "id": "dissonant_note", "name": "Dissonant Note",
