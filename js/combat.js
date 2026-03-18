@@ -1676,7 +1676,8 @@ class CombatEngine {
       poison: 0,
       block: 0,
       justSpawned: true,
-      actions: [{ name: 'Pulsing Roots', damage: 0, chance: 1.0, text: 'pulses with green energy, healing the Witch' }],
+      description: `A living totem of twisted roots. Heals the Grove Witch for ${5 + (Math.max(0, (this.difficulty || 1) - 1) * 2)} HP each turn. Destroy it to stop the healing.`,
+      actions: [{ name: 'Pulsing Roots', damage: 0, chance: 1.0, text: `pulses with green energy — heals the Witch for ${5 + (Math.max(0, (this.difficulty || 1) - 1) * 2)} HP` }],
     };
     this.enemies.push(totem);
     // Grove Witch gains block when summoning a totem (3 x difficulty)
