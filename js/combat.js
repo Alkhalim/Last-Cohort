@@ -652,21 +652,39 @@ class CombatEngine {
         parts.push(`Hits all ${result.target.row}-row enemies.`);
       }
 
-      // Pierce row: bolt passes through to hit all enemies in the OTHER row
+      // Pierce row: bolt passes through to hit the enemy directly behind the target
       if (result.pierceRow && result.target.row) {
         const otherRow = result.target.row === 'front' ? 'back' : 'front';
-        const pierceDmg = result.damage + bonusDmg;
-        this.enemies.forEach(e => {
-          if (!e.dead && e !== result.target && e.row === otherRow) {
-            let sDmg = pierceDmg;
-            const sAura = this.getAuraDamageReduction(e);
-            if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
-            if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
-            e.hp = Math.max(0, e.hp - sDmg);
-            unit.stats.damageDealt += sDmg;
-          }
+        const behind = this.enemies.filter(e => !e.dead && e.row === otherRow);
+        if (behind.length > 0) {
+          // Pick the one closest in index (visually behind)
+          const victim = behind.reduce((closest, e) =>
+            Math.abs(e.index - result.target.index) < Math.abs(closest.index - result.target.index) ? e : closest, behind[0]);
+          let sDmg = result.damage + bonusDmg;
+          const sAura = this.getAuraDamageReduction(victim);
+          if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
+          if (victim.block && victim.block > 0) { const ab = Math.min(victim.block, sDmg); victim.block -= ab; sDmg -= ab; }
+          victim.hp = Math.max(0, victim.hp - sDmg);
+          unit.stats.damageDealt += sDmg;
+          parts.push(`Bolt pierces through to ${victim.name}!`);
+        }
+      }
+
+      // Splash adjacent: damage enemies directly beside the target in the same row
+      if (result.splashAdjacent && result.target.row) {
+        const sameRow = this.enemies.filter(e => !e.dead && e.row === result.target.row && e !== result.target);
+        // Sort by index to find the two closest
+        sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
+        const adjacent = sameRow.filter(e => Math.abs(e.index - result.target.index) <= 2).slice(0, 2);
+        adjacent.forEach(e => {
+          let sDmg = result.splashAdjacent;
+          const sAura = this.getAuraDamageReduction(e);
+          if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
+          if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+          e.hp = Math.max(0, e.hp - sDmg);
+          unit.stats.damageDealt += sDmg;
         });
-        parts.push(`Bolt pierces through to ${otherRow}-row enemies.`);
+        if (adjacent.length > 0) parts.push(`Tramples ${adjacent.map(e => e.name).join(' and ')} for ${result.splashAdjacent} damage.`);
       }
 
       // Knockback: shove front-row enemy to back row

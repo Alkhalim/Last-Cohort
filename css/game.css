@@ -2043,13 +2043,18 @@ html, body {
 .map-node.type-boss .map-node-icon { color: var(--purple); font-size: 1.3rem; }
 
 .map-node.visited {
-  opacity: 0.35;
+  opacity: 0.6;
+  border-color: rgba(220, 220, 220, 0.5);
+}
+
+.map-node.unreachable {
+  opacity: 0.15;
   border-color: var(--border);
 }
 
 .map-node.current {
-  border-color: var(--gold);
-  box-shadow: 0 0 10px rgba(201, 162, 39, 0.4);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
   opacity: 1;
 }
 

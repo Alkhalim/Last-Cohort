@@ -385,8 +385,8 @@ const RAW_CLASSES = {
       {
         "id": "trample", "name": "Trample", "starter": true,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Trample a front-line enemy. Deals 4 damage and 2 damage to adjacent row enemies.",
-        "effects": { "damage": 4, "splashRow": true }
+        "description": "Trample a front-line enemy. Deals 4 damage and 2 damage to enemies directly beside it.",
+        "effects": { "damage": 4, "splashAdjacent": 2 }
       },
       {
         "id": "hit_and_run", "name": "Hit and Run",
@@ -466,7 +466,7 @@ const RAW_CLASSES = {
       {
         "id": "scorpio_bolt", "name": "Scorpio Bolt",
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 6+. A siege bolt that pierces the line. Deals 5 damage to target and all enemies behind them.",
+        "description": "2 dice totaling 6+. A siege bolt that pierces the line. Deals 5 damage to target and the enemy directly behind.",
         "effects": { "damage": 5, "pierceRow": true }
       },
       {

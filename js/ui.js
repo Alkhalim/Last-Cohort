@@ -1053,7 +1053,25 @@ class GameUI {
     const currentDepth = currentNode ? currentNode.depth : 0;
     const visibleRange = 2;
 
-    // Position nodes: bottom = start (depth 0), top = boss (depth 8)
+    // Compute all nodes reachable via forward paths from current position
+    const futureReachable = new Set();
+    const computeFuture = (nodeId) => {
+      if (futureReachable.has(nodeId)) return;
+      futureReachable.add(nodeId);
+      const n = this.mapNodes.find(nd => nd.id === nodeId);
+      if (n) n.children.forEach(cid => computeFuture(cid));
+    };
+    if (this.currentNodeId !== null) {
+      computeFuture(this.currentNodeId);
+    } else {
+      // Start: all depth-0 nodes and their descendants
+      this.mapNodes.filter(n => n.depth === 0).forEach(n => computeFuture(n.id));
+    }
+
+    // Build set of visited node IDs for path drawing
+    const visitedIds = new Set(this.mapNodes.filter(n => n.visited).map(n => n.id));
+
+    // Position nodes
     const nodePositions = {};
     for (const node of this.mapNodes) {
       const y = totalHeight - bottomPadding - node.depth * nodeSpacing;
@@ -1061,13 +1079,12 @@ class GameUI {
       nodePositions[node.id] = { x, y };
     }
 
+    // Helper: is a node visible
+    const isVisible = (node) => node.visited || (node.depth >= currentDepth && node.depth <= currentDepth + visibleRange);
+
     // Draw lines on canvas
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.lineWidth = 2;
-
-    // Helper: is a node visible (within range or visited)
-    const isVisible = (node) => node.visited || (node.depth >= currentDepth && node.depth <= currentDepth + visibleRange);
 
     for (const node of this.mapNodes) {
       if (!isVisible(node)) continue;
@@ -1078,10 +1095,28 @@ class GameUI {
         const to = nodePositions[childId];
         if (!to) continue;
 
-        const isReachableLine = (node.id === this.currentNodeId) ||
-          (startReachable && node.depth === 0);
+        // Determine line style
+        const bothVisited = visitedIds.has(node.id) && visitedIds.has(childId);
+        const isNextPath = (node.id === this.currentNodeId || (startReachable && node.depth === 0)) && reachableIds.includes(childId);
 
-        ctx.strokeStyle = isReachableLine ? 'rgba(201, 162, 39, 0.6)' : 'rgba(42, 46, 58, 0.5)';
+        if (bothVisited) {
+          // Path taken — white
+          ctx.strokeStyle = 'rgba(220, 220, 220, 0.7)';
+          ctx.lineWidth = 3;
+        } else if (isNextPath) {
+          // Path to reachable nodes — golden
+          ctx.strokeStyle = 'rgba(201, 162, 39, 0.7)';
+          ctx.lineWidth = 2.5;
+        } else if (futureReachable.has(node.id) && futureReachable.has(childId)) {
+          // Future possible path — dim
+          ctx.strokeStyle = 'rgba(42, 46, 58, 0.5)';
+          ctx.lineWidth = 1.5;
+        } else {
+          // Unreachable — very dim
+          ctx.strokeStyle = 'rgba(42, 46, 58, 0.2)';
+          ctx.lineWidth = 1;
+        }
+
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
         ctx.lineTo(to.x, to.y);
@@ -1097,8 +1132,9 @@ class GameUI {
 
       const isReachableNode = startReachable ? (node.depth === 0) : reachableIds.includes(node.id);
       const isCurrent = node.id === this.currentNodeId;
+      const isUnreachable = !node.visited && !futureReachable.has(node.id);
 
-      el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''} type-${node.type}`;
+      el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''}${isUnreachable ? ' unreachable' : ''} type-${node.type}`;
       el.style.left = (pos.x - 22) + 'px';
       el.style.top = (pos.y - 22) + 'px';
 

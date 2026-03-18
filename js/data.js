@@ -184,6 +184,11 @@ function buildSkillExecute(skillData) {
       result.pierceRow = true;
     }
 
+    // Splash adjacent: deal X damage to enemies directly beside the target
+    if (effects.splashAdjacent !== undefined) {
+      result.splashAdjacent = effects.splashAdjacent;
+    }
+
     // Knockback: shove front-row enemy to back row
     if (effects.knockback) {
       result.knockback = true;
