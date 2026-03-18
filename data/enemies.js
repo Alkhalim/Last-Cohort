@@ -137,6 +137,22 @@ const RAW_ENEMIES = {
 
   // === DIFFICULTY 2+ ENEMIES ===
 
+  "spear_thrower": {
+    "id": "spear_thrower", "name": "Germanic Spearman",
+    "maxHp": 18, "row": "back", "damage": [4, 7], "speed": 2, "xpValue": 5,
+    "minDifficulty": 2,
+    "description": "A versatile warrior who hurls spears from the back line before charging into melee. After 2 turns of throwing, he rushes to the front with his last spear.",
+    "ai": "aggressive",
+    "phaseShift": { "afterTurns": 2, "toRow": "front" },
+    "actions": [
+      { "name": "Spear Throw", "damage": 5, "chance": 0.6, "text": "hurls a spear with deadly aim", "ignoreRow": true, "phase": "ranged" },
+      { "name": "Double Throw", "damage": 4, "chance": 0.4, "text": "hurls two spears in quick succession", "ignoreRow": true, "aoe": true, "phase": "ranged" },
+      { "name": "Spear Thrust", "damage": 6, "chance": 0.5, "text": "thrusts with his last spear", "phase": "melee" },
+      { "name": "Shield Bash", "damage": 4, "morale": -5, "chance": 0.3, "text": "bashes with a makeshift shield", "phase": "melee" },
+      { "name": "Wild Charge", "damage": 8, "chance": 0.2, "text": "charges with reckless fury", "cooldown": 1, "phase": "melee" }
+    ]
+  },
+
   "germanic_berserker": {
     "id": "germanic_berserker", "name": "Germanic Berserker",
     "maxHp": 22, "row": "front", "damage": [5, 9], "speed": 2, "xpValue": 6,

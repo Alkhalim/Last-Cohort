@@ -1163,12 +1163,21 @@ class CombatEngine {
 
   // --- Enemy turn (sequential) ---
   executeEnemyTurn() {
-    // Clear enemy block and tick action cooldowns at start of their turn
+    // Clear enemy block, tick cooldowns, track turns alive, handle phase shifts
     this.enemies.forEach(e => {
       if (!e.dead) e.block = 0;
       if (e._actionCooldowns) {
         for (const name in e._actionCooldowns) {
           if (e._actionCooldowns[name] > 0) e._actionCooldowns[name]--;
+        }
+      }
+      // Track turns alive for phase shift enemies
+      if (!e.dead) {
+        e._turnsAlive = (e._turnsAlive || 0) + 1;
+        // Phase shift: move to new row after N turns
+        if (e.phaseShift && e._turnsAlive > e.phaseShift.afterTurns && e.row !== e.phaseShift.toRow) {
+          e.row = e.phaseShift.toRow;
+          this.addLog(`${e.name} charges to the ${e.phaseShift.toRow} row!`);
         }
       }
     });
@@ -1244,6 +1253,13 @@ class CombatEngine {
         const nonDamage = availableActions.filter(a => !a.damage || a.damage === 0);
         if (nonDamage.length > 0) availableActions = nonDamage;
       }
+    }
+
+    // Phase-based filtering: only use actions matching current phase (ranged = back row, melee = front row)
+    if (enemy.phaseShift) {
+      const currentPhase = enemy.row === 'back' ? 'ranged' : 'melee';
+      const phaseFiltered = availableActions.filter(a => !a.phase || a.phase === currentPhase);
+      if (phaseFiltered.length > 0) availableActions = phaseFiltered;
     }
 
     // Filter out actions on cooldown

@@ -36,6 +36,7 @@ const RAW_ENCOUNTERS = {
       { "name": "Shield Line", "enemies": ["cheruscan_shieldbearer", "cheruscan_raider", "sling_hunter"], "intro": "A shieldbearer hunkers down while warriors form behind him. A disciplined formation." },
       { "name": "Guardian Formation", "enemies": ["cheruscan_guardian", "cheruscan_guardian", "cheruscan_raider", "sling_hunter"], "intro": "Two guardians lock shields while attackers strike from behind the wall." },
       { "name": "Leech Swarm", "enemies": ["mire_leech", "mire_leech", "mire_leech"], "intro": "The ground writhes. Bloated leeches pour from the mud in a sickening wave." },
+      { "name": "Spear Rain", "minDifficulty": 2, "enemies": ["spear_thrower", "spear_thrower", "cheruscan_raider"], "intro": "Spears arc from the treeline. Two warriors hurl javelin after javelin before drawing blades." },
       { "name": "Berserker Charge", "minDifficulty": 2, "enemies": ["germanic_berserker", "cheruscan_raider", "sling_hunter"], "intro": "A foam-mouthed berserker charges from the trees, warriors at his back." },
       { "name": "War Hound Pack", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "cheruscan_raider"], "intro": "Armored hounds bound through the undergrowth, a handler driving them forward." },
       { "name": "Runed Shield Line", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_shieldbearer", "cheruscan_raider"], "intro": "A runecarver crouches behind a shield line, carving wards into every surface." },
@@ -52,6 +53,7 @@ const RAW_ENCOUNTERS = {
       { "name": "The Burning Effigy", "enemies": ["wicker_man", "cheruscan_shieldbearer", "bog_seer"], "intro": "A towering wicker effigy burns in the clearing. Its smoke protects the warriors gathered around it." },
       { "name": "Shield Wall", "enemies": ["cheruscan_shieldbearer", "cheruscan_shieldbearer", "sling_hunter", "sling_hunter"], "intro": "Two shieldbearers form an impenetrable wall while slingers rain stones from behind." },
       { "name": "Swamp Horror", "enemies": ["mire_leech", "mire_leech", "fen_viper", "bog_seer"], "intro": "The swamp itself attacks \u2014 leeches, vipers, and a chanting seer drive the assault." },
+      { "name": "Javelin Ambush", "minDifficulty": 2, "enemies": ["spear_thrower", "spear_thrower", "cheruscan_raider", "sling_hunter"], "intro": "Javelins rain from the trees as spearmen prepare to charge. You have moments before they close the gap." },
       { "name": "Berserker Warband", "minDifficulty": 2, "enemies": ["germanic_berserker", "germanic_berserker", "cheruscan_shieldbearer"], "intro": "Two berserkers charge screaming from the trees. A shieldbearer covers their flank." },
       { "name": "The Kennels", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "war_hound", "sling_hunter"], "intro": "A pack of armored war hounds pours from a makeshift kennel. A handler slings stones from behind." },
       { "name": "Warded Warband", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Rune-warded warriors advance behind a wall of carved shields. Every blow glances off." },
@@ -158,6 +160,18 @@ const RAW_ENCOUNTERS = {
       { "chance": 0.15, "items": ["cursed_bone_blade"] },
       { "chance": 0.10, "items": ["herbalists_robe", "aquila_spearhead"] },
       { "chance": 0.10, "items": ["gilded_cuirass", "windreaders_charm"], "minDifficulty": 5 }
+    ] },
+    "spear_thrower": { "nothingChance": 0.20, "tiers": [
+      { "chance": 0.35, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
+      { "chance": 0.20, "items": ["fang_necklace", "cheruscan_torc", "hunters_cloak"] },
+      { "chance": 0.10, "items": ["chiefs_spear", "scorpio_crossbow"] },
+      { "chance": 0.15, "items": ["gladiators_wraps", "scouts_leather"] }
+    ] },
+    "ironbound_champion": { "nothingChance": 0.10, "tiers": [
+      { "chance": 0.30, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
+      { "chance": 0.25, "items": ["shieldbearers_grip", "legionary_lorica", "cheruscan_torc"] },
+      { "chance": 0.15, "items": ["champions_helm", "boar_tusk_pauldron"] },
+      { "chance": 0.20, "items": ["oak_splinter", "warlords_blade"] }
     ] },
     "arminius_champion": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
     "grove_witch": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
