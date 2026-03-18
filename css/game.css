@@ -1645,6 +1645,12 @@ html, body {
   font-size: 0.68rem;
 }
 
+.stat-breakdown {
+  font-size: 0.6em;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
 .stat-dmg { color: var(--red-bright); }
 .stat-heal { color: var(--green-bright); }
 .stat-block { color: var(--blue-bright); }

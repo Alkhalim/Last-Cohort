@@ -712,51 +712,62 @@ class GameUI {
         : 0;
       const effectiveBonusDmg = totalBonusDmg - auraReduction;
 
-      // Replace damage values with colored totals
-      if (effectiveBonusDmg !== 0 || auraReduction > 0) {
-        desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
-          const total = Math.max(1, parseInt(base) + effectiveBonusDmg);
-          return `Deals <span class="stat-dmg">${total}</span> damage`;
-        });
-      }
+      // Replace damage values — show total (base+bonus) breakdown
+      desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
+        const b = parseInt(base);
+        if (effectiveBonusDmg !== 0) {
+          const total = Math.max(1, b + effectiveBonusDmg);
+          return `Deals <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${effectiveBonusDmg})</span> damage`;
+        }
+        return `Deals <span class="stat-dmg">${b}</span> damage`;
+      });
+      desc = desc.replace(/(\d+) damage/g, (match, base) => {
+        const b = parseInt(base);
+        if (effectiveBonusDmg !== 0) {
+          const total = Math.max(1, b + effectiveBonusDmg);
+          return `<span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${effectiveBonusDmg})</span> damage`;
+        }
+        return `<span class="stat-dmg">${b}</span> damage`;
+      });
+
       // Replace block values
-      if (equipBlock > 0) {
-        desc = desc.replace(/(\d+) Block/g, (match, base) => {
-          const total = parseInt(base) + equipBlock;
-          return `<span class="stat-block">${total}</span> Block`;
-        });
-      }
+      desc = desc.replace(/(\d+) Block/g, (match, base) => {
+        const b = parseInt(base);
+        if (equipBlock > 0) {
+          const total = b + equipBlock;
+          return `<span class="stat-block">${total}</span> <span class="stat-breakdown">(${b}+${equipBlock})</span> Block`;
+        }
+        return `<span class="stat-block">${b}</span> Block`;
+      });
+
       // Replace heal values
-      if (totalBonusHeal !== 0) {
-        desc = desc.replace(/(\d+) HP/g, (match, base) => {
-          const total = Math.max(0, parseInt(base) + totalBonusHeal);
-          return `<span class="stat-heal">${total}</span> HP`;
-        });
-      }
+      desc = desc.replace(/(\d+) HP/g, (match, base) => {
+        const b = parseInt(base);
+        if (totalBonusHeal !== 0) {
+          const total = Math.max(0, b + totalBonusHeal);
+          return `<span class="stat-heal">${total}</span> <span class="stat-breakdown">(${b}${totalBonusHeal >= 0 ? '+' : ''}${totalBonusHeal})</span> HP`;
+        }
+        return `<span class="stat-heal">${b}</span> HP`;
+      });
 
-      // Replace poison values with equipment bonus
-      if (equipPoison > 0) {
-        desc = desc.replace(/(\d+) Poison/g, (match, base) => {
-          const total = parseInt(base) + equipPoison;
-          return `<span class="stat-poison">${total}</span> Poison`;
-        });
-      }
-
-      // Color-code base stat keywords even without bonuses
-      desc = desc.replace(/(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
-      desc = desc.replace(/(\d+) Block/g, '<span class="stat-block">$1</span> Block');
-      desc = desc.replace(/(\d+) HP/g, '<span class="stat-heal">$1</span> HP');
-      desc = desc.replace(/(\d+) Poison/g, '<span class="stat-poison">$1</span> Poison');
+      // Replace poison values
+      desc = desc.replace(/(\d+) Poison/g, (match, base) => {
+        const b = parseInt(base);
+        if (equipPoison > 0) {
+          const total = b + equipPoison;
+          return `<span class="stat-poison">${total}</span> <span class="stat-breakdown">(${b}+${equipPoison})</span> Poison`;
+        }
+        return `<span class="stat-poison">${b}</span> Poison`;
+      });
       desc = desc.replace(/(\d+) Morale/g, '<span class="stat-morale-text">$1</span> Morale');
 
-      const cdDisplay = skill.cooldownLeft > 0 ? skill.cooldownLeft - 1 : 0;
-      const cdBaseDisplay = skill.cooldown ? skill.cooldown - 1 : 0;
-      const cdText = skill.cooldownLeft > 0 && cdDisplay > 0
-        ? `<span class="skill-cd">CD: ${cdDisplay}</span>`
+      const cdLeft = skill.cooldownLeft > 0 ? skill.cooldownLeft - 1 : 0;
+      const cdText = skill.cooldownLeft > 0 && cdLeft > 0
+        ? `<span class="skill-cd">CD: ${cdLeft}</span>`
         : skill.cooldownLeft > 0
           ? `<span class="skill-cd">Ready next turn</span>`
-          : cdBaseDisplay > 0
-            ? `<span class="skill-cd-ready">CD: ${cdBaseDisplay}</span>`
+          : skill.cooldown
+            ? `<span class="skill-cd-ready">CD: ${skill.cooldown}</span>`
             : '';
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span> ${cdText}</div>
@@ -798,7 +809,7 @@ class GameUI {
     popup.className = 'cooldown-popup';
     const displayLeft = Math.max(0, turnsLeft - 1);
     popup.textContent = displayLeft > 0
-      ? `On cooldown (${displayLeft} turn${displayLeft > 1 ? 's' : ''})`
+      ? `On cooldown (${displayLeft} turn${displayLeft > 1 ? 's' : ''} remaining)`
       : 'Ready next turn';
     const rect = element.getBoundingClientRect();
     popup.style.left = (rect.left + rect.width / 2) + 'px';

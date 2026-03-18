@@ -588,7 +588,7 @@ class CombatEngine {
 
     // Set cooldown
     if (skill.cooldown) {
-      skill.cooldownLeft = skill.cooldown;
+      skill.cooldownLeft = skill.cooldown + 1;
     }
 
     const logText = this.applySkillResult(unit, skill, result);
@@ -1182,7 +1182,7 @@ class CombatEngine {
 
     // Set cooldown on used action
     if (action.cooldown) {
-      enemy._actionCooldowns[action.name] = action.cooldown;
+      enemy._actionCooldowns[action.name] = action.cooldown + 1;
     }
 
     const target = this.pickEnemyTarget(enemy, action);

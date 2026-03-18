@@ -10,7 +10,7 @@ const RAW_ENEMIES = {
     "description": "Germanic warrior. Aggressive melee fighter.", "ai": "aggressive",
     "actions": [
       { "name": "Spear Thrust", "damage": 5, "chance": 0.6, "text": "thrusts spear" },
-      { "name": "Wild Slash", "damage": 7, "chance": 0.3, "text": "slashes wildly", "cooldown": 2 },
+      { "name": "Wild Slash", "damage": 7, "chance": 0.3, "text": "slashes wildly", "cooldown": 1 },
       { "name": "War Cry", "damage": 0, "morale": -10, "chance": 0.1, "text": "lets out a war cry" }
     ]
   },
@@ -20,7 +20,7 @@ const RAW_ENEMIES = {
     "description": "Ranged skirmisher. Targets weakest unit.", "ai": "sniper",
     "actions": [
       { "name": "Sling Stone", "damage": 4, "chance": 0.7, "text": "hurls a sling stone", "ignoreRow": true },
-      { "name": "Aimed Shot", "damage": 6, "chance": 0.2, "text": "takes careful aim", "ignoreRow": true, "cooldown": 2 },
+      { "name": "Aimed Shot", "damage": 6, "chance": 0.2, "text": "takes careful aim", "ignoreRow": true, "cooldown": 1 },
       { "name": "Scatter Shot", "damage": 3, "chance": 0.1, "text": "fires scatter shot at the line", "aoe": true }
     ]
   },
@@ -30,7 +30,7 @@ const RAW_ENEMIES = {
     "description": "Fast predator. Attacks twice when wounded.", "ai": "aggressive",
     "actions": [
       { "name": "Bite", "damage": 4, "chance": 0.5, "text": "lunges with snapping jaws" },
-      { "name": "Pounce", "damage": 6, "chance": 0.3, "text": "pounces", "cooldown": 2 },
+      { "name": "Pounce", "damage": 6, "chance": 0.3, "text": "pounces", "cooldown": 1 },
       { "name": "Howl", "damage": 0, "morale": -15, "chance": 0.2, "text": "howls into the mist" }
     ]
   },
@@ -52,7 +52,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Curse of Dread", "damage": 0, "morale": -18, "chance": 0.4, "text": "chants a dreadful curse" },
       { "name": "Marsh Hex", "damage": 3, "morale": -10, "chance": 0.3, "text": "hurls a hex of swamp fire", "ignoreRow": true },
-      { "name": "Wail of the Dead", "damage": 0, "morale": -25, "chance": 0.2, "text": "screams with the voices of the dead", "cooldown": 3 },
+      { "name": "Wail of the Dead", "damage": 0, "morale": -25, "chance": 0.2, "text": "screams with the voices of the dead", "cooldown": 2 },
       { "name": "Bone Shard", "damage": 5, "chance": 0.1, "text": "flings a shard of bone", "ignoreRow": true }
     ]
   },
@@ -65,7 +65,7 @@ const RAW_ENEMIES = {
       { "name": "Oak Smash", "damage": 8, "chance": 0.4, "text": "smashes with the great oak shield" },
       { "name": "Shieldwall Charge", "damage": 6, "chance": 0.25, "text": "charges behind the oak shield", "aoe": true },
       { "name": "Rallying Roar", "damage": 0, "morale": -15, "chance": 0.15, "text": "roars, rallying nearby warriors" },
-      { "name": "Crushing Overhead", "damage": 12, "chance": 0.2, "text": "brings a devastating overhead blow", "cooldown": 2 }
+      { "name": "Crushing Overhead", "damage": 12, "chance": 0.2, "text": "brings a devastating overhead blow", "cooldown": 1 }
     ]
   },
   "cheruscan_shieldbearer": {
@@ -86,7 +86,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Latch On", "damage": 2, "poisonTarget": 4, "chance": 0.5, "text": "latches on with burrowing mouthparts" },
       { "name": "Multiply", "damage": 0, "chance": 0.3, "text": "splits and spawns another leech", "spawn": "mire_leech" },
-      { "name": "Blood Drain", "damage": 4, "poisonTarget": 2, "chance": 0.2, "text": "drains blood with a sickening pull", "cooldown": 2 }
+      { "name": "Blood Drain", "damage": 4, "poisonTarget": 2, "chance": 0.2, "text": "drains blood with a sickening pull", "cooldown": 1 }
     ]
   },
   "wicker_man": {
@@ -106,7 +106,7 @@ const RAW_ENEMIES = {
       { "name": "Crushing Blow", "damage": 10, "chance": 0.4, "text": "brings down a crushing blow" },
       { "name": "Shield Bash", "damage": 6, "chance": 0.25, "text": "bashes with iron shield" },
       { "name": "War Cry", "damage": 0, "morale": -20, "chance": 0.15, "text": "roars a war cry" },
-      { "name": "Frenzy", "damage": 8, "chance": 0.2, "text": "attacks in a frenzy", "aoe": true, "cooldown": 2 }
+      { "name": "Frenzy", "damage": 8, "chance": 0.2, "text": "attacks in a frenzy", "aoe": true, "cooldown": 1 }
     ]
   },
   "grove_witch": {
@@ -116,8 +116,8 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Thorn Volley", "damage": 5, "chance": 0.3, "text": "sends a volley of blackened thorns", "aoe": true },
       { "name": "Soul Drain", "damage": 7, "morale": -15, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
-      { "name": "Swamp Call", "damage": 0, "morale": -25, "chance": 0.2, "text": "calls upon the swamp spirits", "cooldown": 3 },
-      { "name": "Root Grasp", "damage": 9, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true, "cooldown": 2 }
+      { "name": "Swamp Call", "damage": 0, "morale": -25, "chance": 0.2, "text": "calls upon the swamp spirits", "cooldown": 2 },
+      { "name": "Root Grasp", "damage": 9, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true, "cooldown": 1 }
     ]
   },
 
@@ -144,7 +144,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Frenzied Slash", "damage": 7, "chance": 0.4, "text": "slashes in a wild frenzy" },
       { "name": "Headbutt", "damage": 5, "morale": -5, "chance": 0.3, "text": "headbutts with a sickening crack" },
-      { "name": "Blood Rage", "damage": 9, "chance": 0.2, "text": "howls and strikes with terrible force", "cooldown": 2 },
+      { "name": "Blood Rage", "damage": 9, "chance": 0.2, "text": "howls and strikes with terrible force", "cooldown": 1 },
       { "name": "Intimidating Scream", "damage": 0, "morale": -12, "chance": 0.1, "text": "screams, foam at the mouth" }
     ]
   },
@@ -156,7 +156,7 @@ const RAW_ENEMIES = {
     "description": "A scarred bowman who never misses. Trained by Arminius himself. His arrows find flesh through any defense.",
     "actions": [
       { "name": "Precise Shot", "damage": 8, "chance": 0.35, "text": "looses a precise arrow", "ignoreRow": true },
-      { "name": "Marked Shot", "damage": 12, "chance": 0.25, "text": "fires at a marked target — the arrow punches through armor", "ignoreRow": true, "cooldown": 2 },
+      { "name": "Marked Shot", "damage": 12, "chance": 0.25, "text": "fires at a marked target — the arrow punches through armor", "ignoreRow": true, "cooldown": 1 },
       { "name": "Arrow Rain", "damage": 5, "chance": 0.2, "text": "sends a volley of arrows into the Roman line", "aoe": true },
       { "name": "Hunter's Silence", "damage": 0, "morale": -18, "chance": 0.2, "text": "vanishes into shadow — the silence is deafening" }
     ]
@@ -200,7 +200,7 @@ const RAW_ENEMIES = {
       { "name": "Gore Charge", "damage": 10, "chance": 0.3, "text": "charges with lowered tusks" },
       { "name": "Thrashing Fury", "damage": 7, "chance": 0.25, "text": "thrashes wildly, striking everything", "aoe": true },
       { "name": "Call the Brood", "damage": 0, "chance": 0.25, "text": "bellows into the swamp — her young answer", "spawn": "marsh_wolf" },
-      { "name": "Mother's Wrath", "damage": 12, "morale": -10, "chance": 0.2, "text": "rears up and brings crushing weight down", "cooldown": 2 }
+      { "name": "Mother's Wrath", "damage": 12, "morale": -10, "chance": 0.2, "text": "rears up and brings crushing weight down", "cooldown": 1 }
     ]
   },
 
@@ -215,7 +215,7 @@ const RAW_ENEMIES = {
     "ai": "aggressive",
     "actions": [
       { "name": "Cursed Blade", "damage": 5, "poisonTarget": 2, "chance": 0.4, "text": "strikes with a blackened blade" },
-      { "name": "Death Grip", "damage": 7, "chance": 0.3, "text": "grabs and squeezes with unnatural strength", "cooldown": 2 },
+      { "name": "Death Grip", "damage": 7, "chance": 0.3, "text": "grabs and squeezes with unnatural strength", "cooldown": 1 },
       { "name": "Bone Rattle", "damage": 0, "morale": -12, "chance": 0.3, "text": "rattles the bones woven into his armor" }
     ]
   },
@@ -228,7 +228,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Bone Curse", "damage": 3, "morale": -15, "poisonTarget": 7, "chance": 0.3, "text": "speaks a bone curse — pain and dread wash over a soldier", "ignoreRow": true },
       { "name": "Wither", "damage": 0, "morale": -20, "chance": 0.25, "text": "chants words of withering — your men feel their strength fade" },
-      { "name": "Soul Shackle", "damage": 17, "morale": -10, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true, "cooldown": 2 },
+      { "name": "Soul Shackle", "damage": 17, "morale": -10, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true, "cooldown": 1 },
       { "name": "Raise the Dead", "damage": 0, "chance": 0.2, "text": "raises a cursed warrior from the mud", "spawn": "cursed_warrior" }
     ]
   }

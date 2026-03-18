@@ -35,26 +35,26 @@ const RAW_CLASSES = {
         "effects": { "damage": 7 }
       },
       {
-        "id": "hold_fast", "name": "Hold Fast", "cooldown": 2,
+        "id": "hold_fast", "name": "Hold Fast", "cooldown": 1,
         "cost": { "type": "exact", "val": 4 }, "target": "self",
         "description": "Gain 8 Block and Taunt (enemies target this unit).",
         "effects": { "block": 8, "taunt": true }
       },
       {
-        "id": "pilum_cast", "name": "Pilum Cast", "cooldown": 2,
+        "id": "pilum_cast", "name": "Pilum Cast", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Throw pilum at any row. Deals 6 damage.",
         "effects": { "damage": 6, "ignoreRow": true }
       },
       {
-        "id": "twin_slash", "name": "Twin Slash", "cooldown": 2,
+        "id": "twin_slash", "name": "Twin Slash", "cooldown": 1,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deals 10 damage.",
         "effects": { "damage": 10 }
       },
       {
-        "id": "shield_wall", "name": "Shield Wall", "cooldown": 3,
+        "id": "shield_wall", "name": "Shield Wall", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 8+. All allies gain 5 Block.",
         "effects": { "blockAll": 5 }
@@ -99,25 +99,25 @@ const RAW_CLASSES = {
         "effects": { "healAll": 2, "buffAllies": { "bonusDamage": 1, "attacks": 3 } }
       },
       {
-        "id": "measured_advance", "name": "Measured Advance", "cooldown": 2,
+        "id": "measured_advance", "name": "Measured Advance", "cooldown": 1,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 7+. Deals 8 damage and all allies gain 3 Block.",
         "effects": { "damage": 8, "blockAll": 3 }
       },
       {
-        "id": "no_retreat", "name": "No Retreat", "cooldown": 2,
+        "id": "no_retreat", "name": "No Retreat", "cooldown": 1,
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
         "description": "All allies gain 5 Block and +8 Morale.",
         "effects": { "blockAll": 5, "morale": 8 }
       },
       {
-        "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
+        "id": "rally_cry", "name": "Rally Cry", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. +10 Morale and +1 damage for next 2 attacks.",
         "effects": { "morale": 10, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
       },
       {
-        "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 3,
+        "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 2,
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling exactly 7. Deals 15 damage.",
         "effects": { "damage": 15 }
@@ -156,32 +156,32 @@ const RAW_CLASSES = {
         "effects": { "heal": 6, "cleanse": true }
       },
       {
-        "id": "emergency_draught", "name": "Emergency Draught", "cooldown": 2,
+        "id": "emergency_draught", "name": "Emergency Draught", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_ally",
         "description": "Heal an ally for 7 HP.",
         "effects": { "heal": 7 }
       },
       {
-        "id": "plague_flask", "name": "Plague Flask", "cooldown": 2,
+        "id": "plague_flask", "name": "Plague Flask", "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to all others.",
         "effects": { "poison": 4, "poisonSplash": 2 }
       },
       {
-        "id": "sawbones_choice", "name": "Sawbones' Choice", "cooldown": 2,
+        "id": "sawbones_choice", "name": "Sawbones' Choice", "cooldown": 1,
         "cost": { "type": "exact", "val": 1 }, "target": "single_ally",
         "description": "Sacrifice 4 HP to heal ally for 10 HP and grant 3 Block.",
         "effects": { "heal": 10, "selfDamage": 4, "block": 3 }
       },
       {
-        "id": "field_surgery", "name": "Field Surgery", "cooldown": 3,
+        "id": "field_surgery", "name": "Field Surgery", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. Heal all allies for 4 HP.",
         "effects": { "healAll": 4 }
       },
       {
-        "id": "venom_strike", "name": "Venom Strike", "cooldown": 2,
+        "id": "venom_strike", "name": "Venom Strike", "cooldown": 1,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deals 4 damage and applies 4 Poison.",
         "effects": { "damage": 4, "poison": 4 }
@@ -208,27 +208,27 @@ const RAW_CLASSES = {
         "effects": { "damage": 3 }
       },
       {
-        "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 2, "starter": true,
+        "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 1, "starter": true,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Carefully aimed shot. Deals 6 damage. Ignores block.",
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
-        "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true, "cooldown": 2,
+        "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true, "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "description": "Rain arrows on a row. Deals 2 damage to target and all enemies in the same row.",
         "effects": { "damage": 2, "splashRow": true }
       },
       {
-        "id": "piercing_shot", "name": "Piercing Shot", "cooldown": 2,
+        "id": "piercing_shot", "name": "Piercing Shot", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "A powerful shot that pierces all armor. Deals 8 damage, ignores all block.",
         "effects": { "damage": 8, "pierceBlock": 99 }
       },
       {
-        "id": "arrow_volley", "name": "Arrow Volley", "cooldown": 2,
+        "id": "arrow_volley", "name": "Arrow Volley", "cooldown": 1,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
         "description": "2 dice totaling 6+. Deals 3 damage to all enemies.",
         "effects": { "damageAll": 3 }
@@ -241,7 +241,7 @@ const RAW_CLASSES = {
         "effects": { "poison": 3 }
       },
       {
-        "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 3,
+        "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "2 dice totaling 8+. Deals 7 damage and applies 3 Poison.",
@@ -281,25 +281,25 @@ const RAW_CLASSES = {
         "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
       },
       {
-        "id": "hold_the_line", "name": "Hold the Line", "cooldown": 2,
+        "id": "hold_the_line", "name": "Hold the Line", "cooldown": 1,
         "cost": { "type": "threshold", "min": 4 }, "target": "all_allies",
         "description": "All allies gain 3 Block. +5 Morale.",
         "effects": { "blockAll": 3, "morale": 5 }
       },
       {
-        "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 3,
+        "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 2,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 7+. +15 Morale, all allies gain +1 damage for next attack.",
         "effects": { "morale": 15, "buffAllies": { "bonusDamage": 1, "attacks": 1 } }
       },
       {
-        "id": "defiant_stand", "name": "Defiant Stand", "cooldown": 3,
+        "id": "defiant_stand", "name": "Defiant Stand", "cooldown": 2,
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
         "description": "All allies gain 6 Block and +8 Morale.",
         "effects": { "blockAll": 6, "morale": 8 }
       },
       {
-        "id": "standard_charge", "name": "Standard Charge", "cooldown": 2,
+        "id": "standard_charge", "name": "Standard Charge", "cooldown": 1,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deals 8 damage and +8 Morale.",
         "effects": { "damage": 8, "morale": 8 }
@@ -326,13 +326,13 @@ const RAW_CLASSES = {
         "effects": { "damage": 2, "splashBackRow": true }
       },
       {
-        "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 1,
+        "id": "battle_horn", "name": "Battle Horn", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
         "description": "Sound the battle horn. Heal all allies for 1 HP and grant 1 Block.",
         "effects": { "healAll": 1, "blockAll": 1 }
       },
       {
-        "id": "war_drums", "name": "War Drums", "cooldown": 2, "starter": true,
+        "id": "war_drums", "name": "War Drums", "cooldown": 1, "starter": true,
         "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
         "description": "Beat the war drums. All allies gain +1 damage for next attack. +6 Morale.",
         "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 1 }, "morale": 6 }
@@ -344,19 +344,19 @@ const RAW_CLASSES = {
         "effects": { "damage": 3, "poison": 3 }
       },
       {
-        "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 3,
+        "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. Heal all allies for 6 HP. +11 Morale.",
         "effects": { "healAll": 6, "morale": 11 }
       },
       {
-        "id": "cacophony", "name": "Cacophony", "cooldown": 2,
+        "id": "cacophony", "name": "Cacophony", "cooldown": 1,
         "cost": { "type": "exact", "val": 1 }, "target": "all_enemies",
         "description": "A cacophony of noise. Deals 1 damage and applies 1 Poison to all enemies.",
         "effects": { "damageAll": 1, "poisonAll": 1 }
       },
       {
-        "id": "thunderous_blast", "name": "Thunderous Blast", "cooldown": 3,
+        "id": "thunderous_blast", "name": "Thunderous Blast", "cooldown": 2,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 7+. Deals 5 damage to target, half to all others. +7 Morale.",
         "effects": { "damage": 5, "splashHalf": true, "morale": 7 }
@@ -396,28 +396,28 @@ const RAW_CLASSES = {
         "effects": { "damage": 4, "splashAdjacent": 2 }
       },
       {
-        "id": "hit_and_run", "name": "Hit and Run", "cooldown": 2,
+        "id": "hit_and_run", "name": "Hit and Run", "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Strike and wheel away. Deals 3 damage and gain 3 Block.",
         "effects": { "damage": 3, "block": 3 }
       },
       {
-        "id": "devastating_charge", "name": "Devastating Charge", "cooldown": 2,
+        "id": "devastating_charge", "name": "Devastating Charge", "cooldown": 1,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "2 dice totaling 7+. A thunderous charge. Deals 10 damage.",
         "effects": { "damage": 10 }
       },
       {
-        "id": "shield_breaker", "name": "Shield Breaker", "cooldown": 2,
+        "id": "shield_breaker", "name": "Shield Breaker", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Smash through defenses. Deals 6 damage, ignores block.",
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
-        "id": "rally_charge", "name": "Rally Charge", "cooldown": 3,
+        "id": "rally_charge", "name": "Rally Charge", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "2 dice totaling 8+. Deals 8 damage. +10 Morale.",
@@ -458,7 +458,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 2, "splashRow": true }
       },
       {
-        "id": "fire_bolt", "name": "Fire Bolt", "cooldown": 2,
+        "id": "fire_bolt", "name": "Fire Bolt", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "A flaming bolt. Deals 4 damage and applies 3 Poison.",
@@ -472,19 +472,19 @@ const RAW_CLASSES = {
         "effects": { "damage": 4, "pierceBlock": 99 }
       },
       {
-        "id": "scorpio_bolt", "name": "Scorpio Bolt", "cooldown": 2,
+        "id": "scorpio_bolt", "name": "Scorpio Bolt", "cooldown": 1,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 6+. A siege bolt that pierces the line. Deals 5 damage to target and the enemy directly behind.",
         "effects": { "damage": 5, "pierceRow": true }
       },
       {
-        "id": "concussive_shot", "name": "Concussive Shot", "cooldown": 2,
+        "id": "concussive_shot", "name": "Concussive Shot", "cooldown": 1,
         "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
         "description": "A blunt-tipped bolt. Deals 3 damage and knocks front-row enemy to back row.",
         "effects": { "damage": 3, "knockback": true }
       },
       {
-        "id": "siege_shot", "name": "Siege Shot", "cooldown": 3,
+        "id": "siege_shot", "name": "Siege Shot", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "2 dice totaling 8+. A devastating siege bolt. Deals 12 damage.",
@@ -525,26 +525,26 @@ const RAW_CLASSES = {
         "effects": { "damage": 8 }
       },
       {
-        "id": "praetorian_guard", "name": "Praetorian Guard", "cooldown": 2,
+        "id": "praetorian_guard", "name": "Praetorian Guard", "cooldown": 1,
         "cost": { "type": "exact", "val": 4 }, "target": "all_allies",
         "description": "All allies gain 4 Block. Taunt all enemies.",
         "effects": { "blockAll": 4, "taunt": true }
       },
       {
-        "id": "execute", "name": "Execute", "cooldown": 2,
+        "id": "execute", "name": "Execute", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Execute a weakened foe. Deals 6 damage. Ignores block.",
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
-        "id": "roman_discipline", "name": "Roman Discipline", "cooldown": 3,
+        "id": "roman_discipline", "name": "Roman Discipline", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. All allies gain 3 Block, +1 damage for next 2 attacks, +8 Morale.",
         "effects": { "blockAll": 3, "buffAllies": { "bonusDamage": 1, "attacks": 2 }, "morale": 8 }
       },
       {
-        "id": "wrath_of_rome", "name": "Wrath of Rome", "cooldown": 3,
+        "id": "wrath_of_rome", "name": "Wrath of Rome", "cooldown": 2,
         "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "2 dice totaling 9+. The full fury of Rome. Deals 14 damage. Ignores block.",
