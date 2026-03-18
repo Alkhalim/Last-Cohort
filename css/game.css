@@ -2140,6 +2140,30 @@ html, body {
   letter-spacing: 1px;
 }
 
+.map-node-training {
+  font-size: 0.4rem;
+  color: var(--gold);
+  letter-spacing: 1px;
+  margin-top: 1px;
+  font-weight: 700;
+  text-shadow: 0 0 4px rgba(201, 162, 39, 0.4);
+}
+
+/* Loot screen training message */
+.loot-training {
+  font-size: 0.8rem;
+  margin: 0.3rem 0 0.6rem;
+  font-style: italic;
+}
+
+.loot-training.gained {
+  color: var(--gold);
+}
+
+.loot-training.none {
+  color: var(--text-dim);
+}
+
 /* ================================================================
    EVENT SCREEN
    ================================================================ */

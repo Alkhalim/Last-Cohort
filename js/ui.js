@@ -1160,7 +1160,15 @@ class GameUI {
         threatSkulls = `<div class="map-node-threat">${'\u2620'.repeat(node.threat)}</div>`;
       }
 
-      el.innerHTML = `<span class="map-node-icon">${icon}</span>${threatSkulls}`;
+      // Show training indicator on combat nodes that grant skill picks (threat 2+)
+      let trainingLabel = '';
+      if (node.type === 'combat' && !node.visited && node.threat >= 2) {
+        trainingLabel = '<div class="map-node-training">TRAIN</div>';
+      } else if (node.type === 'boss') {
+        trainingLabel = '<div class="map-node-training">TRAIN</div>';
+      }
+
+      el.innerHTML = `<span class="map-node-icon">${icon}</span>${threatSkulls}${trainingLabel}`;
 
       if (isReachableNode && !node.visited) {
         el.addEventListener('click', () => this.onMapNodeClick(node));
@@ -1798,8 +1806,10 @@ class GameUI {
         if (uncommonCount >= maxUncommon) continue;
         uncommonCount++;
       }
-      // Scale item level by difficulty (difficulty 2 = +1 level, etc.)
-      const bonusLevels = Math.max(0, difficulty - 1);
+      // Scale item level relative to its native difficulty tier
+      // March 1 items in March 3 get +2, March 3 items in March 3 get +0
+      const itemNativeDiff = item.minDifficulty || 1;
+      const bonusLevels = Math.max(0, difficulty - itemNativeDiff);
       const scaledId = bonusLevels > 0 ? createLeveledItem(itemId, bonusLevels) : itemId;
       this.pendingLoot.push(scaledId);
     }
@@ -1832,6 +1842,21 @@ class GameUI {
     const continueBtn = document.getElementById('btn-loot-continue');
 
     dropsEl.innerHTML = '';
+
+    // Show training status
+    let trainingEl = document.getElementById('loot-training');
+    if (!trainingEl) {
+      trainingEl = document.createElement('p');
+      trainingEl.id = 'loot-training';
+      lootText.parentNode.insertBefore(trainingEl, lootText.nextSibling);
+    }
+    if (this.lastEncounterGrantedTraining) {
+      trainingEl.textContent = 'Your men learned from this battle. (Training available)';
+      trainingEl.className = 'loot-training gained';
+    } else {
+      trainingEl.textContent = 'A routine skirmish — nothing new learned.';
+      trainingEl.className = 'loot-training none';
+    }
 
     if (this.pendingLoot.length === 0) {
       lootText.textContent = 'Nothing of value was found among the fallen.';
