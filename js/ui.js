@@ -1976,6 +1976,7 @@ class GameUI {
     this.lastEncounterGrantedTraining = this.engine.addEncounterXP(isBossVictory);
 
     // Roll drops — filter by usability and enforce rarity caps by threat
+    const threat = this.currentNodeThreat || 1;
     const difficulty = window.game ? window.game.difficulty : 1;
     const allDrops = [];
     for (const enemyId of this.engine.killedEnemies) {
