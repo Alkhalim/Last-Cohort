@@ -322,8 +322,8 @@ const RAW_CLASSES = {
       {
         "id": "horn_blast", "name": "Horn Blast", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Blast a disorienting note. Deals 2 damage.",
-        "effects": { "damage": 2 }
+        "description": "Blast a disorienting note. Deals 2 damage, half reverberates to back row.",
+        "effects": { "damage": 2, "splashBackRow": true }
       },
       {
         "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 1,
