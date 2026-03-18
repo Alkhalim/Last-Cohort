@@ -1812,7 +1812,6 @@ class GameUI {
     }
 
     // Rarity caps by threat: easy=1 uncommon, mid=2 uncommon, hard=2 uncommon + 1 rare
-    const threat = this.currentNodeThreat || 1;
     let maxUncommon = 1, maxRare = 0;
     if (threat === 2) { maxUncommon = 2; maxRare = 0; }
     else if (threat >= 3) { maxUncommon = 2; maxRare = 1; }
