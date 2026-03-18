@@ -33,6 +33,9 @@ const RAW_ITEMS = {
   "wicker_ash": { "id": "wicker_ash", "name": "Wicker Ash", "slot": "trinket", "rarity": "rare", "classTags": ["roman"], "stats": { "damage": 1, "block": 2 }, "special": "Enemies take 1 damage at the start of each turn (burning aura).", "description": "Ash from a fallen wicker man, still warm. It smells of sacrifice and old power." },
   "shieldbearers_grip": { "id": "shieldbearers_grip", "name": "Shieldbearer's Grip", "slot": "armor", "rarity": "uncommon", "classTags": ["melee", "command"], "stats": { "block": 3 }, "description": "A leather hand-strap ripped from the shieldbearer's shield. Worn but sturdy." },
 
+  "scorpio_crossbow": { "id": "scorpio_crossbow", "name": "Scorpio Crossbow", "slot": "weapon", "rarity": "uncommon", "classTags": ["ranged"], "stats": { "damage": 3 }, "description": "A compact hand-crossbow salvaged from a Roman siege train. Hits harder than any sling." },
+  "legion_composite_bow": { "id": "legion_composite_bow", "name": "Legion Composite Bow", "slot": "weapon", "rarity": "rare", "classTags": ["ranged"], "stats": { "damage": 4 }, "special": "Attacks apply 1 Poison.", "description": "A recurve bow strung with sinew. Its arrows bite deep and fester in the wound." },
+
   // --- Difficulty 2+ unique drops ---
   "berserker_mushroom": { "id": "berserker_mushroom", "name": "Berserker Mushroom", "slot": "trinket", "rarity": "uncommon", "classTags": ["melee", "roman"], "stats": { "damage": 2, "maxHp": -2 }, "description": "The sacred mushroom of the berserkers. Grants fury at a cost." },
   "huntsmans_arrow": { "id": "huntsmans_arrow", "name": "Huntsman's Arrow", "slot": "trinket", "rarity": "rare", "classTags": ["roman", "ranged"], "stats": { "damage": 3 }, "special": "Attacks can target any row.", "description": "An arrow pulled from a Roman shield. It flew true from impossible distance." },

@@ -164,8 +164,8 @@
       "nothingChance": 0.30,
       "tiers": [
         { "chance": 0.40, "items": ["sling_stones", "bone_needle_kit", "raider_shield"] },
-        { "chance": 0.20, "items": ["hunters_cloak", "scouts_sling"] },
-        { "chance": 0.05, "items": ["woad_charm", "runic_stone"] }
+        { "chance": 0.20, "items": ["hunters_cloak", "scouts_sling", "scorpio_crossbow"] },
+        { "chance": 0.05, "items": ["legion_composite_bow", "runic_stone"] }
       ]
     },
     "marsh_wolf": {
