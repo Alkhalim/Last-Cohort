@@ -215,9 +215,9 @@ const RAW_CLASSES = {
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
-        "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true,
+        "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true, "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Rain arrows on a row. Deals 2 damage to target and all enemies in the same row.",
+        "description": "Rain arrows on a row. Deals 2 damage to target and all enemies in the same row. (2 turn cooldown)",
         "effects": { "damage": 2, "splashRow": true }
       },
       {
