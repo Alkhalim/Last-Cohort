@@ -1443,7 +1443,11 @@ class GameUI {
       const grantedItem = getItemData(effects.grantItem);
       const canUse = grantedItem && this.engine.party.some(u => canEquipItem(u, grantedItem));
       if (canUse) {
-        this.pendingEventItem = effects.grantItem;
+        // Scale item level by difficulty, same as combat drops
+        const difficulty = window.game ? window.game.difficulty : 1;
+        const itemNativeDiff = grantedItem.minDifficulty || 1;
+        const bonusLevels = Math.max(0, difficulty - itemNativeDiff);
+        this.pendingEventItem = bonusLevels > 0 ? createLeveledItem(effects.grantItem, bonusLevels) : effects.grantItem;
       } else {
         // Nobody can use it — convert to Renown
         this.pendingEventItem = null;
