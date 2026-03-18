@@ -237,8 +237,8 @@ const RAW_CLASSES = {
         "id": "mark_target", "name": "Mark Target",
         "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Mark and poison a target. Applies 3 Poison to any enemy.",
-        "effects": { "poison": 3 }
+        "description": "Mark and poison a target. Applies 3 Poison and marks for +20% damage next turn.",
+        "effects": { "poison": 3, "markTarget": true }
       },
       {
         "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 2,

@@ -714,6 +714,11 @@ class CombatEngine {
     if (result.damage && result.target && result.target.hp !== undefined) {
       // Split damage: calculate total first, then halve for each target
       let total = (result.splitDamage ? Math.floor((result.damage + bonusDmg) / 2) : result.damage + bonusDmg);
+      // Mark Target: +20% damage to marked enemies
+      if (result.target._marked && result.target._marked > 0) {
+        total = Math.round(total * 1.2);
+        parts.push('Marked! (+20%)');
+      }
       // Execute: double damage to enemies below 25% HP
       if (result.execute && result.target.hp <= result.target.maxHp * 0.25) {
         total *= 2;
@@ -949,6 +954,11 @@ class CombatEngine {
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
       parts.push(`Applies ${totalPoison}${bonusStr} Poison.`);
     }
+    // Mark Target: enemy takes +20% damage for 1 turn
+    if (result.markTarget && result.target) {
+      result.target._marked = 2; // ticks down each enemy turn; active while > 0
+      parts.push(`${result.target.name} is marked! (+20% damage next turn)`);
+    }
     // Poison splash: apply to all other enemies
     if (result.poisonSplash && result.target) {
       const splashPoison = result.poisonSplash;
@@ -1176,6 +1186,8 @@ class CombatEngine {
           if (e._actionCooldowns[name] > 0) e._actionCooldowns[name]--;
         }
       }
+      // Tick down marks
+      if (e._marked && e._marked > 0) e._marked--;
       // Track turns alive for phase shift enemies
       if (!e.dead) {
         e._turnsAlive = (e._turnsAlive || 0) + 1;

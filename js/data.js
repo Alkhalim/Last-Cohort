@@ -211,6 +211,11 @@ function buildSkillExecute(skillData) {
       result.execute = true;
     }
 
+    // Mark Target: +20% damage from all sources next turn
+    if (effects.markTarget) {
+      result.markTarget = true;
+    }
+
     // Knockback: shove front-row enemy to back row
     if (effects.knockback) {
       result.knockback = true;
