@@ -134,11 +134,52 @@ class GameUI {
   render() {
     this.hideEnemyTooltip();
     this.renderMorale();
+    this.renderBossHpBar();
     this.renderEnemies();
     this.renderDicePool();
     this.renderParty();
     this.renderPhaseUI();
     this.renderSkillPanel();
+  }
+
+  renderBossHpBar() {
+    const bar = document.getElementById('boss-hp-bar');
+    if (!bar) return;
+    const boss = this.engine.enemies.find(e => e.isBoss && !e.dead);
+    if (!boss) {
+      bar.classList.add('hidden');
+      return;
+    }
+    bar.classList.remove('hidden');
+    document.getElementById('boss-hp-name').textContent = boss.name;
+    const pct = (boss.hp / boss.maxHp) * 100;
+    const prevPct = this._prevBossHpPct !== undefined ? this._prevBossHpPct : pct;
+    this._prevBossHpPct = pct;
+
+    const fill = document.getElementById('boss-hp-fill');
+    const drain = document.getElementById('boss-hp-drain');
+    const text = document.getElementById('boss-hp-text');
+
+    fill.style.width = pct + '%';
+    drain.style.width = prevPct + '%';
+    text.textContent = `${boss.hp} / ${boss.maxHp}`;
+
+    // Color based on HP
+    fill.className = 'boss-hp-fill' + (pct < 20 ? ' critical' : pct < 40 ? ' hp-low' : pct < 65 ? ' hp-mid' : '');
+
+    // Animate drain
+    if (prevPct > pct) {
+      requestAnimationFrame(() => { drain.style.width = pct + '%'; });
+    } else if (pct > prevPct) {
+      drain.style.width = pct + '%';
+    }
+
+    // Enrage indicator
+    if (boss.hp <= boss.maxHp * 0.5) {
+      bar.classList.add('enraged');
+    } else {
+      bar.classList.remove('enraged');
+    }
   }
 
   // --- Auto-select first alive unit if none selected ---
@@ -1100,13 +1141,50 @@ class GameUI {
     if (node.type === 'combat') {
       this.startCombatNode(node);
     } else if (node.type === 'boss') {
-      window.game.startBossMusic();
-      this.startCombatNode(node);
+      this.showBossIntro(node);
     } else if (node.type === 'event') {
       this.startEventNode(node);
     } else if (node.type === 'rest') {
       this.startRestNode(node);
     }
+  }
+
+  showBossIntro(node) {
+    // Find the boss enemy data for the intro
+    const bossEnemyId = node.encounter.enemies.find(eid => ENEMY_DATA[eid] && ENEMY_DATA[eid].isBoss);
+    const bossData = bossEnemyId ? ENEMY_DATA[bossEnemyId] : null;
+    const bossName = bossData ? bossData.name : node.encounter.name;
+    const bossDesc = bossData ? bossData.description : '';
+
+    // Create splash overlay
+    const splash = document.createElement('div');
+    splash.id = 'boss-intro-splash';
+    splash.className = 'boss-intro-splash';
+    splash.innerHTML = `
+      <div class="boss-intro-content">
+        <div class="boss-intro-line"></div>
+        <div class="boss-intro-name">${bossName}</div>
+        <div class="boss-intro-desc">${bossDesc}</div>
+        <div class="boss-intro-line"></div>
+      </div>
+    `;
+    document.getElementById('game').appendChild(splash);
+
+    // Brief silence before boss music
+    if (window.game && window.game.currentTrack) {
+      window.game.stopTrack(window.game.currentTrack, 800);
+      window.game.currentTrack = null;
+    }
+
+    // After 2.5s: fade out splash, start boss music, begin combat
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+      window.game.startBossMusic();
+      setTimeout(() => {
+        splash.remove();
+        this.startCombatNode(node);
+      }, 600);
+    }, 2500);
   }
 
   startCombatNode(node) {
@@ -1117,6 +1195,7 @@ class GameUI {
     this.stagedSkill = null;
     this.prevEnemyHp = {};
     this.prevUnitHp = {};
+    this._prevBossHpPct = undefined;
     this.diceRevealRunning = false;
     this.render();
   }

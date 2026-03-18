@@ -31,7 +31,7 @@
           </div>
         </div>
       </div>
-      <span class="version-label">v0.4.08</span>
+      <span class="version-label">v0.4.09</span>
     </div>
 
     <!-- Unlocks Screen -->
@@ -158,6 +158,16 @@
         <button id="btn-log-toggle" class="log-toggle-btn">Log</button>
         <button class="options-cog-inline" onclick="window.game.showOptionsScreen()">&#9881;</button>
         <div id="morale-tooltip" class="morale-tooltip hidden"></div>
+      </div>
+
+      <!-- Boss HP Bar (shown during boss fights) -->
+      <div id="boss-hp-bar" class="boss-hp-bar hidden">
+        <div class="boss-hp-name" id="boss-hp-name"></div>
+        <div class="boss-hp-track">
+          <div class="boss-hp-drain" id="boss-hp-drain"></div>
+          <div class="boss-hp-fill" id="boss-hp-fill"></div>
+        </div>
+        <div class="boss-hp-text" id="boss-hp-text"></div>
       </div>
 
       <!-- Combat Log overlay (collapsed by default) -->

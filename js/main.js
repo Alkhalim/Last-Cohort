@@ -289,7 +289,12 @@ class Game {
   startBossMusic() {
     if (this.musicMode === 'boss') return;
     this.musicMode = 'boss';
-    this.fadeToTrack(MUSIC_BOSS, true);
+    // Start from silence — the intro splash already faded out previous music
+    if (this.currentTrack) {
+      this.stopTrack(this.currentTrack, 0);
+      this.currentTrack = null;
+    }
+    this.currentTrack = this.playTrack(MUSIC_BOSS, true);
   }
 
   resumeGameplayMusic() {
