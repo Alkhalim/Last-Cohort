@@ -86,10 +86,9 @@ function buildSkillExecute(skillData) {
       result.baseHeal = effects.healAll;
     }
 
-    // Block (self)
+    // Block (self — but don't override target if damage already set it to an enemy)
     if (effects.block !== undefined) {
       let block = effects.block;
-      // Handle passive trigger (Shield Brace + Shield Discipline)
       if (passiveTrigger) {
         if (dice[0] && dice[0].value >= passiveTrigger.dieMin && !unit.passiveTriggered) {
           block += passiveTrigger.bonusBlock;
@@ -97,7 +96,9 @@ function buildSkillExecute(skillData) {
         }
       }
       result.block = block;
-      result.target = unit;
+      // Block goes to self unless there's a heal target (then block goes to heal target)
+      result.blockTarget = result.heal ? (result.target || unit) : unit;
+      if (!result.target) result.target = unit;
     }
 
     // Block all allies
@@ -210,6 +211,8 @@ function buildClassData(rawClasses) {
       passive: { ...rawClass.passive },
       skills: rawClass.skills.map(s => buildSkill(s)),
     };
+    if (rawClass.hidden) result[classId].hidden = true;
+    if (rawClass.unlockCondition) result[classId].unlockCondition = rawClass.unlockCondition;
   }
   return result;
 }

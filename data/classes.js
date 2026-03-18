@@ -477,8 +477,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 12 }
       }
     ]
-  }
-},
+  },
   "praetorian": {
     "name": "Praetorian",
     "title": "PRA",

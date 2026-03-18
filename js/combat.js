@@ -674,15 +674,18 @@ class CombatEngine {
       unit.stats.damageTaken += result.selfDamage;
       parts.push(`(${unit.name} takes ${result.selfDamage} self-damage.)`);
     }
-    if (result.block && result.target) {
+    if (result.block) {
+      const blockTarget = result.blockTarget || result.target || unit;
       const totalBlock = result.block + bonusBlock;
-      result.target.block = (result.target.block || 0) + totalBlock;
+      blockTarget.block = (blockTarget.block || 0) + totalBlock;
       unit.stats.blockGenerated += totalBlock;
       const bonusStr = bonusBlock > 0 ? ` (${result.block}+${bonusBlock})` : '';
-      if (!result.damage && !result.heal) {
+      if (result.damage) {
+        parts.push(`${unit.name} gains ${totalBlock} Block.`);
+      } else if (!result.heal) {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
-      if (this.onVisual) this.onVisual('unitBlock', { unitIndex: result.target.index, amount: totalBlock });
+      if (this.onVisual) this.onVisual('unitBlock', { unitIndex: blockTarget.index, amount: totalBlock });
       // Special: Oak Splinter — block skills grant +2 block to all other allies
       if (this.unitHasItem(unit, 'oak_splinter')) {
         this.party.forEach(u => {

@@ -8,7 +8,9 @@
       "Bash(ls:*)",
       "Bash(cd:*)",
       "Bash(grep:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(node:*)",
+      "Bash(for f:*)"
     ]
   }
 }
