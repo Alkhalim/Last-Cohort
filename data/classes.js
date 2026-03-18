@@ -93,8 +93,8 @@ const RAW_CLASSES = {
       {
         "id": "officers_care", "name": "Officer's Care",
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "All allies heal 1 HP and gain +1 damage for next 3 attacks.",
-        "effects": { "healAll": 1, "buffAllies": { "bonusDamage": 1, "attacks": 3 } }
+        "description": "All allies heal 2 HP and gain +1 damage for next 3 attacks.",
+        "effects": { "healAll": 2, "buffAllies": { "bonusDamage": 1, "attacks": 3 } }
       },
       {
         "id": "measured_advance", "name": "Measured Advance",

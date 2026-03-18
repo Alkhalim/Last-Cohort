@@ -590,6 +590,9 @@ class GameUI {
         } else if (!unit.downed) {
           el.addEventListener('click', () => this.onUnitClick(i));
         }
+      } else if (this.engine.phase === PHASE.PRE_COMBAT && !unit.downed) {
+        // Allow inspecting units before combat starts
+        el.addEventListener('click', () => this.onUnitClick(i));
       }
 
       area.appendChild(el);
@@ -633,7 +636,8 @@ class GameUI {
       endBtn.textContent = 'End Turn';
     }
 
-    if (this.engine.phase !== PHASE.PLAYER_TURN) {
+    const isPreCombat = this.engine.phase === PHASE.PRE_COMBAT;
+    if (this.engine.phase !== PHASE.PLAYER_TURN && !isPreCombat) {
       panel.classList.add('hidden');
       confirmBtn.classList.add('hidden');
       return;
@@ -1186,13 +1190,24 @@ class GameUI {
   }
 
   showBossIntro(node) {
-    // Find the boss enemy data for the intro
     const bossEnemyId = node.encounter.enemies.find(eid => ENEMY_DATA[eid] && ENEMY_DATA[eid].isBoss);
     const bossData = bossEnemyId ? ENEMY_DATA[bossEnemyId] : null;
     const bossName = bossData ? bossData.name : node.encounter.name;
-    const bossDesc = bossData ? bossData.description : '';
+    // Use the encounter intro as flavor text (not the mechanical description)
+    const bossFlavorText = node.encounter.intro || (bossData ? bossData.description : '');
 
-    // Create splash overlay
+    // Switch to combat screen first (hidden behind splash) to prevent map flash
+    this.currentNodeThreat = node.threat || 1;
+    this.engine.initEncounter(node.encounter);
+    this.showScreen('combat-screen');
+    this.selectedUnitIndex = null;
+    this.stagedSkill = null;
+    this.prevEnemyHp = {};
+    this.prevUnitHp = {};
+    this._prevBossHpPct = undefined;
+    this.diceRevealRunning = false;
+
+    // Create splash overlay on top
     const splash = document.createElement('div');
     splash.id = 'boss-intro-splash';
     splash.className = 'boss-intro-splash';
@@ -1200,7 +1215,7 @@ class GameUI {
       <div class="boss-intro-content">
         <div class="boss-intro-line"></div>
         <div class="boss-intro-name">${bossName}</div>
-        <div class="boss-intro-desc">${bossDesc}</div>
+        <div class="boss-intro-desc">${bossFlavorText}</div>
         <div class="boss-intro-line"></div>
       </div>
     `;
@@ -1212,13 +1227,14 @@ class GameUI {
       window.game.currentTrack = null;
     }
 
-    // After 2.5s: fade out splash, start boss music, begin combat
+    // After 2.5s: fade out splash, start boss music, auto-start fight
     setTimeout(() => {
       splash.classList.add('fade-out');
       window.game.startBossMusic();
       setTimeout(() => {
         splash.remove();
-        this.startCombatNode(node);
+        // Auto-start: skip "Begin Encounter" and go straight to spawning
+        this.engine.beginSpawning();
       }, 600);
     }, 2500);
   }
