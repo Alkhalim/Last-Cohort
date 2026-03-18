@@ -770,12 +770,25 @@ class GameUI {
           clearTimeout(holdTimer);
           this.clearPreviewSkill();
         });
+      } else if (skill.cooldownLeft && skill.cooldownLeft > 0) {
+        el.addEventListener('click', () => this.showCooldownPopup(el, skill.cooldownLeft));
       }
 
       list.appendChild(el);
     });
 
     confirmBtn.classList.add('hidden');
+  }
+
+  showCooldownPopup(element, turnsLeft) {
+    const popup = document.createElement('div');
+    popup.className = 'cooldown-popup';
+    popup.textContent = `On cooldown (${turnsLeft} turn${turnsLeft > 1 ? 's' : ''})`;
+    const rect = element.getBoundingClientRect();
+    popup.style.left = (rect.left + rect.width / 2) + 'px';
+    popup.style.top = (rect.top - 8) + 'px';
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 1200);
   }
 
   setPreviewSkill(skill) {
