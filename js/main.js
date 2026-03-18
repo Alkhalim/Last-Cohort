@@ -711,6 +711,7 @@ class Game {
   startNewRun() {
     this.difficulty = 1;
     this.marchCount = 0;
+    this.recentBosses = [];
     this.engine.morale = 50;
     this.engine.totalEnemiesKilled = 0;
     this.engine.encountersCompleted = 0;
@@ -726,7 +727,7 @@ class Game {
 
     this.startGameplayMusic();
 
-    this.ui.mapNodes = generateMap(this.difficulty);
+    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
     this.ui.showMapScreen();
@@ -739,7 +740,7 @@ class Game {
 
     this.resumeGameplayMusic();
 
-    this.ui.mapNodes = generateMap(this.difficulty);
+    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
     this.ui.showMapScreen();

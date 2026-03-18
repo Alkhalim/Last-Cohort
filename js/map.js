@@ -2,7 +2,7 @@
 // Last Cohort – Map Generator
 // ============================================================
 
-function generateMap(difficulty = 1) {
+function generateMap(difficulty = 1, recentBosses = []) {
   const nodes = [];
   let idCounter = 0;
 
@@ -176,7 +176,16 @@ function generateMap(difficulty = 1) {
       }
     } else if (node.type === 'boss') {
       const eligibleBosses = BOSS_ENCOUNTERS.filter(b => !b.minDifficulty || b.minDifficulty <= difficulty);
-      node.encounter = eligibleBosses[Math.floor(Math.random() * eligibleBosses.length)];
+      // Avoid repeating bosses until all eligible have been fought
+      let unseenBosses = eligibleBosses.filter(b => !recentBosses.includes(b.name));
+      if (unseenBosses.length === 0) {
+        // All eligible bosses have been seen — reset the list
+        recentBosses.length = 0;
+        unseenBosses = eligibleBosses;
+      }
+      const chosenBoss = unseenBosses[Math.floor(Math.random() * unseenBosses.length)];
+      recentBosses.push(chosenBoss.name);
+      node.encounter = chosenBoss;
     } else if (node.type === 'event') {
       // Filter by difficulty, then weighted random — no regular event repeats per march
       const repeatable = ['skill_upgrade', 'item_upgrade']; // these can repeat
