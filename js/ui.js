@@ -1690,18 +1690,26 @@ class GameUI {
     }
 
     shuffled.forEach(({ unit, itemId, item }) => {
-      // Determine upgrade: +1 to primary stat
+      // Determine which stat will be upgraded (same logic as createLeveledItem)
       const stats = item.stats;
-      let upgradeText = '';
+      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice');
+      const currentLevel = item.level || 1;
+      const newLevel = currentLevel + 1;
+
+      // Pre-pick the stat that would be upgraded (random, consistent with leveling)
       let statKey = '';
-      if (stats.damage) { statKey = 'damage'; upgradeText = `+1 damage (${stats.damage} → ${stats.damage + 1})`; }
-      else if (stats.block) { statKey = 'block'; upgradeText = `+1 block (${stats.block} → ${stats.block + 1})`; }
-      else if (stats.heal) { statKey = 'heal'; upgradeText = `+1 heal (${stats.heal} → ${stats.heal + 1})`; }
-      else if (stats.maxHp) { statKey = 'maxHp'; upgradeText = `+2 HP (${stats.maxHp} → ${stats.maxHp + 2})`; }
-      else if (stats.extraDice) { upgradeText = 'Already at maximum power.'; statKey = ''; }
-      else { statKey = Object.keys(stats)[0]; upgradeText = statKey ? `+1 ${statKey} (${stats[statKey]} → ${stats[statKey] + 1})` : 'Already at maximum power.'; }
+      let upgradeText = '';
+      if (statKeys.length > 0) {
+        statKey = statKeys[Math.floor(Math.random() * statKeys.length)];
+        const current = stats[statKey];
+        const next = current < 0 ? current - 1 : current + 1;
+        upgradeText = `Level ${currentLevel} → ${newLevel}: +1 ${statKey} (${current} → ${next})`;
+      } else {
+        upgradeText = 'Already at maximum power.';
+      }
 
       const tag = getPrimaryTag(unit.classId);
+      const baseName = item.baseId ? ITEM_DATA[item.baseId].name : item.name.replace(/ \+\d+$/, '');
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
@@ -1711,16 +1719,24 @@ class GameUI {
         btn.style.opacity = '0.5';
       } else {
         btn.addEventListener('click', () => {
-          // Apply upgrade permanently to ITEM_DATA
-          if (statKey === 'maxHp') {
-            ITEM_DATA[itemId].stats[statKey] += 2;
-            // Also apply HP gain to the unit
-            unit.maxHp += 2;
-            unit.baseMaxHp += 2;
-            unit.hp += 2;
+          // Apply level-up: increment the chosen stat
+          if (stats[statKey] < 0) {
+            ITEM_DATA[itemId].stats[statKey]--;
           } else {
             ITEM_DATA[itemId].stats[statKey]++;
           }
+          // Update level and name
+          ITEM_DATA[itemId].level = newLevel;
+          ITEM_DATA[itemId].name = baseName + ' +' + (newLevel - 1);
+          if (!ITEM_DATA[itemId].baseId) ITEM_DATA[itemId].baseId = itemId;
+
+          // Apply maxHp change if that stat was upgraded
+          if (statKey === 'maxHp') {
+            unit.maxHp++;
+            unit.baseMaxHp++;
+            unit.hp++;
+          }
+
           // Recompute equipment stats
           this.engine.computeEquipmentStats(unit);
 
