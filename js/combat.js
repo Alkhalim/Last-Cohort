@@ -1600,7 +1600,7 @@ class CombatEngine {
       xpValue: 3,
       ai: 'passive',
       isStructure: true,
-      healBoss: 5,
+      healBoss: 5 + (Math.max(0, (this.difficulty || 1) - 1) * 2),
       healBossId: boss.id,
       dead: false,
       poison: 0,
