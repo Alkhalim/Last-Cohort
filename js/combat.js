@@ -1559,7 +1559,10 @@ class CombatEngine {
       actions: [{ name: 'Pulsing Roots', damage: 0, chance: 1.0, text: 'pulses with green energy, healing the Witch' }],
     };
     this.enemies.push(totem);
-    this.addLog('A Healing Totem sprouts from the ground!');
+    // Grove Witch gains block when summoning a totem (3 x difficulty)
+    const totemBlock = 3 * (this.difficulty || 1);
+    boss.block = (boss.block || 0) + totemBlock;
+    this.addLog(`A Healing Totem sprouts from the ground! ${boss.name} gains ${totemBlock} Block.`);
     setTimeout(() => { totem.justSpawned = false; this.update(); }, 500);
   }
 
