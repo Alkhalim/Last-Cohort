@@ -30,11 +30,12 @@
   --die-selected: #c9a227;
   --die-used: #3a3a3a;
   /* Class tag colors */
-  --class-heavy: #c44a3a;
+  --class-melee: #c44a3a;
   --class-command: #c9a227;
   --class-support: #4aaa6a;
   --class-roman: #8a8a7a;
   --class-ranged: #4a8abf;
+  --class-elite: #7a4a8a;
 }
 
 * {
@@ -950,25 +951,29 @@ html, body {
 }
 
 /* --- Class color coding --- */
-.class-heavy .unit-title,
-.class-heavy .summary-unit-title { color: var(--class-heavy); }
+.class-melee .unit-title,
+.class-melee .summary-unit-title { color: var(--class-melee); }
 .class-command .unit-title,
 .class-command .summary-unit-title { color: var(--class-command); }
 .class-support .unit-title,
 .class-support .summary-unit-title { color: var(--class-support); }
 .class-ranged .unit-title,
 .class-ranged .summary-unit-title { color: var(--class-ranged); }
+.class-elite .unit-title,
+.class-elite .summary-unit-title { color: var(--class-elite); }
 
-.unit-card.class-heavy.selected { border-color: var(--class-heavy); box-shadow: 0 0 8px rgba(196, 74, 58, 0.25); }
+.unit-card.class-melee.selected { border-color: var(--class-melee); box-shadow: 0 0 8px rgba(196, 74, 58, 0.25); }
 .unit-card.class-command.selected { border-color: var(--class-command); box-shadow: 0 0 8px rgba(201, 162, 39, 0.25); }
 .unit-card.class-support.selected { border-color: var(--class-support); box-shadow: 0 0 8px rgba(74, 170, 106, 0.25); }
 .unit-card.class-ranged.selected { border-color: var(--class-ranged); box-shadow: 0 0 8px rgba(74, 138, 191, 0.25); }
+.unit-card.class-elite.selected { border-color: var(--class-elite); box-shadow: 0 0 8px rgba(122, 74, 138, 0.25); }
 
 /* Skill panel header color matches selected unit */
-#skill-panel.class-heavy { border-top-color: var(--class-heavy); }
+#skill-panel.class-melee { border-top-color: var(--class-melee); }
 #skill-panel.class-command { border-top-color: var(--class-command); }
 #skill-panel.class-support { border-top-color: var(--class-support); }
 #skill-panel.class-ranged { border-top-color: var(--class-ranged); }
+#skill-panel.class-elite { border-top-color: var(--class-elite); }
 
 /* Item class tag pips */
 .tag-pip {
@@ -979,11 +984,12 @@ html, body {
   margin-right: 2px;
   vertical-align: middle;
 }
-.tag-pip.tag-heavy { background: var(--class-heavy); }
+.tag-pip.tag-melee { background: var(--class-melee); }
 .tag-pip.tag-command { background: var(--class-command); }
 .tag-pip.tag-support { background: var(--class-support); }
 .tag-pip.tag-roman { background: var(--class-roman); }
 .tag-pip.tag-ranged { background: var(--class-ranged); }
+.tag-pip.tag-elite { background: var(--class-elite); }
 
 .loot-item-tags {
   display: inline-flex;
@@ -2722,10 +2728,11 @@ html, body {
   background: #1e2230;
 }
 
-.ps-class-card.selected.class-heavy { border-color: var(--class-heavy); box-shadow: 0 0 10px rgba(196, 74, 58, 0.3); }
+.ps-class-card.selected.class-melee { border-color: var(--class-melee); box-shadow: 0 0 10px rgba(196, 74, 58, 0.3); }
 .ps-class-card.selected.class-command { border-color: var(--class-command); box-shadow: 0 0 10px rgba(201, 162, 39, 0.3); }
 .ps-class-card.selected.class-support { border-color: var(--class-support); box-shadow: 0 0 10px rgba(74, 170, 106, 0.3); }
 .ps-class-card.selected.class-ranged { border-color: var(--class-ranged); box-shadow: 0 0 10px rgba(74, 138, 191, 0.3); }
+.ps-class-card.selected.class-elite { border-color: var(--class-elite); box-shadow: 0 0 10px rgba(122, 74, 138, 0.3); }
 
 .ps-class-header {
   display: flex;

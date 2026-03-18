@@ -8,7 +8,7 @@ const RAW_CLASSES = {
     "name": "Legionary",
     "title": "LEG",
     "maxHp": 32,
-    "tags": ["heavy", "roman"],
+    "tags": ["melee", "roman"],
     "description": "Heavy infantry. Reliable damage and strong defense.",
     "passive": {
       "name": "Shield Discipline",
@@ -364,7 +364,7 @@ const RAW_CLASSES = {
     "name": "Equites",
     "title": "EQU",
     "maxHp": 26,
-    "tags": ["heavy", "roman"],
+    "tags": ["melee", "roman"],
     "description": "Roman cavalry. Devastating charge openers that can strike any target.",
     "passive": {
       "name": "Cavalry Charge",
@@ -478,6 +478,66 @@ const RAW_CLASSES = {
         "ignoreRow": true,
         "description": "2 dice totaling 8+. A devastating siege bolt. Deals 12 damage.",
         "effects": { "damage": 12 }
+      }
+    ]
+  }
+},
+  "praetorian": {
+    "name": "Praetorian",
+    "title": "PRA",
+    "maxHp": 30,
+    "tags": ["melee", "elite", "roman"],
+    "hidden": true,
+    "unlockCondition": "Beat March 5",
+    "description": "Imperial bodyguard. The Emperor's finest, forged in blood and loyalty.",
+    "passive": {
+      "name": "Unyielding",
+      "description": "Cannot be downed in one hit. If a single attack would down this unit, survive with 1 HP instead (once per encounter)."
+    },
+    "skills": [
+      {
+        "id": "gladius_imperialis", "name": "Gladius Imperialis", "starter": true,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "description": "Strike with the imperial blade. Deals 4 damage.",
+        "effects": { "damage": 4 }
+      },
+      {
+        "id": "shield_of_rome", "name": "Shield of Rome", "starter": true,
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
+        "description": "Raise the praetorian shield. Gain 6 Block.",
+        "effects": { "block": 6 }
+      },
+      {
+        "id": "imperial_thrust", "name": "Imperial Thrust", "starter": true,
+        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "description": "A precise thrust to the throat. Deals 8 damage.",
+        "effects": { "damage": 8 }
+      },
+      {
+        "id": "praetorian_guard", "name": "Praetorian Guard",
+        "cost": { "type": "exact", "val": 4 }, "target": "all_allies",
+        "description": "All allies gain 4 Block. Taunt all enemies.",
+        "effects": { "blockAll": 4, "taunt": true }
+      },
+      {
+        "id": "execute", "name": "Execute",
+        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Execute a weakened foe. Deals 6 damage. Ignores block.",
+        "effects": { "damage": 6, "pierceBlock": 99 }
+      },
+      {
+        "id": "roman_discipline", "name": "Roman Discipline",
+        "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
+        "description": "2 dice totaling 6+. All allies gain 3 Block, +1 damage for next 2 attacks, +8 Morale.",
+        "effects": { "blockAll": 3, "buffAllies": { "bonusDamage": 1, "attacks": 2 }, "morale": 8 }
+      },
+      {
+        "id": "wrath_of_rome", "name": "Wrath of Rome",
+        "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 9+. The full fury of Rome. Deals 14 damage. Ignores block.",
+        "effects": { "damage": 14, "pierceBlock": 99 }
       }
     ]
   }

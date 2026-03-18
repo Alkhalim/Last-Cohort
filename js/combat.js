@@ -1006,6 +1006,13 @@ class CombatEngine {
   checkPartyDowned() {
     this.party.forEach(u => {
       if (u.hp <= 0 && !u.downed) {
+        // Praetorian passive: Unyielding — survive one lethal hit per encounter
+        if (u.classId === 'praetorian' && !u._unyieldingUsed) {
+          u._unyieldingUsed = true;
+          u.hp = 1;
+          this.addLog(`${u.name} refuses to fall! (Unyielding)`);
+          return;
+        }
         u.downed = true;
         u.hp = 0;
         this.addLog(`${u.name} is downed!`);

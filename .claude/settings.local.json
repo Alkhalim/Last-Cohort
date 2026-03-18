@@ -7,7 +7,8 @@
       "Bash(start:*)",
       "Bash(ls:*)",
       "Bash(cd:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(sed:*)"
     ]
   }
 }

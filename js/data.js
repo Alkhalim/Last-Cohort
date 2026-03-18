@@ -339,7 +339,10 @@ function getPrimaryTag(classId) {
 
 // Returns tag pip HTML for an item's classTags
 function renderTagPips(classTags) {
-  return classTags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
+  // Hide "roman" tag when there are other tags (avoid empty grey dot)
+  const nonRoman = classTags.filter(t => t !== 'roman');
+  const tagsToShow = nonRoman.length > 0 ? nonRoman : classTags;
+  return tagsToShow.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
 }
 
 // Create a leveled copy of an item — each level adds +1 to a random stat (or -1 to negative stats)

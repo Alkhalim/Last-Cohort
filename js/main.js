@@ -387,6 +387,10 @@ class Game {
     // Render class cards
     let html = '';
     for (const [classId, data] of Object.entries(CLASS_DATA)) {
+      // Hidden classes require unlock conditions
+      if (data.hidden) {
+        if (classId === 'praetorian' && (this.stats.highestDifficulty || 1) < 5) continue;
+      }
       const selected = this.selectedPartyClasses.includes(classId);
       const primaryTag = data.tags.find(t => t !== 'roman') || 'roman';
       const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
