@@ -220,6 +220,17 @@ class CombatEngine {
         });
         this.addLog(`${e.name} burns — all soldiers take ${e.turnDamageAll} damage!`);
       }
+      // Healing Totem: heals the boss each turn
+      if (!e.dead && e.healBoss) {
+        const boss = this.enemies.find(b => b.id === e.healBossId && !b.dead);
+        if (boss) {
+          const healAmt = Math.min(e.healBoss, boss.maxHp - boss.hp);
+          if (healAmt > 0) {
+            boss.hp += healAmt;
+            this.addLog(`${e.name} heals ${boss.name} for ${healAmt} HP.`);
+          }
+        }
+      }
     });
 
     // Morale decay — escalates each turn. Turn 1: -1, Turn 2: -2, etc.
@@ -251,9 +262,16 @@ class CombatEngine {
     }
 
     this.party.forEach(u => {
-      if (this.turn > 1) u.block = 0; // preserve camp block on turn 1
+      if (this.turn > 1) u.block = 0;
       u.taunt = false;
-      u.actedThisTurn = false;
+      // Bone Totem stun: skip this turn
+      if (u._stunNextTurn) {
+        u.actedThisTurn = true;
+        u._stunNextTurn = false;
+        this.addLog(`${u.name} is stunned and cannot act!`);
+      } else {
+        u.actedThisTurn = false;
+      }
     });
     this.dicePool.adjustUsed = false;
     this.dicePool.rerollUsed = false;
@@ -905,6 +923,70 @@ class CombatEngine {
               const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               victim.hp = Math.max(0, victim.hp - e.deathDamageEnemy);
               this.addLog(`${e.name} collapses onto ${victim.name} for ${e.deathDamageEnemy} damage!`);
+            }
+          }
+
+          // --- Boss-specific death reactions ---
+
+          // Arminius's Champion: revenge — deal 5 damage to whoever killed his ally
+          const champion = this.enemies.find(b => b.id === 'arminius_champion' && !b.dead && b !== e);
+          if (champion && !e.isBoss) {
+            champion.row = 'front';
+            // Damage a random alive party member
+            const aliveParty = this.party.filter(u => !u.downed);
+            if (aliveParty.length > 0) {
+              const victim = aliveParty[Math.floor(Math.random() * aliveParty.length)];
+              victim.hp = Math.max(1, victim.hp - 5);
+              victim.stats.damageTaken += 5;
+              this.addLog(`${champion.name} charges forward in rage and strikes ${victim.name} for 5 damage!`);
+              if (this.onVisual) this.onVisual('unitHit', { unitIndex: victim.index, damage: 5 });
+            }
+          }
+
+          // Mire Mother: gains +2 damage per action when a wolf dies
+          const mireMother = this.enemies.find(b => b.id === 'mire_mother' && !b.dead);
+          if (mireMother && e.id === 'marsh_wolf') {
+            mireMother.actions.forEach(a => { if (a.damage > 0) a.damage += 2; });
+            this.addLog(`${mireMother.name} howls with rage! Her attacks grow stronger!`);
+          }
+
+          // Bone Speaker: raise dead allies as bone totems
+          const boneSpeaker = this.enemies.find(b => b.id === 'bone_speaker' && !b.dead);
+          if (boneSpeaker && !e.isBoss && e.id !== 'bone_totem' && !e._raisedAsTotem) {
+            e._raisedAsTotem = true;
+            if (this.enemies.filter(en => !en.dead).length < 6) {
+              const totem = {
+                index: this.enemies.length,
+                id: 'bone_totem',
+                name: `${e.name}'s Bones`,
+                maxHp: 8,
+                hp: 8,
+                row: 'front',
+                damage: [0, 0],
+                speed: 0,
+                xpValue: 2,
+                ai: 'passive',
+                isStructure: true,
+                stunOnDeath: true,
+                dead: false,
+                poison: 0,
+                block: 0,
+                justSpawned: true,
+                actions: [{ name: 'Rattle', damage: 0, morale: -3, chance: 1.0, text: 'rattles with dark energy' }],
+              };
+              this.enemies.push(totem);
+              this.addLog(`${boneSpeaker.name} raises ${e.name}'s bones as a totem!`);
+              setTimeout(() => { totem.justSpawned = false; this.update(); }, 500);
+            }
+          }
+
+          // Bone Totem: destroying it stuns the killer (skip next turn)
+          if (e.stunOnDeath) {
+            // Find last unit that acted — that's likely the killer
+            const lastActor = this.party.find(u => u.actedThisTurn && !u.downed);
+            if (lastActor) {
+              lastActor._stunNextTurn = true;
+              this.addLog(`The bones shatter — ${lastActor.name} is stunned next turn!`);
             }
           }
         }
