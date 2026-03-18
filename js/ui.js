@@ -1454,15 +1454,22 @@ class GameUI {
       // Determine what to upgrade
       const effects = baseDef.effects || {};
       let upgradeText = '';
-      if (effects.damage) upgradeText = `+1 base damage (${effects.damage} → ${effects.damage + 1})`;
-      else if (effects.heal) upgradeText = `+1 base healing (${effects.heal} → ${effects.heal + 1})`;
-      else if (effects.healAll) upgradeText = `+1 base healing (${effects.healAll} → ${effects.healAll + 1})`;
-      else if (effects.block) upgradeText = `+1 base block (${effects.block} → ${effects.block + 1})`;
-      else if (effects.blockAll) upgradeText = `+1 base block (${effects.blockAll} → ${effects.blockAll + 1})`;
-      else if (effects.poison) upgradeText = `+1 base poison (${effects.poison} → ${effects.poison + 1})`;
-      else if (effects.poisonAll) upgradeText = `+1 base poison (${effects.poisonAll} → ${effects.poisonAll + 1})`;
+      if (effects.damage) upgradeText = `+1 damage (${effects.damage} → ${effects.damage + 1})`;
+      else if (effects.heal) upgradeText = `+1 healing (${effects.heal} → ${effects.heal + 1})`;
+      else if (effects.healAll) upgradeText = `+1 healing to all (${effects.healAll} → ${effects.healAll + 1})`;
+      else if (effects.block) upgradeText = `+1 block (${effects.block} → ${effects.block + 1})`;
+      else if (effects.blockAll) upgradeText = `+1 block to all (${effects.blockAll} → ${effects.blockAll + 1})`;
+      else if (effects.poison) upgradeText = `+1 poison (${effects.poison} → ${effects.poison + 1})`;
+      else if (effects.poisonAll) upgradeText = `+1 poison to all (${effects.poisonAll} → ${effects.poisonAll + 1})`;
       else if (effects.morale) upgradeText = `+5 morale (${effects.morale} → ${effects.morale + 5})`;
-      else upgradeText = '+1 to primary effect';
+      else if (effects.damageAll) upgradeText = `+1 damage to all (${effects.damageAll} → ${effects.damageAll + 1})`;
+      else if (effects.selfDamage) upgradeText = `-1 self damage (${effects.selfDamage} → ${effects.selfDamage - 1})`;
+      else {
+        // Fallback: find the first numeric effect and name it
+        const key = Object.keys(effects).find(k => typeof effects[k] === 'number');
+        if (key) upgradeText = `+1 ${key} (${effects[key]} → ${effects[key] + 1})`;
+        else upgradeText = 'Skill already at full power';
+      }
 
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
@@ -1555,7 +1562,7 @@ class GameUI {
       else if (stats.heal) { statKey = 'heal'; upgradeText = `+1 heal (${stats.heal} → ${stats.heal + 1})`; }
       else if (stats.maxHp) { statKey = 'maxHp'; upgradeText = `+2 HP (${stats.maxHp} → ${stats.maxHp + 2})`; }
       else if (stats.extraDice) { upgradeText = 'Already at maximum power.'; statKey = ''; }
-      else { upgradeText = '+1 to primary stat'; statKey = Object.keys(stats)[0]; }
+      else { statKey = Object.keys(stats)[0]; upgradeText = statKey ? `+1 ${statKey} (${stats[statKey]} → ${stats[statKey] + 1})` : 'Already at maximum power.'; }
 
       const tag = getPrimaryTag(unit.classId);
       const btn = document.createElement('button');
