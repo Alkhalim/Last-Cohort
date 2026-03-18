@@ -358,9 +358,8 @@ const RAW_CLASSES = {
       {
         "id": "thunderous_blast", "name": "Thunderous Blast", "cooldown": 3,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
-        "ignoreRow": true,
-        "description": "2 dice totaling 7+. Deals 5 damage to target, half to others. +6 Morale. Targets any row.",
-        "effects": { "damage": 5, "splashHalf": true, "morale": 6 }
+        "description": "2 dice totaling 7+. Deals 5 damage to front-row target. Half damage pierces to back row. +6 Morale.",
+        "effects": { "damage": 5, "splashBackRow": true, "morale": 6 }
       }
     ]
   },

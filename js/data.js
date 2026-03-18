@@ -189,6 +189,11 @@ function buildSkillExecute(skillData) {
       result.splashAdjacent = effects.splashAdjacent;
     }
 
+    // Splash back row: half damage pierces to all back-row enemies
+    if (effects.splashBackRow) {
+      result.splashBackRow = true;
+    }
+
     // Knockback: shove front-row enemy to back row
     if (effects.knockback) {
       result.knockback = true;
@@ -277,8 +282,12 @@ function loadGameData() {
 function generateEncounterByThreat(threat, difficulty) {
   const diff = difficulty || 1;
   const filterByDiff = (list) => list.filter(e => !e.minDifficulty || e.minDifficulty <= diff);
-  if (threat <= 1) {
+  if (threat <= 1 && diff <= 3) {
     const pool = filterByDiff(_encounterThreatData.easy);
+    return pool[Math.floor(Math.random() * pool.length)];
+  } else if (threat <= 1 && diff > 3) {
+    // No easy encounters after difficulty 3 — promote to mid
+    const pool = filterByDiff(_encounterThreatData.mid);
     return pool[Math.floor(Math.random() * pool.length)];
   } else if (threat === 2) {
     const pool = filterByDiff(_encounterThreatData.mid);

@@ -704,6 +704,21 @@ class CombatEngine {
         parts.push(`Splash deals ${halfDmg} to other enemies.`);
       }
 
+      // Splash back row: half damage pierces to all back-row enemies
+      if (result.splashBackRow) {
+        const halfDmg = Math.max(1, Math.floor((result.damage + bonusDmg) / 2));
+        const backRow = this.enemies.filter(e => !e.dead && e.row === 'back');
+        backRow.forEach(e => {
+          let sDmg = halfDmg;
+          const sAura = this.getAuraDamageReduction(e);
+          if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
+          if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+          e.hp = Math.max(0, e.hp - sDmg);
+          unit.stats.damageDealt += sDmg;
+        });
+        if (backRow.length > 0) parts.push(`The blast pierces to the back row for ${halfDmg} damage.`);
+      }
+
       // Splash: damage to all enemies in same row as target
       if (result.splashRow && result.target.row) {
         const rowDmg = result.damage + bonusDmg;
