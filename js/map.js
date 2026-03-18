@@ -170,6 +170,10 @@ function generateMap(difficulty = 1) {
   for (const node of nodes) {
     if (node.type === 'combat') {
       node.encounter = generateEncounterByThreat(node.threat, difficulty);
+      // Ambush: at difficulty 3+, 30% chance for combat nodes to become ambushes
+      if (difficulty >= 3 && node.depth > 0 && Math.random() < 0.3) {
+        node.encounter = { ...node.encounter, isAmbush: true };
+      }
     } else if (node.type === 'boss') {
       const eligibleBosses = BOSS_ENCOUNTERS.filter(b => !b.minDifficulty || b.minDifficulty <= difficulty);
       node.encounter = eligibleBosses[Math.floor(Math.random() * eligibleBosses.length)];

@@ -849,10 +849,12 @@ class GameUI {
 
     switch (this.engine.phase) {
       case PHASE.PRE_COMBAT:
-        phaseLabel.textContent = 'ENCOUNTER';
-        rollBtn.classList.remove('hidden');
-        rollBtn.textContent = 'Begin Encounter';
-        rollBtn.onclick = () => { this.engine.beginSpawning(); };
+        phaseLabel.textContent = this.engine.isAmbush ? 'AMBUSH' : 'ENCOUNTER';
+        if (!this.engine.isAmbush) {
+          rollBtn.classList.remove('hidden');
+          rollBtn.textContent = 'Begin Encounter';
+          rollBtn.onclick = () => { this.engine.beginSpawning(); };
+        }
         break;
       case PHASE.SPAWNING:
         phaseLabel.textContent = 'ENEMIES APPEAR...';
@@ -1253,6 +1255,32 @@ class GameUI {
     this._prevBossHpPct = undefined;
     this.diceRevealRunning = false;
     this.render();
+
+    // Ambush encounters: show splash then auto-start
+    if (node.encounter.isAmbush) {
+      this.showAmbushSplash();
+    }
+  }
+
+  showAmbushSplash() {
+    const splash = document.createElement('div');
+    splash.id = 'ambush-splash';
+    splash.className = 'ambush-splash';
+    splash.innerHTML = `
+      <div class="ambush-splash-content">
+        <div class="ambush-splash-text">AMBUSH!</div>
+      </div>
+    `;
+    document.getElementById('game').appendChild(splash);
+
+    // After 1.5s: fade out and auto-start the encounter (enemies go first)
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+      setTimeout(() => {
+        splash.remove();
+        this.engine.beginSpawning();
+      }, 500);
+    }, 1500);
   }
 
   // ================================================================

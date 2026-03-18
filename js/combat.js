@@ -75,6 +75,7 @@ class CombatEngine {
     this.log = [];
     this.phase = PHASE.PRE_COMBAT;
     this.currentEncounterDef = encounterDef;
+    this.isAmbush = !!encounterDef.isAmbush;
     this.targetMode = null;
     this.killedEnemies = [];
     this.party.forEach(u => {
@@ -113,6 +114,15 @@ class CombatEngine {
 
   spawnNextEnemy() {
     if (this.spawnIndex >= this.enemyDefs.length) {
+      // Ambush: enemies strike first before the player gets dice
+      if (this.isAmbush) {
+        this.isAmbush = false; // only the first turn is ambushed
+        this.addLog('AMBUSH! The enemy strikes before you can react!');
+        this.phase = PHASE.ENEMY_TURN;
+        this.update();
+        setTimeout(() => this.executeEnemyTurn(), 600);
+        return;
+      }
       this.addLog('Prepare yourselves!');
       this.startRollPhase();
       return;
