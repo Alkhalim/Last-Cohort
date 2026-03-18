@@ -331,25 +331,27 @@ class CombatEngine {
     const triggeredDice = []; // { dieId, type } for UI flash
 
     for (const die of this.dicePool.dice) {
-      // Medicus: heal random damaged ally on each 1
+      // Medicus: heal random damaged ally on each 1 (scales with difficulty)
       if (die.value === 1 && hasMedicus) {
         const damaged = this.party.filter(u => !u.downed && u.hp < u.maxHp);
         if (damaged.length > 0) {
+          const passiveHeal = Math.max(1, (this.difficulty || 1));
           const target = damaged[Math.floor(Math.random() * damaged.length)];
-          target.hp = Math.min(target.maxHp, target.hp + 1);
-          this.addLog(`Healer's Instinct: ${target.name} healed 1 HP.`);
-          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: 1 });
+          target.hp = Math.min(target.maxHp, target.hp + passiveHeal);
+          this.addLog(`Healer's Instinct: ${target.name} healed ${passiveHeal} HP.`);
+          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: passiveHeal });
           triggeredDice.push({ dieId: die.id, type: 'heal' });
         }
       }
 
-      // Sagittarius: damage random enemy on each 6
+      // Sagittarius: damage random enemy on each 6 (scales with difficulty)
       if (die.value === 6 && hasSagittarius) {
         const alive = this.enemies.filter(e => !e.dead);
         if (alive.length > 0) {
+          const passiveDmg = Math.max(1, (this.difficulty || 1));
           const target = alive[Math.floor(Math.random() * alive.length)];
-          target.hp = Math.max(0, target.hp - 1);
-          this.addLog(`Eagle Eye: ${target.name} takes 1 damage.`);
+          target.hp = Math.max(0, target.hp - passiveDmg);
+          this.addLog(`Eagle Eye: ${target.name} takes ${passiveDmg} damage.`);
           triggeredDice.push({ dieId: die.id, type: 'damage' });
         }
       }
