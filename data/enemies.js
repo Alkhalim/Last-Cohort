@@ -28,6 +28,7 @@ const RAW_ENEMIES = {
     "id": "marsh_wolf", "name": "Marsh Wolf",
     "maxHp": 14, "row": "front", "damage": [3, 6], "speed": 3, "xpValue": 4,
     "description": "Fast predator. Attacks twice when wounded.", "ai": "aggressive",
+    "woundedDoubleAttack": true,
     "actions": [
       { "name": "Bite", "damage": 4, "chance": 0.5, "text": "lunges with snapping jaws" },
       { "name": "Pounce", "damage": 6, "chance": 0.3, "text": "pounces", "cooldown": 1 },

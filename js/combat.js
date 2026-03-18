@@ -1192,16 +1192,30 @@ class CombatEngine {
     }
     this.executeEnemyAction(enemy);
 
-    // Boss enrage: if boss is below 50% HP, attack twice
-    if (enemy.isBoss && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5) {
-      this.addLog(`${enemy.name} is enraged and strikes again!`);
-      this.executeEnemySingleAction(enemy);
+    // Check for second strike (boss enrage or wounded frenzy)
+    const needsSecondStrike =
+      (enemy.isBoss && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5) ||
+      (!enemy.isBoss && enemy.woundedDoubleAttack && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5);
+
+    if (needsSecondStrike) {
+      this.update();
+      setTimeout(() => {
+        if (enemy.dead || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
+          this.executeEnemySequence(enemies, index + 1);
+          return;
+        }
+        const msg = enemy.isBoss ? `${enemy.name} is enraged and strikes again!` : `${enemy.name} is wounded and attacks in a frenzy!`;
+        this.addLog(msg);
+        this.executeEnemySingleAction(enemy);
+        this.checkPartyDowned();
+        this.update();
+        setTimeout(() => this.executeEnemySequence(enemies, index + 1), 800);
+      }, 600);
+    } else {
+      this.checkPartyDowned();
+      this.update();
+      setTimeout(() => this.executeEnemySequence(enemies, index + 1), 800);
     }
-
-    this.checkPartyDowned();
-    this.update();
-
-    setTimeout(() => this.executeEnemySequence(enemies, index + 1), 800);
   }
 
   executeEnemyAction(enemy) {
