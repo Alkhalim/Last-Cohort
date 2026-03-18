@@ -1813,6 +1813,7 @@ class GameUI {
       const tag = getPrimaryTag(u.classId);
       const statLines = [];
       if (s.damageDealt > 0) statLines.push(`<span class="stat-dmg">${s.damageDealt} damage dealt</span>`);
+      if (s.poisonInflicted > 0) statLines.push(`<span class="stat-poison">${s.poisonInflicted} poison inflicted</span>`);
       if (s.healingDone > 0) statLines.push(`<span class="stat-heal">${s.healingDone} healing done</span>`);
       if (s.blockGenerated > 0) statLines.push(`<span class="stat-block">${s.blockGenerated} block generated</span>`);
       if (s.moraleRestored > 0) statLines.push(`<span class="stat-morale">${s.moraleRestored} morale restored</span>`);

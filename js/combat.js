@@ -85,7 +85,7 @@ class CombatEngine {
       u.passiveTriggered = false;
       u.skills.forEach(s => { s.cooldownLeft = 0; });
       u.actedThisTurn = false;
-      u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 };
+      u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0 };
       if (u.passive) u.passive.triggered = false;
       this.computeEquipmentStats(u);
     });
@@ -694,6 +694,7 @@ class CombatEngine {
       // Special: Legion Composite Bow — attacks apply 1 Poison
       if (this.unitHasItem(unit, 'legion_composite_bow') && total > 0 && result.target.hp > 0) {
         result.target.poison = (result.target.poison || 0) + 1;
+        unit.stats.poisonInflicted += 1;
         parts.push('The festering arrow poisons the target. (+1 Poison)');
       }
 
@@ -873,6 +874,7 @@ class CombatEngine {
     if (result.poison && result.target) {
       const totalPoison = result.poison + (unit.equipPoison || 0);
       result.target.poison = (result.target.poison || 0) + totalPoison;
+      unit.stats.poisonInflicted += totalPoison;
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
       parts.push(`Applies ${totalPoison}${bonusStr} Poison.`);
     }
@@ -880,7 +882,10 @@ class CombatEngine {
     if (result.poisonSplash && result.target) {
       const splashPoison = result.poisonSplash;
       this.enemies.forEach(e => {
-        if (!e.dead && e !== result.target) e.poison = (e.poison || 0) + splashPoison;
+        if (!e.dead && e !== result.target) {
+          e.poison = (e.poison || 0) + splashPoison;
+          unit.stats.poisonInflicted += splashPoison;
+        }
       });
       parts.push(`${splashPoison} Poison splashes to other enemies.`);
     }
@@ -888,7 +893,10 @@ class CombatEngine {
     if (result.poisonAll) {
       const totalPoison = result.poisonAll + (unit.equipPoison || 0);
       this.enemies.forEach(e => {
-        if (!e.dead) e.poison = (e.poison || 0) + totalPoison;
+        if (!e.dead) {
+          e.poison = (e.poison || 0) + totalPoison;
+          unit.stats.poisonInflicted += totalPoison;
+        }
       });
       parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${totalPoison} Poison to all enemies.`);
     }

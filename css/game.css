@@ -1652,6 +1652,61 @@ html, body {
 .stat-taken { color: #aa6666; }
 .stat-none { color: var(--text-dim); font-style: italic; }
 
+.summary-expand-hint {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-left: auto;
+}
+
+.summary-unit.expanded .summary-expand-hint {
+  display: none;
+}
+
+.summary-unit-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.7rem;
+  color: var(--text);
+}
+
+.summary-unit-detail.hidden {
+  display: none;
+}
+
+.summary-detail-passive {
+  margin-bottom: 6px;
+  color: var(--text-dim);
+  font-size: 0.65rem;
+}
+
+.summary-detail-section {
+  margin-bottom: 4px;
+}
+
+.summary-detail-skill {
+  color: var(--text-bright);
+}
+
+.summary-detail-item {
+  margin-left: 8px;
+  margin-top: 2px;
+}
+
+.summary-detail-item-name {
+  font-weight: 600;
+}
+
+.summary-detail-item-name.rarity-common { color: var(--text); }
+.summary-detail-item-name.rarity-uncommon { color: var(--blue-bright); }
+.summary-detail-item-name.rarity-rare { color: var(--gold); }
+
+.summary-detail-item-stats {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
 /* --- Renown on encounter summary --- */
 .summary-renown {
   text-align: center;
