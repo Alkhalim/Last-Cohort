@@ -708,7 +708,8 @@ class CombatEngine {
     const bonusHeal = (unit.equipHeal || 0) + moraleMod;
 
     if (result.damage && result.target && result.target.hp !== undefined) {
-      let total = result.damage + bonusDmg;
+      // Split damage: calculate total first, then halve for each target
+      let total = (result.splitDamage ? Math.floor((result.damage + bonusDmg) / 2) : result.damage + bonusDmg);
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);
@@ -837,9 +838,9 @@ class CombatEngine {
         parts.push(`${result.target.name} is knocked to the back row!`);
       }
 
-      // Split damage: apply same damage to second target
+      // Split damage: apply same halved damage to second target (bonuses already included in split)
       if (result.splitDamage && result.secondTarget && result.secondTarget.hp !== undefined) {
-        let total2 = result.damage + bonusDmg;
+        let total2 = Math.floor((result.damage + bonusDmg) / 2);
         const aura2 = this.getAuraDamageReduction(result.secondTarget);
         if (aura2 > 0) total2 = Math.max(1, total2 - aura2);
         if (result.secondTarget.block && result.secondTarget.block > 0) {
