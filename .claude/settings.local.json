@@ -10,7 +10,8 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Bash(node:*)",
-      "Bash(for f:*)"
+      "Bash(for f:*)",
+      "Bash(node -e \":*)"
     ]
   }
 }
