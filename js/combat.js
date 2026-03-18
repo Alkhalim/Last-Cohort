@@ -450,6 +450,18 @@ class CombatEngine {
   canUseSkill(unitIndex, skill, available) {
     // Cooldown check
     if (skill.cooldownLeft && skill.cooldownLeft > 0) return false;
+
+    // Disable pure heal skills when nobody is damaged
+    const eff = skill.effects || {};
+    const isHealOnly = (eff.heal || eff.healAll) &&
+      !eff.damage && !eff.damageAll && !eff.poison && !eff.poisonAll &&
+      !eff.block && !eff.blockAll && !eff.morale && !eff.buffAllies &&
+      !eff.cleanse && !eff.taunt && !eff.markTarget;
+    if (isHealOnly) {
+      const anyDamaged = this.party.some(u => !u.downed && u.hp < u.maxHp);
+      if (!anyDamaged) return false;
+    }
+
     if (!available) available = this.dicePool.getAvailable();
     const cost = skill.cost;
     switch (cost.type) {
