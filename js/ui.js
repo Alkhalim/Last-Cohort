@@ -1319,6 +1319,21 @@ class GameUI {
     choicesEl.innerHTML = '';
 
     event.choices.forEach((choice, ci) => {
+      // Check class/tag requirements
+      const party = this.engine.party;
+      const aliveParty = party.filter(u => !u.downed);
+      if (choice.requiresClass) {
+        const hasClass = aliveParty.some(u => u.classId === choice.requiresClass);
+        if (!hasClass) return; // skip this choice entirely
+      }
+      if (choice.requiresTag) {
+        const hasTag = aliveParty.some(u => {
+          const tags = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags : [];
+          return tags.includes(choice.requiresTag);
+        });
+        if (!hasTag) return;
+      }
+
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
       btn.textContent = choice.text;

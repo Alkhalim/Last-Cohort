@@ -27,9 +27,9 @@ const RAW_EVENTS = [
     "id": "fallen_legionary", "name": "Fallen Legionary",
     "intro": "A Roman soldier lies against a tree, barely alive. His armor is shattered and his eyes are dim. He clutches a leather satchel.",
     "choices": [
-      { "text": "Tend to his wounds and take the satchel.", "outcomes": [
-        { "weight": 0.6, "text": "He dies in your arms, but the satchel holds useful supplies.", "effects": { "grantItem": "herb_pouch", "morale": -5 } },
-        { "weight": 0.4, "text": "He revives briefly and whispers a warning about the path ahead. The satchel holds medicine.", "effects": { "healAll": 6, "morale": 5 } }
+      { "text": "Have your medicus tend to his wounds.", "requiresClass": "medicus", "outcomes": [
+        { "weight": 0.6, "text": "Your medicus works quickly. He dies in your arms, but the satchel holds useful supplies.", "effects": { "grantItem": "herb_pouch", "morale": -5 } },
+        { "weight": 0.4, "text": "Your medicus stabilizes him. He whispers a warning about the path ahead. The satchel holds medicine.", "effects": { "healAll": 8, "morale": 8 } }
       ]},
       { "text": "Take his equipment and move on.", "outcomes": [
         { "weight": 0.5, "text": "His gladius is still sharp.", "effects": { "grantItem": "iron_gladius" } },
@@ -46,6 +46,10 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "The crossing goes smoothly. The cold water numbs old wounds.", "effects": { "healAll": 3 } },
         { "weight": 0.3, "text": "The current is stronger than expected. Equipment is lost.", "effects": { "damageAll": 6, "morale": -10 } }
       ]},
+      { "text": "Your scout finds a safe crossing upstream.", "requiresTag": "ranged", "outcomes": [
+        { "weight": 0.6, "text": "Sharp eyes spot a shallow ford hidden by reeds. Everyone crosses dry.", "effects": { "morale": 10 } },
+        { "weight": 0.4, "text": "The scout finds the ford and a forgotten supply pack on the far bank.", "effects": { "morale": 8, "grantItem": "scouts_sling" } }
+      ]},
       { "text": "Cross on the fallen log.", "outcomes": [
         { "weight": 0.5, "text": "Careful footing gets everyone across safely.", "effects": { "morale": 5 } },
         { "weight": 0.3, "text": "The log holds. You find a cache on the far bank.", "effects": { "grantItem": "fang_necklace" } },
@@ -61,6 +65,10 @@ const RAW_EVENTS = [
         { "weight": 0.5, "text": "He reveals a hidden supply cache before escaping.", "effects": { "grantItem": "herb_pouch", "morale": 5 } },
         { "weight": 0.3, "text": "He tells you nothing useful and manages to bite a soldier.", "effects": { "damageAll": 2 } },
         { "weight": 0.2, "text": "He breaks free and screams an alarm. You must move quickly.", "effects": { "morale": -12 } }
+      ]},
+      { "text": "Your centurion takes command of the interrogation.", "requiresClass": "centurion", "outcomes": [
+        { "weight": 0.6, "text": "Under firm questioning, the scout reveals enemy positions. Invaluable intelligence.", "effects": { "morale": 12, "healAll": 3 } },
+        { "weight": 0.4, "text": "The centurion's authority breaks him. He begs for mercy and offers his blade.", "effects": { "grantItem": "wolf_fang_blade", "morale": 5 } }
       ]},
       { "text": "Release him as a show of mercy.", "outcomes": [
         { "weight": 0.6, "text": "The men question your judgment, but the gesture feels right.", "effects": { "morale": 8 } },
@@ -94,6 +102,10 @@ const RAW_EVENTS = [
         { "weight": 0.4, "text": "They fall in line, ashamed. Your men stand a little taller.", "effects": { "morale": 15 } },
         { "weight": 0.3, "text": "They refuse and flee into the forest, but leave useful supplies behind.", "effects": { "healAll": 6, "grantItem": "iron_gladius" } },
         { "weight": 0.3, "text": "They attack in desperation. You put them down, but the fight costs you.", "effects": { "damageAll": 5, "morale": -10 } }
+      ]},
+      { "text": "Your centurion rallies them with authority.", "requiresClass": "centurion", "outcomes": [
+        { "weight": 0.7, "text": "The centurion's voice carries the weight of Rome. Every man falls in line without a word. Morale soars.", "effects": { "morale": 22 } },
+        { "weight": 0.3, "text": "They recognize the rank and offer their best supplies as penance.", "effects": { "morale": 12, "healAll": 8, "grantItem": "iron_gladius" } }
       ]},
       { "text": "Trade supplies with them.", "outcomes": [
         { "weight": 0.6, "text": "They share medicine and a warm meal. A brief taste of civilization.", "effects": { "healAll": 10, "morale": 5 } },
@@ -170,6 +182,10 @@ const RAW_EVENTS = [
         { "weight": 0.6, "text": "The boar falls. Fresh meat lifts the men's spirits.", "effects": { "healAll": 8, "morale": 8 } },
         { "weight": 0.4, "text": "The boar gores a soldier before going down. Meat is meat.", "effects": { "damageAll": 4, "healAll": 6, "morale": 3 } }
       ]},
+      { "text": "Your heavy infantry brings it down cleanly.", "requiresTag": "melee", "outcomes": [
+        { "weight": 0.7, "text": "A single precise thrust. The boar never stood a chance. Fresh meat and a trophy tusk.", "effects": { "healAll": 10, "morale": 10 } },
+        { "weight": 0.3, "text": "The legionary pins it expertly. The tusk makes a fine blade.", "effects": { "healAll": 8, "grantItem": "fang_necklace" } }
+      ]},
       { "text": "Wait for it to move.", "outcomes": [
         { "weight": 0.5, "text": "It eventually wanders off. Time lost, but no blood spilled.", "effects": { "morale": -3 } },
         { "weight": 0.5, "text": "It charges! Your men scatter but regroup quickly.", "effects": { "damageAll": 3 } }
@@ -186,6 +202,10 @@ const RAW_EVENTS = [
         { "weight": 0.5, "text": "From the top, you see the path ahead clearly. Your confidence grows.", "effects": { "morale": 15 } },
         { "weight": 0.3, "text": "You spot an enemy patrol and avoid them. The men feel relieved.", "effects": { "morale": 10, "healAll": 3 } },
         { "weight": 0.2, "text": "The stairs collapse. A soldier is injured in the fall.", "effects": { "damageAll": 5, "morale": -5 } }
+      ]},
+      { "text": "Your officer organizes a defensive rest.", "requiresTag": "command", "outcomes": [
+        { "weight": 0.6, "text": "The watchtower provides cover. Your men rest properly for the first time in days.", "effects": { "healAll": 10, "morale": 12 } },
+        { "weight": 0.4, "text": "A well-organized camp. The officer finds a Roman cache bricked into the wall.", "effects": { "healAll": 8, "morale": 8, "grantItem": "shieldbearers_grip" } }
       ]},
       { "text": "Search the ruins for supplies.", "outcomes": [
         { "weight": 0.5, "text": "You find a cache of Roman equipment hidden in the walls.", "effects": { "grantItem": "raider_shield" } },
@@ -205,8 +225,13 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "The blood ignites as you approach. A curse lashes out.", "effects": { "damageAll": 6, "morale": -12 } },
         { "weight": 0.3, "text": "You destroy the site but find a powerful artifact beneath the altar.", "effects": { "grantItem": "arm_ring_of_arminius", "damageAll": 4 } }
       ]},
+      { "text": "Your medicus studies the herbs and symbols.", "requiresClass": "medicus", "outcomes": [
+        { "weight": 0.5, "text": "Your medicus recognizes the herbs and harvests them. Potent medicine.", "effects": { "healAll": 12, "morale": 5 } },
+        { "weight": 0.3, "text": "The medicus deciphers a ward against poison and applies it to your weapons.", "effects": { "morale": 8, "grantItem": "viper_venom_vial" } },
+        { "weight": 0.2, "text": "Deep study reveals the ritual's purpose — a protection charm, repurposed.", "effects": { "healAll": 6, "grantItem": "woad_charm" } }
+      ]},
       { "text": "Study the symbols carefully.", "outcomes": [
-        { "weight": 0.5, "text": "Your medicus recognizes some of the herbs used. Knowledge is power.", "effects": { "healAll": 8 } },
+        { "weight": 0.5, "text": "The symbols are hard to read. You glean a little knowledge.", "effects": { "healAll": 5 } },
         { "weight": 0.3, "text": "The symbols make no sense, but staring at them too long brings headaches.", "effects": { "morale": -8 } },
         { "weight": 0.2, "text": "You decipher a ward against poison. Useful.", "effects": { "morale": 5, "healAll": 3 } }
       ]},
@@ -226,7 +251,7 @@ const RAW_EVENTS = [
         { "weight": 0.5, "text": "The wolf dies quietly. Its pelt is thick and warm.", "effects": { "grantItem": "wolf_pelt", "morale": 3 } },
         { "weight": 0.5, "text": "As it dies, others howl in the distance. Its pack remembers.", "effects": { "morale": -8 } }
       ]},
-      { "text": "Have the medicus tend to it.", "outcomes": [
+      { "text": "Have your medicus tend to it.", "requiresClass": "medicus", "outcomes": [
         { "weight": 0.4, "text": "Against all odds, the wolf accepts treatment. It limps away, turning back once. Your men feel... something.", "effects": { "morale": 20 } },
         { "weight": 0.3, "text": "It snaps and bites before fleeing. Worth the try.", "effects": { "damageAll": 3, "morale": 5 } },
         { "weight": 0.3, "text": "The wolf calms. Around its neck is a collar with a strange charm.", "effects": { "grantItem": "fang_necklace", "morale": 10 } }
