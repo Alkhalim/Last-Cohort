@@ -113,6 +113,7 @@ const RAW_ENEMIES = {
     "id": "grove_witch", "name": "Grove Witch",
     "maxHp": 45, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 22,
     "isBoss": true, "ai": "boss",
+    "description": "A twisted figure wreathed in green flame, half-woman, half-forest. She commands root and thorn, drains the will from soldiers, and summons healing totems from the living earth. The longer she lives, the stronger the forest grows around her.",
     "actions": [
       { "name": "Thorn Volley", "damage": 5, "chance": 0.3, "text": "sends a volley of blackened thorns", "aoe": true },
       { "name": "Soul Drain", "damage": 7, "morale": -15, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
