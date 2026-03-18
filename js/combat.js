@@ -279,6 +279,13 @@ class CombatEngine {
     });
     this.dicePool.adjustUsed = false;
     this.dicePool.rerollUsed = false;
+
+    // Tick down skill cooldowns
+    this.party.forEach(u => {
+      u.skills.forEach(s => {
+        if (s.cooldownLeft && s.cooldownLeft > 0) s.cooldownLeft--;
+      });
+    });
     this.targetMode = null;
     this.addLog(`\u2014 Turn ${this.turn} \u2014`);
 
@@ -399,6 +406,8 @@ class CombatEngine {
   }
 
   canUseSkill(unitIndex, skill, available) {
+    // Cooldown check
+    if (skill.cooldownLeft && skill.cooldownLeft > 0) return false;
     if (!available) available = this.dicePool.getAvailable();
     const cost = skill.cost;
     switch (cost.type) {
@@ -542,6 +551,11 @@ class CombatEngine {
 
     diceIds.forEach(id => this.dicePool.useDie(id));
     const result = skill.execute(unit, targets, diceIds.map(id => this.dicePool.dice.find(d => d.id === id)));
+
+    // Set cooldown
+    if (skill.cooldown) {
+      skill.cooldownLeft = skill.cooldown;
+    }
 
     const logText = this.applySkillResult(unit, skill, result);
     this.addLog(logText);

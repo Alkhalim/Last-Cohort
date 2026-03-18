@@ -209,6 +209,7 @@ function buildSkill(skillData) {
     execute: buildSkillExecute(skillData),
   };
   if (skillData.starter) skill.starter = true;
+  if (skillData.cooldown) skill.cooldown = skillData.cooldown;
   if (skillData.ignoreRow) skill.ignoreRow = true;
   return skill;
 }

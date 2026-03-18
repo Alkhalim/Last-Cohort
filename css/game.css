@@ -1316,6 +1316,19 @@ html, body {
   font-size: 0.6rem;
 }
 
+.skill-cd {
+  font-size: 0.6rem;
+  color: var(--red);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.skill-cd-ready {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  margin-left: 4px;
+}
+
 .stat-dmg { color: var(--red-bright); font-weight: 600; }
 .stat-block { color: var(--blue-bright); font-weight: 600; }
 .stat-heal { color: var(--green-bright); font-weight: 600; }

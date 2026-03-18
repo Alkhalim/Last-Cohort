@@ -733,8 +733,9 @@ class GameUI {
       desc = desc.replace(/(\d+) Poison/g, '<span class="stat-poison">$1</span> Poison');
       desc = desc.replace(/(\d+) Morale/g, '<span class="stat-morale-text">$1</span> Morale');
 
+      const cdText = skill.cooldownLeft > 0 ? `<span class="skill-cd">CD: ${skill.cooldownLeft}</span>` : (skill.cooldown ? `<span class="skill-cd-ready">CD: ${skill.cooldown}</span>` : '');
       el.innerHTML = `
-        <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span></div>
+        <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span> ${cdText}</div>
         <div class="skill-desc">${desc}</div>
       `;
 
@@ -1238,7 +1239,7 @@ class GameUI {
         // Auto-start: skip "Begin Encounter" and go straight to spawning
         this.engine.beginSpawning();
       }, 600);
-    }, 2500);
+    }, 3500);
   }
 
   startCombatNode(node) {

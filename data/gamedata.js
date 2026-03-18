@@ -11,11 +11,11 @@ const RAW_ENCOUNTERS = {
     { "name": "The Clearing", "enemies": ["cheruscan_raider", "cheruscan_raider", "marsh_wolf", "sling_hunter"], "intro": "You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you." }
   ],
   "bossEncounters": [
-    { "name": "Arminius's Champion", "enemies": ["arminius_champion", "cheruscan_raider"], "intro": "A towering Germanic champion steps from the treeline, flanked by his guard. The final test." },
-    { "name": "The Grove Witch", "enemies": ["grove_witch", "bog_seer", "marsh_wolf"], "intro": "The trees twist apart to reveal a figure wreathed in green flame. The forest itself fights against you." },
-    { "name": "The Silent Huntsman", "minDifficulty": 2, "enemies": ["silent_huntsman", "sling_hunter", "cheruscan_raider"], "intro": "Arrows thud into trees around you. A shadow moves in the canopy. The Huntsman has found you." },
-    { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "marsh_wolf", "marsh_wolf"], "intro": "The ground shakes. A massive shape rises from the swamp, her brood swarming at her flanks." },
-    { "name": "The Bone Speaker", "minDifficulty": 4, "enemies": ["bone_speaker", "cursed_warrior", "cursed_warrior"], "intro": "Bones rattle in the wind. A figure draped in skulls steps from the mist, flanked by the walking cursed." }
+    { "name": "Arminius's Champion", "enemies": ["arminius_champion", "cheruscan_raider"], "intro": "The Champion of Arminius blocks your path." },
+    { "name": "The Grove Witch", "enemies": ["grove_witch", "bog_seer", "marsh_wolf"], "intro": "Green flame parts the trees. The forest itself rises." },
+    { "name": "The Silent Huntsman", "minDifficulty": 2, "enemies": ["silent_huntsman", "sling_hunter", "cheruscan_raider"], "intro": "Arrows from the shadows. The Huntsman has found you." },
+    { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "marsh_wolf", "marsh_wolf"], "intro": "The swamp shakes. Something massive rises." },
+    { "name": "The Bone Speaker", "minDifficulty": 4, "enemies": ["bone_speaker", "cursed_warrior", "cursed_warrior"], "intro": "Bones rattle. The dead walk at his command." }
   ],
   "threatLevels": {
     "easy": [
