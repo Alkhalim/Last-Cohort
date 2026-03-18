@@ -2247,12 +2247,29 @@ html, body {
   font-style: italic;
 }
 
-.loot-training.gained {
+.loot-training-text.gained {
   color: var(--gold);
+  font-weight: 600;
 }
 
-.loot-training.none {
+.loot-training-text.none {
   color: var(--text-dim);
+}
+
+.xp-pip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  margin: 0 2px;
+  vertical-align: middle;
+}
+
+.xp-pip.filled {
+  background: var(--gold);
+  box-shadow: 0 0 4px rgba(201, 162, 39, 0.5);
 }
 
 /* ================================================================

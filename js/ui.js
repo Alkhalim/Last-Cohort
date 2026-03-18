@@ -1214,15 +1214,7 @@ class GameUI {
         threatSkulls = `<div class="map-node-threat">${'\u2620'.repeat(node.threat)}</div>`;
       }
 
-      // Show training indicator on combat nodes that grant skill picks (threat 2+)
-      let trainingLabel = '';
-      if (node.type === 'combat' && !node.visited && node.threat >= 2) {
-        trainingLabel = '<div class="map-node-training">TRAIN</div>';
-      } else if (node.type === 'boss') {
-        trainingLabel = '<div class="map-node-training">TRAIN</div>';
-      }
-
-      el.innerHTML = `<span class="map-node-icon">${icon}</span>${threatSkulls}${trainingLabel}`;
+      el.innerHTML = `<span class="map-node-icon">${icon}</span>${threatSkulls}`;
 
       if (isReachableNode && !node.visited) {
         el.addEventListener('click', () => this.onMapNodeClick(node));
@@ -1906,13 +1898,8 @@ class GameUI {
   showLootScreen(isBossVictory) {
     this.engine.afterEncounter();
 
-    // Grant skill pick only from challenging encounters (threat 2+) and bosses
-    const threat = this.currentNodeThreat || 1;
-    this.lastEncounterGrantedTraining = false;
-    if (isBossVictory || threat >= 2) {
-      this.engine.grantSkillPick();
-      this.lastEncounterGrantedTraining = true;
-    }
+    // XP bar: every encounter adds XP, skill pick granted every 3 encounters (bosses always grant)
+    this.lastEncounterGrantedTraining = this.engine.addEncounterXP(isBossVictory);
 
     // Roll drops — filter by usability and enforce rarity caps by threat
     const difficulty = window.game ? window.game.difficulty : 1;
@@ -1981,19 +1968,24 @@ class GameUI {
 
     dropsEl.innerHTML = '';
 
-    // Show training status
+    // Show XP bar / training status
     let trainingEl = document.getElementById('loot-training');
     if (!trainingEl) {
-      trainingEl = document.createElement('p');
+      trainingEl = document.createElement('div');
       trainingEl.id = 'loot-training';
       lootText.parentNode.insertBefore(trainingEl, lootText.nextSibling);
     }
     if (this.lastEncounterGrantedTraining) {
-      trainingEl.textContent = 'Your men learned from this battle. (Training available)';
-      trainingEl.className = 'loot-training gained';
+      trainingEl.innerHTML = '<span class="loot-training-text gained">Your men learned from this battle. Training available!</span>';
+      trainingEl.className = 'loot-training';
     } else {
-      trainingEl.textContent = 'A routine skirmish — nothing new learned.';
-      trainingEl.className = 'loot-training none';
+      const xp = this.engine.encounterXP;
+      const xpNeeded = 3;
+      const pips = Array.from({ length: xpNeeded }, (_, i) =>
+        `<span class="xp-pip${i < xp ? ' filled' : ''}"></span>`
+      ).join('');
+      trainingEl.innerHTML = `<span class="loot-training-text none">Experience: ${pips} (${xp}/${xpNeeded})</span>`;
+      trainingEl.className = 'loot-training';
     }
 
     if (this.pendingLoot.length === 0) {

@@ -30,6 +30,7 @@ class CombatEngine {
     this.encountersCompleted = 0;
     this.totalRenownEarned = 0;
     this.pendingSkillPicks = 0;
+    this.encounterXP = 0; // XP bar: grants skill pick every 3 encounters
   }
 
   // --- Setup ---
@@ -1462,12 +1463,24 @@ class CombatEngine {
     }
   }
 
-  // Grant one skill pick after each combat encounter (always grants — HP if maxed)
-  grantSkillPick() {
+  // Add encounter XP — grants a skill pick every 3 encounters
+  addEncounterXP(isBoss) {
     const hasAnyUse = this.party.some(u => !u.downed);
-    if (hasAnyUse) {
+    if (!hasAnyUse) return false;
+
+    // Bosses always grant a pick immediately
+    if (isBoss) {
       this.pendingSkillPicks++;
+      return true;
     }
+
+    this.encounterXP++;
+    if (this.encounterXP >= 3) {
+      this.encounterXP = 0;
+      this.pendingSkillPicks++;
+      return true;
+    }
+    return false;
   }
 
   // --- Equipment helpers ---
