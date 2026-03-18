@@ -228,7 +228,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 8, "pierceBlock": 99 }
       },
       {
-        "id": "arrow_volley", "name": "Arrow Volley", "cooldown": 1,
+        "id": "arrow_volley", "name": "Arrow Volley", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
         "description": "2 dice totaling 6+. Deals 3 damage to all enemies.",
         "effects": { "damageAll": 3 }

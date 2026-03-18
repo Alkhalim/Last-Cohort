@@ -762,13 +762,18 @@ class GameUI {
       desc = desc.replace(/(\d+) Morale/g, '<span class="stat-morale-text">$1</span> Morale');
 
       const cdLeft = skill.cooldownLeft > 0 ? skill.cooldownLeft - 1 : 0;
-      const cdText = skill.cooldownLeft > 0 && cdLeft > 0
-        ? `<span class="skill-cd">CD: ${cdLeft}</span>`
-        : skill.cooldownLeft > 0
-          ? `<span class="skill-cd">Ready next turn</span>`
-          : skill.cooldown
-            ? `<span class="skill-cd-ready">CD: ${skill.cooldown}</span>`
-            : '';
+      let cdText = '';
+      if (skill.cooldownLeft > 0 && cdLeft > 0) {
+        // On cooldown: show filled icons for remaining, empty for spent
+        const icons = Array.from({ length: cdLeft }, () => '<span class="cd-icon active"></span>').join('');
+        cdText = `<span class="skill-cd">${icons}</span>`;
+      } else if (skill.cooldownLeft > 0) {
+        cdText = '<span class="skill-cd">Ready next turn</span>';
+      } else if (skill.cooldown) {
+        // Ready: show empty icons for base cooldown
+        const icons = Array.from({ length: skill.cooldown }, () => '<span class="cd-icon ready"></span>').join('');
+        cdText = `<span class="skill-cd-ready">${icons}</span>`;
+      }
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span> ${cdText}</div>
         <div class="skill-desc">${desc}</div>
