@@ -956,7 +956,7 @@ class CombatEngine {
 
           // Bone Speaker: raise dead allies as bone totems
           const boneSpeaker = this.enemies.find(b => b.id === 'bone_speaker' && !b.dead);
-          if (boneSpeaker && !e.isBoss && e.id !== 'bone_totem' && !e._raisedAsTotem) {
+          if (boneSpeaker && !e.isBoss && !e.isStructure && e.id !== 'bone_totem' && e.id !== 'healing_totem' && !e._raisedAsTotem) {
             e._raisedAsTotem = true;
             if (this.enemies.filter(en => !en.dead).length < 6) {
               const totem = {
