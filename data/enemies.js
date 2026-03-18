@@ -226,9 +226,9 @@ const RAW_ENEMIES = {
     "isBoss": true, "ai": "boss",
     "description": "An ancient death-priest draped in human bones. He weakens the body, drains the will, and curses weapons. The longer you fight, the weaker you become.",
     "actions": [
-      { "name": "Bone Curse", "damage": 3, "morale": -15, "poisonTarget": 2, "chance": 0.3, "text": "speaks a bone curse — pain and dread wash over a soldier", "ignoreRow": true },
+      { "name": "Bone Curse", "damage": 3, "morale": -15, "poisonTarget": 7, "chance": 0.3, "text": "speaks a bone curse — pain and dread wash over a soldier", "ignoreRow": true },
       { "name": "Wither", "damage": 0, "morale": -20, "chance": 0.25, "text": "chants words of withering — your men feel their strength fade" },
-      { "name": "Soul Shackle", "damage": 6, "morale": -10, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true },
+      { "name": "Soul Shackle", "damage": 17, "morale": -10, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true },
       { "name": "Raise the Dead", "damage": 0, "chance": 0.2, "text": "raises a cursed warrior from the mud", "spawn": "cursed_warrior" }
     ]
   }
