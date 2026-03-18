@@ -129,7 +129,7 @@ class CombatEngine {
     }
     const eid = this.enemyDefs[this.spawnIndex];
     const data = ENEMY_DATA[eid];
-    // Difficulty scaling: +20% HP and +1 damage per action per difficulty above 1
+    // Difficulty scaling: HP, damage, poison, and block scale per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
     let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
     // Curse: Champion's Mark — bosses have +20% HP
@@ -138,7 +138,11 @@ class CombatEngine {
     }
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.30)) : 0,
+      poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
+      blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
+      blockFrontRow: a.blockFrontRow ? a.blockFrontRow + diffBonus : undefined,
+      blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
     }));
     const enemy = {
       index: this.spawnIndex,
@@ -154,14 +158,15 @@ class CombatEngine {
     this.enemies.push(enemy);
     this.addLog(`${enemy.name} appears!`);
 
-    // Runecarver: grant block to all other enemies when spawning
+    // Runecarver: grant block to all other enemies when spawning (scales with difficulty)
     if (data.startBlockAllEnemies) {
+      const scaledStartBlock = data.startBlockAllEnemies + diffBonus;
       this.enemies.forEach(e => {
         if (!e.dead && e !== enemy) {
-          e.block = (e.block || 0) + data.startBlockAllEnemies;
+          e.block = (e.block || 0) + scaledStartBlock;
         }
       });
-      this.addLog(`${enemy.name} carves runes — all enemies gain ${data.startBlockAllEnemies} Block!`);
+      this.addLog(`${enemy.name} carves runes — all enemies gain ${scaledStartBlock} Block!`);
     }
 
     this.spawnIndex++;
@@ -1540,7 +1545,11 @@ class CombatEngine {
     const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.30)) : 0,
+      poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
+      blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
+      blockFrontRow: a.blockFrontRow ? a.blockFrontRow + diffBonus : undefined,
+      blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
     }));
     const enemy = {
       index: this.enemies.length,
