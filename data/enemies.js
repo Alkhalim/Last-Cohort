@@ -157,8 +157,9 @@ const RAW_ENEMIES = {
     "id": "germanic_berserker", "name": "Germanic Berserker",
     "maxHp": 22, "row": "front", "damage": [5, 9], "speed": 2, "xpValue": 6,
     "minDifficulty": 2,
-    "description": "A wild-eyed warrior who has chewed the sacred mushroom. Feels no pain and fights like a demon.",
+    "description": "A wild-eyed warrior who has chewed the sacred mushroom. Feels no pain and fights like a demon. The more wounded he is, the harder he hits.",
     "ai": "aggressive",
+    "berserkRage": true,
     "actions": [
       { "name": "Frenzied Slash", "damage": 7, "chance": 0.4, "text": "slashes in a wild frenzy" },
       { "name": "Headbutt", "damage": 5, "morale": -5, "chance": 0.3, "text": "headbutts with a sickening crack" },

@@ -1313,6 +1313,15 @@ class CombatEngine {
         this.addLog(`${enemy.name} channels ${enemy.block} block into the charge!`);
         enemy.block = 0;
       }
+      // Berserk Rage: bonus damage based on missing HP (up to +50% at 0 HP)
+      if (enemy.berserkRage && enemy.maxHp > 0) {
+        const missingPct = 1 - (enemy.hp / enemy.maxHp);
+        const rageBonus = Math.round(actionDamage * missingPct * 0.5);
+        if (rageBonus > 0) {
+          actionDamage += rageBonus;
+          this.addLog(`${enemy.name}'s rage intensifies! (+${rageBonus} damage)`);
+        }
+      }
       // Curse: Hunter's Shadow — enemies deal +1 damage
       const curseBonusDmg = this.getActiveCurses().includes('hunters_shadow') ? 1 : 0;
       let dmg = actionDamage + curseBonusDmg;
