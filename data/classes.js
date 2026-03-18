@@ -328,8 +328,8 @@ const RAW_CLASSES = {
       {
         "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "Sound the battle horn. Heal all allies for 2 HP. (1 turn cooldown)",
-        "effects": { "healAll": 2 }
+        "description": "Sound the battle horn. Heal all allies for 1 HP and grant 1 Block. (1 turn cooldown)",
+        "effects": { "healAll": 1, "blockAll": 1 }
       },
       {
         "id": "war_drums", "name": "War Drums", "cooldown": 2, "starter": true,
