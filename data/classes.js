@@ -35,26 +35,26 @@ const RAW_CLASSES = {
         "effects": { "damage": 7 }
       },
       {
-        "id": "hold_fast", "name": "Hold Fast",
+        "id": "hold_fast", "name": "Hold Fast", "cooldown": 2,
         "cost": { "type": "exact", "val": 4 }, "target": "self",
         "description": "Gain 8 Block and Taunt (enemies target this unit).",
         "effects": { "block": 8, "taunt": true }
       },
       {
-        "id": "pilum_cast", "name": "Pilum Cast",
+        "id": "pilum_cast", "name": "Pilum Cast", "cooldown": 2,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Throw pilum at any row. Deals 6 damage.",
         "effects": { "damage": 6, "ignoreRow": true }
       },
       {
-        "id": "twin_slash", "name": "Twin Slash",
+        "id": "twin_slash", "name": "Twin Slash", "cooldown": 2,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deals 10 damage.",
         "effects": { "damage": 10 }
       },
       {
-        "id": "shield_wall", "name": "Shield Wall",
+        "id": "shield_wall", "name": "Shield Wall", "cooldown": 3,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 8+. All allies gain 5 Block.",
         "effects": { "blockAll": 5 }
@@ -99,25 +99,25 @@ const RAW_CLASSES = {
         "effects": { "healAll": 2, "buffAllies": { "bonusDamage": 1, "attacks": 3 } }
       },
       {
-        "id": "measured_advance", "name": "Measured Advance",
+        "id": "measured_advance", "name": "Measured Advance", "cooldown": 2,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 7+. Deals 8 damage and all allies gain 3 Block.",
         "effects": { "damage": 8, "blockAll": 3 }
       },
       {
-        "id": "no_retreat", "name": "No Retreat",
+        "id": "no_retreat", "name": "No Retreat", "cooldown": 2,
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
         "description": "All allies gain 5 Block and +8 Morale.",
         "effects": { "blockAll": 5, "morale": 8 }
       },
       {
-        "id": "rally_cry", "name": "Rally Cry",
+        "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. +10 Morale and +1 damage for next 2 attacks.",
         "effects": { "morale": 10, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
       },
       {
-        "id": "decimation_strike", "name": "Decimation Strike",
+        "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 3,
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling exactly 7. Deals 15 damage.",
         "effects": { "damage": 15 }
@@ -156,32 +156,32 @@ const RAW_CLASSES = {
         "effects": { "heal": 6, "cleanse": true }
       },
       {
-        "id": "emergency_draught", "name": "Emergency Draught",
+        "id": "emergency_draught", "name": "Emergency Draught", "cooldown": 2,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_ally",
         "description": "Heal an ally for 7 HP.",
         "effects": { "heal": 7 }
       },
       {
-        "id": "plague_flask", "name": "Plague Flask",
+        "id": "plague_flask", "name": "Plague Flask", "cooldown": 2,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Hurl a flask of plague. 3 Poison to target, 1 Poison to all others.",
         "effects": { "poison": 3, "poisonSplash": 1 }
       },
       {
-        "id": "sawbones_choice", "name": "Sawbones' Choice",
+        "id": "sawbones_choice", "name": "Sawbones' Choice", "cooldown": 2,
         "cost": { "type": "exact", "val": 1 }, "target": "single_ally",
         "description": "Sacrifice 4 HP to heal ally for 10 HP and grant 3 Block.",
         "effects": { "heal": 10, "selfDamage": 4, "block": 3 }
       },
       {
-        "id": "field_surgery", "name": "Field Surgery",
+        "id": "field_surgery", "name": "Field Surgery", "cooldown": 3,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. Heal all allies for 4 HP.",
         "effects": { "healAll": 4 }
       },
       {
-        "id": "venom_strike", "name": "Venom Strike",
+        "id": "venom_strike", "name": "Venom Strike", "cooldown": 2,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deals 4 damage and applies 4 Poison.",
         "effects": { "damage": 4, "poison": 4 }
