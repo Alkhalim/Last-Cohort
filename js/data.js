@@ -243,6 +243,7 @@ function buildDropTables(rawDropTables, bossPool) {
       tiers: rawTable.tiers.map(tier => ({
         chance: tier.chance,
         items: tier.items === '__BOSS_DROP_POOL__' ? bossPool : tier.items,
+        minDifficulty: tier.minDifficulty || 0,
       })),
     };
   }
@@ -304,21 +305,44 @@ function canEquipItem(unit, item) {
 }
 
 // --- Drop / loot helpers ---
-function rollDrop(enemyId, party) {
+function rollDrop(enemyId, party, difficulty) {
   const table = DROP_TABLES[enemyId];
   if (!table) return null;
+  const diff = difficulty || (window.game && window.game.difficulty) || 1;
   // Curse: Rare Collector — uncommon/rare items drop 30% less
   const rareCollectorActive = window.game && window.game.activeCurses && window.game.activeCurses.includes('rare_collector');
   const roll = Math.random();
   let cumulative = table.nothingChance;
   if (roll < cumulative) return null;
   for (const tier of table.tiers) {
+    // Skip tiers locked behind higher difficulty
+    if (tier.minDifficulty && diff < tier.minDifficulty) continue;
     cumulative += tier.chance;
     if (roll < cumulative) {
       let candidates = tier.items;
+      // Filter out items locked behind higher difficulty
+      candidates = candidates.filter(itemId => {
+        const item = ITEM_DATA[itemId];
+        if (!item) return true;
+        return !item.minDifficulty || item.minDifficulty <= diff;
+      });
+      if (candidates.length === 0) candidates = tier.items.filter(itemId => {
+        const item = ITEM_DATA[itemId];
+        return !item || !item.minDifficulty || item.minDifficulty <= diff;
+      });
+      if (candidates.length === 0) return null;
+      // Boost items new to this march (minDifficulty === current difficulty)
+      // They get 2x weight in the random selection
+      const weighted = [];
+      candidates.forEach(itemId => {
+        const item = ITEM_DATA[itemId];
+        const isNew = item && item.minDifficulty && item.minDifficulty === diff;
+        weighted.push(itemId);
+        if (isNew) weighted.push(itemId); // double chance
+      });
       // Smart drop filtering: reduce chance if slot is full on all eligible characters
       if (party && party.length > 0) {
-        candidates = candidates.filter(itemId => {
+        let filtered = weighted.filter(itemId => {
           const item = ITEM_DATA[itemId];
           if (!item) return true;
           const eligible = party.filter(u => canEquipItem(u, item));
@@ -328,15 +352,22 @@ function rollDrop(enemyId, party) {
             return slots.every(s => s !== null);
           });
           if (allFull) {
-            // 60% chance to skip this item
             return Math.random() > 0.6;
           }
           return true;
         });
-        if (candidates.length === 0) candidates = tier.items;
+        if (filtered.length === 0) filtered = weighted;
+        const picked = filtered[Math.floor(Math.random() * filtered.length)];
+        // Curse: Rare Collector — 30% chance to nullify uncommon/rare drops
+        if (rareCollectorActive && picked) {
+          const pickedItem = ITEM_DATA[picked];
+          if (pickedItem && (pickedItem.rarity === 'uncommon' || pickedItem.rarity === 'rare')) {
+            if (Math.random() < 0.3) return null;
+          }
+        }
+        return picked;
       }
-      const picked = candidates[Math.floor(Math.random() * candidates.length)];
-      // Curse: Rare Collector — 30% chance to nullify uncommon/rare drops
+      const picked = weighted[Math.floor(Math.random() * weighted.length)];
       if (rareCollectorActive && picked) {
         const pickedItem = ITEM_DATA[picked];
         if (pickedItem && (pickedItem.rarity === 'uncommon' || pickedItem.rarity === 'rare')) {
