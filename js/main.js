@@ -401,7 +401,7 @@ class Game {
       const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
       html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
         <div class="ps-class-header">
-          <span class="ps-class-name">${data.name}</span>
+          <span class="ps-class-name" style="color:var(--class-${primaryTag})">${data.name}</span>
           <span class="ps-class-title">${data.title}</span>
           <span class="ps-class-tags">${tagPips}</span>
         </div>
