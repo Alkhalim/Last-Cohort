@@ -162,11 +162,11 @@ const RAW_CLASSES = {
         "effects": { "heal": 7 }
       },
       {
-        "id": "plague_flask", "name": "Plague Flask", "cooldown": 2,
+        "id": "plague_flask", "name": "Plague Flask", "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Hurl a flask of plague. 3 Poison to target, 1 Poison to all others.",
-        "effects": { "poison": 3, "poisonSplash": 1 }
+        "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to all others. (1 turn cooldown)",
+        "effects": { "poison": 4, "poisonSplash": 2 }
       },
       {
         "id": "sawbones_choice", "name": "Sawbones' Choice", "cooldown": 2,
