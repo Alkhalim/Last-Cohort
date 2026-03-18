@@ -326,9 +326,9 @@ const RAW_CLASSES = {
         "effects": { "damage": 2 }
       },
       {
-        "id": "battle_horn", "name": "Battle Horn", "starter": true,
+        "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "Sound the battle horn. Heal all allies for 2 HP.",
+        "description": "Sound the battle horn. Heal all allies for 2 HP. (1 turn cooldown)",
         "effects": { "healAll": 2 }
       },
       {
