@@ -307,6 +307,8 @@ class CombatEngine {
     });
     this.dicePool.adjustUsed = false;
     this.dicePool.rerollUsed = false;
+    this.dicePool.itemAdjustUsed = false;
+    this.dicePool.itemRerollUsed = false;
 
     // Tick down skill cooldowns
     this.party.forEach(u => {
@@ -417,22 +419,33 @@ class CombatEngine {
     }
   }
 
-  // --- Centurion passive ---
+  // --- Centurion passive / Seer's Knucklebone ---
   canAdjustDie() {
-    return !this.dicePool.adjustUsed && this.party.some(u => u.classId === 'centurion' && !u.downed);
+    if (!this.dicePool.adjustUsed && this.party.some(u => u.classId === 'centurion' && !u.downed)) return true;
+    if (!this.dicePool.itemAdjustUsed && this.partyHasItem('seers_knucklebone')) return true;
+    return false;
   }
 
   adjustDie(dieId, direction) {
     if (!this.canAdjustDie()) return false;
     const die = this.dicePool.dice.find(d => d.id === dieId);
-    if (!die) return false;
+    if (!die || die.used) return false;
+    const newVal = die.value + direction;
+    if (newVal < 1 || newVal > 6) return false;
     const oldVal = die.value;
-    if (this.dicePool.adjustDie(dieId, direction)) {
+    die.value = newVal;
+
+    // Use class passive first, then item
+    const hasCenturion = !this.dicePool.adjustUsed && this.party.some(u => u.classId === 'centurion' && !u.downed);
+    if (hasCenturion) {
+      this.dicePool.adjustUsed = true;
       this.addLog(`Centurion adjusts die: ${oldVal} \u2192 ${die.value}`);
-      this.update();
-      return true;
+    } else {
+      this.dicePool.itemAdjustUsed = true;
+      this.addLog(`Seer's Knucklebone adjusts die: ${oldVal} \u2192 ${die.value}`);
     }
-    return false;
+    this.update();
+    return true;
   }
 
   // --- Skill system ---
@@ -1609,10 +1622,11 @@ class CombatEngine {
     return extra;
   }
 
-  // Cornicen passive: can reroll 1 die per turn (never same value)
+  // Cornicen passive / Fate's Coin: can reroll 1 die per turn (never same value)
   canRerollDie() {
-    if (this.dicePool.rerollUsed) return false;
-    return this.party.some(u => u.classId === 'cornicen' && !u.downed);
+    if (!this.dicePool.rerollUsed && this.party.some(u => u.classId === 'cornicen' && !u.downed)) return true;
+    if (!this.dicePool.itemRerollUsed && this.partyHasItem('fates_coin')) return true;
+    return false;
   }
 
   rerollDie(dieId) {
@@ -1624,8 +1638,16 @@ class CombatEngine {
     let newVal;
     do { newVal = Math.floor(Math.random() * 6) + 1; } while (newVal === oldVal);
     die.value = newVal;
-    this.dicePool.rerollUsed = true;
-    this.addLog(`Cornicen rerolls die: ${oldVal} → ${newVal}`);
+
+    // Use class passive first, then item
+    const hasCornicen = !this.dicePool.rerollUsed && this.party.some(u => u.classId === 'cornicen' && !u.downed);
+    if (hasCornicen) {
+      this.dicePool.rerollUsed = true;
+      this.addLog(`Cornicen rerolls die: ${oldVal} → ${newVal}`);
+    } else {
+      this.dicePool.itemRerollUsed = true;
+      this.addLog(`Fate's Coin rerolls die: ${oldVal} → ${newVal}`);
+    }
     this.update();
     return true;
   }

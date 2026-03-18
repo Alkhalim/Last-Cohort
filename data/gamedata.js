@@ -64,9 +64,10 @@ const RAW_ENCOUNTERS = {
   "dropTables": {
     "cheruscan_raider": { "nothingChance": 0.25, "tiers": [
       { "chance": 0.35, "items": ["iron_gladius", "raider_shield", "herb_pouch"] },
-      { "chance": 0.20, "items": ["woad_charm", "fang_necklace", "legionary_lorica", "officers_cloak"] },
+      { "chance": 0.18, "items": ["woad_charm", "fang_necklace", "legionary_lorica", "officers_cloak"] },
       { "chance": 0.05, "items": ["chiefs_spear", "runic_stone"] },
       { "chance": 0.10, "items": ["cheruscan_torc"] },
+      { "chance": 0.07, "items": ["fates_coin", "seers_knucklebone"] },
       { "chance": 0.05, "items": ["gladiators_wraps", "commanders_signet"], "minDifficulty": 2 }
     ] },
     "sling_hunter": { "nothingChance": 0.25, "tiers": [
