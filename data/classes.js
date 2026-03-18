@@ -162,10 +162,10 @@ const RAW_CLASSES = {
         "effects": { "heal": 7 }
       },
       {
-        "id": "plague_flask", "name": "Plague Flask", "cooldown": 1,
+        "id": "plague_flask", "name": "Plague Flask", "cooldown": 2,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to all others. (1 turn cooldown)",
+        "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to all others.",
         "effects": { "poison": 4, "poisonSplash": 2 }
       },
       {
@@ -346,8 +346,8 @@ const RAW_CLASSES = {
       {
         "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 3,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 6+. Heal all allies for 6 HP. +10 Morale.",
-        "effects": { "healAll": 6, "morale": 10 }
+        "description": "2 dice totaling 6+. Heal all allies for 6 HP. +11 Morale.",
+        "effects": { "healAll": 6, "morale": 11 }
       },
       {
         "id": "cacophony", "name": "Cacophony", "cooldown": 2,
@@ -358,8 +358,8 @@ const RAW_CLASSES = {
       {
         "id": "thunderous_blast", "name": "Thunderous Blast", "cooldown": 3,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 7+. Deals 5 damage to target, half to all others. +6 Morale.",
-        "effects": { "damage": 5, "splashHalf": true, "morale": 6 }
+        "description": "2 dice totaling 7+. Deals 5 damage to target, half to all others. +7 Morale.",
+        "effects": { "damage": 5, "splashHalf": true, "morale": 7 }
       }
     ]
   },

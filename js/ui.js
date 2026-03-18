@@ -683,6 +683,7 @@ class GameUI {
     const equipDmg = unit.equipDamage || 0;
     const equipBlock = unit.equipBlock || 0;
     const equipHeal = unit.equipHeal || 0;
+    const equipPoison = unit.equipPoison || 0;
     const buffDmg = (unit.buffs || []).reduce((s, b) => s + (b.damage || 0), 0);
     let moraleMod = 0;
     if (this.engine.morale >= 75) moraleMod = 2;
@@ -725,6 +726,14 @@ class GameUI {
         desc = desc.replace(/(\d+) HP/g, (match, base) => {
           const total = Math.max(0, parseInt(base) + totalBonusHeal);
           return `<span class="stat-heal">${total}</span> HP`;
+        });
+      }
+
+      // Replace poison values with equipment bonus
+      if (equipPoison > 0) {
+        desc = desc.replace(/(\d+) Poison/g, (match, base) => {
+          const total = parseInt(base) + equipPoison;
+          return `<span class="stat-poison">${total}</span> Poison`;
         });
       }
 
