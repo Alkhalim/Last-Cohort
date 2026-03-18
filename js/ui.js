@@ -1759,8 +1759,13 @@ class GameUI {
   showLootScreen(isBossVictory) {
     this.engine.afterEncounter();
 
-    // Grant one skill pick after each combat encounter
-    this.engine.grantSkillPick();
+    // Grant skill pick only from challenging encounters (threat 2+) and bosses
+    const threat = this.currentNodeThreat || 1;
+    this.lastEncounterGrantedTraining = false;
+    if (isBossVictory || threat >= 2) {
+      this.engine.grantSkillPick();
+      this.lastEncounterGrantedTraining = true;
+    }
 
     // Roll drops — filter by usability and enforce rarity caps by threat
     const difficulty = window.game ? window.game.difficulty : 1;
