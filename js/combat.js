@@ -528,6 +528,7 @@ class CombatEngine {
     unit.actedThisTurn = true;
 
     this.checkEnemyDeaths();
+    this.processBossPhases();
     if (this.enemies.every(e => e.dead)) {
       this.triggerVictory();
       return;
@@ -618,6 +619,14 @@ class CombatEngine {
       // Ballistarius passive: Pinning Fire — target deals 15% less damage next action
       if (unit.classId === 'ballistarius' && total > 0 && result.target.hp > 0) {
         result.target._pinned = true;
+      }
+
+      // Arminius's Champion: 15% damage reflection
+      if (result.target.id === 'arminius_champion' && total > 0 && result.target.hp > 0) {
+        const reflected = Math.max(1, Math.floor(total * 0.15));
+        unit.hp = Math.max(1, unit.hp - reflected);
+        unit.stats.damageTaken += reflected;
+        parts.push(`Champion's armor reflects ${reflected} damage!`);
       }
 
       // Splash: half damage to all other enemies
@@ -964,6 +973,17 @@ class CombatEngine {
   }
 
   executeEnemyAction(enemy) {
+    // Silent Huntsman: snipe an odd-numbered die every 2 turns
+    if (enemy.id === 'silent_huntsman' && !enemy.dead && this.turn % 2 === 0) {
+      const oddDice = this.dicePool.dice.filter(d => !d.used && d.value % 2 === 1);
+      if (oddDice.length > 0) {
+        const victim = oddDice[Math.floor(Math.random() * oddDice.length)];
+        this.dicePool.useDie(victim.id);
+        this.addLog(`The Huntsman's arrow shatters a die! (${victim.value} destroyed)`);
+        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
+      }
+    }
+
     this.executeEnemySingleAction(enemy);
   }
 
@@ -1325,6 +1345,105 @@ class CombatEngine {
         this.addLog(`${u.name} recovers at ${u.hp} HP.`);
       }
     });
+  }
+
+  // --- Boss Phase Mechanics ---
+  processBossPhases() {
+    for (const boss of this.enemies) {
+      if (!boss.isBoss || boss.dead) continue;
+
+      // Arminius's Champion: spawns 2 raiders at 50% HP
+      if (boss.id === 'arminius_champion' && !boss._phase50 && boss.hp <= boss.maxHp * 0.5) {
+        boss._phase50 = true;
+        boss.row = 'front';
+        this.addLog(`${boss.name} roars and summons reinforcements!`);
+        this.spawnBossMinion('cheruscan_raider');
+        this.spawnBossMinion('cheruscan_raider');
+      }
+
+      // Grove Witch: summons healing totem at 66% and 33%, swaps to front
+      if (boss.id === 'grove_witch') {
+        if (!boss._phase66 && boss.hp <= boss.maxHp * 0.66) {
+          boss._phase66 = true;
+          if (boss.row !== 'front') { boss.row = 'front'; this.addLog(`${boss.name} surges forward!`); }
+          this.spawnHealingTotem(boss);
+        }
+        if (!boss._phase33 && boss.hp <= boss.maxHp * 0.33) {
+          boss._phase33 = true;
+          if (boss.row !== 'front') { boss.row = 'front'; this.addLog(`${boss.name} surges forward!`); }
+          this.spawnHealingTotem(boss);
+        }
+      }
+
+      // Mire Mother: spawns wolves at 70% and 40% HP
+      if (boss.id === 'mire_mother') {
+        if (!boss._phase70 && boss.hp <= boss.maxHp * 0.7) {
+          boss._phase70 = true;
+          this.addLog(`${boss.name} bellows! Her brood answers!`);
+          this.spawnBossMinion('marsh_wolf');
+          this.spawnBossMinion('marsh_wolf');
+        }
+        if (!boss._phase40 && boss.hp <= boss.maxHp * 0.4) {
+          boss._phase40 = true;
+          this.addLog(`${boss.name} screams in fury! More wolves pour from the swamp!`);
+          this.spawnBossMinion('marsh_wolf');
+          this.spawnBossMinion('marsh_wolf');
+        }
+      }
+    }
+  }
+
+  spawnBossMinion(enemyId) {
+    const data = ENEMY_DATA[enemyId];
+    if (!data) return;
+    if (this.enemies.filter(e => !e.dead).length >= 6) return;
+    const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
+    const scaledActions = data.actions.map(a => ({
+      ...a,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
+    }));
+    const enemy = {
+      index: this.enemies.length,
+      ...data,
+      maxHp: scaledMaxHp,
+      hp: scaledMaxHp,
+      actions: scaledActions,
+      dead: false,
+      poison: 0,
+      block: 0,
+      justSpawned: true,
+    };
+    this.enemies.push(enemy);
+    this.addLog(`${data.name} joins the fight!`);
+    setTimeout(() => { enemy.justSpawned = false; this.update(); }, 500);
+  }
+
+  spawnHealingTotem(boss) {
+    if (this.enemies.filter(e => !e.dead).length >= 6) return;
+    const totem = {
+      index: this.enemies.length,
+      id: 'healing_totem',
+      name: 'Healing Totem',
+      maxHp: 12,
+      hp: 12,
+      row: 'back',
+      damage: [0, 0],
+      speed: 0,
+      xpValue: 3,
+      ai: 'passive',
+      isStructure: true,
+      healBoss: 3,
+      healBossId: boss.id,
+      dead: false,
+      poison: 0,
+      block: 0,
+      justSpawned: true,
+      actions: [{ name: 'Pulsing Roots', damage: 0, chance: 1.0, text: 'pulses with green energy, healing the Witch' }],
+    };
+    this.enemies.push(totem);
+    this.addLog('A Healing Totem sprouts from the ground!');
+    setTimeout(() => { totem.justSpawned = false; this.update(); }, 500);
   }
 
   // Check if current encounter has a boss
