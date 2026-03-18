@@ -1766,7 +1766,7 @@ class GameUI {
     const difficulty = window.game ? window.game.difficulty : 1;
     const allDrops = [];
     for (const enemyId of this.engine.killedEnemies) {
-      const itemId = rollDrop(enemyId, this.engine.party);
+      const itemId = rollDrop(enemyId, this.engine.party, difficulty);
       if (!itemId) continue;
       const item = getItemData(itemId);
       if (!item) continue;
