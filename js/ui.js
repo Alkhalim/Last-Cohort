@@ -1719,6 +1719,30 @@ class GameUI {
     document.getElementById('event-intro').textContent = introText;
     document.getElementById('event-intro').style.whiteSpace = 'pre-line';
 
+    // Show party status (morale + HP)
+    let statusEl = document.getElementById('camp-party-status');
+    if (!statusEl) {
+      statusEl = document.createElement('div');
+      statusEl.id = 'camp-party-status';
+      const introEl = document.getElementById('event-intro');
+      introEl.parentNode.insertBefore(statusEl, introEl.nextSibling);
+    }
+    const moraleBand = getMoraleBand(this.engine.morale);
+    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale} (${moraleBand.label})</span></div>`;
+    statusHtml += '<div class="camp-units">';
+    this.engine.party.forEach(u => {
+      const tag = getPrimaryTag(u.classId);
+      const hpPct = Math.round((u.hp / u.maxHp) * 100);
+      const hpColor = hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
+      statusHtml += `<div class="camp-unit-status">
+        <span class="camp-unit-name" style="color:var(--class-${tag})">${u.title}</span>
+        <span class="camp-unit-hp" style="color:${hpColor}">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp}`}</span>
+        <div class="camp-hp-bar"><div class="camp-hp-fill" style="width:${u.downed ? 0 : hpPct}%;background:${hpColor}"></div></div>
+      </div>`;
+    });
+    statusHtml += '</div>';
+    statusEl.innerHTML = statusHtml;
+
     const choicesEl = document.getElementById('event-choices');
     choicesEl.innerHTML = '';
     document.getElementById('event-outcome').classList.add('hidden');
