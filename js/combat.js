@@ -1089,8 +1089,15 @@ class CombatEngine {
 
   // --- Enemy turn (sequential) ---
   executeEnemyTurn() {
-    // Clear enemy block at start of their turn
-    this.enemies.forEach(e => { if (!e.dead) e.block = 0; });
+    // Clear enemy block and tick action cooldowns at start of their turn
+    this.enemies.forEach(e => {
+      if (!e.dead) e.block = 0;
+      if (e._actionCooldowns) {
+        for (const name in e._actionCooldowns) {
+          if (e._actionCooldowns[name] > 0) e._actionCooldowns[name]--;
+        }
+      }
+    });
     const alive = this.enemies.filter(e => !e.dead);
     if (alive.length === 0) return;
     this.executeEnemySequence(alive, 0);
@@ -1138,6 +1145,9 @@ class CombatEngine {
       return;
     }
 
+    // Tick down enemy action cooldowns
+    if (!enemy._actionCooldowns) enemy._actionCooldowns = {};
+
     // Defensive AI: only attack if last alive in row, otherwise only use non-damage actions
     let availableActions = enemy.actions;
     if (enemy.ai === 'defensive') {
@@ -1148,6 +1158,10 @@ class CombatEngine {
       }
     }
 
+    // Filter out actions on cooldown
+    const offCooldown = availableActions.filter(a => !a.cooldown || !(enemy._actionCooldowns[a.name] > 0));
+    if (offCooldown.length > 0) availableActions = offCooldown;
+
     // Normalize chances for filtered actions
     const totalChance = availableActions.reduce((s, a) => s + a.chance, 0);
     const roll = Math.random() * totalChance;
@@ -1156,6 +1170,11 @@ class CombatEngine {
     for (const a of availableActions) {
       cumulative += a.chance;
       if (roll <= cumulative) { action = a; break; }
+    }
+
+    // Set cooldown on used action
+    if (action.cooldown) {
+      enemy._actionCooldowns[action.name] = action.cooldown;
     }
 
     const target = this.pickEnemyTarget(enemy, action);
