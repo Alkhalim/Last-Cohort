@@ -1045,7 +1045,7 @@ class CombatEngine {
                 poison: 0,
                 block: 0,
                 justSpawned: true,
-                actions: [{ name: 'Rattle', damage: 0, morale: -3, chance: 1.0, text: 'rattles with dark energy' }],
+                actions: [{ name: 'Rattle', damage: 0, morale: -6, chance: 1.0, text: 'rattles with dark energy' }],
               };
               this.enemies.push(totem);
               this.addLog(`${boneSpeaker.name} raises ${e.name}'s bones as a totem!`);
