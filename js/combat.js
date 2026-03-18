@@ -974,10 +974,22 @@ class CombatEngine {
       return;
     }
 
-    const roll = Math.random();
+    // Defensive AI: only attack if last alive in row, otherwise only use non-damage actions
+    let availableActions = enemy.actions;
+    if (enemy.ai === 'defensive') {
+      const sameRowAlive = this.enemies.filter(e => !e.dead && e.row === enemy.row && e !== enemy);
+      if (sameRowAlive.length > 0) {
+        const nonDamage = availableActions.filter(a => !a.damage || a.damage === 0);
+        if (nonDamage.length > 0) availableActions = nonDamage;
+      }
+    }
+
+    // Normalize chances for filtered actions
+    const totalChance = availableActions.reduce((s, a) => s + a.chance, 0);
+    const roll = Math.random() * totalChance;
     let cumulative = 0;
-    let action = enemy.actions[0];
-    for (const a of enemy.actions) {
+    let action = availableActions[0];
+    for (const a of availableActions) {
       cumulative += a.chance;
       if (roll <= cumulative) { action = a; break; }
     }
@@ -1063,6 +1075,22 @@ class CombatEngine {
         }
       });
       this.addLog(`${enemy.name} ${action.text}. All enemies gain ${action.blockAllEnemies} Block.`);
+    }
+
+    // Guardian: grant block to front-row allies only
+    if (action.blockFrontRow) {
+      this.enemies.forEach(e => {
+        if (!e.dead && e.row === 'front' && e !== enemy) {
+          e.block = (e.block || 0) + action.blockFrontRow;
+        }
+      });
+      this.addLog(`${enemy.name} ${action.text}. Front-row enemies gain ${action.blockFrontRow} Block.`);
+    }
+
+    // Guardian: grant block to self
+    if (action.blockSelf) {
+      enemy.block = (enemy.block || 0) + action.blockSelf;
+      this.addLog(`${enemy.name} ${action.text}. Gains ${action.blockSelf} Block.`);
     }
 
     // Mire Leech: spawn another enemy

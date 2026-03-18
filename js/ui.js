@@ -275,6 +275,8 @@ class GameUI {
       if (a.poisonTarget) details.push(`${a.poisonTarget} poison`);
       if (a.morale) details.push(`${a.morale} morale`);
       if (a.blockAllEnemies) details.push(`+${a.blockAllEnemies} block to allies`);
+      if (a.blockFrontRow) details.push(`+${a.blockFrontRow} block to front row`);
+      if (a.blockSelf) details.push(`+${a.blockSelf} block to self`);
       if (a.spawn) details.push('spawns unit');
       if (a.aoe) details.push('AOE');
       if (a.ignoreRow) details.push('any row');

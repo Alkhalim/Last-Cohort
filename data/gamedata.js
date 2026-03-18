@@ -23,7 +23,8 @@ const RAW_ENCOUNTERS = {
       { "name": "Lone Wolves", "enemies": ["marsh_wolf", "marsh_wolf"], "intro": "Wolves slink from the undergrowth, hungry and desperate." },
       { "name": "Eerie Chanting", "enemies": ["bog_seer", "cheruscan_raider"], "intro": "Chanting drifts from the fog. A seer and his guard block your path." },
       { "name": "Viper Nest", "enemies": ["fen_viper", "fen_viper"], "intro": "You step into a nest of marsh vipers. They strike without warning." },
-      { "name": "Swamp Crawlers", "enemies": ["mire_leech", "mire_leech"], "intro": "Bloated shapes slither from the mud. The swamp breeds foul things." }
+      { "name": "Swamp Crawlers", "enemies": ["mire_leech", "mire_leech"], "intro": "Bloated shapes slither from the mud. The swamp breeds foul things." },
+      { "name": "Guarded Scouts", "enemies": ["cheruscan_guardian", "cheruscan_raider", "sling_hunter"], "intro": "A guardian crouches with shield raised while scouts press the attack." }
     ],
     "mid": [
       { "name": "Ambush on the Trail", "enemies": ["cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Shapes burst from the undergrowth \u2014 Germanic warriors block the path." },
@@ -33,6 +34,7 @@ const RAW_ENCOUNTERS = {
       { "name": "Wolves and Whispers", "enemies": ["marsh_wolf", "marsh_wolf", "bog_seer"], "intro": "Wolves circle in the mist while eerie chanting echoes from behind the trees." },
       { "name": "Venomous Ambush", "enemies": ["fen_viper", "fen_viper", "sling_hunter"], "intro": "Vipers and slingers attack from the swamp in a coordinated ambush." },
       { "name": "Shield Line", "enemies": ["cheruscan_shieldbearer", "cheruscan_raider", "sling_hunter"], "intro": "A shieldbearer hunkers down while warriors form behind him. A disciplined formation." },
+      { "name": "Guardian Formation", "enemies": ["cheruscan_guardian", "cheruscan_guardian", "cheruscan_raider", "sling_hunter"], "intro": "Two guardians lock shields while attackers strike from behind the wall." },
       { "name": "Leech Swarm", "enemies": ["mire_leech", "mire_leech", "mire_leech"], "intro": "The ground writhes. Bloated leeches pour from the mud in a sickening wave." },
       { "name": "Berserker Charge", "minDifficulty": 2, "enemies": ["germanic_berserker", "cheruscan_raider", "sling_hunter"], "intro": "A foam-mouthed berserker charges from the trees, warriors at his back." },
       { "name": "War Hound Pack", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "cheruscan_raider"], "intro": "Armored hounds bound through the undergrowth, a handler driving them forward." },
@@ -65,6 +67,7 @@ const RAW_ENCOUNTERS = {
     "cheruscan_shieldbearer": { "nothingChance": 0.15, "tiers": [{ "chance": 0.40, "items": ["raider_shield", "iron_gladius", "wolf_pelt"] }, { "chance": 0.20, "items": ["woad_charm", "hunters_cloak"] }, { "chance": 0.10, "items": ["chiefs_spear"] }, { "chance": 0.15, "items": ["shieldbearers_grip"] }] },
     "mire_leech": { "nothingChance": 0.45, "tiers": [{ "chance": 0.30, "items": ["herb_pouch", "bone_needle_kit"] }, { "chance": 0.12, "items": ["fang_necklace", "marsh_fang"] }, { "chance": 0.13, "items": ["leech_bile_flask"] }] },
     "wicker_man": { "nothingChance": 0.05, "tiers": [{ "chance": 0.35, "items": ["woad_charm", "herb_pouch"] }, { "chance": 0.30, "items": ["runic_stone", "fang_necklace"] }, { "chance": 0.10, "items": ["chiefs_spear", "arm_ring_of_arminius"] }, { "chance": 0.20, "items": ["wicker_ash"] }] },
+    "cheruscan_guardian": { "nothingChance": 0.25, "tiers": [{ "chance": 0.40, "items": ["raider_shield", "wolf_pelt"] }, { "chance": 0.25, "items": ["shieldbearers_grip", "woad_charm"] }, { "chance": 0.10, "items": ["seers_eye"] }] },
     "germanic_berserker": { "nothingChance": 0.15, "tiers": [{ "chance": 0.40, "items": ["iron_gladius", "wolf_pelt", "raider_shield"] }, { "chance": 0.20, "items": ["fang_necklace", "cheruscan_torc"] }, { "chance": 0.10, "items": ["chiefs_spear"] }, { "chance": 0.15, "items": ["berserker_mushroom"] }] },
     "runecarver": { "nothingChance": 0.25, "tiers": [{ "chance": 0.40, "items": ["raider_shield", "woad_charm"] }, { "chance": 0.25, "items": ["seers_eye", "shieldbearers_grip"] }, { "chance": 0.10, "items": ["runic_stone"] }] },
     "war_hound": { "nothingChance": 0.20, "tiers": [{ "chance": 0.35, "items": ["wolf_pelt", "herb_pouch"] }, { "chance": 0.25, "items": ["fang_necklace", "wolf_fang_blade"] }, { "chance": 0.08, "items": ["marsh_fang"] }, { "chance": 0.12, "items": ["hound_collar"] }] },
