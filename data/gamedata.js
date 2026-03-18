@@ -96,7 +96,7 @@ const RAW_ENCOUNTERS = {
       { "chance": 0.25, "items": ["herb_pouch", "bone_needle_kit"] },
       { "chance": 0.15, "items": ["woad_charm", "fang_necklace", "medicus_vestments", "cursed_die"] },
       { "chance": 0.08, "items": ["runic_stone", "apothecary_mortar"] },
-      { "chance": 0.12, "items": ["seers_eye"] },
+      { "chance": 0.10, "items": ["seers_eye", "fates_coin", "seers_knucklebone"] },
       { "chance": 0.10, "items": ["scorpio_crossbow", "surgeons_scalpel"] }
     ] },
     "oak_shield": { "nothingChance": 0.05, "tiers": [
