@@ -1810,6 +1810,7 @@ class GameUI {
 
     statsHtml += this.engine.party.map(u => {
       const s = u.stats;
+      const tag = getPrimaryTag(u.classId);
       const statLines = [];
       if (s.damageDealt > 0) statLines.push(`<span class="stat-dmg">${s.damageDealt} damage dealt</span>`);
       if (s.healingDone > 0) statLines.push(`<span class="stat-heal">${s.healingDone} healing done</span>`);
@@ -1817,20 +1818,53 @@ class GameUI {
       if (s.moraleRestored > 0) statLines.push(`<span class="stat-morale">${s.moraleRestored} morale restored</span>`);
       if (s.damageTaken > 0) statLines.push(`<span class="stat-taken">${s.damageTaken} damage taken</span>`);
 
+      // Build expanded detail panel (skills + equipment)
+      const skillList = u.skills.map(sk => `<span class="summary-detail-skill">${sk.name}</span>`).join(', ');
+      const equipItems = [];
+      for (const slot of ['weapon', 'armor', 'trinket']) {
+        u.equipment[slot].forEach(id => {
+          if (!id) return;
+          const item = getItemData(id);
+          if (item) equipItems.push(`<div class="summary-detail-item"><span class="summary-detail-item-name rarity-${item.rarity}">${item.name}</span> <span class="summary-detail-item-stats">${formatItemStats(item.stats)}</span></div>`);
+        });
+      }
+      const equipHtml = equipItems.length > 0 ? equipItems.join('') : '<span class="stat-none">No equipment</span>';
+
+      const passiveData = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].passive : null;
+      const passiveHtml = passiveData ? `<div class="summary-detail-passive"><strong>${passiveData.name}:</strong> ${passiveData.description}</div>` : '';
+
       return `
-        <div class="summary-unit ${u.downed ? 'downed' : ''}">
+        <div class="summary-unit ${u.downed ? 'downed' : ''}" data-unit-idx="${u.index}">
           <div class="summary-unit-header">
-            <span class="summary-unit-title" style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>
+            <span class="summary-unit-title" style="color:var(--class-${tag})">${u.title}</span>
             <span class="summary-unit-name">${u.name}</span>
             <span class="summary-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp}`}</span>
+            <span class="summary-expand-hint">tap to expand</span>
           </div>
           <div class="summary-unit-stats">
             ${statLines.length > 0 ? statLines.join('  ') : '<span class="stat-none">No contribution</span>'}
+          </div>
+          <div class="summary-unit-detail hidden">
+            ${passiveHtml}
+            <div class="summary-detail-section"><strong>Skills:</strong> ${skillList}</div>
+            <div class="summary-detail-section"><strong>Equipment:</strong>${equipHtml}</div>
           </div>
         </div>`;
     }).join('');
 
     statsEl.innerHTML = statsHtml;
+
+    // Bind click to toggle detail panels
+    statsEl.querySelectorAll('.summary-unit').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => {
+        const detail = el.querySelector('.summary-unit-detail');
+        if (detail) {
+          detail.classList.toggle('hidden');
+          el.classList.toggle('expanded');
+        }
+      });
+    });
 
     const continueBtn = document.getElementById('btn-summary-continue');
     if (title === 'THE COHORT FALLS') {
