@@ -49,9 +49,9 @@ const RAW_CLASSES = {
       },
       {
         "id": "twin_slash", "name": "Twin Slash", "cooldown": 1,
-        "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 5+. Deals 10 damage.",
-        "effects": { "damage": 10 }
+        "cost": { "type": "pair" }, "target": "dual_enemy",
+        "description": "Requires a pair (two matching dice). Deals 5 damage to each of two targets.",
+        "effects": { "damage": 10, "splitDamage": true }
       },
       {
         "id": "shield_wall", "name": "Shield Wall", "cooldown": 2,

@@ -10,11 +10,13 @@ const COST = {
   any: () => ({ type: 'any', dice: 1, label: 'Any' }),
   combined: (min, count = 2) => ({ type: 'combined', min, dice: count, label: `${count}d ${min}+` }),
   combinedExact: (val, count = 2) => ({ type: 'combinedExact', val, dice: count, label: `${count}d =${val}` }),
+  pair: () => ({ type: 'pair', dice: 2, label: 'Pair' }),
 };
 
 // --- Target types ---
 const TARGET = {
   SINGLE_ENEMY: 'single_enemy',
+  DUAL_ENEMY: 'dual_enemy',
   ALL_ENEMIES: 'all_enemies',
   FRONT_ROW: 'front_row',
   SELF: 'self',
@@ -53,6 +55,8 @@ function buildCost(costData) {
       return COST.combined(costData.min, costData.dice || 2);
     case 'combinedExact':
       return COST.combinedExact(costData.val, costData.dice || 2);
+    case 'pair':
+      return COST.pair();
     default:
       return COST.any();
   }
@@ -66,11 +70,19 @@ function buildSkillExecute(skillData) {
   return function execute(unit, targets, dice) {
     const result = {};
 
-    // Damage (single target)
+    // Damage (single target or split across dual targets)
     if (effects.damage !== undefined) {
-      result.damage = effects.damage;
-      result.baseDamage = effects.damage;
-      if (targets[0]) result.target = targets[0];
+      if (effects.splitDamage && targets.length >= 2) {
+        result.splitDamage = true;
+        result.damage = Math.floor(effects.damage / 2);
+        result.baseDamage = effects.damage;
+        result.target = targets[0];
+        result.secondTarget = targets[1];
+      } else {
+        result.damage = effects.damage;
+        result.baseDamage = effects.damage;
+        if (targets[0]) result.target = targets[0];
+      }
     }
 
     // Heal (single target)

@@ -455,6 +455,11 @@ class CombatEngine {
         return this.findCombinedDice(available, cost.dice, cost.min, '>=');
       case 'combinedExact':
         return this.findCombinedDice(available, cost.dice, cost.val, '===');
+      case 'pair': {
+        const vals = {};
+        for (const d of available) { vals[d.value] = (vals[d.value] || 0) + 1; }
+        return Object.values(vals).some(c => c >= 2);
+      }
       default:
         return false;
     }
@@ -505,6 +510,16 @@ class CombatEngine {
         }
         return [];
       }
+      case 'pair': {
+        // Find lowest value pair
+        const sorted = [...available].sort((a, b) => a.value - b.value);
+        for (let i = 0; i < sorted.length - 1; i++) {
+          if (sorted[i].value === sorted[i + 1].value) {
+            return [sorted[i].id, sorted[i + 1].id];
+          }
+        }
+        return [];
+      }
       default:
         return [];
     }
@@ -544,6 +559,15 @@ class CombatEngine {
         this.targetMode = { unitIndex, skillId, diceIds, skill, targetType: 'enemy' };
         this.update();
       }
+    } else if (skill.target === TARGET.DUAL_ENEMY) {
+      const validTargets = this.getValidEnemyTargets(skill, unit);
+      if (validTargets.length === 1) {
+        // Only one target — hit it twice
+        this.executeSkill(unitIndex, skillId, diceIds, [validTargets[0], validTargets[0]]);
+      } else if (validTargets.length > 1) {
+        this.targetMode = { unitIndex, skillId, diceIds, skill, targetType: 'dual_enemy', selectedTargets: [] };
+        this.update();
+      }
     } else if (skill.target === TARGET.SINGLE_ALLY) {
       const aliveAllies = this.party.filter(u => !u.downed);
       if (aliveAllies.length === 1) {
@@ -560,6 +584,20 @@ class CombatEngine {
   selectTarget(target) {
     if (!this.targetMode) return;
     const { unitIndex, skillId, diceIds } = this.targetMode;
+
+    // Dual enemy targeting: collect two targets
+    if (this.targetMode.targetType === 'dual_enemy') {
+      this.targetMode.selectedTargets.push(target);
+      if (this.targetMode.selectedTargets.length >= 2) {
+        const targets = this.targetMode.selectedTargets;
+        this.targetMode = null;
+        this.executeSkill(unitIndex, skillId, diceIds, targets);
+      } else {
+        this.update();
+      }
+      return;
+    }
+
     this.executeSkill(unitIndex, skillId, diceIds, [target]);
     this.targetMode = null;
   }
@@ -792,6 +830,24 @@ class CombatEngine {
       if (result.knockback && result.target.row === 'front') {
         result.target.row = 'back';
         parts.push(`${result.target.name} is knocked to the back row!`);
+      }
+
+      // Split damage: apply same damage to second target
+      if (result.splitDamage && result.secondTarget && result.secondTarget.hp !== undefined) {
+        let total2 = result.damage + bonusDmg;
+        const aura2 = this.getAuraDamageReduction(result.secondTarget);
+        if (aura2 > 0) total2 = Math.max(1, total2 - aura2);
+        if (result.secondTarget.block && result.secondTarget.block > 0) {
+          const absorbed2 = Math.min(result.secondTarget.block, total2);
+          result.secondTarget.block -= absorbed2;
+          total2 -= absorbed2;
+        }
+        result.secondTarget.hp = Math.max(0, result.secondTarget.hp - total2);
+        unit.stats.damageDealt += total2;
+        parts.push(`${unit.name} strikes ${result.secondTarget.name} for ${total2} damage.`);
+        if (this.onVisual && result.secondTarget.index !== undefined) {
+          this.onVisual('enemyAttack', { enemyIndex: result.secondTarget.index });
+        }
       }
     }
     if (result.heal && result.target) {

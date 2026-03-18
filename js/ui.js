@@ -312,7 +312,7 @@ class GameUI {
 
   isEnemyTargetable(enemy) {
     if (enemy.dead) return false;
-    if (this.engine.targetMode && this.engine.targetMode.targetType === 'enemy') {
+    if (this.engine.targetMode && (this.engine.targetMode.targetType === 'enemy' || this.engine.targetMode.targetType === 'dual_enemy')) {
       const tmUnit = this.engine.party[this.engine.targetMode.unitIndex];
       return this.engine.getValidEnemyTargets(this.engine.targetMode.skill, tmUnit).includes(enemy);
     }
@@ -322,7 +322,7 @@ class GameUI {
       if (!unit) return false;
       const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
       if (!skill) return false;
-      if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES) return false;
+      if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES && skill.target !== TARGET.DUAL_ENEMY) return false;
       const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
       if (!canPay) return false;
       if (skill.target === TARGET.ALL_ENEMIES) return true;
@@ -921,7 +921,10 @@ class GameUI {
         }
         break;
       case PHASE.PLAYER_TURN:
-        if (this.engine.targetMode) {
+        if (this.engine.targetMode && this.engine.targetMode.targetType === 'dual_enemy') {
+          const picked = this.engine.targetMode.selectedTargets ? this.engine.targetMode.selectedTargets.length : 0;
+          phaseLabel.textContent = `SELECT TARGET ${picked + 1} OF 2 FOR ${this.engine.targetMode.skill.name.toUpperCase()}`;
+        } else if (this.engine.targetMode) {
           phaseLabel.textContent = `SELECT TARGET FOR ${this.engine.targetMode.skill.name.toUpperCase()}`;
         } else {
           phaseLabel.textContent = `TURN ${this.engine.turn}`;
