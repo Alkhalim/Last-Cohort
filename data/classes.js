@@ -425,7 +425,7 @@ const RAW_CLASSES = {
     "name": "Ballistarius",
     "title": "BAL",
     "maxHp": 20,
-    "tags": ["ranged", "support"],
+    "tags": ["ranged", "roman"],
     "description": "Roman siege crossbowman. Every hit weakens the enemy, reducing their damage.",
     "passive": {
       "name": "Pinning Fire",
