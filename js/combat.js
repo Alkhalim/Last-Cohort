@@ -274,7 +274,47 @@ class CombatEngine {
     this.phase = PHASE.PLAYER_TURN;
     const vals = this.dicePool.dice.map(d => d.value).join(', ');
     this.addLog(`Dice: [${vals}]`);
+
+    // Dice passives trigger on rolled values
+    this.processDicePassives();
+
     this.update();
+  }
+
+  processDicePassives() {
+    const hasMedicus = this.party.some(u => u.classId === 'medicus' && !u.downed);
+    const hasSagittarius = this.party.some(u => u.classId === 'sagittarius' && !u.downed);
+
+    for (const die of this.dicePool.dice) {
+      // Medicus: heal random damaged ally on each 1
+      if (die.value === 1 && hasMedicus) {
+        const damaged = this.party.filter(u => !u.downed && u.hp < u.maxHp);
+        if (damaged.length > 0) {
+          const target = damaged[Math.floor(Math.random() * damaged.length)];
+          const healAmt = 2;
+          target.hp = Math.min(target.maxHp, target.hp + healAmt);
+          this.addLog(`Healer's Instinct: ${target.name} healed ${healAmt} HP.`);
+          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: healAmt });
+        }
+      }
+
+      // Sagittarius: damage random enemy on each 6
+      if (die.value === 6 && hasSagittarius) {
+        const alive = this.enemies.filter(e => !e.dead);
+        if (alive.length > 0) {
+          const target = alive[Math.floor(Math.random() * alive.length)];
+          const dmg = 2;
+          target.hp = Math.max(0, target.hp - dmg);
+          this.addLog(`Eagle Eye: ${target.name} takes ${dmg} damage.`);
+        }
+      }
+    }
+
+    // Check if any enemy died from Sagittarius passive
+    this.checkEnemyDeaths();
+    if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
+      this.triggerVictory();
+    }
   }
 
   // --- Centurion passive ---
@@ -1018,11 +1058,6 @@ class CombatEngine {
         this.addLog(`${u.name} is downed!`);
         this.morale = Math.max(-100, this.morale - 20);
         if (this.onVisual) this.onVisual('morale', { amount: -20 });
-        const medicus = this.party.find(p => p.classId === 'medicus' && !p.downed && p !== u);
-        if (medicus) {
-          this.addLog('Field Triage: Medicus gains a free Bind Wounds.');
-          medicus.passive.freeHealAvailable = true;
-        }
       }
     });
     if (this.party.every(u => u.downed)) {

@@ -130,9 +130,8 @@ const RAW_CLASSES = {
     "tags": ["support", "roman"],
     "description": "Field surgeon. Heals, poisons, and manages attrition.",
     "passive": {
-      "name": "Field Triage",
-      "description": "When an ally is downed, gain one free Bind Wounds this encounter.",
-      "freeHealAvailable": false
+      "name": "Healer's Instinct",
+      "description": "Whenever a 1 is rolled, heal a random damaged ally for 2 HP."
     },
     "skills": [
       {
@@ -195,8 +194,7 @@ const RAW_CLASSES = {
     "description": "Roman archer. Fragile but strikes any row with precision.",
     "passive": {
       "name": "Eagle Eye",
-      "description": "First ranged attack each encounter ignores row restrictions.",
-      "triggered": false
+      "description": "Whenever a 6 is rolled, deal 2 damage to a random enemy."
     },
     "skills": [
       {
