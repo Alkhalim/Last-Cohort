@@ -70,6 +70,12 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "description": "Smash through defenses. Remove all block from target and deal 3 damage.",
         "effects": { "damage": 3, "shieldbreak": true }
+      },
+      {
+        "id": "shoulder_charge", "name": "Shoulder Charge",
+        "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
+        "description": "Deal 4 damage and knock target to back row. If already back row, deal 6 instead.",
+        "effects": { "damage": 4, "shoulderCharge": true }
       }
     ]
   },
@@ -295,6 +301,12 @@ const RAW_CLASSES = {
         "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
         "description": "Set a trap. If target attacks this turn, it takes 4 damage and is stunned next turn.",
         "effects": { "snareTrap": 4 }
+      },
+      {
+        "id": "disengage", "name": "Disengage", "cooldown": 1,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "description": "Shoot and brace. Deal 2 damage to a front-row enemy and gain 4 Block.",
+        "effects": { "damage": 2, "block": 4 }
       }
     ]
   },
@@ -364,6 +376,12 @@ const RAW_CLASSES = {
         "cost": { "type": "any" }, "target": "all_enemies",
         "description": "Spend 20 Morale to deal 8 damage to all enemies.",
         "effects": { "damageAll": 8, "moraleCost": 20 }
+      },
+      {
+        "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 2,
+        "cost": { "type": "exact", "val": 1 }, "target": "all_allies",
+        "description": "Sacrifice 5 HP. All allies gain +2 damage for 2 attacks and 4 Block.",
+        "effects": { "selfDamage": 5, "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 4 }
       }
     ]
   },
@@ -434,6 +452,12 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_ally",
         "description": "Mark an ally. The next heal they receive is doubled. Grant 2 Block.",
         "effects": { "resonance": true, "block": 2 }
+      },
+      {
+        "id": "echoing_blast", "name": "Echoing Blast", "cooldown": 2,
+        "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
+        "description": "2 dice totaling 5+. Deal 2 damage. If target dies, deal 2 damage to a random other enemy.",
+        "effects": { "damage": 2, "echoOnKill": 2 }
       }
     ]
   },
@@ -509,6 +533,12 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 5+. All allies take 50% less damage during the next enemy turn.",
         "effects": { "damageShield": 0.5 }
+      },
+      {
+        "id": "warhorse_kick", "name": "Warhorse Kick", "cooldown": 3,
+        "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
+        "description": "Kick target and a random other front-row enemy. Both are stunned next turn.",
+        "effects": { "warhorseKick": true }
       }
     ]
   },
@@ -662,6 +692,12 @@ const RAW_CLASSES = {
         "ignoreRow": true,
         "description": "2 dice totaling 8+. Deal 10 damage. If any ally is downed, deal 16 instead and ignore block.",
         "effects": { "damage": 10, "avengeDamage": 16, "pierceBlock": 0 }
+      },
+      {
+        "id": "condemn", "name": "Condemn", "cooldown": 4,
+        "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
+        "description": "2 dice totaling 5+. Deal 4 damage. Target takes +30% damage from all sources for 2 turns.",
+        "effects": { "damage": 4, "condemn": 2 }
       }
     ]
   }

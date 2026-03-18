@@ -772,6 +772,11 @@ class CombatEngine {
         total = Math.round(total * 1.2);
         parts.push('Marked! (+20%)');
       }
+      // Condemn: +30% damage from all sources
+      if (result.target._condemned && result.target._condemned > 0) {
+        total = Math.round(total * 1.3);
+        parts.push('Condemned! (+30%)');
+      }
       // Execute: double damage to enemies below 25% HP
       if (result.execute && result.target.hp <= result.target.maxHp * 0.25) {
         total *= 2;
@@ -1217,6 +1222,49 @@ class CombatEngine {
       }
     }
 
+    // Shoulder Charge: knockback to back row, or bonus damage if already back
+    if (result.shoulderCharge && result.target) {
+      if (result.target.row === 'front') {
+        result.target.row = 'back';
+        parts.push(`${result.target.name} is knocked to the back row!`);
+      } else {
+        // Already back row — deal 2 extra damage
+        const bonusDmg = 2;
+        result.target.hp = Math.max(0, result.target.hp - bonusDmg);
+        unit.stats.damageDealt += bonusDmg;
+        parts.push(`${result.target.name} has nowhere to go! (+${bonusDmg} bonus damage)`);
+      }
+    }
+
+    // Echo on Kill: if target dies, chain damage to random other enemy
+    if (result.echoOnKill && result.target && result.target.hp <= 0) {
+      const others = this.enemies.filter(e => !e.dead && e !== result.target && e.hp > 0);
+      if (others.length > 0) {
+        const echoTarget = others[Math.floor(Math.random() * others.length)];
+        echoTarget.hp = Math.max(0, echoTarget.hp - result.echoOnKill);
+        unit.stats.damageDealt += result.echoOnKill;
+        parts.push(`The blast echoes — ${echoTarget.name} takes ${result.echoOnKill} damage!`);
+      }
+    }
+
+    // Warhorse Kick: stun target + random other front-row enemy
+    if (result.warhorseKick && result.target) {
+      result.target._skipNextAction = true;
+      parts.push(`${result.target.name} is stunned!`);
+      const otherFront = this.enemies.filter(e => !e.dead && e.row === 'front' && e !== result.target);
+      if (otherFront.length > 0) {
+        const secondTarget = otherFront[Math.floor(Math.random() * otherFront.length)];
+        secondTarget._skipNextAction = true;
+        parts.push(`${secondTarget.name} is also stunned!`);
+      }
+    }
+
+    // Condemn: target takes +30% damage from all sources for N turns
+    if (result.condemn && result.target) {
+      result.target._condemned = result.condemn;
+      parts.push(`${result.target.name} is condemned! (+30% damage from all sources for ${result.condemn} turns)`);
+    }
+
     if (parts.length === 0) parts.push(`${unit.name} uses ${skill.name}.`);
     return parts.join(' ');
   }
@@ -1391,8 +1439,9 @@ class CombatEngine {
           if (e._actionCooldowns[name] > 0) e._actionCooldowns[name]--;
         }
       }
-      // Tick down marks
+      // Tick down marks and condemn
       if (e._marked && e._marked > 0) e._marked--;
+      if (e._condemned && e._condemned > 0) e._condemned--;
       // Track turns alive for phase shift enemies
       if (!e.dead) {
         e._turnsAlive = (e._turnsAlive || 0) + 1;

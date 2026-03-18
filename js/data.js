@@ -272,6 +272,18 @@ function buildSkillExecute(skillData) {
     // Avenger's Oath: bonus damage if ally downed
     if (effects.avengeDamage) result.avengeDamage = effects.avengeDamage;
 
+    // Shoulder Charge: knockback + bonus damage if already back row
+    if (effects.shoulderCharge) result.shoulderCharge = true;
+
+    // Echo on Kill: chain damage to another enemy if target dies
+    if (effects.echoOnKill) result.echoOnKill = effects.echoOnKill;
+
+    // Warhorse Kick: stun target + random other front-row enemy
+    if (effects.warhorseKick) result.warhorseKick = true;
+
+    // Condemn: target takes +30% damage from all sources
+    if (effects.condemn) result.condemn = effects.condemn;
+
     return result;
   };
 }
