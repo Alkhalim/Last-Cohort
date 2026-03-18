@@ -346,8 +346,8 @@ const RAW_CLASSES = {
       {
         "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 3,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 6+. Heal all allies for 5 HP. +10 Morale.",
-        "effects": { "healAll": 5, "morale": 10 }
+        "description": "2 dice totaling 6+. Heal all allies for 6 HP. +10 Morale.",
+        "effects": { "healAll": 6, "morale": 10 }
       },
       {
         "id": "cacophony", "name": "Cacophony", "cooldown": 2,

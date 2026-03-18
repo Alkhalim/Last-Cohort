@@ -1550,7 +1550,7 @@ class CombatEngine {
       xpValue: 3,
       ai: 'passive',
       isStructure: true,
-      healBoss: 3,
+      healBoss: 5,
       healBossId: boss.id,
       dead: false,
       poison: 0,
