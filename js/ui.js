@@ -1420,24 +1420,32 @@ class GameUI {
       if (roll < cumulative) { outcome = o; break; }
     }
 
-    // Apply effects
+    // Apply effects — scale with difficulty
     const effects = outcome.effects || {};
+    const diff = window.game ? window.game.difficulty : 1;
+    const diffScale = 1 + (diff - 1) * 0.25; // +25% per difficulty above 1
+
     if (effects.healAll) {
+      const scaledHeal = Math.round(effects.healAll * diffScale);
       this.engine.party.forEach(u => {
         if (!u.downed) {
-          u.hp = Math.min(u.maxHp, u.hp + effects.healAll);
+          u.hp = Math.min(u.maxHp, u.hp + scaledHeal);
         }
       });
     }
     if (effects.damageAll) {
+      const scaledDmg = Math.round(effects.damageAll * diffScale);
       this.engine.party.forEach(u => {
         if (!u.downed) {
-          u.hp = Math.max(1, u.hp - effects.damageAll);
+          u.hp = Math.max(1, u.hp - scaledDmg);
         }
       });
     }
     if (effects.morale) {
-      this.engine.morale = Math.max(-100, Math.min(100, this.engine.morale + effects.morale));
+      const scaledMorale = effects.morale > 0
+        ? Math.round(effects.morale * diffScale)
+        : Math.round(effects.morale * diffScale); // negative scales too (harsher)
+      this.engine.morale = Math.max(-100, Math.min(100, this.engine.morale + scaledMorale));
     }
     if (effects.grantItem) {
       const grantedItem = getItemData(effects.grantItem);

@@ -81,12 +81,12 @@ const RAW_EVENTS = [
     "intro": "Behind a fallen oak, you discover a hidden cache of supplies \u2014 likely left by a Germanic foraging party. Dried meat, herbs, and a few weapons.",
     "choices": [
       { "text": "Take everything.", "outcomes": [
-        { "weight": 0.6, "text": "A good haul. The men eat well tonight.", "effects": { "healAll": 10, "morale": 8 } },
-        { "weight": 0.4, "text": "You find excellent supplies and a fine weapon among the cache.", "effects": { "healAll": 6, "grantItem": "iron_gladius" } }
+        { "weight": 0.6, "text": "A good haul. The men eat well tonight.", "effects": { "healAll": 6, "morale": 10 } },
+        { "weight": 0.4, "text": "You find excellent supplies and a fine weapon among the cache.", "effects": { "healAll": 4, "grantItem": "iron_gladius" } }
       ]},
       { "text": "Take only the medicine and leave the rest.", "outcomes": [
-        { "weight": 0.7, "text": "The herbs are potent. Your wounded recover.", "effects": { "healAll": 12 } },
-        { "weight": 0.3, "text": "Among the herbs you find something special.", "effects": { "healAll": 8, "grantItem": "bone_needle_kit" } }
+        { "weight": 0.7, "text": "The herbs are potent. Focusing on medicine pays off — your wounded recover well.", "effects": { "healAll": 16 } },
+        { "weight": 0.3, "text": "Among the herbs you find something special.", "effects": { "healAll": 12, "grantItem": "herb_pouch" } }
       ]},
       { "text": "Leave it \u2014 it could be a trap.", "outcomes": [
         { "weight": 0.5, "text": "Prudent. The men grumble but respect your caution.", "effects": { "morale": -3 } },
