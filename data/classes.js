@@ -464,10 +464,16 @@ const RAW_CLASSES = {
         "effects": { "damage": 4, "pierceBlock": 99 }
       },
       {
-        "id": "scatter_bolts", "name": "Scatter Bolts",
-        "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
-        "description": "2 dice totaling 6+. Deals 3 damage to all enemies.",
-        "effects": { "damageAll": 3 }
+        "id": "scorpio_bolt", "name": "Scorpio Bolt",
+        "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
+        "description": "2 dice totaling 6+. A siege bolt that pierces the line. Deals 5 damage to target and all enemies behind them.",
+        "effects": { "damage": 5, "pierceRow": true }
+      },
+      {
+        "id": "concussive_shot", "name": "Concussive Shot",
+        "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
+        "description": "A blunt-tipped bolt. Deals 3 damage and knocks front-row enemy to back row.",
+        "effects": { "damage": 3, "knockback": true }
       },
       {
         "id": "siege_shot", "name": "Siege Shot",

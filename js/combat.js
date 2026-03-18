@@ -651,6 +651,29 @@ class CombatEngine {
         });
         parts.push(`Hits all ${result.target.row}-row enemies.`);
       }
+
+      // Pierce row: bolt passes through to hit all enemies in the OTHER row
+      if (result.pierceRow && result.target.row) {
+        const otherRow = result.target.row === 'front' ? 'back' : 'front';
+        const pierceDmg = result.damage + bonusDmg;
+        this.enemies.forEach(e => {
+          if (!e.dead && e !== result.target && e.row === otherRow) {
+            let sDmg = pierceDmg;
+            const sAura = this.getAuraDamageReduction(e);
+            if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
+            if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+            e.hp = Math.max(0, e.hp - sDmg);
+            unit.stats.damageDealt += sDmg;
+          }
+        });
+        parts.push(`Bolt pierces through to ${otherRow}-row enemies.`);
+      }
+
+      // Knockback: shove front-row enemy to back row
+      if (result.knockback && result.target.row === 'front') {
+        result.target.row = 'back';
+        parts.push(`${result.target.name} is knocked to the back row!`);
+      }
     }
     if (result.heal && result.target) {
       const totalHeal = result.heal + bonusHeal;

@@ -179,6 +179,16 @@ function buildSkillExecute(skillData) {
       result.splashRow = true;
     }
 
+    // Pierce row: damage passes through to all enemies in the OTHER row
+    if (effects.pierceRow) {
+      result.pierceRow = true;
+    }
+
+    // Knockback: shove front-row enemy to back row
+    if (effects.knockback) {
+      result.knockback = true;
+    }
+
     return result;
   };
 }
