@@ -262,6 +262,57 @@ const RAW_EVENTS = [
     ]
   },
   {
+    "id": "shattered_camp",
+    "name": "The Shattered Camp",
+    "minDifficulty": 2,
+    "intro": "A Roman camp lies in ruins \u2014 tents shredded, cookfire cold, equipment scattered in the mud. Signs of a fight everywhere, but no bodies. Drag marks lead into the treeline. Whatever happened here, it happened fast.",
+    "choices": [
+      { "text": "Search the camp for supplies.", "outcomes": [
+        { "weight": 0.4, "text": "Among the wreckage you find intact supplies. Someone packed in a hurry and left these behind.", "effects": { "healAll": 6, "grantItem": "herb_pouch" } },
+        { "weight": 0.3, "text": "A weapon rack still stands. One blade is worth taking.", "effects": { "grantItem": "iron_gladius", "morale": -5 } },
+        { "weight": 0.3, "text": "The camp is picked clean. Only blood and silence remain.", "effects": { "morale": -10 } }
+      ]},
+      { "text": "Your officer rallies the men and secures the perimeter.", "requiresTag": "command", "outcomes": [
+        { "weight": 0.6, "text": "Discipline holds. The officer turns fear into focus. The camp yields useful supplies.", "effects": { "morale": 10, "healAll": 6, "grantItem": "raider_shield" } },
+        { "weight": 0.4, "text": "The perimeter holds. Your men take what they can and move on with purpose.", "effects": { "morale": 12, "healAll": 4 } }
+      ]},
+      { "text": "Follow the drag marks.", "outcomes": [
+        { "weight": 0.4, "text": "The trail leads to a shallow grave. Among the dead, a fine weapon.", "effects": { "grantItem": "chiefs_spear", "morale": -8 } },
+        { "weight": 0.3, "text": "You find nothing but torn earth and claw marks. The men are shaken.", "effects": { "morale": -15 } },
+        { "weight": 0.3, "text": "The trail ends at a ravine. Below, supplies that tumbled during the retreat.", "effects": { "healAll": 8, "morale": -3 } }
+      ]},
+      { "text": "Leave. This place is death.", "outcomes": [
+        { "weight": 1.0, "text": "You march past. No one looks back.", "effects": { "morale": -5 } }
+      ]}
+    ]
+  },
+  {
+    "id": "bone_markers",
+    "name": "The Bone Markers",
+    "minDifficulty": 3,
+    "intro": "The trail narrows between trees hung with bone totems \u2014 femurs lashed into symbols, skulls on stakes facing your path. Dark runes are smeared in blood on every surface. Someone knows you're coming.",
+    "choices": [
+      { "text": "Tear them down and push through.", "outcomes": [
+        { "weight": 0.5, "text": "Your men smash the totems with grim satisfaction. The oppressive air lifts.", "effects": { "morale": 12 } },
+        { "weight": 0.3, "text": "As the last totem falls, a curse lashes out. Pain sears through the column.", "effects": { "damageAll": 5, "morale": -8 } },
+        { "weight": 0.2, "text": "Among the shattered bones, a charm pulses with stolen power.", "effects": { "grantItem": "woad_charm", "morale": 5 } }
+      ]},
+      { "text": "Your medicus examines the runes and bones.", "requiresClass": "medicus", "outcomes": [
+        { "weight": 0.5, "text": "The medicus identifies the poison on the bone tips and prepares a counter-agent. Knowledge is armor.", "effects": { "healAll": 6, "morale": 8 } },
+        { "weight": 0.3, "text": "Careful study reveals a ward pattern. Your medicus repurposes it as protection.", "effects": { "morale": 10, "grantItem": "seers_eye" } },
+        { "weight": 0.2, "text": "The runes resist understanding. The medicus pulls back, shaken but wiser.", "effects": { "morale": -3, "healAll": 4 } }
+      ]},
+      { "text": "Your heavy infantry carves a new path around them.", "requiresTag": "melee", "outcomes": [
+        { "weight": 0.6, "text": "Brute force wins. Your soldiers hack through the undergrowth, avoiding the markers entirely.", "effects": { "morale": 8, "damageAll": 2 } },
+        { "weight": 0.4, "text": "The detour takes time but keeps the men away from the markers. They find a stream to refill waterskins.", "effects": { "healAll": 5, "morale": 5 } }
+      ]},
+      { "text": "Walk through without touching anything.", "outcomes": [
+        { "weight": 0.5, "text": "The skulls watch you pass. The men hold their breath the entire way.", "effects": { "morale": -10 } },
+        { "weight": 0.5, "text": "You pass through unharmed, but the feeling of being watched doesn't fade.", "effects": { "morale": -6 } }
+      ]}
+    ]
+  },
+  {
     "id": "fog_bank",
     "name": "The Fog Bank",
     "intro": "A wall of fog rolls through the trees, thick as wool and cold as the grave. Shapes move in the murk \u2014 or maybe they don't. Your men freeze. Visibility drops to nothing.",
