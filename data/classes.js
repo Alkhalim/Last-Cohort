@@ -217,7 +217,7 @@ const RAW_CLASSES = {
       {
         "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true, "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Rain arrows on a row. Deals 2 damage to target and all enemies in the same row. (2 turn cooldown)",
+        "description": "Rain arrows on a row. Deals 2 damage to target and all enemies in the same row.",
         "effects": { "damage": 2, "splashRow": true }
       },
       {
@@ -328,7 +328,7 @@ const RAW_CLASSES = {
       {
         "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "Sound the battle horn. Heal all allies for 1 HP and grant 1 Block. (1 turn cooldown)",
+        "description": "Sound the battle horn. Heal all allies for 1 HP and grant 1 Block.",
         "effects": { "healAll": 1, "blockAll": 1 }
       },
       {

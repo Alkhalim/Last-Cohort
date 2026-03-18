@@ -749,7 +749,15 @@ class GameUI {
       desc = desc.replace(/(\d+) Poison/g, '<span class="stat-poison">$1</span> Poison');
       desc = desc.replace(/(\d+) Morale/g, '<span class="stat-morale-text">$1</span> Morale');
 
-      const cdText = skill.cooldownLeft > 0 ? `<span class="skill-cd">CD: ${skill.cooldownLeft}</span>` : (skill.cooldown ? `<span class="skill-cd-ready">CD: ${skill.cooldown}</span>` : '');
+      const cdDisplay = skill.cooldownLeft > 0 ? skill.cooldownLeft - 1 : 0;
+      const cdBaseDisplay = skill.cooldown ? skill.cooldown - 1 : 0;
+      const cdText = skill.cooldownLeft > 0 && cdDisplay > 0
+        ? `<span class="skill-cd">CD: ${cdDisplay}</span>`
+        : skill.cooldownLeft > 0
+          ? `<span class="skill-cd">Ready next turn</span>`
+          : cdBaseDisplay > 0
+            ? `<span class="skill-cd-ready">CD: ${cdBaseDisplay}</span>`
+            : '';
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span> ${cdText}</div>
         <div class="skill-desc">${desc}</div>
@@ -788,7 +796,10 @@ class GameUI {
   showCooldownPopup(element, turnsLeft) {
     const popup = document.createElement('div');
     popup.className = 'cooldown-popup';
-    popup.textContent = `On cooldown (${turnsLeft} turn${turnsLeft > 1 ? 's' : ''})`;
+    const displayLeft = Math.max(0, turnsLeft - 1);
+    popup.textContent = displayLeft > 0
+      ? `On cooldown (${displayLeft} turn${displayLeft > 1 ? 's' : ''})`
+      : 'Ready next turn';
     const rect = element.getBoundingClientRect();
     popup.style.left = (rect.left + rect.width / 2) + 'px';
     popup.style.top = (rect.top - 8) + 'px';
