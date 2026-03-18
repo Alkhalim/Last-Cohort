@@ -180,6 +180,19 @@ const RAW_ENEMIES = {
     ]
   },
 
+  "ironbound_champion": {
+    "id": "ironbound_champion", "name": "Ironbound Champion",
+    "maxHp": 24, "row": "front", "damage": [5, 10], "speed": 1, "xpValue": 7,
+    "minDifficulty": 3,
+    "description": "A warrior encased in layers of scavenged shields and iron plate. He builds his defenses, then unleashes them in a single devastating charge. Kill him before the shieldbearers make him unstoppable.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Iron Brace", "damage": 0, "chance": 0.4, "text": "hunkers behind layered shields", "blockSelf": 5 },
+      { "name": "Shield Charge", "damage": 3, "chance": 0.35, "text": "charges forward, smashing with his shield wall", "damageFromBlock": true },
+      { "name": "Crushing Slam", "damage": 6, "chance": 0.25, "text": "brings an armored fist down" }
+    ]
+  },
+
   "war_hound": {
     "id": "war_hound", "name": "War Hound",
     "maxHp": 16, "row": "front", "damage": [4, 7], "speed": 3, "xpValue": 5,

@@ -1272,10 +1272,17 @@ class CombatEngine {
       this.onVisual('enemyAttack', { enemyIndex: enemy.index });
     }
 
-    if (action.damage > 0) {
+    if (action.damage > 0 || action.damageFromBlock) {
+      // Ironbound Champion: damage = base + current block (consumes block)
+      let actionDamage = action.damage || 0;
+      if (action.damageFromBlock && enemy.block > 0) {
+        actionDamage += enemy.block;
+        this.addLog(`${enemy.name} channels ${enemy.block} block into the charge!`);
+        enemy.block = 0;
+      }
       // Curse: Hunter's Shadow — enemies deal +1 damage
       const curseBonusDmg = this.getActiveCurses().includes('hunters_shadow') ? 1 : 0;
-      let dmg = action.damage + curseBonusDmg;
+      let dmg = actionDamage + curseBonusDmg;
       // Ballistarius passive: Pinning Fire — pinned enemies deal 15% less
       if (enemy._pinned) {
         const reduction = Math.max(1, Math.floor(dmg * 0.15));
@@ -1292,7 +1299,7 @@ class CombatEngine {
       }
       target.hp = Math.max(0, target.hp - dmg);
       target.stats.damageTaken += dmg;
-      const totalActionDmg = action.damage + curseBonusDmg;
+      const totalActionDmg = actionDamage + curseBonusDmg;
       this.addLog(`${enemy.name} ${action.text} at ${target.name} for ${totalActionDmg} damage${dmg < totalActionDmg ? ` (${dmg} after block)` : ''}.`);
 
       if (this.onVisual) {

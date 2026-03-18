@@ -39,7 +39,8 @@ const RAW_ENCOUNTERS = {
       { "name": "Berserker Charge", "minDifficulty": 2, "enemies": ["germanic_berserker", "cheruscan_raider", "sling_hunter"], "intro": "A foam-mouthed berserker charges from the trees, warriors at his back." },
       { "name": "War Hound Pack", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "cheruscan_raider"], "intro": "Armored hounds bound through the undergrowth, a handler driving them forward." },
       { "name": "Runed Shield Line", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_shieldbearer", "cheruscan_raider"], "intro": "A runecarver crouches behind a shield line, carving wards into every surface." },
-      { "name": "Cursed Patrol", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Black-veined warriors shamble through the mist. A seer chants behind them." }
+      { "name": "Cursed Patrol", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Black-veined warriors shamble through the mist. A seer chants behind them." },
+      { "name": "Ironbound Vanguard", "minDifficulty": 3, "enemies": ["ironbound_champion", "cheruscan_shieldbearer", "sling_hunter"], "intro": "An iron-clad warrior advances behind a shieldbearer. The more they protect him, the harder he hits." }
     ],
     "hard": [
       { "name": "The Clearing", "enemies": ["cheruscan_raider", "cheruscan_raider", "marsh_wolf", "sling_hunter"], "intro": "You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you." },
@@ -54,7 +55,8 @@ const RAW_ENCOUNTERS = {
       { "name": "Berserker Warband", "minDifficulty": 2, "enemies": ["germanic_berserker", "germanic_berserker", "cheruscan_shieldbearer"], "intro": "Two berserkers charge screaming from the trees. A shieldbearer covers their flank." },
       { "name": "The Kennels", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "war_hound", "sling_hunter"], "intro": "A pack of armored war hounds pours from a makeshift kennel. A handler slings stones from behind." },
       { "name": "Warded Warband", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Rune-warded warriors advance behind a wall of carved shields. Every blow glances off." },
-      { "name": "Bone Court", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Three cursed warriors stand in a circle of bones. A seer orchestrates their suffering." }
+      { "name": "Bone Court", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Three cursed warriors stand in a circle of bones. A seer orchestrates their suffering." },
+      { "name": "The Iron Wall", "minDifficulty": 3, "enemies": ["ironbound_champion", "cheruscan_shieldbearer", "cheruscan_shieldbearer", "sling_hunter"], "intro": "Two shieldbearers funnel their defenses into an iron-clad champion. He grows stronger with every shield raised." }
     ]
   },
   "dropTables": {
