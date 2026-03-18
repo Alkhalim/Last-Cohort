@@ -317,6 +317,18 @@ class CombatEngine {
     const vals = this.dicePool.dice.map(d => d.value).join(', ');
     this.addLog(`Dice: [${vals}]`);
 
+    // Silent Huntsman: destroy an odd die every 2 turns (after player rolls)
+    const huntsman = this.enemies.find(e => e.id === 'silent_huntsman' && !e.dead);
+    if (huntsman && this.turn % 2 === 0) {
+      const oddDice = this.dicePool.dice.filter(d => !d.used && d.value % 2 === 1);
+      if (oddDice.length > 0) {
+        const victim = oddDice[Math.floor(Math.random() * oddDice.length)];
+        this.dicePool.useDie(victim.id);
+        this.addLog(`The Huntsman's arrow shatters a die! (${victim.value} destroyed)`);
+        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
+      }
+    }
+
     // Dice passives trigger on rolled values
     this.processDicePassives();
 
@@ -1111,17 +1123,6 @@ class CombatEngine {
   }
 
   executeEnemyAction(enemy) {
-    // Silent Huntsman: snipe an odd-numbered die every 2 turns
-    if (enemy.id === 'silent_huntsman' && !enemy.dead && this.turn % 2 === 0) {
-      const oddDice = this.dicePool.dice.filter(d => !d.used && d.value % 2 === 1);
-      if (oddDice.length > 0) {
-        const victim = oddDice[Math.floor(Math.random() * oddDice.length)];
-        this.dicePool.useDie(victim.id);
-        this.addLog(`The Huntsman's arrow shatters a die! (${victim.value} destroyed)`);
-        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
-      }
-    }
-
     this.executeEnemySingleAction(enemy);
   }
 
