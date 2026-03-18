@@ -674,10 +674,15 @@ class GameUI {
       return;
     }
 
+    // Before player turn, show all skills as inactive (no dice yet)
+    const isPlayerTurn = this.engine.phase === PHASE.PLAYER_TURN;
+
     nameEl.textContent = `${unit.name}`;
     list.innerHTML = '';
 
-    const skills = this.engine.getValidSkills(this.selectedUnitIndex);
+    const skills = isPlayerTurn
+      ? this.engine.getValidSkills(this.selectedUnitIndex)
+      : unit.skills.map(s => ({ ...s, canUse: false }));
 
     // Compute equipment bonuses for modified descriptions
     const equipDmg = unit.equipDamage || 0;
