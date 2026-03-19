@@ -129,7 +129,7 @@ const RAW_ENEMIES = {
     "description": "A disciplined warrior who fights defensively, shielding his brothers. Only strikes when cornered alone.",
     "ai": "defensive",
     "actions": [
-      { "name": "Shield Cover", "damage": 0, "chance": 0.5, "text": "raises his shield, covering nearby warriors", "blockFrontRow": 2 },
+      { "name": "Shield Cover", "damage": 0, "chance": 0.5, "text": "raises his shield, covering nearby warriors", "blockFrontRow": 3 },
       { "name": "Brace", "damage": 0, "chance": 0.3, "text": "braces behind his shield", "blockSelf": 3 },
       { "name": "Desperate Strike", "damage": 5, "chance": 0.2, "text": "strikes desperately" }
     ]
