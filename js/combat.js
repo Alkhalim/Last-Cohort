@@ -2108,15 +2108,26 @@ class CombatEngine {
 
   // --- Equipment helpers ---
   unitHasItem(unit, itemId) {
+    // Use cache if available
+    if (unit._itemCache && unit._itemCache[itemId] !== undefined) return unit._itemCache[itemId];
     for (const slot of ['weapon', 'armor', 'trinket']) {
       for (const equipped of unit.equipment[slot]) {
         if (!equipped) continue;
-        if (equipped === itemId) return true;
-        // Check base ID for leveled items
+        if (equipped === itemId) {
+          if (!unit._itemCache) unit._itemCache = {};
+          unit._itemCache[itemId] = true;
+          return true;
+        }
         const item = ITEM_DATA[equipped];
-        if (item && item.baseId === itemId) return true;
+        if (item && item.baseId === itemId) {
+          if (!unit._itemCache) unit._itemCache = {};
+          unit._itemCache[itemId] = true;
+          return true;
+        }
       }
     }
+    if (!unit._itemCache) unit._itemCache = {};
+    unit._itemCache[itemId] = false;
     return false;
   }
 
