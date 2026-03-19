@@ -757,23 +757,17 @@ class GameUI {
         : 0;
       const effectiveBonusDmg = totalBonusDmg - auraReduction;
 
-      // Replace damage values — show total (base+bonus) breakdown
-      desc = desc.replace(/Deals (\d+) damage/g, (match, base) => {
+      // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
+      desc = desc.replace(/([Dd]eal[s]?) (\d+) damage/g, (match, verb, base) => {
         const b = parseInt(base);
         if (effectiveBonusDmg !== 0) {
           const total = Math.max(1, b + effectiveBonusDmg);
-          return `Deals <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${effectiveBonusDmg})</span> damage`;
+          return `${verb} <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${effectiveBonusDmg})</span> damage`;
         }
-        return `Deals <span class="stat-dmg">${b}</span> damage`;
+        return `${verb} <span class="stat-dmg">${b}</span> damage`;
       });
-      desc = desc.replace(/(\d+) damage/g, (match, base) => {
-        const b = parseInt(base);
-        if (effectiveBonusDmg !== 0) {
-          const total = Math.max(1, b + effectiveBonusDmg);
-          return `<span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${effectiveBonusDmg})</span> damage`;
-        }
-        return `<span class="stat-dmg">${b}</span> damage`;
-      });
+      // Color-code remaining "X damage" (buff amounts like "+2 damage") without adding bonuses
+      desc = desc.replace(/(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
 
       // Replace block values
       desc = desc.replace(/(\d+) Block/g, (match, base) => {
