@@ -2469,12 +2469,12 @@ class GameUI {
   showSkillChoices(unitIndex) {
     const content = document.getElementById('levelup-content');
     const unit = this.engine.party[unitIndex];
-    // Cache choices so Back button doesn't reroll
-    if (!this._cachedSkillChoices || this._cachedSkillChoicesUnit !== unitIndex) {
-      this._cachedSkillChoices = this.engine.getSkillChoices(unit, 2);
-      this._cachedSkillChoicesUnit = unitIndex;
+    // Cache choices per unit so switching between units doesn't reroll
+    if (!this._cachedSkillChoicesMap) this._cachedSkillChoicesMap = {};
+    if (!this._cachedSkillChoicesMap[unitIndex]) {
+      this._cachedSkillChoicesMap[unitIndex] = this.engine.getSkillChoices(unit, 2);
     }
-    const choices = this._cachedSkillChoices;
+    const choices = this._cachedSkillChoicesMap[unitIndex];
 
     if (choices.length === 0) {
       this.showLevelUpScreen();
@@ -2492,8 +2492,7 @@ class GameUI {
         <div class="skill-desc">${skill.description}</div>
       `;
       card.addEventListener('click', () => {
-        this._cachedSkillChoices = null;
-        this._cachedSkillChoicesUnit = null;
+        this._cachedSkillChoicesMap = null;
         this.engine.teachSkill(unitIndex, skill.id);
         this.engine.pendingSkillPicks--;
         if (this.engine.pendingSkillPicks > 0) {
