@@ -143,6 +143,11 @@ class GameUI {
   // --- Main render ---
   render() {
     this.hideEnemyTooltip();
+    // Victory/Defeat: only render phase UI, skip heavy combat rendering
+    if (this.engine.phase === PHASE.VICTORY || this.engine.phase === PHASE.DEFEAT) {
+      this.renderPhaseUI();
+      return;
+    }
     this.renderMorale();
     this.renderBossHpBar();
     this.renderEnemies();
