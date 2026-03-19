@@ -1096,6 +1096,16 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: blockTarget.index, amount: totalBlock });
+      // Shieldbearer's Grip: grant 2 block to a random other ally
+      if (this.unitHasItem(unit, 'shieldbearers_grip')) {
+        const others = this.party.filter(u => !u.downed && u !== unit);
+        if (others.length > 0) {
+          const ally = others[Math.floor(Math.random() * others.length)];
+          ally.block = (ally.block || 0) + 2;
+          parts.push(`Shieldbearer's Grip spreads 2 Block to ${ally.name}.`);
+          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: 2 });
+        }
+      }
       // Special: Oak Splinter — block skills grant +2 block to all other allies
       if (this.unitHasItem(unit, 'oak_splinter')) {
         this.party.forEach(u => {
@@ -1121,6 +1131,15 @@ class CombatEngine {
         }
       });
       unit.stats.blockGenerated += totalBlock * count;
+      // Shieldbearer's Grip: grant 2 extra block to a random other ally on blockAll
+      if (this.unitHasItem(unit, 'shieldbearers_grip')) {
+        const others = this.party.filter(u => !u.downed && u !== unit);
+        if (others.length > 0) {
+          const ally = others[Math.floor(Math.random() * others.length)];
+          ally.block = (ally.block || 0) + 2;
+          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: 2 });
+        }
+      }
       const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
       if (!result.damage && !result.heal && !result.block) {
         parts.push(`${unit.name} uses ${skill.name} \u2014 all gain ${totalBlock}${bonusStr} Block.`);
