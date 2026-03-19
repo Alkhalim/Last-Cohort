@@ -11,7 +11,8 @@
       "Bash(sed:*)",
       "Bash(node:*)",
       "Bash(for f:*)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "WebFetch(domain:slaythespire.wiki.gg)"
     ]
   }
 }

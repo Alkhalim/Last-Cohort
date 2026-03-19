@@ -227,11 +227,11 @@ const RAW_ENEMIES = {
     "maxHp": 60, "row": "front", "damage": [8, 14], "speed": 1, "xpValue": 25,
     "minDifficulty": 3,
     "isBoss": true, "ai": "boss",
-    "description": "A massive swamp predator — half boar, half nightmare. Her young swarm at her call. She fights harder when they fall.",
+    "description": "A monstrous sow, ancient and scarred, draped in mud and fury. Her boar brood swarms at her call. Kill her young and she grows deadlier.",
     "actions": [
       { "name": "Gore Charge", "damage": 10, "chance": 0.3, "text": "charges with lowered tusks" },
       { "name": "Thrashing Fury", "damage": 7, "chance": 0.25, "text": "thrashes wildly, striking everything", "aoe": true },
-      { "name": "Call the Brood", "damage": 0, "chance": 0.25, "text": "bellows into the swamp — her young answer", "spawn": "boar_youngling" },
+      { "name": "Call the Brood", "damage": 0, "chance": 0.25, "text": "bellows into the swamp — her young answer", "spawn": "boar_youngling", "cooldown": 3 },
       { "name": "Mother's Wrath", "damage": 12, "morale": -10, "chance": 0.2, "text": "rears up and brings crushing weight down", "cooldown": 1 }
     ]
   },

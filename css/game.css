@@ -1575,6 +1575,26 @@ html, body {
 }
 
 /* --- Damage number popup --- */
+.status-popup {
+  position: fixed;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+  pointer-events: none;
+  z-index: 25;
+  transform: translateX(-50%);
+  animation: status-float 1.4s ease-out forwards;
+}
+
+@keyframes status-float {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-24px); }
+}
+
 .cooldown-popup {
   position: fixed;
   font-family: 'Inter', sans-serif;

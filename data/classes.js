@@ -366,9 +366,9 @@ const RAW_CLASSES = {
         "effects": { "damage": 8, "morale": 8 }
       },
       {
-        "id": "rally_fallen", "name": "Rally the Fallen", "cooldown": 2,
+        "id": "rally_fallen", "name": "Rally the Fallen", "cooldown": 5,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_ally",
-        "description": "2 dice totaling 8+. Revive a downed ally at 25% HP. -15 Morale.",
+        "description": "2 dice totaling 8+. Revive a downed ally at 25% HP with equal Block. -15 Morale.",
         "effects": { "revive": true, "morale": -15 }
       },
       {

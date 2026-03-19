@@ -170,6 +170,16 @@ const RAW_ENCOUNTERS = {
       { "chance": 0.10, "items": ["chiefs_spear", "scorpio_crossbow"] },
       { "chance": 0.15, "items": ["gladiators_wraps", "scouts_leather"] }
     ] },
+    "boar_youngling": { "nothingChance": 0.50, "tiers": [
+      { "chance": 0.35, "items": ["wolf_pelt", "herb_pouch"] },
+      { "chance": 0.15, "items": ["fang_necklace"] }
+    ] },
+    "war_boar": { "nothingChance": 0.15, "tiers": [
+      { "chance": 0.30, "items": ["wolf_pelt", "herb_pouch", "raider_shield"] },
+      { "chance": 0.25, "items": ["fang_necklace", "legionary_lorica", "gladiators_wraps"] },
+      { "chance": 0.15, "items": ["hound_collar", "berserker_mushroom"] },
+      { "chance": 0.15, "items": ["mire_mothers_tusk"] }
+    ] },
     "ironbound_champion": { "nothingChance": 0.10, "tiers": [
       { "chance": 0.30, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
       { "chance": 0.25, "items": ["shieldbearers_grip", "legionary_lorica", "cheruscan_torc"] },

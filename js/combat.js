@@ -477,9 +477,10 @@ class CombatEngine {
     // Cooldown check
     if (skill.cooldownLeft && skill.cooldownLeft > 0) return false;
 
-    // Revive skills need a downed ally
+    // Revive skills need a downed ally (not self)
     if (skill.effects && skill.effects.revive) {
-      if (!this.party.some(u => u.downed)) return false;
+      const self = this.party[unitIndex];
+      if (!this.party.some(u => u.downed && u !== self)) return false;
     }
 
     // Morale cost skills need enough morale
@@ -628,7 +629,8 @@ class CombatEngine {
       }
     } else if (skill.target === TARGET.SINGLE_ALLY) {
       const isRevive = skill.effects && skill.effects.revive;
-      const aliveAllies = isRevive ? this.party.filter(u => u.downed) : this.party.filter(u => !u.downed);
+      const unit = this.party[unitIndex];
+      const aliveAllies = isRevive ? this.party.filter(u => u.downed && u !== unit) : this.party.filter(u => !u.downed);
       if (aliveAllies.length === 1) {
         this.executeSkill(unitIndex, skillId, diceIds, [aliveAllies[0]]);
       } else if (aliveAllies.length > 1) {
@@ -773,6 +775,7 @@ class CombatEngine {
       if (result.target._marked && result.target._marked > 0) {
         total = Math.round(total * 1.2);
         parts.push('Marked! (+20%)');
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Marked!', color: 'var(--red-bright)' });
       }
       // Condemn: +30% damage from all sources
       if (result.target._condemned && result.target._condemned > 0) {
@@ -783,6 +786,7 @@ class CombatEngine {
       if (result.execute && result.target.hp <= result.target.maxHp * 0.25) {
         total *= 2;
         parts.push('EXECUTE!');
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Execute!', color: 'var(--red-bright)' });
       }
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
@@ -1105,6 +1109,7 @@ class CombatEngine {
     if (result.counterStance) {
       unit._counterStance = result.counterStance;
       parts.push(`${unit.name} enters counter stance! (${result.counterStance} retaliatory damage)`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'Counter', color: 'var(--gold)' });
     }
 
     // Shieldbreak: remove all block from target
@@ -1118,18 +1123,21 @@ class CombatEngine {
     if (result.overwatch) {
       unit._overwatch = result.overwatch;
       parts.push(`${unit.name} sets an overwatch! (${result.overwatch} damage to next attacker)`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'Overwatch', color: 'var(--gold)' });
     }
 
     // Suppress: target deals 40% less damage for N turns
     if (result.suppress && result.target) {
       result.target._suppressed = result.suppress;
       parts.push(`${result.target.name} is suppressed! (-40% damage for ${result.suppress} turns)`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Suppressed', color: '#aa66aa' });
     }
 
     // Stimulant: target ally can act again
     if (result.stimulant && result.target) {
       result.target.actedThisTurn = false;
       parts.push(`${result.target.name} is reinvigorated! Can act again this turn.`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: result.target.index, text: 'Stimulant!', color: 'var(--green-bright)' });
     }
 
     // Transfusion: transfer HP from self to target
@@ -1150,20 +1158,25 @@ class CombatEngine {
     if (result.cripple && result.target) {
       result.target._crippled = result.cripple;
       parts.push(`${result.target.name} is crippled! (-30% damage for ${result.cripple} actions)`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Crippled', color: '#aa66aa' });
     }
 
     // Snare Trap: if target attacks this turn, takes damage and is stunned
     if (result.snareTrap && result.target) {
       result.target._snareTrap = result.snareTrap;
       parts.push(`A trap is set on ${result.target.name}!`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Trapped', color: 'var(--gold)' });
     }
 
     // Revive: bring a downed ally back
     if (result.revive && result.target && result.target.downed) {
       result.target.downed = false;
-      result.target.hp = Math.max(1, Math.floor(result.target.maxHp * 0.25));
-      parts.push(`${result.target.name} is revived at ${result.target.hp} HP!`);
-      if (this.onVisual) this.onVisual('unitHeal', { unitIndex: result.target.index, amount: result.target.hp });
+      const reviveHp = Math.max(1, Math.floor(result.target.maxHp * 0.25));
+      result.target.hp = reviveHp;
+      result.target.block = (result.target.block || 0) + reviveHp;
+      parts.push(`${result.target.name} is revived at ${reviveHp} HP with ${reviveHp} Block!`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: result.target.index, text: 'Revived!', color: 'var(--green-bright)' });
+      if (this.onVisual) this.onVisual('unitHeal', { unitIndex: result.target.index, amount: reviveHp });
     }
 
     // Morale Cost: spend morale to use the skill
@@ -1177,18 +1190,21 @@ class CombatEngine {
     if (result.deafen && result.target) {
       result.target._deafened = result.deafen;
       parts.push(`${result.target.name} is deafened! Morale attacks nullified for ${result.deafen} turns.`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Deafened', color: '#aa66aa' });
     }
 
     // Resonance: mark ally, next heal doubled + grant block
     if (result.resonance && result.target) {
       result.target._resonance = true;
       parts.push(`${result.target.name} resonates with healing energy! Next heal doubled.`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: result.target.index, text: 'Resonance', color: 'var(--green-bright)' });
     }
 
     // Pull to Front: move enemy to front row
     if (result.pullToFront && result.target && result.target.row === 'back') {
       result.target.row = 'front';
       parts.push(`${result.target.name} is pulled to the front row!`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Pulled!', color: 'var(--red-bright)' });
     }
 
     // Damage Shield: all allies take X% less damage next enemy turn
@@ -1209,6 +1225,7 @@ class CombatEngine {
     if (result.intercept) {
       unit._intercept = true;
       parts.push(`${unit.name} stands ready to intercept the next attack!`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'Intercept', color: 'var(--blue-bright)' });
     }
 
     // Avenger's Oath: bonus damage if ally is downed
@@ -1277,6 +1294,7 @@ class CombatEngine {
     if (result.condemn && result.target) {
       result.target._condemned = result.condemn;
       parts.push(`${result.target.name} is condemned! (+30% damage from all sources for ${result.condemn} turns)`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Condemned', color: 'var(--red-bright)' });
     }
 
     if (parts.length === 0) parts.push(`${unit.name} uses ${skill.name}.`);
@@ -1525,6 +1543,7 @@ class CombatEngine {
     if (enemy._skipNextAction) {
       enemy._skipNextAction = false;
       this.addLog(`${enemy.name} is stunned and cannot act!`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: enemy.index, text: 'Stunned!', color: 'var(--red-bright)' });
       return;
     }
 
@@ -1580,6 +1599,7 @@ class CombatEngine {
     if (enemy._smokeScreen && Math.random() < enemy._smokeScreen) {
       enemy._smokeScreen = 0;
       this.addLog(`${enemy.name}'s attack misses in the smoke!`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: enemy.index, text: 'Miss!', color: 'var(--text-dim)' });
       return;
     }
 
@@ -1635,6 +1655,7 @@ class CombatEngine {
         enemy.hp = Math.max(0, enemy.hp - halfDmg);
         enemy._skipNextAction = true;
         this.addLog(`${interceptor.name} intercepts! Takes ${halfDmg} damage, reflects ${halfDmg} back. ${enemy.name} is stunned!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: interceptor.index, text: 'Intercept!', color: 'var(--blue-bright)' });
         if (this.onVisual) {
           this.onVisual('unitHit', { unitIndex: interceptor.index, damage: halfDmg });
         }
@@ -1668,6 +1689,7 @@ class CombatEngine {
         enemy.hp = Math.max(0, enemy.hp - counterDmg);
         target._counterStance = 0;
         this.addLog(`${target.name} retaliates for ${counterDmg} damage!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Counter!', color: 'var(--red-bright)' });
       }
 
       // Overwatch: check all allies for overwatch
@@ -1677,6 +1699,7 @@ class CombatEngine {
           enemy.hp = Math.max(0, enemy.hp - owDmg);
           u._overwatch = 0;
           this.addLog(`${u.name}'s overwatch fires! ${enemy.name} takes ${owDmg} damage.`);
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Overwatch!', color: 'var(--gold)' });
         }
       });
 
@@ -1687,6 +1710,7 @@ class CombatEngine {
         enemy._skipNextAction = true;
         enemy._snareTrap = 0;
         this.addLog(`The trap springs! ${enemy.name} takes ${trapDmg} damage and is stunned!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: enemy.index, text: 'Trapped!', color: 'var(--gold)' });
       }
     }
 
@@ -1744,6 +1768,7 @@ class CombatEngine {
       }
       target._stunNextTurn = true;
       this.addLog(`${target.name} is stunned by the charge!`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Stunned!', color: 'var(--red-bright)' });
     }
 
     // Shieldbearer: grant block to all other enemies

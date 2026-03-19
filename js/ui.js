@@ -84,6 +84,13 @@ class GameUI {
         this.flashElement('morale-bar', data.amount > 0 ? 'morale-up' : 'morale-down', 600);
         this.showDamagePopup('morale-bar', data.amount, 'morale');
         break;
+      case 'statusText':
+        if (data.unitIndex !== undefined) {
+          this.showStatusPopup(`unit-${data.unitIndex}`, data.text, data.color || 'var(--gold)');
+        } else if (data.enemyIndex !== undefined) {
+          this.showStatusPopup(`enemy-${data.enemyIndex}`, data.text, data.color || 'var(--gold)');
+        }
+        break;
       case 'dicePassive':
         if (data.triggers) {
           data.triggers.forEach(t => {
@@ -399,6 +406,8 @@ class GameUI {
   }
 
   isAllyTargetable(unit) {
+    // Revive targeting: only downed allies
+    if (this.engine.targetMode && this.engine.targetMode.targetType === 'ally_downed') return unit.downed;
     if (unit.downed) return false;
     if (this.engine.targetMode && this.engine.targetMode.targetType === 'ally') return true;
     if (this.stagedSkill && this.selectedUnitIndex !== null) {
@@ -1051,6 +1060,20 @@ class GameUI {
     document.body.appendChild(popup);
 
     setTimeout(() => popup.remove(), 1000);
+  }
+
+  showStatusPopup(elementId, text, color) {
+    const target = document.getElementById(elementId);
+    if (!target) return;
+    const popup = document.createElement('div');
+    popup.className = 'status-popup';
+    popup.textContent = text;
+    popup.style.color = color || 'var(--gold)';
+    const rect = target.getBoundingClientRect();
+    popup.style.left = (rect.left + rect.width / 2) + 'px';
+    popup.style.top = (rect.top - 4) + 'px';
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 1400);
   }
 
   flashElement(elementId, cssClass, duration = 500) {
