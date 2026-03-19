@@ -5,6 +5,54 @@
 
 const RAW_EVENTS = [
   {
+    "id": "roman_mile_marker",
+    "name": "Roman Mile Marker",
+    "maxDifficulty": 1,
+    "intro": "A Roman milestone stands at a crossroads, half-buried in moss. The inscription reads 'LEGIO XVII — 3 miles to forward camp.' The forward camp is long gone, but the road is still Roman stone beneath the mud. Your men take comfort in it.",
+    "choices": [
+      { "text": "Follow the old Roman road.", "outcomes": [
+        { "weight": 0.5, "text": "The road holds. Solid footing and clear sightlines. Your men march with purpose.", "effects": { "morale": 12, "healAll": 3 } },
+        { "weight": 0.3, "text": "The road leads to an abandoned supply cache, still sealed.", "effects": { "morale": 8, "grantItem": "raider_shield" } },
+        { "weight": 0.2, "text": "The road ends abruptly at a collapsed bridge. You lose time backtracking.", "effects": { "morale": -5 } }
+      ]},
+      { "text": "Search around the milestone for anything useful.", "outcomes": [
+        { "weight": 0.5, "text": "Buried at the base, a legionary's kit — still wrapped in oilcloth.", "effects": { "grantItem": "herb_pouch", "morale": 5 } },
+        { "weight": 0.3, "text": "Nothing but old bones and rust. The men grow quiet.", "effects": { "morale": -3 } },
+        { "weight": 0.2, "text": "You find a charm tucked into a crack in the stone. Someone left it for the next Roman to pass.", "effects": { "grantItem": "woad_charm", "morale": 8 } }
+      ]},
+      { "text": "Take a moment to rest by the marker.", "outcomes": [
+        { "weight": 0.7, "text": "A brief rest in the shadow of Rome. The men eat, drink, and breathe.", "effects": { "healAll": 8, "morale": 5 } },
+        { "weight": 0.3, "text": "The rest does everyone good. For a moment, the forest doesn't feel so hostile.", "effects": { "healAll": 6, "morale": 10 } }
+      ]}
+    ]
+  },
+  {
+    "id": "the_scouts_warning",
+    "name": "The Scout's Warning",
+    "minDifficulty": 2,
+    "maxDifficulty": 2,
+    "intro": "One of your forward scouts returns at a sprint, white-faced. 'Ambush ahead,' he gasps. 'A full war band, dug in across the trail. They haven't seen us yet.' You have moments to decide.",
+    "choices": [
+      { "text": "Prepare your men for a head-on fight.", "outcomes": [
+        { "weight": 0.5, "text": "Your men brace shields and ready weapons. The preparation steadies their nerves.", "effects": { "morale": 10, "healAll": 4 } },
+        { "weight": 0.5, "text": "Forewarned is forearmed. Your men sharpen blades and set formations.", "effects": { "morale": 8 } }
+      ]},
+      { "text": "Your scout leads you on a hidden path around them.", "requiresTag": "ranged", "outcomes": [
+        { "weight": 0.6, "text": "The scout's keen eyes find a deer trail through the thicket. You bypass the ambush entirely.", "effects": { "morale": 15 } },
+        { "weight": 0.4, "text": "The detour reveals an abandoned hunter's camp with useful supplies.", "effects": { "morale": 10, "grantItem": "fang_necklace" } }
+      ]},
+      { "text": "Set your own ambush — turn the tables.", "outcomes": [
+        { "weight": 0.4, "text": "The element of surprise works both ways. You strike first and scatter them before they can organize. Spoils litter the trail.", "effects": { "morale": 18, "grantItem": "iron_gladius" } },
+        { "weight": 0.3, "text": "Your counter-ambush succeeds, but not without cost. A few scrapes and bruises.", "effects": { "morale": 12, "damageAll": 3 } },
+        { "weight": 0.3, "text": "They spot you setting up. The ambush becomes a chaotic brawl.", "effects": { "damageAll": 6, "morale": -5 } }
+      ]},
+      { "text": "Fall back and find another route.", "outcomes": [
+        { "weight": 0.6, "text": "Discretion wins. You lose time but keep everyone safe.", "effects": { "morale": -3 } },
+        { "weight": 0.4, "text": "The long way around saps your energy, but you find a stream to rest by.", "effects": { "healAll": 5, "morale": -5 } }
+      ]}
+    ]
+  },
+  {
     "id": "roadside_shrine", "name": "Roadside Shrine",
     "intro": "You come upon a weathered shrine to some forgotten god. Offerings of fruit and bone litter the base. The men look to you for guidance.",
     "choices": [

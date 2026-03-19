@@ -189,7 +189,11 @@ function generateMap(difficulty = 1, recentBosses = []) {
     } else if (node.type === 'event') {
       // Filter by difficulty, then weighted random — no regular event repeats per march
       const repeatable = ['skill_upgrade', 'item_upgrade']; // these can repeat
-      const eligible = EVENT_DATA.filter(e => !e.minDifficulty || e.minDifficulty <= difficulty);
+      const eligible = EVENT_DATA.filter(e => {
+        if (e.minDifficulty && e.minDifficulty > difficulty) return false;
+        if (e.maxDifficulty && e.maxDifficulty < difficulty) return false;
+        return true;
+      });
       // Remove already-used non-repeatable events
       const available = eligible.filter(e => {
         if (repeatable.includes(e.type)) return true;
