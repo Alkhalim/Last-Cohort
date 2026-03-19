@@ -201,6 +201,11 @@ function buildSkillExecute(skillData) {
       result.splashAdjacent = effects.splashAdjacent;
     }
 
+    // Splash adjacent percentage: deal X% of total damage to adjacent enemies (min 2)
+    if (effects.splashAdjacentPct !== undefined) {
+      result.splashAdjacentPct = effects.splashAdjacentPct;
+    }
+
     // Splash back row: half damage pierces to all back-row enemies
     if (effects.splashBackRow) {
       result.splashBackRow = true;

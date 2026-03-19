@@ -140,14 +140,14 @@ class CombatEngine {
     const data = ENEMY_DATA[eid];
     // Difficulty scaling: HP, damage, poison, and block scale per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
+    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.65));
     // Curse: Champion's Mark — bosses have +20% HP
     if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
       scaledMaxHp = Math.round(scaledMaxHp * 1.2);
     }
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.30)) : 0,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.35)) : 0,
       poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
       blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
       blockFrontRow: a.blockFrontRow ? a.blockFrontRow + diffBonus : undefined,
@@ -983,6 +983,23 @@ class CombatEngine {
           unit.stats.damageDealt += sDmg;
         });
         if (adjacent.length > 0) parts.push(`Tramples ${adjacent.map(e => e.name).join(' and ')} for ${result.splashAdjacent} damage.`);
+      }
+
+      // Splash adjacent percentage: deal X% of total damage to adjacent enemies (min 2)
+      if (result.splashAdjacentPct && result.target.row) {
+        const trampleDmg = Math.max(2, Math.round(total * result.splashAdjacentPct));
+        const sameRow = this.enemies.filter(e => !e.dead && e.row === result.target.row && e !== result.target);
+        sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
+        const adjacent = sameRow.filter(e => Math.abs(e.index - result.target.index) <= 2).slice(0, 2);
+        adjacent.forEach(e => {
+          let sDmg = trampleDmg;
+          const sAura = this.getAuraDamageReduction(e);
+          if (sAura > 0) sDmg = Math.max(1, sDmg - sAura);
+          if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+          e.hp = Math.max(0, e.hp - sDmg);
+          unit.stats.damageDealt += sDmg;
+        });
+        if (adjacent.length > 0) parts.push(`Tramples ${adjacent.map(e => e.name).join(' and ')} for ${trampleDmg} damage.`);
       }
 
       // Knockback: shove front-row enemy to back row
@@ -1900,7 +1917,7 @@ class CombatEngine {
         const data = ENEMY_DATA[action.spawn];
         if (data) {
           const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
+          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.65));
           const scaledActions = data.actions.map(a => ({
             ...a,
             damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
@@ -2270,10 +2287,10 @@ class CombatEngine {
     if (!data) return;
     if (this.enemies.filter(e => !e.dead).length >= 6) return;
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.55));
+    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.65));
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.30)) : 0,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.35)) : 0,
       poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
       blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
       blockFrontRow: a.blockFrontRow ? a.blockFrontRow + diffBonus : undefined,

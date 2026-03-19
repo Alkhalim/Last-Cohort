@@ -2487,7 +2487,7 @@ class GameUI {
     // Two buttons: continue deeper or return home
     const btnContainer = document.getElementById('btn-run-complete');
     btnContainer.textContent = 'Deeper into the Forest';
-    btnContainer.onclick = () => window.game.continueRun();
+    btnContainer.onclick = () => this.showMarchRestScreen();
 
     // Add a secondary "Return Home" link if not already there
     let homeBtn = document.getElementById('btn-run-home');
@@ -2503,6 +2503,234 @@ class GameUI {
       homeBtn.classList.add('hidden');
       window.game.returnHome();
     };
+  }
+
+  showMarchRestScreen() {
+    // Brief rest: heal 10% of all members
+    this.engine.party.forEach(u => {
+      if (!u.downed) {
+        const healAmt = Math.max(1, Math.floor(u.maxHp * 0.1));
+        u.hp = Math.min(u.maxHp, u.hp + healAmt);
+      }
+    });
+
+    this.showScreen('event-screen');
+    document.getElementById('event-title').textContent = 'BRIEF RESPITE';
+    document.getElementById('event-intro').textContent = 'Your cohort rests briefly before pressing deeper. Wounds are tended, and there is time to hone your edge.';
+    document.getElementById('event-intro').style.whiteSpace = 'pre-line';
+    document.getElementById('event-outcome').classList.add('hidden');
+
+    // Show party HP
+    let statusEl = document.getElementById('camp-party-status');
+    if (!statusEl) {
+      statusEl = document.createElement('div');
+      statusEl.id = 'camp-party-status';
+      const introEl = document.getElementById('event-intro');
+      introEl.parentNode.insertBefore(statusEl, introEl.nextSibling);
+    }
+    const moraleBand = getMoraleBand(this.engine.morale);
+    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale} (${moraleBand.label})</span> | All soldiers healed 10%</div>`;
+    statusHtml += '<div class="camp-units">';
+    this.engine.party.forEach(u => {
+      const tag = getPrimaryTag(u.classId);
+      const hpPct = Math.round((u.hp / u.maxHp) * 100);
+      const hpColor = hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
+      statusHtml += `<div class="camp-unit-status"><span class="camp-unit-name" style="color:var(--class-${tag})">${u.title}</span><span class="camp-unit-hp" style="color:${hpColor}">${u.downed ? 'FALLEN' : u.hp + '/' + u.maxHp}</span><div class="camp-hp-bar"><div class="camp-hp-fill" style="width:${u.downed ? 0 : hpPct}%;background:${hpColor}"></div></div></div>`;
+    });
+    statusHtml += '</div>';
+    statusEl.innerHTML = statusHtml;
+
+    // Randomly choose: item upgrades or skill upgrades
+    const upgradeType = Math.random() < 0.5 ? 'item' : 'skill';
+    this._marchRestUpgradesLeft = 2;
+
+    const choicesEl = document.getElementById('event-choices');
+    choicesEl.innerHTML = '';
+
+    if (upgradeType === 'item') {
+      this.showMarchRestItemUpgrades(choicesEl);
+    } else {
+      this.showMarchRestSkillUpgrades(choicesEl);
+    }
+  }
+
+  showMarchRestItemUpgrades(choicesEl) {
+    // Gather all equipped items, spread across characters
+    const allItems = [];
+    this.engine.party.forEach(u => {
+      if (!u.downed) {
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (!id) return;
+            const item = getItemData(id);
+            if (item && !item.stats.extraDice) allItems.push({ unit: u, itemId: id, item });
+          });
+        }
+      }
+    });
+
+    // Spread selection across characters
+    const selected = [];
+    const usedUnits = new Set();
+    const shuffled = allItems.sort(() => Math.random() - 0.5);
+    // First pass: one per unit
+    for (const entry of shuffled) {
+      if (selected.length >= 5) break;
+      if (!usedUnits.has(entry.unit.index)) {
+        selected.push(entry);
+        usedUnits.add(entry.unit.index);
+      }
+    }
+    // Second pass: fill remaining
+    for (const entry of shuffled) {
+      if (selected.length >= 5) break;
+      if (!selected.includes(entry)) selected.push(entry);
+    }
+
+    if (selected.length === 0) {
+      choicesEl.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No equipment to improve.</div>';
+      this.addMarchRestContinue(choicesEl);
+      return;
+    }
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'march-rest-subtitle';
+    titleEl.textContent = `Choose ${this._marchRestUpgradesLeft} items to upgrade:`;
+    choicesEl.appendChild(titleEl);
+
+    selected.forEach(({ unit, itemId, item }) => {
+      const stats = item.stats;
+      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice');
+      if (statKeys.length === 0) return;
+      const statKey = statKeys[Math.floor(Math.random() * statKeys.length)];
+      const current = stats[statKey];
+      const next = current < 0 ? current - 1 : current + 1;
+      const currentLevel = item.level || 1;
+      const upgradeText = `Level ${currentLevel} → ${currentLevel + 1}: +1 ${statKey} (${current} → ${next})`;
+      const tag = getPrimaryTag(unit.classId);
+      const baseName = item.baseId ? (ITEM_DATA[item.baseId] ? ITEM_DATA[item.baseId].name : item.name) : item.name.replace(/ \+\d+$/, '');
+
+      const btn = document.createElement('button');
+      btn.className = 'btn-event-choice';
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong><br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      btn.addEventListener('click', () => {
+        if (stats[statKey] < 0) ITEM_DATA[itemId].stats[statKey]--;
+        else ITEM_DATA[itemId].stats[statKey]++;
+        ITEM_DATA[itemId].level = currentLevel + 1;
+        ITEM_DATA[itemId].name = baseName + ' +' + currentLevel;
+        if (!ITEM_DATA[itemId].baseId) ITEM_DATA[itemId].baseId = itemId;
+        if (statKey === 'maxHp') { unit.maxHp++; unit.baseMaxHp++; unit.hp++; }
+        this.engine.computeEquipmentStats(unit);
+
+        btn.classList.add('disabled');
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        this._marchRestUpgradesLeft--;
+        if (this._marchRestUpgradesLeft <= 0) {
+          choicesEl.querySelectorAll('.btn-event-choice').forEach(b => { b.style.pointerEvents = 'none'; b.style.opacity = '0.4'; });
+          this.addMarchRestContinue(choicesEl);
+        }
+      });
+      choicesEl.appendChild(btn);
+    });
+  }
+
+  showMarchRestSkillUpgrades(choicesEl) {
+    // Gather upgradeable skills spread across characters
+    const allSkills = [];
+    this.engine.party.forEach(u => {
+      if (!u.downed) {
+        u.skills.forEach(s => {
+          const baseDef = u.allSkills.find(as => as.id === s.id);
+          if (!baseDef || !baseDef.effects) return;
+          const eff = baseDef.effects;
+          if (eff.damage || eff.heal || eff.healAll || eff.block || eff.blockAll || eff.poison || eff.poisonAll || eff.morale || eff.damageAll) {
+            allSkills.push({ unit: u, skill: s, baseDef });
+          }
+        });
+      }
+    });
+
+    const selected = [];
+    const usedUnits = new Set();
+    const shuffled = allSkills.sort(() => Math.random() - 0.5);
+    for (const entry of shuffled) {
+      if (selected.length >= 5) break;
+      if (!usedUnits.has(entry.unit.index)) {
+        selected.push(entry);
+        usedUnits.add(entry.unit.index);
+      }
+    }
+    for (const entry of shuffled) {
+      if (selected.length >= 5) break;
+      if (!selected.includes(entry)) selected.push(entry);
+    }
+
+    if (selected.length === 0) {
+      choicesEl.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No skills to improve.</div>';
+      this.addMarchRestContinue(choicesEl);
+      return;
+    }
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'march-rest-subtitle';
+    titleEl.textContent = `Choose ${this._marchRestUpgradesLeft} skills to upgrade:`;
+    choicesEl.appendChild(titleEl);
+
+    selected.forEach(({ unit, skill, baseDef }) => {
+      const eff = baseDef.effects;
+      let upgradeText = '';
+      if (eff.damage) upgradeText = `+1 damage (${eff.damage} → ${eff.damage + 1})`;
+      else if (eff.heal) upgradeText = `+1 healing (${eff.heal} → ${eff.heal + 1})`;
+      else if (eff.healAll) upgradeText = `+1 healing to all (${eff.healAll} → ${eff.healAll + 1})`;
+      else if (eff.block) upgradeText = `+1 block (${eff.block} → ${eff.block + 1})`;
+      else if (eff.blockAll) upgradeText = `+1 block to all (${eff.blockAll} → ${eff.blockAll + 1})`;
+      else if (eff.poison) upgradeText = `+1 poison (${eff.poison} → ${eff.poison + 1})`;
+      else if (eff.poisonAll) upgradeText = `+1 poison to all (${eff.poisonAll} → ${eff.poisonAll + 1})`;
+      else if (eff.morale) upgradeText = `+5 morale (${eff.morale} → ${eff.morale + 5})`;
+      else if (eff.damageAll) upgradeText = `+1 damage to all (${eff.damageAll} → ${eff.damageAll + 1})`;
+      else { const key = Object.keys(eff).find(k => typeof eff[k] === 'number'); if (key) upgradeText = `+1 ${key} (${eff[key]} → ${eff[key] + 1})`; }
+
+      const tag = getPrimaryTag(unit.classId);
+      const btn = document.createElement('button');
+      btn.className = 'btn-event-choice';
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      btn.addEventListener('click', () => {
+        if (eff.damage) baseDef.effects.damage++;
+        else if (eff.heal) baseDef.effects.heal++;
+        else if (eff.healAll) baseDef.effects.healAll++;
+        else if (eff.block) baseDef.effects.block++;
+        else if (eff.blockAll) baseDef.effects.blockAll++;
+        else if (eff.poison) baseDef.effects.poison++;
+        else if (eff.poisonAll) baseDef.effects.poisonAll++;
+        else if (eff.morale) baseDef.effects.morale += 5;
+        else if (eff.damageAll) baseDef.effects.damageAll++;
+
+        btn.classList.add('disabled');
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        this._marchRestUpgradesLeft--;
+        if (this._marchRestUpgradesLeft <= 0) {
+          choicesEl.querySelectorAll('.btn-event-choice').forEach(b => { b.style.pointerEvents = 'none'; b.style.opacity = '0.4'; });
+          this.addMarchRestContinue(choicesEl);
+        }
+      });
+      choicesEl.appendChild(btn);
+    });
+  }
+
+  addMarchRestContinue(choicesEl) {
+    const continueBtn = document.createElement('button');
+    continueBtn.className = 'btn-primary';
+    continueBtn.textContent = 'March On';
+    continueBtn.style.marginTop = '12px';
+    continueBtn.addEventListener('click', () => {
+      // Clean up camp status if present
+      const statusEl = document.getElementById('camp-party-status');
+      if (statusEl) statusEl.innerHTML = '';
+      window.game.continueRun();
+    });
+    choicesEl.appendChild(continueBtn);
   }
 
   showRunSummary(isVictory) {

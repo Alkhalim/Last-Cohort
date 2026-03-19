@@ -491,8 +491,8 @@ const RAW_CLASSES = {
       {
         "id": "trample", "name": "Trample", "starter": true,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Trample a front-line enemy. Deals 4 damage and 2 damage to enemies directly beside it.",
-        "effects": { "damage": 4, "splashAdjacent": 2 }
+        "description": "Trample a front-line enemy. Deals 4 damage and 20% trample damage to enemies beside it.",
+        "effects": { "damage": 4, "splashAdjacentPct": 0.2 }
       },
       {
         "id": "hit_and_run", "name": "Hit and Run", "cooldown": 1,
