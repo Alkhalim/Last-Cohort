@@ -119,6 +119,7 @@ class CombatEngine {
       // Ambush: enemies strike first before the player gets dice
       if (this.isAmbush) {
         this.isAmbush = false; // only the first turn is ambushed
+        this._ambushTargeted = new Set(); // spread targets during ambush
         this.addLog('AMBUSH! The enemy strikes before you can react!');
         this.phase = PHASE.ENEMY_TURN;
         this.update();
@@ -320,6 +321,7 @@ class CombatEngine {
     this.dicePool.rerollUsed = false;
     this.dicePool.itemAdjustUsed = false;
     this.dicePool.itemRerollUsed = false;
+    this._ambushTargeted = null; // clear ambush spread tracking
 
     // Tick down skill cooldowns
     this.party.forEach(u => {
@@ -1808,6 +1810,22 @@ class CombatEngine {
     if (enemy.ai === 'sniper') {
       return alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
     }
+
+    // Ambush spread: avoid targeting the same unit if others haven't been hit
+    if (this._ambushTargeted && alive.length > 1) {
+      const untargeted = alive.filter(u => !this._ambushTargeted.has(u.index));
+      if (untargeted.length > 0) {
+        const target = untargeted[Math.floor(Math.random() * untargeted.length)];
+        this._ambushTargeted.add(target.index);
+        return target;
+      }
+    }
+    if (this._ambushTargeted) {
+      const target = alive[Math.floor(Math.random() * alive.length)];
+      this._ambushTargeted.add(target.index);
+      return target;
+    }
+
     return alive[Math.floor(Math.random() * alive.length)];
   }
 
