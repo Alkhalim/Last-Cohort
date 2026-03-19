@@ -312,6 +312,15 @@ class CombatEngine {
       this.checkEnemyDeaths();
     }
 
+    // Herb Pouch: heal wielder for 1 HP each turn
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'herb_pouch') && u.hp < u.maxHp) {
+        u.hp = Math.min(u.maxHp, u.hp + 1);
+        this.addLog(`${u.name}'s Herb Pouch heals 1 HP.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: 1 });
+      }
+    });
+
     // Eagle of the Lost Ninth: on turn 7, deal 20 damage to all enemies
     if (this.turn === 7 && !this._eagleUsed && this.partyHasItem('eagle_lost_ninth')) {
       this._eagleUsed = true;
