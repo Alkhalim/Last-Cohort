@@ -203,6 +203,6 @@ const RAW_CONFIG = {
     { "min": -100, "label": "BROKEN", "color": "#6b1a1a" }
   ],
   "equipSlots": { "weapon": 2, "armor": 2, "trinket": 3 },
-  "bossDropPool": ["champions_helm", "arm_ring_of_arminius", "warlords_blade", "huntsmans_arrow", "mire_mothers_tusk", "bone_speakers_skull", "legion_composite_bow", "apothecary_mortar", "boar_tusk_pauldron", "aquila_spearhead", "marksmans_brigandine", "herbalists_robe", "bloodstone_pendant", "gilded_cuirass", "windreaders_charm", "battle_standard_cord"],
+  "bossDropPool": ["champions_helm", "arm_ring_of_arminius", "warlords_blade", "huntsmans_arrow", "mire_mothers_tusk", "bone_speakers_skull", "legion_composite_bow", "apothecary_mortar", "boar_tusk_pauldron", "aquila_spearhead", "marksmans_brigandine", "herbalists_robe", "bloodstone_pendant", "gilded_cuirass", "windreaders_charm", "battle_standard_cord", "varus_shield", "heartwood_charm", "mars_denarius", "pact_of_wolves", "centurions_gorget", "serpents_coil", "eagle_lost_ninth", "lupas_fang"],
   "baseDiceCount": 4
 };

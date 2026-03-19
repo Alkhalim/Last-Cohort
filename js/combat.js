@@ -79,6 +79,12 @@ class CombatEngine {
     this.currentEncounterDef = encounterDef;
     this.isAmbush = !!encounterDef.isAmbush;
     this.targetMode = null;
+    // Reset epic item combat flags
+    this._heartwoodTriggered = false;
+    this._heartwoodBonusDice = 0;
+    this._lupaFangUsed = false;
+    this._eagleUsed = false;
+    this._marsSkillCount = 0;
     this.killedEnemies = [];
     this.party.forEach(u => {
       // Preserve camp-granted block and buffs, only reset combat-specific state
@@ -220,7 +226,17 @@ class CombatEngine {
         this.addLog(`${e.name} takes ${poisonDmg} poison damage.`);
         if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: e.index, type: 'poison' });
         e.poison = Math.max(0, e.poison - 1);
-        if (e.hp <= 0) { e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++; this.addLog(`${e.name} falls to poison!`); }
+        if (e.hp <= 0) {
+          e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
+          this.addLog(`${e.name} falls to poison!`);
+          // Serpent's Coil: spread 2 poison to all other enemies on poison kill
+          if (this.partyHasItem('serpents_coil')) {
+            this.enemies.forEach(other => {
+              if (!other.dead && other !== e) other.poison = (other.poison || 0) + 2;
+            });
+            this.addLog("Serpent's Coil spreads venom! (+2 Poison to all enemies)");
+          }
+        }
       }
     });
     // Check if all enemies died to poison
@@ -288,6 +304,16 @@ class CombatEngine {
       });
       this.addLog(`Wicker ash burns — all enemies take ${wickerAshCount} damage.`);
       this.checkEnemyDeaths();
+    }
+
+    // Eagle of the Lost Ninth: on turn 7, deal 20 damage to all enemies
+    if (this.turn === 7 && !this._eagleUsed && this.partyHasItem('eagle_lost_ninth')) {
+      this._eagleUsed = true;
+      this.enemies.forEach(e => {
+        if (!e.dead) e.hp = Math.max(0, e.hp - 20);
+      });
+      this.addLog('The Eagle of the Lost Ninth awakens — 20 damage to all enemies!');
+      this.checkEnemyDeaths();
       if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
         this.triggerVictory();
         return;
@@ -295,7 +321,14 @@ class CombatEngine {
     }
 
     this.party.forEach(u => {
-      if (this.turn > 1) u.block = 0;
+      if (this.turn > 1) {
+        // Varus's Shield: retain up to 5 block between turns
+        if (this.unitHasItem(u, 'varus_shield')) {
+          u.block = Math.min(u.block || 0, 5);
+        } else {
+          u.block = 0;
+        }
+      }
       u.taunt = false;
       u._counterStance = 0;
       u._overwatch = 0;
@@ -333,7 +366,18 @@ class CombatEngine {
     this.addLog(`\u2014 Turn ${this.turn} \u2014`);
 
     // Roll dice — base 4 + extra from equipment
-    const extraDice = this.getExtraDiceCount();
+    let extraDice = this.getExtraDiceCount();
+    // Pact of Wolves: +1 die every 3rd turn
+    if (this.partyHasItem('pact_of_wolves') && this.turn > 0 && this.turn % 3 === 0) {
+      extraDice++;
+      this.addLog('The Pact of Wolves grants an extra die!');
+    }
+    // Heartwood Charm: +3 dice next turn after first damage taken
+    if (this._heartwoodBonusDice) {
+      extraDice += this._heartwoodBonusDice;
+      this.addLog(`Heartwood Charm grants ${this._heartwoodBonusDice} extra dice!`);
+      this._heartwoodBonusDice = 0;
+    }
     // Curse: Golden Challenge — start with 1 fewer die
     const curseDiceReduction = this.getActiveCurses().includes('golden_challenge') ? 1 : 0;
     this.dicePool.count = Math.max(1, 4 + extraDice - curseDiceReduction);
@@ -689,6 +733,23 @@ class CombatEngine {
 
     diceIds.forEach(id => this.dicePool.useDie(id));
     const result = skill.execute(unit, targets, diceIds.map(id => this.dicePool.dice.find(d => d.id === id)));
+
+    // Mars's Denarius: every 5th skill used doubles all numeric effects
+    if (!this._marsSkillCount) this._marsSkillCount = 0;
+    if (this.partyHasItem('mars_denarius')) {
+      this._marsSkillCount++;
+      if (this._marsSkillCount % 5 === 0) {
+        if (result.damage) result.damage *= 2;
+        if (result.heal) result.heal *= 2;
+        if (result.healAll) result.healAll *= 2;
+        if (result.block) result.block *= 2;
+        if (result.blockAll) result.blockAll *= 2;
+        if (result.poison) result.poison *= 2;
+        if (result.poisonAll) result.poisonAll *= 2;
+        this.addLog("Mars's Denarius — DOUBLE EFFECT!");
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'Mars!', color: '#cc44ff' });
+      }
+    }
 
     // Set cooldown
     if (skill.cooldown) {
@@ -1674,6 +1735,22 @@ class CombatEngine {
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
         }
       }
+      // Centurion's Gorget: reduce incoming damage by 3 (minimum 1)
+      if (dmg > 0 && this.unitHasItem(target, 'centurions_gorget')) {
+        dmg = Math.max(1, dmg - 3);
+      }
+      // Damage Shield: reduce incoming damage
+      if (target._damageShield && dmg > 0) {
+        dmg = Math.max(1, Math.round(dmg * target._damageShield));
+        target._damageShield = 0;
+      }
+      // Heartwood Charm: first time taking damage this combat, gain +3 dice next turn
+      if (dmg > 0 && !this._heartwoodTriggered && this.partyHasItem('heartwood_charm')) {
+        this._heartwoodTriggered = true;
+        this._heartwoodBonusDice = 3;
+        this.addLog('Heartwood Charm pulses — bonus dice next turn!');
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: '+3 Dice!', color: 'var(--green-bright)' });
+      }
       target.hp = Math.max(0, target.hp - dmg);
       target.stats.damageTaken += dmg;
       const totalActionDmg = actionDamage + curseBonusDmg;
@@ -1872,6 +1949,15 @@ class CombatEngine {
           u._unyieldingUsed = true;
           u.hp = 1;
           this.addLog(`${u.name} refuses to fall! (Unyielding)`);
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Unyielding!', color: 'var(--gold)' });
+          return;
+        }
+        // Lupa's Fang: first downing prevented (once per combat)
+        if (!this._lupaFangUsed && this.partyHasItem('lupas_fang')) {
+          this._lupaFangUsed = true;
+          u.hp = 1;
+          this.addLog(`Lupa's Fang glows — ${u.name} refuses to fall!`);
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: "Lupa's Fang!", color: '#cc44ff' });
           return;
         }
         u.downed = true;

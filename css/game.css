@@ -1786,6 +1786,7 @@ html, body {
 .summary-detail-item-name.rarity-common { color: var(--text); }
 .summary-detail-item-name.rarity-uncommon { color: var(--blue-bright); }
 .summary-detail-item-name.rarity-rare { color: var(--gold); }
+.summary-detail-item-name.rarity-epic { color: #cc44ff; }
 
 .summary-detail-item-stats {
   font-size: 0.6rem;
