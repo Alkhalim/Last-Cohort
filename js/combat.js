@@ -1499,6 +1499,14 @@ class CombatEngine {
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
 
+          // Fang Necklace: killing an enemy grants +1 damage for 2 attacks to wielder
+          this.party.forEach(u => {
+            if (!u.downed && this.unitHasItem(u, 'fang_necklace')) {
+              u.buffs.push({ damage: 1, attacksLeft: 2 });
+              this.addLog(`${u.name}'s Fang Necklace pulses — +1 damage (2 attacks).`);
+            }
+          });
+
           if (e.deathPoison) {
             this.party.forEach(u => {
               if (!u.downed) u.poison = (u.poison || 0) + e.deathPoison;
