@@ -791,8 +791,16 @@ class GameUI {
         }
         return `${verb} <span class="stat-dmg">${b}</span> damage`;
       });
-      // Color-code remaining "X damage" (buff amounts like "+2 damage") without adding bonuses
-      desc = desc.replace(/(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
+      // Buff damage preview: scale "+X damage" with caster's equipDamage
+      if (skill.effects && skill.effects.buffAllies && equipDmg > 0) {
+        desc = desc.replace(/\+(\d+) damage/g, (match, base) => {
+          const b = parseInt(base);
+          const total = b + equipDmg;
+          return `+<span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${equipDmg})</span> damage`;
+        });
+      }
+      // Color-code remaining "X damage" (that hasn't been wrapped in spans already)
+      desc = desc.replace(/(?<!">)(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
 
       // Replace block values
       desc = desc.replace(/(\d+) Block/g, (match, base) => {
