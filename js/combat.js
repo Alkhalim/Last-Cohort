@@ -99,6 +99,14 @@ class CombatEngine {
       this.computeEquipmentStats(u);
     });
 
+    // Special: Raider's Shield — start each combat with 6 block
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'raider_shield')) {
+        u.block = (u.block || 0) + 6;
+        this.addLog(`${u.name}'s Raider's Shield grants 6 Block.`);
+      }
+    });
+
     // Special: Arm Ring of Arminius — +10 morale at encounter start
     if (this.partyHasItem('arm_ring_of_arminius')) {
       this.morale = Math.min(100, this.morale + 10);

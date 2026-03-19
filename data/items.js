@@ -5,7 +5,7 @@
 
 const RAW_ITEMS = {
   "iron_gladius": { "id": "iron_gladius", "name": "Iron Gladius", "slot": "weapon", "rarity": "common", "classTags": ["melee", "command"], "stats": { "damage": 2 }, "description": "A sturdy blade taken from a fallen raider." },
-  "raider_shield": { "id": "raider_shield", "name": "Raider's Shield", "slot": "armor", "rarity": "common", "classTags": ["roman"], "stats": { "block": 2 }, "description": "Rough wood and hide, but it turns a blade." },
+  "raider_shield": { "id": "raider_shield", "name": "Raider's Shield", "slot": "armor", "rarity": "common", "classTags": ["roman"], "stats": { "block": 2 }, "special": "Start each combat with 6 block.", "description": "Rough wood and hide, but it turns a blade. You enter battle already shielded." },
   "wolf_pelt": { "id": "wolf_pelt", "name": "Wolf Pelt", "slot": "armor", "rarity": "common", "classTags": ["roman"], "stats": { "maxHp": 4 }, "special": "The first hit each combat deals 3 less damage.", "description": "Thick fur that wards off the cold and softens blows. The first strike always lands soft." },
   "sling_stones": { "id": "sling_stones", "name": "Sling Stones", "slot": "weapon", "rarity": "common", "classTags": ["command", "support", "ranged"], "stats": { "damage": 1 }, "description": "Smooth river stones, still in their pouch." },
   "bone_needle_kit": { "id": "bone_needle_kit", "name": "Toxic Needle Kit", "slot": "trinket", "rarity": "common", "classTags": ["support"], "stats": { "poison": 1, "damage": 1 }, "description": "Bone needles tipped with marsh toxin. Every prick festers." },
