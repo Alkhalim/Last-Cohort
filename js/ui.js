@@ -777,12 +777,17 @@ class GameUI {
         : 0;
       const effectiveBonusDmg = totalBonusDmg - auraReduction;
 
+      // Equites passive: Cavalry Charge — preview +50% on first attack
+      const cavalryCharge = unit.classId === 'equites' && !unit.passiveTriggered;
+
       // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
       desc = desc.replace(/([Dd]eal[s]?) (\d+) damage/g, (match, verb, base) => {
         const b = parseInt(base);
-        if (effectiveBonusDmg !== 0) {
-          const total = Math.max(1, b + effectiveBonusDmg);
-          return `${verb} <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${effectiveBonusDmg})</span> damage`;
+        const chargeBonus = cavalryCharge ? Math.floor(b * 0.5) : 0;
+        const totalBonus = effectiveBonusDmg + chargeBonus;
+        if (totalBonus !== 0) {
+          const total = Math.max(1, b + totalBonus);
+          return `${verb} <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${totalBonus})</span> damage`;
         }
         return `${verb} <span class="stat-dmg">${b}</span> damage`;
       });
