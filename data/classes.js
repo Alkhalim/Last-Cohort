@@ -99,7 +99,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 4 }
       },
       {
-        "id": "commanding_shout", "name": "Commanding Shout", "starter": true,
+        "id": "commanding_shout", "name": "Commanding Shout", "starter": true, "cooldown": 3,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
         "description": "All allies gain +2 damage on their next attack.",
         "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 1 } }
@@ -111,7 +111,7 @@ const RAW_CLASSES = {
         "effects": { "blockAll": 4 }
       },
       {
-        "id": "officers_care", "name": "Officer's Care",
+        "id": "officers_care", "name": "Officer's Care", "cooldown": 3,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
         "description": "All allies heal 2 HP and gain +1 damage for next 3 attacks.",
         "effects": { "healAll": 2, "buffAllies": { "bonusDamage": 1, "attacks": 3 } }
@@ -129,7 +129,7 @@ const RAW_CLASSES = {
         "effects": { "blockAll": 5, "morale": 8 }
       },
       {
-        "id": "rally_cry", "name": "Rally Cry", "cooldown": 2,
+        "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. +10 Morale and +1 damage for next 2 attacks.",
         "effects": { "morale": 10, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
@@ -336,7 +336,7 @@ const RAW_CLASSES = {
         "effects": { "morale": 11 }
       },
       {
-        "id": "inspire", "name": "Inspire", "starter": true, "cooldown": 2,
+        "id": "inspire", "name": "Inspire", "starter": true, "cooldown": 3,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
         "description": "Inspire the troops. All allies gain +1 damage for next 4 attacks.",
         "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 4 } }
@@ -348,7 +348,7 @@ const RAW_CLASSES = {
         "effects": { "blockAll": 3, "morale": 5 }
       },
       {
-        "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 3,
+        "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 4,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 7+. +15 Morale, all allies gain +2 damage for next 3 attacks.",
         "effects": { "morale": 15, "buffAllies": { "bonusDamage": 2, "attacks": 3 } }
@@ -378,7 +378,7 @@ const RAW_CLASSES = {
         "effects": { "damageAll": 8, "moraleCost": 20 }
       },
       {
-        "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 1,
+        "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 3,
         "cost": { "type": "exact", "val": 1 }, "target": "all_allies",
         "description": "Sacrifice 5 HP. All allies gain +2 damage for 2 attacks and 4 Block.",
         "effects": { "selfDamage": 5, "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 4 }
@@ -411,7 +411,7 @@ const RAW_CLASSES = {
         "effects": { "healAll": 1, "blockAll": 1 }
       },
       {
-        "id": "war_drums", "name": "War Drums", "cooldown": 1, "starter": true,
+        "id": "war_drums", "name": "War Drums", "cooldown": 3, "starter": true,
         "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
         "description": "Beat the war drums. All allies gain +3 damage for next attack. Shatters all enemy block.",
         "effects": { "buffAllies": { "bonusDamage": 3, "attacks": 1 }, "shieldbreakAll": true }
@@ -669,7 +669,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 6, "pierceBlock": 99, "execute": true }
       },
       {
-        "id": "roman_discipline", "name": "Roman Discipline", "cooldown": 2,
+        "id": "roman_discipline", "name": "Roman Discipline", "cooldown": 4,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. All allies gain 3 Block, +5 damage for next attack, +8 Morale.",
         "effects": { "blockAll": 3, "buffAllies": { "bonusDamage": 5, "attacks": 1 }, "morale": 8 }

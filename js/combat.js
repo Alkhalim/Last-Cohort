@@ -1271,17 +1271,19 @@ class CombatEngine {
     }
     if (result.buffAllies) {
       const attacks = result.buffAllies.attacks || 1;
+      // Buff damage scales with caster's equipment damage
+      const scaledBonusDmg = (result.buffAllies.bonusDamage || 0) + (unit.equipDamage || 0);
       this.party.forEach(u => {
         if (!u.downed) {
           let buffAttacks = attacks;
           // Sigil of the Ninth: buff effects last 1 extra attack
           if (this.unitHasItem(u, 'sigil_of_the_ninth')) buffAttacks += 1;
-          u.buffs.push({ damage: result.buffAllies.bonusDamage || 0, attacksLeft: buffAttacks });
+          u.buffs.push({ damage: scaledBonusDmg, attacksLeft: buffAttacks });
         }
       });
       const attackStr = attacks === 1 ? 'next attack' : `next ${attacks} attacks`;
       if (!result.damage && !result.heal && !result.block && !result.blockAll) {
-        parts.push(`${unit.name} uses ${skill.name} \u2014 allies gain +${result.buffAllies.bonusDamage} damage (${attackStr}).`);
+        parts.push(`${unit.name} uses ${skill.name} \u2014 allies gain +${scaledBonusDmg} damage (${attackStr}).`);
       }
     }
     // Poison (single target)
