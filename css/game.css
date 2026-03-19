@@ -2306,6 +2306,19 @@ html, body {
   font-style: italic;
 }
 
+.loot-party-hp {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 0.4rem 0;
+  font-size: 0.7rem;
+}
+
+.loot-unit-hp {
+  display: inline-flex;
+  gap: 4px;
+}
+
 .loot-training-text.gained {
   color: var(--gold);
   font-weight: 600;

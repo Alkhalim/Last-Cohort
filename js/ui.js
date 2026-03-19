@@ -2073,6 +2073,21 @@ class GameUI {
       trainingEl.className = 'loot-training';
     }
 
+    // Show party HP status
+    let partyHpEl = document.getElementById('loot-party-hp');
+    if (!partyHpEl) {
+      partyHpEl = document.createElement('div');
+      partyHpEl.id = 'loot-party-hp';
+      partyHpEl.className = 'loot-party-hp';
+      trainingEl.parentNode.insertBefore(partyHpEl, trainingEl.nextSibling);
+    }
+    partyHpEl.innerHTML = this.engine.party.map(u => {
+      const tag = getPrimaryTag(u.classId);
+      const hpPct = Math.round((u.hp / u.maxHp) * 100);
+      const hpColor = u.downed ? 'var(--text-dim)' : hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
+      return `<span class="loot-unit-hp"><span style="color:var(--class-${tag})">${u.title}</span> <span style="color:${hpColor}">${u.downed ? 'DOWN' : u.hp + '/' + u.maxHp}</span></span>`;
+    }).join('');
+
     if (this.pendingLoot.length === 0) {
       lootText.textContent = 'Nothing of value was found among the fallen.';
     } else {

@@ -1084,7 +1084,7 @@ class CombatEngine {
         }
       });
       const bonusStr = bonusHeal > 0 ? ` (${result.healAll}+${bonusHeal})` : '';
-      parts.push(`${unit.name} uses ${skill.name} \u2014 heals all allies for ${totalHeal}${bonusStr} HP.`);
+      parts.push(`${unit.name} uses ${skill.name} \u2014 heals all allies for ${baseHealAll}${bonusStr} HP.`);
     }
     // Cleanse poison from target
     if (result.cleanse && result.target && result.target.poison > 0) {
