@@ -373,6 +373,18 @@ class CombatEngine {
       u.taunt = false;
       u._counterStance = 0;
       u._overwatch = 0;
+      // Scout's Leather: +3 damage if not hit last turn
+      if (this.turn > 1 && this.unitHasItem(u, 'scouts_leather')) {
+        if (!u._wasHitThisTurn) {
+          u._scoutsLeatherActive = true;
+          u.equipDamage += 3;
+          this.addLog(`${u.name}'s Scout's Leather grants +3 damage (untouched).`);
+        } else if (u._scoutsLeatherActive) {
+          u._scoutsLeatherActive = false;
+          u.equipDamage -= 3;
+        }
+      }
+      u._wasHitThisTurn = false;
       u._damageShield = 0;
       u._intercept = false;
       // Bone Totem stun: skip this turn
@@ -1884,6 +1896,7 @@ class CombatEngine {
       }
       target.hp = Math.max(0, target.hp - dmg);
       target.stats.damageTaken += dmg;
+      if (dmg > 0) target._wasHitThisTurn = true;
       const totalActionDmg = actionDamage + curseBonusDmg;
       this.addLog(`${enemy.name} ${action.text} at ${target.name} for ${totalActionDmg} damage${dmg < totalActionDmg ? ` (${dmg} after block)` : ''}.`);
 
