@@ -53,7 +53,7 @@ const RAW_ITEMS = {
   "spotters_lens": { "id": "spotters_lens", "name": "Spotter's Lens", "slot": "trinket", "rarity": "uncommon", "classTags": ["ranged"], "stats": { "damage": 2, "maxHp": 1 }, "minDifficulty": 2, "description": "A polished glass disc set in bronze. Everything at distance becomes clear." },
 
   // --- Difficulty 2+ unique drops ---
-  "berserker_mushroom": { "id": "berserker_mushroom", "name": "Berserker Mushroom", "slot": "trinket", "rarity": "uncommon", "classTags": ["melee", "roman"], "stats": { "damage": 2, "maxHp": -3 }, "minDifficulty": 2, "special": "Gain +1 damage each time hit in combat (max +4).", "description": "The sacred mushroom of the berserkers. Pain becomes fury. Each blow makes you stronger." },
+  "berserker_mushroom": { "id": "berserker_mushroom", "name": "Berserker Mushroom", "slot": "trinket", "rarity": "uncommon", "classTags": ["melee", "roman"], "stats": { "damage": 2, "maxHp": -6 }, "minDifficulty": 2, "special": "Gain +1 damage each time hit in combat (max +4).", "description": "The sacred mushroom of the berserkers. Pain becomes fury. Each blow makes you stronger." },
   "huntsmans_arrow": { "id": "huntsmans_arrow", "name": "Huntsman's Arrow", "slot": "trinket", "rarity": "rare", "classTags": ["roman", "ranged"], "stats": { "damage": 3 }, "special": "Attacks can target any row.", "minDifficulty": 2, "description": "An arrow pulled from a Roman shield. It flew true from impossible distance." },
 
   // --- March 3 new items ---
