@@ -2136,6 +2136,7 @@ class CombatEngine {
   }
 
   computeEquipmentStats(unit) {
+    unit._itemCache = {}; // invalidate item lookup cache
     unit.equipDamage = 0;
     unit.equipBlock = 0;
     unit.equipHeal = 0;
