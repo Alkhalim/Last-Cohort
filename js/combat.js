@@ -1855,6 +1855,12 @@ class CombatEngine {
       }
       if (target.block > 0) {
         const absorbed = Math.min(target.block, dmg);
+        // Legionary's Lorica: deal difficulty damage back when hit while having block
+        if (absorbed > 0 && this.unitHasItem(target, 'legionary_lorica')) {
+          const loricaDmg = this.difficulty || 1;
+          enemy.hp = Math.max(0, enemy.hp - loricaDmg);
+          this.addLog(`Lorica retaliates for ${loricaDmg} damage!`);
+        }
         target.block -= absorbed;
         dmg -= absorbed;
         if (absorbed > 0) {
