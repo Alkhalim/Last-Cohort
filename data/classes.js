@@ -566,8 +566,8 @@ const RAW_CLASSES = {
         "id": "pinning_shot", "name": "Pinning Shot", "starter": true,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A heavy bolt that pins the target. Deals 5 damage and applies 2 Poison.",
-        "effects": { "damage": 5, "poison": 2 }
+        "description": "A heavy bolt that pins the target. Deals 5 damage. Target deals 30% less damage for next 2 actions.",
+        "effects": { "damage": 5, "cripple": 2 }
       },
       {
         "id": "suppressive_volley", "name": "Suppressive Volley", "starter": true,
