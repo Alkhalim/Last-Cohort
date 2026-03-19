@@ -153,6 +153,12 @@ class CombatEngine {
       blockFrontRow: a.blockFrontRow ? a.blockFrontRow + diffBonus : undefined,
       blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
     }));
+    // Determine starting block from blockSelf action (e.g., Cheruscan Guardian)
+    let startBlock = 0;
+    if (data.startWithSelfBlock) {
+      const selfBlockAction = scaledActions.find(a => a.blockSelf);
+      if (selfBlockAction) startBlock = selfBlockAction.blockSelf;
+    }
     const enemy = {
       index: this.spawnIndex,
       ...data,
@@ -161,11 +167,11 @@ class CombatEngine {
       actions: scaledActions,
       dead: false,
       poison: 0,
-      block: 0,
+      block: startBlock,
       justSpawned: true,
     };
     this.enemies.push(enemy);
-    this.addLog(`${enemy.name} appears!`);
+    this.addLog(`${enemy.name} appears!${startBlock > 0 ? ` (${startBlock} Block)` : ''}`);
 
     // Runecarver: grant block to all other enemies when spawning (scales with difficulty)
     if (data.startBlockAllEnemies) {
