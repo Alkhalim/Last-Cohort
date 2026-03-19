@@ -332,8 +332,8 @@ const RAW_CLASSES = {
       {
         "id": "raise_the_eagle", "name": "Raise the Eagle", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "Raise the eagle standard. +8 Morale.",
-        "effects": { "morale": 8 }
+        "description": "Raise the eagle standard. +11 Morale.",
+        "effects": { "morale": 11 }
       },
       {
         "id": "inspire", "name": "Inspire", "starter": true,
