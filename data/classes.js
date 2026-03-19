@@ -326,8 +326,8 @@ const RAW_CLASSES = {
       {
         "id": "standard_strike", "name": "Standard Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Strike with the standard. Deals 2 damage.",
-        "effects": { "damage": 2 }
+        "description": "Strike with the standard. Deals 2 damage. +2 Morale.",
+        "effects": { "damage": 2, "morale": 2 }
       },
       {
         "id": "raise_the_eagle", "name": "Raise the Eagle", "starter": true,
