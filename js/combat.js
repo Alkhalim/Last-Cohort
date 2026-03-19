@@ -904,6 +904,7 @@ class CombatEngine {
         let effectiveBlock = Math.max(0, result.target.block - pierceAmount);
         let blockDmg = total;
         if (this.unitHasItem(unit, 'warlords_blade')) blockDmg += 2;
+        if (this.unitHasItem(unit, 'scorpio_crossbow')) blockDmg += 5;
         const absorbed = Math.min(effectiveBlock, blockDmg);
         result.target.block = Math.max(0, result.target.block - absorbed - pierceAmount);
         total -= Math.min(total, absorbed);

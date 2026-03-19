@@ -36,7 +36,7 @@ const RAW_ITEMS = {
   "wicker_ash": { "id": "wicker_ash", "name": "Wicker Ash", "slot": "trinket", "rarity": "rare", "classTags": ["roman"], "stats": { "damage": 1, "block": 2 }, "special": "Enemies take 1 damage at the start of each turn (burning aura).", "description": "Ash from a fallen wicker man, still warm. It smells of sacrifice and old power." },
   "shieldbearers_grip": { "id": "shieldbearers_grip", "name": "Shieldbearer's Grip", "slot": "armor", "rarity": "uncommon", "classTags": ["melee", "command"], "stats": { "block": 3 }, "special": "When this unit generates block, grant 2 block to a random other ally.", "description": "A leather hand-strap ripped from the shieldbearer's shield. Its discipline spreads to those nearby." },
 
-  "scorpio_crossbow": { "id": "scorpio_crossbow", "name": "Scorpio Crossbow", "slot": "weapon", "rarity": "uncommon", "classTags": ["ranged"], "stats": { "damage": 3 }, "description": "A compact hand-crossbow salvaged from a Roman siege train. Hits harder than any sling." },
+  "scorpio_crossbow": { "id": "scorpio_crossbow", "name": "Scorpio Crossbow", "slot": "weapon", "rarity": "uncommon", "classTags": ["ranged"], "stats": { "damage": 3 }, "special": "Attacks deal +5 bonus damage against enemies with block.", "description": "A compact hand-crossbow salvaged from a Roman siege train. Its bolts punch through shields like parchment." },
   "legion_composite_bow": { "id": "legion_composite_bow", "name": "Legion Composite Bow", "slot": "weapon", "rarity": "rare", "classTags": ["ranged"], "stats": { "damage": 4 }, "special": "Attacks apply 1 Poison.", "description": "A recurve bow strung with sinew. Its arrows bite deep and fester in the wound." },
 
   // --- March 1 (base) tag-unique items ---
