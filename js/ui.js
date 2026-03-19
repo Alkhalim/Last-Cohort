@@ -1518,7 +1518,7 @@ class GameUI {
       } else {
         // Nobody can use it — convert to Renown
         this.pendingEventItem = null;
-        const renownGain = { common: 2, uncommon: 5, rare: 10 }[grantedItem ? grantedItem.rarity : 'common'] || 2;
+        const renownGain = { common: 2, uncommon: 5, rare: 10, epic: 20 }[grantedItem ? grantedItem.rarity : 'common'] || 2;
         this.engine.totalRenownEarned += renownGain;
       }
     } else {
@@ -1539,7 +1539,7 @@ class GameUI {
       if (this.pendingEventItem) {
         if (item) outcomeText += ` (Found: ${item.name})`;
       } else {
-        const renownGain = { common: 2, uncommon: 5, rare: 10 }[item ? item.rarity : 'common'] || 2;
+        const renownGain = { common: 2, uncommon: 5, rare: 10, epic: 20 }[item ? item.rarity : 'common'] || 2;
         outcomeText += ` (No one can use ${item ? item.name : 'this'} — +${renownGain} Renown)`;
       }
     }
@@ -2131,7 +2131,7 @@ class GameUI {
           let replaceHtml = '';
           if (!hasEmpty) {
             // Find lowest rarity + lowest level item that would be replaced
-            const rarityOrder = { common: 0, uncommon: 1, rare: 2 };
+            const rarityOrder = { common: 0, uncommon: 1, rare: 2, epic: 3 };
             let worstIdx = 0;
             let worstRarity = 3;
             let worstLevel = 999;
@@ -2163,7 +2163,7 @@ class GameUI {
           <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
           <div class="loot-item-desc">${item.description}</div>
           ${item.special ? `<div class="loot-item-special">${item.special}</div>` : ''}
-          <div class="loot-item-skip">Skip: +${{ common: 2, uncommon: 5, rare: 10 }[item.rarity] || 2} Renown</div>
+          <div class="loot-item-skip">Skip: +${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown</div>
           <div class="loot-equip-actions">${equipBtns}</div>
         `;
 
@@ -2219,7 +2219,7 @@ class GameUI {
     const afterLoot = () => {
       // Convert unpicked items to Renown
       if (this.pendingLoot.length > 0) {
-        const renownPerRarity = { common: 2, uncommon: 5, rare: 10 };
+        const renownPerRarity = { common: 2, uncommon: 5, rare: 10, epic: 20 };
         let bonusRenown = 0;
         this.pendingLoot.forEach(itemId => {
           const item = getItemData(itemId);

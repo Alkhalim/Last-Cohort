@@ -2017,7 +2017,7 @@ class CombatEngine {
     let slotIdx = slots.indexOf(null);
     if (slotIdx === -1) {
       // All full — replace the lowest rarity, then lowest level item
-      const rarityOrder = { common: 0, uncommon: 1, rare: 2 };
+      const rarityOrder = { common: 0, uncommon: 1, rare: 2, epic: 3 };
       let worstIdx = 0;
       let worstRarity = 3;
       let worstLevel = 999;
