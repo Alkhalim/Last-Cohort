@@ -60,7 +60,7 @@ const RAW_CLASSES = {
         "effects": { "blockAll": 5 }
       },
       {
-        "id": "counter_stance", "name": "Counter Stance", "cooldown": 1,
+        "id": "counter_stance", "name": "Counter Stance", "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "self",
         "description": "Enter counter stance. If hit this enemy turn, reflect the damage back +2.",
         "effects": { "counterStance": true }
