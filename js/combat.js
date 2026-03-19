@@ -835,8 +835,17 @@ class CombatEngine {
     const bonusHeal = (unit.equipHeal || 0) + moraleMod;
 
     if (result.damage && result.target && result.target.hp !== undefined) {
+      // Morale Scaling: damage scales from 1x at -100 morale to 2.5x at 100 morale
+      let scaledDamage = result.damage;
+      if (result.moraleScaling) {
+        // Linear scale: morale -100 = 0.5x, 0 = 1.0x, 100 = 2.5x
+        const moraleNorm = (this.morale + 100) / 200; // 0 to 1
+        const scale = 0.5 + moraleNorm * 2.0; // 0.5 to 2.5
+        scaledDamage = Math.round(result.damage * scale);
+        if (scale > 1.05) parts.push(`Morale fuels the charge! (x${scale.toFixed(1)})`);
+      }
       // Split damage: calculate total first, then halve for each target
-      let total = (result.splitDamage ? Math.floor((result.damage + bonusDmg) / 2) : result.damage + bonusDmg);
+      let total = (result.splitDamage ? Math.floor((scaledDamage + bonusDmg) / 2) : scaledDamage + bonusDmg);
       // Mark Target: +20% damage to marked enemies
       if (result.target._marked && result.target._marked > 0) {
         total = Math.round(total * 1.2);

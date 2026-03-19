@@ -269,6 +269,9 @@ function buildSkillExecute(skillData) {
     // Intercept: take hit for ally
     if (effects.intercept) result.intercept = true;
 
+    // Morale Scaling: damage scales with morale (up to 2.5x at 100)
+    if (effects.moraleScaling) result.moraleScaling = true;
+
     // Avenger's Oath: bonus damage if ally downed
     if (effects.avengeDamage) result.avengeDamage = effects.avengeDamage;
 

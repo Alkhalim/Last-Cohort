@@ -336,10 +336,10 @@ const RAW_CLASSES = {
         "effects": { "morale": 11 }
       },
       {
-        "id": "inspire", "name": "Inspire", "starter": true,
+        "id": "inspire", "name": "Inspire", "starter": true, "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
-        "description": "Inspire the troops. All allies gain +1 damage for next 2 attacks.",
-        "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
+        "description": "Inspire the troops. All allies gain +1 damage for next 4 attacks.",
+        "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 4 } }
       },
       {
         "id": "hold_the_line", "name": "Hold the Line", "cooldown": 1,
@@ -362,8 +362,8 @@ const RAW_CLASSES = {
       {
         "id": "standard_charge", "name": "Standard Charge", "cooldown": 1,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 5+. Deals 8 damage and +8 Morale.",
-        "effects": { "damage": 8, "morale": 8 }
+        "description": "2 dice totaling 5+. Deals 9 damage. Deals up to 2.5x damage at full morale.",
+        "effects": { "damage": 9, "moraleScaling": true }
       },
       {
         "id": "rally_fallen", "name": "Rally the Fallen", "cooldown": 5,
@@ -378,7 +378,7 @@ const RAW_CLASSES = {
         "effects": { "damageAll": 8, "moraleCost": 20 }
       },
       {
-        "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 2,
+        "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 1,
         "cost": { "type": "exact", "val": 1 }, "target": "all_allies",
         "description": "Sacrifice 5 HP. All allies gain +2 damage for 2 attacks and 4 Block.",
         "effects": { "selfDamage": 5, "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 4 }
@@ -482,7 +482,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 3 }
       },
       {
-        "id": "charging_strike", "name": "Charging Strike", "starter": true,
+        "id": "charging_strike", "name": "Charging Strike", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "A powerful charging blow. Deals 7 damage.",
