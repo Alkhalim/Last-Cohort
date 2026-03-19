@@ -348,10 +348,10 @@ const RAW_CLASSES = {
         "effects": { "blockAll": 3, "morale": 5 }
       },
       {
-        "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 2,
+        "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 3,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 7+. +15 Morale, all allies gain +1 damage for next attack.",
-        "effects": { "morale": 15, "buffAllies": { "bonusDamage": 1, "attacks": 1 } }
+        "description": "2 dice totaling 7+. +15 Morale, all allies gain +2 damage for next 3 attacks.",
+        "effects": { "morale": 15, "buffAllies": { "bonusDamage": 2, "attacks": 3 } }
       },
       {
         "id": "defiant_stand", "name": "Defiant Stand", "cooldown": 2,
