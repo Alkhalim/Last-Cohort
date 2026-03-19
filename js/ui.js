@@ -135,6 +135,9 @@ class GameUI {
   showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    // Clean up any stray tooltips
+    this.hideUnitLootTooltip();
+    this.hideEnemyTooltip();
   }
 
   // --- Main render ---
@@ -2124,6 +2127,7 @@ class GameUI {
   }
 
   renderLootScreen() {
+    this.hideUnitLootTooltip();
     const lootText = document.getElementById('loot-text');
     const dropsEl = document.getElementById('loot-drops');
     const equipListEl = document.getElementById('loot-equip-list');

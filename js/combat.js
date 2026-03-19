@@ -2103,7 +2103,13 @@ class CombatEngine {
   // --- Equipment helpers ---
   unitHasItem(unit, itemId) {
     for (const slot of ['weapon', 'armor', 'trinket']) {
-      if (unit.equipment[slot].includes(itemId)) return true;
+      for (const equipped of unit.equipment[slot]) {
+        if (!equipped) continue;
+        if (equipped === itemId) return true;
+        // Check base ID for leveled items
+        const item = ITEM_DATA[equipped];
+        if (item && item.baseId === itemId) return true;
+      }
     }
     return false;
   }

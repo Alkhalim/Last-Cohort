@@ -2072,6 +2072,7 @@ html, body {
   max-width: 280px;
   z-index: 100;
   font-size: 0.7rem;
+  pointer-events: none;
   color: var(--text);
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
