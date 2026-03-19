@@ -1788,6 +1788,13 @@ class CombatEngine {
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
         }
       }
+      // Wolf Pelt: first hit each combat deals 3 less damage
+      if (dmg > 0 && !target._wolfPeltUsed && this.unitHasItem(target, 'wolf_pelt')) {
+        target._wolfPeltUsed = true;
+        dmg = Math.max(1, dmg - 3);
+        this.addLog(`Wolf Pelt absorbs the first blow! (-3 damage)`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Pelt!', color: 'var(--gold)' });
+      }
       // Centurion's Gorget: reduce incoming damage by 3 (minimum 1)
       if (dmg > 0 && this.unitHasItem(target, 'centurions_gorget')) {
         dmg = Math.max(1, dmg - 3);
