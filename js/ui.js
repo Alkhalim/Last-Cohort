@@ -603,14 +603,20 @@ class GameUI {
       // For healing: start fill at old %, animate up. For damage: drain trails behind.
       const fillStartPct = isHealing ? drainPct : hpPct;
 
+      const hpDelta = unit.hp - prevHp;
+
       el.innerHTML = `
+        ${unit.block > 0 ? '<div class="unit-shield-overlay"></div>' : ''}
         <div class="unit-header">
           <span class="unit-title">${unit.title}</span>
           <span class="unit-name">${unit.name}</span>
         </div>
-        <div class="hp-bar">
-          <div class="hp-drain" style="width:${drainPct}%"></div>
-          <div class="hp-fill ${isHealing ? 'healing' : ''} ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${fillStartPct}%"></div>
+        <div class="hp-bar-container">
+          <div class="hp-bar">
+            <div class="hp-drain" style="width:${drainPct}%"></div>
+            <div class="hp-fill ${isHealing ? 'healing' : ''} ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${fillStartPct}%"></div>
+          </div>
+          ${hpDelta !== 0 ? `<span class="hp-delta ${hpDelta > 0 ? 'hp-delta-heal' : 'hp-delta-damage'}">${hpDelta > 0 ? '+' + hpDelta : hpDelta}</span>` : ''}
         </div>
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>

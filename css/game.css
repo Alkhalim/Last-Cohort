@@ -824,12 +824,67 @@ html, body {
 }
 
 /* --- HP Bars (two-layer drain) --- */
+/* Shield overlay for units with block */
+.unit-shield-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(74, 138, 191, 0.12) 0%, rgba(74, 138, 191, 0.04) 50%, transparent 100%);
+  border: 1px solid rgba(74, 138, 191, 0.3);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1;
+  animation: shield-shimmer 2s ease-in-out infinite alternate;
+}
+
+@keyframes shield-shimmer {
+  0% { border-color: rgba(74, 138, 191, 0.2); }
+  100% { border-color: rgba(74, 138, 191, 0.45); }
+}
+
+/* HP bar container for floating numbers */
+.hp-bar-container {
+  position: relative;
+  margin-bottom: 2px;
+}
+
+/* Floating HP delta numbers */
+.hp-delta {
+  position: absolute;
+  right: -2px;
+  top: -10px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 2;
+  animation: hp-delta-float 1.2s ease-out forwards;
+}
+
+.hp-delta-damage {
+  color: var(--red-bright);
+  text-shadow: 0 1px 4px rgba(200, 50, 50, 0.6);
+}
+
+.hp-delta-heal {
+  color: var(--green-bright);
+  text-shadow: 0 1px 4px rgba(50, 200, 80, 0.6);
+}
+
+@keyframes hp-delta-float {
+  0% { opacity: 1; transform: translateY(0); }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+
 .hp-bar {
   height: 5px;
   background: #1a1a1a;
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 2px;
+  margin-bottom: 0;
   position: relative;
 }
 
@@ -1149,6 +1204,8 @@ html, body {
   padding: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
 .unit-card.selected {
