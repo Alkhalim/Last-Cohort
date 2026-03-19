@@ -92,6 +92,7 @@ class CombatEngine {
       u.poison = 0;
       u.passiveTriggered = false;
       u._wolfPeltUsed = false;
+      u._mushroomRage = 0;
       u.skills.forEach(s => { s.cooldownLeft = 0; });
       u.actedThisTurn = false;
       u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0 };
@@ -1814,6 +1815,16 @@ class CombatEngine {
         dmg -= absorbed;
         if (absorbed > 0) {
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
+        }
+      }
+      // Berserker Mushroom: gain +1 damage each time hit (max +4)
+      if (dmg > 0 && this.unitHasItem(target, 'berserker_mushroom')) {
+        if (!target._mushroomRage) target._mushroomRage = 0;
+        if (target._mushroomRage < 4) {
+          target._mushroomRage++;
+          target.equipDamage++;
+          this.addLog(`${target.name}'s rage grows! (+1 damage, ${target._mushroomRage}/4)`);
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: `Rage ${target._mushroomRage}!`, color: 'var(--red-bright)' });
         }
       }
       // Wolf Pelt: first hit each combat deals 3 less damage
