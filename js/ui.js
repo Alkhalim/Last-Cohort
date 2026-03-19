@@ -1629,14 +1629,17 @@ class GameUI {
     const choicesEl = document.getElementById('event-choices');
     choicesEl.innerHTML = '';
 
-    // Gather all learned skills from all units, pick 3 random
+    // Gather all learned skills that have upgradeable numeric effects
     const allSkills = [];
     this.engine.party.forEach(u => {
       if (!u.downed) {
         u.skills.forEach(s => {
-          // Find the base skill data to get base effects
           const baseDef = u.allSkills.find(a => a.id === s.id);
-          if (baseDef) allSkills.push({ unit: u, skill: s, baseDef });
+          if (!baseDef || !baseDef.effects) return;
+          // Only include if skill has at least one upgradeable effect
+          const hasNumeric = Object.values(baseDef.effects).some(v => typeof v === 'number');
+          const hasBuff = !!baseDef.effects.buffAllies;
+          if (hasNumeric || hasBuff) allSkills.push({ unit: u, skill: s, baseDef });
         });
       }
     });
@@ -1665,11 +1668,15 @@ class GameUI {
       else if (effects.morale) upgradeText = `+5 morale (${effects.morale} → ${effects.morale + 5})`;
       else if (effects.damageAll) upgradeText = `+1 damage to all (${effects.damageAll} → ${effects.damageAll + 1})`;
       else if (effects.selfDamage) upgradeText = `-1 self damage (${effects.selfDamage} → ${effects.selfDamage - 1})`;
+      else if (effects.buffAllies) upgradeText = `+1 buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + 1})`;
       else {
         // Fallback: find the first numeric effect and name it
+        const friendlyNames = { counterStance: 'counter damage', overwatch: 'overwatch damage', snareTrap: 'trap damage', suppress: 'suppress duration', cripple: 'cripple duration', deafen: 'deafen duration', condemn: 'condemn duration', transfusion: 'transfer HP' };
         const key = Object.keys(effects).find(k => typeof effects[k] === 'number');
-        if (key) upgradeText = `+1 ${key} (${effects[key]} → ${effects[key] + 1})`;
-        else upgradeText = 'Skill already at full power';
+        if (key) {
+          const label = friendlyNames[key] || key;
+          upgradeText = `+1 ${label} (${effects[key]} → ${effects[key] + 1})`;
+        }
       }
 
       const btn = document.createElement('button');
@@ -1687,6 +1694,7 @@ class GameUI {
         else if (effects.poison) baseDef.effects.poison++;
         else if (effects.poisonAll) baseDef.effects.poisonAll++;
         else if (effects.morale) baseDef.effects.morale += 5;
+        else if (effects.buffAllies) baseDef.effects.buffAllies.bonusDamage++;
 
         // Also update the runtime skill copy
         const runtimeSkill = unit.skills.find(s => s.id === skill.id);
@@ -2644,7 +2652,7 @@ class GameUI {
           const baseDef = u.allSkills.find(as => as.id === s.id);
           if (!baseDef || !baseDef.effects) return;
           const eff = baseDef.effects;
-          if (eff.damage || eff.heal || eff.healAll || eff.block || eff.blockAll || eff.poison || eff.poisonAll || eff.morale || eff.damageAll) {
+          if (eff.damage || eff.heal || eff.healAll || eff.block || eff.blockAll || eff.poison || eff.poisonAll || eff.morale || eff.damageAll || eff.buffAllies) {
             allSkills.push({ unit: u, skill: s, baseDef });
           }
         });
@@ -2689,6 +2697,7 @@ class GameUI {
       else if (eff.poisonAll) upgradeText = `+1 poison to all (${eff.poisonAll} → ${eff.poisonAll + 1})`;
       else if (eff.morale) upgradeText = `+5 morale (${eff.morale} → ${eff.morale + 5})`;
       else if (eff.damageAll) upgradeText = `+1 damage to all (${eff.damageAll} → ${eff.damageAll + 1})`;
+      else if (eff.buffAllies) upgradeText = `+1 buff damage (${eff.buffAllies.bonusDamage} → ${eff.buffAllies.bonusDamage + 1})`;
       else { const key = Object.keys(eff).find(k => typeof eff[k] === 'number'); if (key) upgradeText = `+1 ${key} (${eff[key]} → ${eff[key] + 1})`; }
 
       const tag = getPrimaryTag(unit.classId);
@@ -2705,6 +2714,7 @@ class GameUI {
         else if (eff.poisonAll) baseDef.effects.poisonAll++;
         else if (eff.morale) baseDef.effects.morale += 5;
         else if (eff.damageAll) baseDef.effects.damageAll++;
+        else if (eff.buffAllies) baseDef.effects.buffAllies.bonusDamage++;
 
         btn.classList.add('disabled');
         btn.style.opacity = '0.5';
