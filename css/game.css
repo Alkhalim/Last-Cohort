@@ -577,6 +577,7 @@ html, body {
   text-shadow: 0 0 30px rgba(201, 162, 39, 0.4);
   margin-bottom: 0.8rem;
   animation: boss-name-in 1.5s ease-out;
+  white-space: nowrap;
 }
 
 @keyframes boss-name-in {
