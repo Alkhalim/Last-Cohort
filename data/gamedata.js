@@ -65,19 +65,20 @@ const RAW_ENCOUNTERS = {
   },
   "dropTables": {
     "cheruscan_raider": { "nothingChance": 0.25, "tiers": [
-      { "chance": 0.35, "items": ["iron_gladius", "raider_shield", "herb_pouch"] },
-      { "chance": 0.18, "items": ["woad_charm", "fang_necklace", "legionary_lorica", "officers_cloak"] },
+      { "chance": 0.30, "items": ["iron_gladius", "raider_shield", "herb_pouch", "legionarys_sandals", "charcoal_stick"] },
+      { "chance": 0.18, "items": ["woad_charm", "fang_necklace", "legionary_lorica", "officers_cloak", "fortified_helm"] },
       { "chance": 0.05, "items": ["chiefs_spear", "runic_stone"] },
       { "chance": 0.10, "items": ["cheruscan_torc"] },
       { "chance": 0.07, "items": ["fates_coin", "seers_knucklebone"] },
-      { "chance": 0.05, "items": ["gladiators_wraps", "commanders_signet"], "minDifficulty": 2 }
+      { "chance": 0.05, "items": ["gladiators_wraps", "commanders_signet", "venomous_blade"], "minDifficulty": 2 }
     ] },
     "sling_hunter": { "nothingChance": 0.25, "tiers": [
-      { "chance": 0.30, "items": ["sling_stones", "bone_needle_kit", "raider_shield"] },
-      { "chance": 0.20, "items": ["hunters_cloak", "scouts_sling", "scorpio_crossbow"] },
+      { "chance": 0.25, "items": ["sling_stones", "bone_needle_kit", "raider_shield", "throwing_stone"] },
+      { "chance": 0.20, "items": ["hunters_cloak", "scouts_sling", "scorpio_crossbow", "ironwood_buckler"] },
       { "chance": 0.05, "items": ["runic_stone", "legion_composite_bow"] },
-      { "chance": 0.10, "items": ["slingers_eye"] },
-      { "chance": 0.10, "items": ["scouts_leather", "spotters_lens"], "minDifficulty": 2 }
+      { "chance": 0.10, "items": ["slingers_eye", "night_owl_pendant"] },
+      { "chance": 0.10, "items": ["scouts_leather", "spotters_lens"], "minDifficulty": 2 },
+      { "chance": 0.05, "items": ["stormcaller_bow"], "minDifficulty": 4 }
     ] },
     "marsh_wolf": { "nothingChance": 0.20, "tiers": [
       { "chance": 0.30, "items": ["wolf_pelt", "herb_pouch"] },
@@ -87,39 +88,41 @@ const RAW_ENCOUNTERS = {
       { "chance": 0.10, "items": ["gladiators_wraps"], "minDifficulty": 2 }
     ] },
     "fen_viper": { "nothingChance": 0.30, "tiers": [
-      { "chance": 0.25, "items": ["herb_pouch", "bone_needle_kit"] },
-      { "chance": 0.15, "items": ["fang_necklace", "venom_gland", "medicus_vestments"] },
-      { "chance": 0.05, "items": ["marsh_fang"] },
+      { "chance": 0.20, "items": ["herb_pouch", "bone_needle_kit", "field_bandage"] },
+      { "chance": 0.15, "items": ["fang_necklace", "venom_gland", "medicus_vestments", "herbalists_satchel"] },
+      { "chance": 0.05, "items": ["marsh_fang", "venomous_blade"] },
       { "chance": 0.10, "items": ["viper_venom_vial"] },
       { "chance": 0.10, "items": ["surgeons_scalpel"] },
       { "chance": 0.05, "items": ["apothecary_mortar"], "minDifficulty": 3 }
     ] },
     "bog_seer": { "nothingChance": 0.25, "tiers": [
-      { "chance": 0.25, "items": ["herb_pouch", "bone_needle_kit"] },
-      { "chance": 0.15, "items": ["woad_charm", "fang_necklace", "medicus_vestments", "cursed_die"] },
-      { "chance": 0.08, "items": ["runic_stone", "apothecary_mortar"] },
+      { "chance": 0.20, "items": ["herb_pouch", "bone_needle_kit", "field_bandage"] },
+      { "chance": 0.15, "items": ["woad_charm", "fang_necklace", "medicus_vestments", "cursed_die", "herbalists_satchel"] },
+      { "chance": 0.08, "items": ["runic_stone", "apothecary_mortar", "moonstone_ring"] },
       { "chance": 0.10, "items": ["seers_eye", "fates_coin", "seers_knucklebone"] },
-      { "chance": 0.10, "items": ["scorpio_crossbow", "surgeons_scalpel"] }
+      { "chance": 0.10, "items": ["scorpio_crossbow", "surgeons_scalpel", "centurions_whistle"] },
+      { "chance": 0.05, "items": ["healers_oath"], "minDifficulty": 3 }
     ] },
     "oak_shield": { "nothingChance": 0.05, "tiers": [
-      { "chance": 0.30, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
-      { "chance": 0.25, "items": ["woad_charm", "fang_necklace", "hunters_cloak", "legionary_lorica", "officers_cloak"] },
-      { "chance": 0.10, "items": ["chiefs_spear", "runic_stone", "legion_composite_bow"] },
+      { "chance": 0.25, "items": ["iron_gladius", "raider_shield", "wolf_pelt", "legionarys_sandals"] },
+      { "chance": 0.20, "items": ["woad_charm", "fang_necklace", "hunters_cloak", "legionary_lorica", "fortified_helm"] },
+      { "chance": 0.10, "items": ["chiefs_spear", "runic_stone", "legion_composite_bow", "blood_iron_gladius"] },
       { "chance": 0.15, "items": ["oak_splinter"] },
+      { "chance": 0.10, "items": ["thorn_mantle"], "minDifficulty": 4 },
       { "chance": 0.15, "items": ["boar_tusk_pauldron", "aquila_spearhead"], "minDifficulty": 4 }
     ] },
     "cheruscan_shieldbearer": { "nothingChance": 0.15, "tiers": [
-      { "chance": 0.35, "items": ["raider_shield", "iron_gladius", "wolf_pelt"] },
-      { "chance": 0.15, "items": ["woad_charm", "hunters_cloak", "officers_cloak"] },
-      { "chance": 0.10, "items": ["chiefs_spear"] },
+      { "chance": 0.30, "items": ["raider_shield", "iron_gladius", "wolf_pelt", "legionarys_sandals"] },
+      { "chance": 0.15, "items": ["woad_charm", "hunters_cloak", "officers_cloak", "fortified_helm"] },
+      { "chance": 0.10, "items": ["chiefs_spear", "vanguards_banner"] },
       { "chance": 0.15, "items": ["shieldbearers_grip"] },
-      { "chance": 0.10, "items": ["boar_tusk_pauldron"], "minDifficulty": 4 }
+      { "chance": 0.10, "items": ["boar_tusk_pauldron", "thorn_mantle"], "minDifficulty": 4 }
     ] },
     "mire_leech": { "nothingChance": 0.45, "tiers": [
-      { "chance": 0.25, "items": ["herb_pouch", "bone_needle_kit"] },
-      { "chance": 0.12, "items": ["fang_necklace", "marsh_fang", "medicus_vestments"] },
-      { "chance": 0.13, "items": ["leech_bile_flask"] },
-      { "chance": 0.05, "items": ["herbalists_robe"], "minDifficulty": 4 }
+      { "chance": 0.20, "items": ["herb_pouch", "bone_needle_kit", "field_bandage"] },
+      { "chance": 0.12, "items": ["fang_necklace", "marsh_fang", "medicus_vestments", "herbalists_satchel"] },
+      { "chance": 0.13, "items": ["leech_bile_flask", "marsh_root_brew"] },
+      { "chance": 0.05, "items": ["herbalists_robe", "healers_oath"], "minDifficulty": 3 }
     ] },
     "wicker_man": { "nothingChance": 0.05, "tiers": [
       { "chance": 0.30, "items": ["woad_charm", "herb_pouch"] },
@@ -129,62 +132,67 @@ const RAW_ENCOUNTERS = {
       { "chance": 0.10, "items": ["bloodstone_pendant", "windreaders_charm"], "minDifficulty": 5 }
     ] },
     "cheruscan_guardian": { "nothingChance": 0.25, "tiers": [
-      { "chance": 0.35, "items": ["raider_shield", "wolf_pelt"] },
-      { "chance": 0.20, "items": ["shieldbearers_grip", "woad_charm", "legionary_lorica"] },
-      { "chance": 0.10, "items": ["seers_eye"] },
-      { "chance": 0.10, "items": ["officers_cloak"] }
+      { "chance": 0.30, "items": ["raider_shield", "wolf_pelt", "legionarys_sandals"] },
+      { "chance": 0.20, "items": ["shieldbearers_grip", "woad_charm", "legionary_lorica", "fortified_helm"] },
+      { "chance": 0.10, "items": ["seers_eye", "marsh_root_brew"] },
+      { "chance": 0.10, "items": ["officers_cloak"] },
+      { "chance": 0.05, "items": ["thorn_mantle"], "minDifficulty": 4 }
     ] },
     "germanic_berserker": { "nothingChance": 0.15, "tiers": [
-      { "chance": 0.30, "items": ["iron_gladius", "wolf_pelt", "raider_shield"] },
-      { "chance": 0.15, "items": ["fang_necklace", "cheruscan_torc", "gladiators_wraps"] },
-      { "chance": 0.10, "items": ["chiefs_spear"] },
+      { "chance": 0.25, "items": ["iron_gladius", "wolf_pelt", "raider_shield", "charcoal_stick"] },
+      { "chance": 0.15, "items": ["fang_necklace", "cheruscan_torc", "gladiators_wraps", "venomous_blade"] },
+      { "chance": 0.10, "items": ["chiefs_spear", "blood_iron_gladius"] },
       { "chance": 0.15, "items": ["berserker_mushroom"] },
-      { "chance": 0.10, "items": ["vine_staff", "commanders_signet"] },
+      { "chance": 0.10, "items": ["vine_staff", "commanders_signet", "centurions_whistle"] },
       { "chance": 0.05, "items": ["bloodstone_pendant"], "minDifficulty": 5 }
     ] },
     "runecarver": { "nothingChance": 0.20, "tiers": [
-      { "chance": 0.30, "items": ["raider_shield", "woad_charm"] },
-      { "chance": 0.20, "items": ["seers_eye", "shieldbearers_grip"] },
-      { "chance": 0.10, "items": ["runic_stone"] },
+      { "chance": 0.25, "items": ["raider_shield", "woad_charm", "legionarys_sandals"] },
+      { "chance": 0.20, "items": ["seers_eye", "shieldbearers_grip", "ironwood_buckler"] },
+      { "chance": 0.10, "items": ["runic_stone", "moonstone_ring"] },
       { "chance": 0.10, "items": ["marksmans_brigandine", "scouts_leather"] },
       { "chance": 0.10, "items": ["battle_standard_cord"], "minDifficulty": 4 }
     ] },
     "war_hound": { "nothingChance": 0.20, "tiers": [
-      { "chance": 0.30, "items": ["wolf_pelt", "herb_pouch"] },
-      { "chance": 0.20, "items": ["fang_necklace", "wolf_fang_blade"] },
+      { "chance": 0.25, "items": ["wolf_pelt", "herb_pouch", "charcoal_stick"] },
+      { "chance": 0.20, "items": ["fang_necklace", "wolf_fang_blade", "boarskin_bracers"] },
       { "chance": 0.08, "items": ["marsh_fang"] },
       { "chance": 0.12, "items": ["hound_collar"] },
-      { "chance": 0.10, "items": ["spotters_lens", "gladiators_wraps"] }
+      { "chance": 0.10, "items": ["spotters_lens", "gladiators_wraps"] },
+      { "chance": 0.05, "items": ["blood_iron_gladius"], "minDifficulty": 3 }
     ] },
     "cursed_warrior": { "nothingChance": 0.10, "tiers": [
-      { "chance": 0.25, "items": ["herb_pouch", "bone_needle_kit", "raider_shield"] },
-      { "chance": 0.20, "items": ["seers_eye", "woad_charm"] },
-      { "chance": 0.10, "items": ["runic_stone"] },
+      { "chance": 0.20, "items": ["herb_pouch", "bone_needle_kit", "raider_shield"] },
+      { "chance": 0.15, "items": ["seers_eye", "woad_charm", "venomous_blade"] },
+      { "chance": 0.10, "items": ["runic_stone", "moonstone_ring"] },
       { "chance": 0.15, "items": ["cursed_bone_blade"] },
-      { "chance": 0.10, "items": ["herbalists_robe", "aquila_spearhead"] },
-      { "chance": 0.10, "items": ["gilded_cuirass", "windreaders_charm"], "minDifficulty": 5 }
+      { "chance": 0.10, "items": ["herbalists_robe", "aquila_spearhead", "vanguards_banner"] },
+      { "chance": 0.10, "items": ["gilded_cuirass", "windreaders_charm"], "minDifficulty": 5 },
+      { "chance": 0.10, "items": ["thorn_mantle", "stormcaller_bow"], "minDifficulty": 4 }
     ] },
     "spear_thrower": { "nothingChance": 0.20, "tiers": [
-      { "chance": 0.35, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
-      { "chance": 0.20, "items": ["fang_necklace", "cheruscan_torc", "hunters_cloak"] },
+      { "chance": 0.30, "items": ["iron_gladius", "raider_shield", "wolf_pelt", "throwing_stone"] },
+      { "chance": 0.20, "items": ["fang_necklace", "cheruscan_torc", "hunters_cloak", "night_owl_pendant"] },
       { "chance": 0.10, "items": ["chiefs_spear", "scorpio_crossbow"] },
-      { "chance": 0.15, "items": ["gladiators_wraps", "scouts_leather"] }
+      { "chance": 0.15, "items": ["gladiators_wraps", "scouts_leather", "boarskin_bracers"] }
     ] },
     "boar_youngling": { "nothingChance": 0.50, "tiers": [
       { "chance": 0.35, "items": ["wolf_pelt", "herb_pouch"] },
       { "chance": 0.15, "items": ["fang_necklace"] }
     ] },
     "war_boar": { "nothingChance": 0.15, "tiers": [
-      { "chance": 0.30, "items": ["wolf_pelt", "herb_pouch", "raider_shield"] },
-      { "chance": 0.25, "items": ["fang_necklace", "legionary_lorica", "gladiators_wraps"] },
+      { "chance": 0.25, "items": ["wolf_pelt", "herb_pouch", "raider_shield", "legionarys_sandals"] },
+      { "chance": 0.25, "items": ["fang_necklace", "legionary_lorica", "gladiators_wraps", "boarskin_bracers"] },
       { "chance": 0.15, "items": ["hound_collar", "berserker_mushroom"] },
-      { "chance": 0.15, "items": ["mire_mothers_tusk"] }
+      { "chance": 0.10, "items": ["mire_mothers_tusk", "blood_iron_gladius"] },
+      { "chance": 0.10, "items": ["thorn_mantle"], "minDifficulty": 4 }
     ] },
     "ironbound_champion": { "nothingChance": 0.10, "tiers": [
-      { "chance": 0.30, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
-      { "chance": 0.25, "items": ["shieldbearers_grip", "legionary_lorica", "cheruscan_torc"] },
-      { "chance": 0.15, "items": ["champions_helm", "boar_tusk_pauldron"] },
-      { "chance": 0.20, "items": ["oak_splinter", "warlords_blade"] }
+      { "chance": 0.25, "items": ["iron_gladius", "raider_shield", "wolf_pelt"] },
+      { "chance": 0.20, "items": ["shieldbearers_grip", "legionary_lorica", "cheruscan_torc", "fortified_helm"] },
+      { "chance": 0.15, "items": ["champions_helm", "boar_tusk_pauldron", "thorn_mantle"] },
+      { "chance": 0.20, "items": ["oak_splinter", "warlords_blade", "blood_iron_gladius"] },
+      { "chance": 0.10, "items": ["vanguards_banner"] }
     ] },
     "arminius_champion": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
     "grove_witch": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
@@ -203,6 +211,6 @@ const RAW_CONFIG = {
     { "min": -100, "label": "BROKEN", "color": "#6b1a1a" }
   ],
   "equipSlots": { "weapon": 2, "armor": 2, "trinket": 3 },
-  "bossDropPool": ["champions_helm", "arm_ring_of_arminius", "warlords_blade", "huntsmans_arrow", "mire_mothers_tusk", "bone_speakers_skull", "legion_composite_bow", "apothecary_mortar", "boar_tusk_pauldron", "aquila_spearhead", "marksmans_brigandine", "herbalists_robe", "bloodstone_pendant", "gilded_cuirass", "windreaders_charm", "battle_standard_cord", "varus_shield", "heartwood_charm", "mars_denarius", "pact_of_wolves", "centurions_gorget", "serpents_coil", "eagle_lost_ninth", "lupas_fang"],
+  "bossDropPool": ["champions_helm", "arm_ring_of_arminius", "warlords_blade", "huntsmans_arrow", "mire_mothers_tusk", "bone_speakers_skull", "legion_composite_bow", "apothecary_mortar", "boar_tusk_pauldron", "aquila_spearhead", "marksmans_brigandine", "herbalists_robe", "bloodstone_pendant", "gilded_cuirass", "windreaders_charm", "battle_standard_cord", "varus_shield", "heartwood_charm", "mars_denarius", "pact_of_wolves", "centurions_gorget", "serpents_coil", "eagle_lost_ninth", "lupas_fang", "blood_iron_gladius", "vanguards_banner", "healers_oath", "moonstone_ring", "stormcaller_bow", "thorn_mantle", "crown_of_thorns", "sigil_of_the_ninth"],
   "baseDiceCount": 4
 };
