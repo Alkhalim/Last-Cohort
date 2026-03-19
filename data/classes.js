@@ -417,11 +417,11 @@ const RAW_CLASSES = {
         "effects": { "buffAllies": { "bonusDamage": 3, "attacks": 1 }, "shieldbreakAll": true }
       },
       {
-        "id": "dissonant_note", "name": "Dissonant Note",
+        "id": "shrieking_note", "name": "Shrieking Note",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A piercing note that reaches any target. Deals 4 damage and applies 3 Poison.",
-        "effects": { "damage": 4, "poison": 3 }
+        "description": "A piercing shriek. Deals 4 damage to target. Applies 1 Poison to all other enemies.",
+        "effects": { "damage": 4, "poisonSplash": 1 }
       },
       {
         "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 2,
