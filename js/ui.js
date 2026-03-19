@@ -976,8 +976,8 @@ class GameUI {
     const unitIndex = this.selectedUnitIndex;
     this.stagedSkill = null;
 
-    // For self/all-target skills, pass appropriate targets
-    if (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES) {
+    // For self/all-target skills and dual-target skills, route through beginSkillTarget
+    if (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES || skill.target === TARGET.DUAL_ENEMY) {
       this.engine.beginSkillTarget(unitIndex, skill.id, diceIds);
     } else {
       this.engine.executeSkill(unitIndex, skill.id, diceIds, [target]);
