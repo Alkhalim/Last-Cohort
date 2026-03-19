@@ -182,7 +182,7 @@ const RAW_EVENTS = [
         { "weight": 0.6, "text": "The boar falls. Fresh meat lifts the men's spirits.", "effects": { "healAll": 8, "morale": 8 } },
         { "weight": 0.4, "text": "The boar gores a soldier before going down. Meat is meat.", "effects": { "damageAll": 4, "healAll": 6, "morale": 3 } }
       ]},
-      { "text": "Your heavy infantry brings it down cleanly.", "requiresTag": "melee", "outcomes": [
+      { "text": "Your fighters bring it down cleanly.", "requiresTag": "melee", "outcomes": [
         { "weight": 0.7, "text": "A single precise thrust. The boar never stood a chance. Fresh meat and a trophy tusk.", "effects": { "healAll": 10, "morale": 10 } },
         { "weight": 0.3, "text": "The legionary pins it expertly. The tusk makes a fine blade.", "effects": { "healAll": 8, "grantItem": "fang_necklace" } }
       ]},
@@ -302,7 +302,7 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "Careful study reveals a ward pattern. Your medicus repurposes it as protection.", "effects": { "morale": 10, "grantItem": "seers_eye" } },
         { "weight": 0.2, "text": "The runes resist understanding. The medicus pulls back, shaken but wiser.", "effects": { "morale": -3, "healAll": 4 } }
       ]},
-      { "text": "Your heavy infantry carves a new path around them.", "requiresTag": "melee", "outcomes": [
+      { "text": "Your fighters carve a new path around them.", "requiresTag": "melee", "outcomes": [
         { "weight": 0.6, "text": "Brute force wins. Your soldiers hack through the undergrowth, avoiding the markers entirely.", "effects": { "morale": 8, "damageAll": 2 } },
         { "weight": 0.4, "text": "The detour takes time but keeps the men away from the markers. They find a stream to refill waterskins.", "effects": { "healAll": 5, "morale": 5 } }
       ]},

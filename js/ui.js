@@ -1494,7 +1494,8 @@ class GameUI {
         });
         if (!hasTag) {
           meetsRequirement = false;
-          requirementLabel = choice.requiresTag;
+          const tagLabels = { melee: 'fighters', command: 'an officer', support: 'a medic', ranged: 'a marksman' };
+          requirementLabel = tagLabels[choice.requiresTag] || choice.requiresTag;
         }
       }
 
