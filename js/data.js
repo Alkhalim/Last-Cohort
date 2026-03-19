@@ -564,12 +564,13 @@ function createLeveledItem(itemId, bonusLevels) {
 }
 
 function formatItemStats(stats) {
+  const fmt = (val, label) => val > 0 ? `+${val} ${label}` : `${val} ${label}`;
   const parts = [];
-  if (stats.damage) parts.push(`+${stats.damage} dmg`);
-  if (stats.block) parts.push(`+${stats.block} block`);
-  if (stats.maxHp) parts.push(`+${stats.maxHp} HP`);
-  if (stats.heal) parts.push(`+${stats.heal} heal`);
-  if (stats.poison) parts.push(`+${stats.poison} poison`);
-  if (stats.extraDice) parts.push(`+${stats.extraDice} die`);
+  if (stats.damage) parts.push(fmt(stats.damage, 'dmg'));
+  if (stats.block) parts.push(fmt(stats.block, 'block'));
+  if (stats.maxHp) parts.push(fmt(stats.maxHp, 'HP'));
+  if (stats.heal) parts.push(fmt(stats.heal, 'heal'));
+  if (stats.poison) parts.push(fmt(stats.poison, 'poison'));
+  if (stats.extraDice) parts.push(fmt(stats.extraDice, 'die'));
   return parts.join(', ');
 }
