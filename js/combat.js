@@ -1828,10 +1828,10 @@ class CombatEngine {
       // Berserker Mushroom: gain +1 damage each time hit (max +4)
       if (dmg > 0 && this.unitHasItem(target, 'berserker_mushroom')) {
         if (!target._mushroomRage) target._mushroomRage = 0;
-        if (target._mushroomRage < 4) {
+        if (target._mushroomRage < 5) {
           target._mushroomRage++;
           target.equipDamage++;
-          this.addLog(`${target.name}'s rage grows! (+1 damage, ${target._mushroomRage}/4)`);
+          this.addLog(`${target.name}'s rage grows! (+1 damage, ${target._mushroomRage}/5)`);
           if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: `Rage ${target._mushroomRage}!`, color: 'var(--red-bright)' });
         }
       }
