@@ -26,7 +26,7 @@ const RAW_ITEMS = {
 
   // --- Enemy-unique drops ---
   "cheruscan_torc": { "id": "cheruscan_torc", "name": "Cheruscan Torc", "slot": "trinket", "rarity": "uncommon", "classTags": ["melee", "command"], "stats": { "damage": 1, "block": 1 }, "description": "A twisted bronze neck ring torn from a raider. It still holds the warmth of its owner." },
-  "slingers_eye": { "id": "slingers_eye", "name": "Slinger's Eye", "slot": "trinket", "rarity": "uncommon", "classTags": ["command", "support", "ranged"], "stats": { "damage": 2 }, "description": "A polished river stone with a hole through the center. Looking through it steadies the hand." },
+  "slingers_eye": { "id": "slingers_eye", "name": "Slinger's Eye", "slot": "trinket", "rarity": "common", "classTags": ["command", "support", "ranged"], "stats": { "damage": 2 }, "description": "A polished river stone with a hole through the center. Looking through it steadies the hand." },
   "wolf_fang_blade": { "id": "wolf_fang_blade", "name": "Wolf-Fang Blade", "slot": "weapon", "rarity": "uncommon", "classTags": ["melee", "roman"], "stats": { "damage": 2, "maxHp": 1 }, "description": "A short blade with a wolf fang set into the pommel. It bites twice." },
   "viper_venom_vial": { "id": "viper_venom_vial", "name": "Viper Venom Vial", "slot": "trinket", "rarity": "uncommon", "classTags": ["support"], "stats": { "damage": 1, "heal": 1 }, "description": "Diluted fen viper venom. Deadly as poison, useful as medicine." },
   "venom_gland": { "id": "venom_gland", "name": "Venom Gland", "slot": "trinket", "rarity": "uncommon", "classTags": ["support", "ranged"], "stats": { "poison": 1 }, "description": "A fen viper's venom gland, still dripping. Coats weapons in toxin." },
