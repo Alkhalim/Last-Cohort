@@ -100,11 +100,13 @@ class CombatEngine {
       this.computeEquipmentStats(u);
     });
 
-    // Special: Raider's Shield — start each combat with 6 block
+    // Special: Raider's Shield — start each combat with 6 block (scales with level)
     this.party.forEach(u => {
       if (!u.downed && this.unitHasItem(u, 'raider_shield')) {
-        u.block = (u.block || 0) + 6;
-        this.addLog(`${u.name}'s Raider's Shield grants 6 Block.`);
+        const lv = this.getItemLevel(u, 'raider_shield');
+        const shieldBlock = 6 + (lv - 1) * 2;
+        u.block = (u.block || 0) + shieldBlock;
+        this.addLog(`${u.name}'s Raider's Shield grants ${shieldBlock} Block.`);
       }
     });
 
@@ -120,6 +122,11 @@ class CombatEngine {
       this.addLog('The Arm Ring of Arminius fills the men with defiance. (+10 Morale)');
     }
 
+    // Special: Centurion's Whistle — +5 morale at combat start
+    if (this.partyHasItem('centurions_whistle')) {
+      this.morale = Math.min(100, this.morale + 5);
+      this.addLog("The Centurion's Whistle steadies the men. (+5 Morale)");
+    }
 
     // Curse: Death's Whisper — start each encounter at -10 morale
     if (this.getActiveCurses().includes('deaths_whisper')) {
@@ -148,14 +155,16 @@ class CombatEngine {
         setTimeout(() => this.executeEnemyTurn(), 600);
         return;
       }
-      // War Hound Collar: apply 2 poison to a random enemy
+      // War Hound Collar: apply poison to a random enemy (scales with level)
       if (this._houndCollarPending) {
         this._houndCollarPending = false;
         const alive = this.enemies.filter(e => !e.dead);
         if (alive.length > 0) {
+          const hcLv = this.getPartyItemLevel('hound_collar');
+          const hcPoison = 2 + (hcLv - 1);
           const victim = alive[Math.floor(Math.random() * alive.length)];
-          victim.poison = (victim.poison || 0) + 2;
-          this.addLog(`War Hound's spirit strikes — ${victim.name} is poisoned! (+2 Poison)`);
+          victim.poison = (victim.poison || 0) + hcPoison;
+          this.addLog(`War Hound's spirit strikes — ${victim.name} is poisoned! (+${hcPoison} Poison)`);
         }
       }
       this.addLog('Prepare yourselves!');
@@ -338,12 +347,14 @@ class CombatEngine {
       this.checkEnemyDeaths();
     }
 
-    // Herb Pouch: heal wielder for 1 HP each turn
+    // Herb Pouch: heal wielder each turn (scales with level)
     this.party.forEach(u => {
       if (!u.downed && this.unitHasItem(u, 'herb_pouch') && u.hp < u.maxHp) {
-        u.hp = Math.min(u.maxHp, u.hp + 1);
-        this.addLog(`${u.name}'s Herb Pouch heals 1 HP.`);
-        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: 1 });
+        const hpLv = this.getItemLevel(u, 'herb_pouch');
+        const hpHeal = 1 * hpLv;
+        u.hp = Math.min(u.maxHp, u.hp + hpHeal);
+        this.addLog(`${u.name}'s Herb Pouch heals ${hpHeal} HP.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: hpHeal });
       }
     });
 
@@ -373,15 +384,20 @@ class CombatEngine {
       u.taunt = false;
       u._counterStance = 0;
       u._overwatch = 0;
-      // Scout's Leather: +3 damage if not hit last turn
+      // Scout's Leather: bonus damage if not hit last turn (scales with level)
       if (this.turn > 1 && this.unitHasItem(u, 'scouts_leather')) {
+        const slLv = this.getItemLevel(u, 'scouts_leather');
+        const slBonus = 3 + (slLv - 1);
         if (!u._wasHitThisTurn) {
+          if (u._scoutsLeatherActive) u.equipDamage -= u._scoutsLeatherBonus || 3;
           u._scoutsLeatherActive = true;
-          u.equipDamage += 3;
-          this.addLog(`${u.name}'s Scout's Leather grants +3 damage (untouched).`);
+          u._scoutsLeatherBonus = slBonus;
+          u.equipDamage += slBonus;
+          this.addLog(`${u.name}'s Scout's Leather grants +${slBonus} damage (untouched).`);
         } else if (u._scoutsLeatherActive) {
           u._scoutsLeatherActive = false;
-          u.equipDamage -= 3;
+          u.equipDamage -= u._scoutsLeatherBonus || 3;
+          u._scoutsLeatherBonus = 0;
         }
       }
       u._wasHitThisTurn = false;
@@ -424,6 +440,11 @@ class CombatEngine {
     if (this.partyHasItem('pact_of_wolves') && this.turn > 0 && this.turn % 3 === 0) {
       extraDice++;
       this.addLog('The Pact of Wolves grants an extra die!');
+    }
+    // Moonstone Ring: +1 die if morale > 50
+    if (this.partyHasItem('moonstone_ring') && this.morale > 50) {
+      extraDice++;
+      this.addLog('Moonstone Ring shines — morale grants an extra die!');
     }
     // Heartwood Charm: +3 dice next turn after first damage taken
     if (this._heartwoodBonusDice) {
@@ -823,11 +844,13 @@ class CombatEngine {
     const logText = this.applySkillResult(unit, skill, result);
     this.addLog(logText);
 
-    // Gladiator's Wraps: gain 3 block after using a 2+ dice skill
+    // Gladiator's Wraps: gain block after using a 2+ dice skill (scales with level)
     if (diceIds.length >= 2 && this.unitHasItem(unit, 'gladiators_wraps')) {
-      unit.block = (unit.block || 0) + 3;
-      this.addLog(`Gladiator's Wraps grant ${unit.name} 3 Block.`);
-      if (this.onVisual) this.onVisual('unitBlock', { unitIndex: unit.index, amount: 3 });
+      const gwLv = this.getItemLevel(unit, 'gladiators_wraps');
+      const gwBlock = 3 + (gwLv - 1);
+      unit.block = (unit.block || 0) + gwBlock;
+      this.addLog(`Gladiator's Wraps grant ${unit.name} ${gwBlock} Block.`);
+      if (this.onVisual) this.onVisual('unitBlock', { unitIndex: unit.index, amount: gwBlock });
     }
 
     // Mark unit as acted
@@ -923,6 +946,13 @@ class CombatEngine {
         total = Math.round(total * 1.3);
         parts.push('Condemned! (+30%)');
       }
+      // Night Owl Pendant: +bonus damage vs back-row enemies (scales with level)
+      if (result.target.row === 'back' && this.unitHasItem(unit, 'night_owl_pendant')) {
+        const nopLv = this.getItemLevel(unit, 'night_owl_pendant');
+        const nopBonus = 2 + (nopLv - 1);
+        total += nopBonus;
+        parts.push(`Night Owl Pendant! (+${nopBonus} vs back row)`);
+      }
       // Execute: double damage to enemies below 25% HP
       if (result.execute && result.target.hp <= result.target.maxHp * 0.25) {
         total *= 2;
@@ -939,7 +969,10 @@ class CombatEngine {
         let effectiveBlock = Math.max(0, result.target.block - pierceAmount);
         let blockDmg = total;
         if (this.unitHasItem(unit, 'warlords_blade')) blockDmg += 2;
-        if (this.unitHasItem(unit, 'scorpio_crossbow')) blockDmg += 5;
+        if (this.unitHasItem(unit, 'scorpio_crossbow')) {
+          const scLv = this.getItemLevel(unit, 'scorpio_crossbow');
+          blockDmg += 5 + (scLv - 1) * 2;
+        }
         const absorbed = Math.min(effectiveBlock, blockDmg);
         result.target.block = Math.max(0, result.target.block - absorbed - pierceAmount);
         total -= Math.min(total, absorbed);
@@ -955,11 +988,31 @@ class CombatEngine {
         result.target._pinned = true;
       }
 
-      // Special: Legion Composite Bow — attacks apply 1 Poison
+      // Special: Legion Composite Bow — attacks apply Poison (scales with level)
       if (this.unitHasItem(unit, 'legion_composite_bow') && total > 0 && result.target.hp > 0) {
-        result.target.poison = (result.target.poison || 0) + 1;
-        unit.stats.poisonInflicted += 1;
-        parts.push('The festering arrow poisons the target. (+1 Poison)');
+        const lcbLv = this.getItemLevel(unit, 'legion_composite_bow');
+        const lcbPoison = 1 * lcbLv;
+        result.target.poison = (result.target.poison || 0) + lcbPoison;
+        unit.stats.poisonInflicted += lcbPoison;
+        parts.push(`The festering arrow poisons the target. (+${lcbPoison} Poison)`);
+      }
+
+      // Special: Venomous Blade — attacks apply Poison (scales with level)
+      if (this.unitHasItem(unit, 'venomous_blade') && total > 0 && result.target.hp > 0) {
+        const vbLv = this.getItemLevel(unit, 'venomous_blade');
+        const vbPoison = 1 * vbLv;
+        result.target.poison = (result.target.poison || 0) + vbPoison;
+        unit.stats.poisonInflicted += vbPoison;
+        parts.push(`Venomous Blade poisons the target. (+${vbPoison} Poison)`);
+      }
+
+      // Special: Blood-Iron Gladius — attacks heal wielder (scales with level)
+      if (this.unitHasItem(unit, 'blood_iron_gladius') && total > 0 && unit.hp < unit.maxHp) {
+        const bigLv = this.getItemLevel(unit, 'blood_iron_gladius');
+        const bigHeal = 1 * bigLv;
+        unit.hp = Math.min(unit.maxHp, unit.hp + bigHeal);
+        unit.stats.healingDone += bigHeal;
+        parts.push(`Blood-Iron Gladius heals ${bigHeal} HP.`);
       }
 
       // Arminius's Champion: 15% damage reflection
@@ -1101,6 +1154,11 @@ class CombatEngine {
         result.target._resonance = false;
         parts.push('Resonance doubles the heal!');
       }
+      // Healer's Oath: healing below 25% HP heals double
+      if (this.unitHasItem(unit, 'healers_oath') && result.target.hp <= result.target.maxHp * 0.25) {
+        totalHeal *= 2;
+        parts.push("Healer's Oath doubles the heal!");
+      }
       const before = result.target.hp;
       result.target.hp = Math.min(result.target.maxHp, result.target.hp + totalHeal);
       const actual = result.target.hp - before;
@@ -1114,6 +1172,31 @@ class CombatEngine {
       if (this.unitHasItem(unit, 'marsh_fang') && result.target.poison > 0) {
         result.target.poison = Math.max(0, result.target.poison - 1);
         parts.push('Marsh Fang purges 1 poison.');
+      }
+      // Herbalist's Satchel: healing applies poison to random enemy (scales with level)
+      if (this.unitHasItem(unit, 'herbalists_satchel') && actual > 0) {
+        const hsLv = this.getItemLevel(unit, 'herbalists_satchel');
+        const hsPoison = 1 * hsLv;
+        const aliveEnemies = this.enemies.filter(e => !e.dead);
+        if (aliveEnemies.length > 0) {
+          const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          victim.poison = (victim.poison || 0) + hsPoison;
+          parts.push(`Herbalist's Satchel poisons ${victim.name}. (+${hsPoison} Poison)`);
+        }
+      }
+      // Marsh Root Brew: healing grants block to target (scales with level)
+      if (this.unitHasItem(unit, 'marsh_root_brew') && actual > 0 && result.target) {
+        const mrbLv = this.getItemLevel(unit, 'marsh_root_brew');
+        const mrbBlock = 1 * mrbLv;
+        result.target.block = (result.target.block || 0) + mrbBlock;
+        parts.push(`Marsh Root Brew grants ${mrbBlock} Block.`);
+      }
+      // Crown of Thorns: when healed, deal damage to all enemies (scales with level)
+      if (this.unitHasItem(result.target, 'crown_of_thorns') && actual > 0) {
+        const cotLv = this.getItemLevel(result.target, 'crown_of_thorns');
+        const cotDmg = 2 * cotLv;
+        this.enemies.forEach(e => { if (!e.dead) e.hp = Math.max(0, e.hp - cotDmg); });
+        parts.push(`Crown of Thorns — ${cotDmg} damage to all enemies!`);
       }
     }
     if (result.selfDamage) {
@@ -1133,14 +1216,16 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: blockTarget.index, amount: totalBlock });
-      // Shieldbearer's Grip: grant 2 block to a random other ally
+      // Shieldbearer's Grip: grant block to a random other ally (scales with level)
       if (this.unitHasItem(unit, 'shieldbearers_grip')) {
+        const sgLv = this.getItemLevel(unit, 'shieldbearers_grip');
+        const sgBlock = 2 + (sgLv - 1);
         const others = this.party.filter(u => !u.downed && u !== unit);
         if (others.length > 0) {
           const ally = others[Math.floor(Math.random() * others.length)];
-          ally.block = (ally.block || 0) + 2;
-          parts.push(`Shieldbearer's Grip spreads 2 Block to ${ally.name}.`);
-          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: 2 });
+          ally.block = (ally.block || 0) + sgBlock;
+          parts.push(`Shieldbearer's Grip spreads ${sgBlock} Block to ${ally.name}.`);
+          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: sgBlock });
         }
       }
       // Special: Oak Splinter — block skills grant +2 block to all other allies
@@ -1168,13 +1253,15 @@ class CombatEngine {
         }
       });
       unit.stats.blockGenerated += totalBlock * count;
-      // Shieldbearer's Grip: grant 2 extra block to a random other ally on blockAll
+      // Shieldbearer's Grip: grant extra block to a random other ally on blockAll (scales with level)
       if (this.unitHasItem(unit, 'shieldbearers_grip')) {
+        const sgLv2 = this.getItemLevel(unit, 'shieldbearers_grip');
+        const sgBlock2 = 2 + (sgLv2 - 1);
         const others = this.party.filter(u => !u.downed && u !== unit);
         if (others.length > 0) {
           const ally = others[Math.floor(Math.random() * others.length)];
-          ally.block = (ally.block || 0) + 2;
-          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: 2 });
+          ally.block = (ally.block || 0) + sgBlock2;
+          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: sgBlock2 });
         }
       }
       const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
@@ -1186,7 +1273,10 @@ class CombatEngine {
       const attacks = result.buffAllies.attacks || 1;
       this.party.forEach(u => {
         if (!u.downed) {
-          u.buffs.push({ damage: result.buffAllies.bonusDamage || 0, attacksLeft: attacks });
+          let buffAttacks = attacks;
+          // Sigil of the Ninth: buff effects last 1 extra attack
+          if (this.unitHasItem(u, 'sigil_of_the_ninth')) buffAttacks += 1;
+          u.buffs.push({ damage: result.buffAllies.bonusDamage || 0, attacksLeft: buffAttacks });
         }
       });
       const attackStr = attacks === 1 ? 'next attack' : `next ${attacks} attacks`;
@@ -1262,11 +1352,46 @@ class CombatEngine {
             u._resonance = false;
             parts.push(`Resonance doubles healing on ${u.name}!`);
           }
+          // Healer's Oath: healing below 25% HP heals double
+          if (this.unitHasItem(unit, 'healers_oath') && u.hp <= u.maxHp * 0.25) {
+            totalHeal *= 2;
+            parts.push(`Healer's Oath doubles the heal on ${u.name}!`);
+          }
           const before = u.hp;
           u.hp = Math.min(u.maxHp, u.hp + totalHeal);
-          unit.stats.healingDone += u.hp - before;
+          const actual = u.hp - before;
+          unit.stats.healingDone += actual;
+          // Crown of Thorns: when healed, deal damage to all enemies (scales with level)
+          if (this.unitHasItem(u, 'crown_of_thorns') && actual > 0) {
+            const cotLv = this.getItemLevel(u, 'crown_of_thorns');
+            const cotDmg = 2 * cotLv;
+            this.enemies.forEach(e => { if (!e.dead) e.hp = Math.max(0, e.hp - cotDmg); });
+            parts.push(`Crown of Thorns — ${cotDmg} damage to all enemies!`);
+          }
         }
       });
+      // Herbalist's Satchel: healing applies poison to random enemy (scales with level)
+      if (this.unitHasItem(unit, 'herbalists_satchel')) {
+        const hsLv = this.getItemLevel(unit, 'herbalists_satchel');
+        const hsPoison = 1 * hsLv;
+        const aliveEnemies = this.enemies.filter(e => !e.dead);
+        if (aliveEnemies.length > 0) {
+          const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          victim.poison = (victim.poison || 0) + hsPoison;
+          parts.push(`Herbalist's Satchel poisons ${victim.name}. (+${hsPoison} Poison)`);
+        }
+      }
+      // Marsh Root Brew: healing grants block to all healed allies (scales with level)
+      if (this.unitHasItem(unit, 'marsh_root_brew')) {
+        const mrbLv = this.getItemLevel(unit, 'marsh_root_brew');
+        const mrbBlock = 1 * mrbLv;
+        this.party.forEach(u => {
+          if (!u.downed) {
+            u.block = (u.block || 0) + mrbBlock;
+          }
+        });
+        parts.push(`Marsh Root Brew grants ${mrbBlock} Block to all allies.`);
+      }
       const bonusStr = bonusHeal > 0 ? ` (${result.healAll}+${bonusHeal})` : '';
       parts.push(`${unit.name} uses ${skill.name} \u2014 heals all allies for ${baseHealAll}${bonusStr} HP.`);
     }
@@ -1535,13 +1660,27 @@ class CombatEngine {
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
 
-          // Fang Necklace: killing an enemy grants +1 damage for 2 attacks to wielder
+          // Fang Necklace: killing an enemy grants damage buff for 2 attacks (scales with level)
           this.party.forEach(u => {
             if (!u.downed && this.unitHasItem(u, 'fang_necklace')) {
-              u.buffs.push({ damage: 1, attacksLeft: 2 });
-              this.addLog(`${u.name}'s Fang Necklace pulses — +1 damage (2 attacks).`);
+              const fnLv = this.getItemLevel(u, 'fang_necklace');
+              const fnDmg = 1 * fnLv;
+              u.buffs.push({ damage: fnDmg, attacksLeft: 2 });
+              this.addLog(`${u.name}'s Fang Necklace pulses — +${fnDmg} damage (2 attacks).`);
             }
           });
+
+          // Vanguard's Banner: kills grant all allies block (scales with level)
+          if (this.partyHasItem('vanguards_banner')) {
+            const vbLv = this.getPartyItemLevel('vanguards_banner');
+            const vbBlock = 2 + (vbLv - 1);
+            this.party.forEach(u => {
+              if (!u.downed) {
+                u.block = (u.block || 0) + vbBlock;
+              }
+            });
+            this.addLog(`Vanguard's Banner — all allies gain ${vbBlock} Block.`);
+          }
 
           if (e.deathPoison) {
             this.party.forEach(u => {
@@ -1877,11 +2016,13 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: `Rage ${target._mushroomRage}!`, color: 'var(--red-bright)' });
         }
       }
-      // Wolf Pelt: first hit each combat deals 3 less damage
+      // Wolf Pelt: first hit each combat deals less damage (scales with level)
       if (dmg > 0 && !target._wolfPeltUsed && this.unitHasItem(target, 'wolf_pelt')) {
         target._wolfPeltUsed = true;
-        dmg = Math.max(1, dmg - 3);
-        this.addLog(`Wolf Pelt absorbs the first blow! (-3 damage)`);
+        const wpLv = this.getItemLevel(target, 'wolf_pelt');
+        const wpReduction = 3 + (wpLv - 1);
+        dmg = Math.max(1, dmg - wpReduction);
+        this.addLog(`Wolf Pelt absorbs the first blow! (-${wpReduction} damage)`);
         if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Pelt!', color: 'var(--gold)' });
       }
       // Centurion's Gorget: reduce incoming damage by 3 (minimum 1)
@@ -1929,6 +2070,14 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Overwatch!', color: 'var(--gold)' });
         }
       });
+
+      // Thorn Mantle: when hit, deal damage back to attacker (scales with level)
+      if (dmg > 0 && this.unitHasItem(target, 'thorn_mantle')) {
+        const tmLv = this.getItemLevel(target, 'thorn_mantle');
+        const thornDmg = 2 * tmLv;
+        enemy.hp = Math.max(0, enemy.hp - thornDmg);
+        this.addLog(`Thorn Mantle deals ${thornDmg} damage back!`);
+      }
 
       // Snare Trap: if this enemy has a trap and attacked, trigger it
       if (enemy._snareTrap && dmg > 0) {
@@ -2245,6 +2394,29 @@ class CombatEngine {
 
   partyHasItem(itemId) {
     return this.party.some(u => !u.downed && this.unitHasItem(u, itemId));
+  }
+
+  getItemLevel(unit, itemId) {
+    for (const slot of ['weapon', 'armor', 'trinket']) {
+      for (const equipped of unit.equipment[slot]) {
+        if (!equipped) continue;
+        if (equipped === itemId) return 1;
+        const item = ITEM_DATA[equipped];
+        if (item && item.baseId === itemId) return item.level || 1;
+      }
+    }
+    return 1;
+  }
+
+  getPartyItemLevel(itemId) {
+    let maxLevel = 1;
+    this.party.forEach(u => {
+      if (!u.downed) {
+        const lv = this.getItemLevel(u, itemId);
+        if (lv > maxLevel) maxLevel = lv;
+      }
+    });
+    return maxLevel;
   }
 
   computeEquipmentStats(unit) {
