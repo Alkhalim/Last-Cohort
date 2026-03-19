@@ -309,43 +309,40 @@ class GameUI {
     tooltip.style.left = Math.max(4, rect.left - gameRect.left) + 'px';
     tooltip.style.top = (rect.bottom - gameRect.top + 4) + 'px';
 
-    // Show target intent: who would this enemy attack?
-    if (!enemy.dead && !enemy.isStructure && this.engine.phase === PHASE.PLAYER_TURN) {
+    // Show target intent from pre-rolled data
+    if (!enemy.dead && !enemy.isStructure && this.engine.phase === PHASE.PLAYER_TURN && enemy._intent) {
+      const intent = enemy._intent;
       const alive = this.engine.party.filter(u => !u.downed);
-      const taunting = alive.find(u => u.taunt);
-      const hasAoe = enemy.actions.some(a => a.aoe && a.damage > 0);
+      let intentText = '';
       let targetIndices = [];
 
-      if (taunting) {
-        targetIndices = [taunting.index];
-      } else if (enemy.ai === 'sniper') {
-        const lowest = alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
-        targetIndices = [lowest.index];
+      if (intent.type === 'stunned') {
+        intentText = '<span style="color:var(--red-bright)">STUNNED — cannot act</span>';
       } else {
-        // Aggressive / default: could hit anyone
-        targetIndices = alive.map(u => u.index);
+        const actionName = intent.action ? intent.action.name : '?';
+        // Validate target is still alive, re-pick if not
+        let targetUnit = this.engine.party[intent.targetIndex];
+        if (!targetUnit || targetUnit.downed) {
+          targetUnit = alive[0]; // fallback
+        }
+
+        if (intent.isAoe) {
+          targetIndices = alive.map(u => u.index);
+          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">All soldiers</span>`;
+        } else if (intent.isTaunted) {
+          targetIndices = [targetUnit.index];
+          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span> (Taunted)`;
+        } else if (intent.isSniper) {
+          targetIndices = [targetUnit.index];
+          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span> (Lowest HP)`;
+        } else {
+          targetIndices = [targetUnit.index];
+          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span>`;
+        }
       }
 
-      // If enemy has AoE, mark everyone
-      if (hasAoe) {
-        targetIndices = alive.map(u => u.index);
-      }
-
-      // Add intent label to tooltip
-      let intentText = '';
-      if (taunting) {
-        intentText = `Targeting: <span style="color:var(--red-bright)">${taunting.name}</span> (Taunted)`;
-      } else if (enemy.ai === 'sniper' && targetIndices.length === 1) {
-        const t = alive.find(u => u.index === targetIndices[0]);
-        intentText = `Targeting: <span style="color:var(--red-bright)">${t ? t.name : '?'}</span> (Lowest HP)`;
-      } else if (hasAoe) {
-        intentText = 'Targeting: <span style="color:var(--red-bright)">All soldiers</span>';
-      } else {
-        intentText = 'Targeting: <span style="color:var(--text-dim)">Random soldier</span>';
-      }
       tooltip.innerHTML += `<div class="enemy-tooltip-intent">${intentText}</div>`;
 
-      // Highlight targeted unit cards
       targetIndices.forEach(idx => {
         const unitEl = document.getElementById(`unit-${idx}`);
         if (unitEl) unitEl.classList.add('enemy-target-highlight');

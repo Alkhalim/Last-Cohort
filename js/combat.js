@@ -406,6 +406,11 @@ class CombatEngine {
     // Dice passives trigger on rolled values
     this.processDicePassives();
 
+    // Roll enemy intents on first turn (subsequent turns get them at end of enemy turn)
+    if (this.turn === 1 || !this.enemies.some(e => e._intent)) {
+      this.rollEnemyIntents();
+    }
+
     this.update();
   }
 
@@ -1554,6 +1559,7 @@ class CombatEngine {
     if (index >= enemies.length || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
       this.checkPartyDowned();
       if (this.phase !== PHASE.DEFEAT && this.phase !== PHASE.VICTORY) {
+        this.rollEnemyIntents();
         setTimeout(() => this.startRollPhase(), 400);
       } else {
         this.update();
@@ -1912,6 +1918,56 @@ class CombatEngine {
         this.addLog(`${enemy.name} writhes but cannot spawn again.`);
       }
     }
+  }
+
+  // Pre-roll enemy intents for display during player turn
+  rollEnemyIntents() {
+    this.enemies.forEach(e => {
+      if (e.dead || e.isStructure) { e._intent = null; return; }
+      if (e._skipNextAction) { e._intent = { type: 'stunned' }; return; }
+
+      const alive = this.party.filter(u => !u.downed);
+      if (alive.length === 0) { e._intent = null; return; }
+
+      // Pick most likely action (filter by phase, cooldown, AI)
+      let availableActions = e.actions;
+      if (e.phaseShift) {
+        const phase = e.row === 'back' ? 'ranged' : 'melee';
+        const filtered = availableActions.filter(a => !a.phase || a.phase === phase);
+        if (filtered.length > 0) availableActions = filtered;
+      }
+      if (!e._actionCooldowns) e._actionCooldowns = {};
+      const offCD = availableActions.filter(a => !a.cooldown || !(e._actionCooldowns[a.name] > 0));
+      if (offCD.length > 0) availableActions = offCD;
+
+      // Weighted random pick
+      const totalChance = availableActions.reduce((s, a) => s + a.chance, 0);
+      const roll = Math.random() * totalChance;
+      let cum = 0;
+      let action = availableActions[0];
+      for (const a of availableActions) { cum += a.chance; if (roll <= cum) { action = a; break; } }
+
+      // Pick target
+      const taunting = alive.find(u => u.taunt);
+      let target;
+      if (taunting) {
+        target = taunting;
+      } else if (e.ai === 'sniper') {
+        target = alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
+      } else {
+        target = alive[Math.floor(Math.random() * alive.length)];
+      }
+
+      const isAoe = action.aoe && action.damage > 0;
+      e._intent = {
+        action: action,
+        targetIndex: target.index,
+        targetName: target.name,
+        isAoe: isAoe,
+        isTaunted: !!taunting,
+        isSniper: e.ai === 'sniper',
+      };
+    });
   }
 
   pickEnemyTarget(enemy, action) {
