@@ -1559,14 +1559,34 @@ class GameUI {
     if (effects.grantItem) {
       const grantedItem = getItemData(effects.grantItem);
       const canUse = grantedItem && this.engine.party.some(u => canEquipItem(u, grantedItem));
-      if (canUse) {
-        // Scale item level by difficulty, same as combat drops
-        const difficulty = window.game ? window.game.difficulty : 1;
-        const itemNativeDiff = grantedItem.minDifficulty || 1;
+      const difficulty = window.game ? window.game.difficulty : 1;
+
+      let finalItemId = effects.grantItem;
+      if (!canUse) {
+        // Try to find a fallback item of same rarity that someone can use
+        const targetRarity = grantedItem ? grantedItem.rarity : 'common';
+        const allItemIds = Object.keys(ITEM_DATA);
+        const fallbacks = allItemIds.filter(id => {
+          const it = ITEM_DATA[id];
+          if (!it || it.rarity !== targetRarity) return false;
+          if (it.minDifficulty && it.minDifficulty > difficulty) return false;
+          if (it.baseId) return false; // skip leveled instances
+          return this.engine.party.some(u => canEquipItem(u, it));
+        });
+        if (fallbacks.length > 0) {
+          finalItemId = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        } else {
+          finalItemId = null;
+        }
+      }
+
+      if (finalItemId) {
+        const finalItem = getItemData(finalItemId);
+        const itemNativeDiff = finalItem ? (finalItem.minDifficulty || 1) : 1;
         const bonusLevels = Math.max(0, difficulty - itemNativeDiff);
-        this.pendingEventItem = bonusLevels > 0 ? createLeveledItem(effects.grantItem, bonusLevels) : effects.grantItem;
+        this.pendingEventItem = bonusLevels > 0 ? createLeveledItem(finalItemId, bonusLevels) : finalItemId;
       } else {
-        // Nobody can use it — convert to Renown
+        // No usable item at all — convert to Renown
         this.pendingEventItem = null;
         const renownGain = { common: 2, uncommon: 5, rare: 10, epic: 20 }[grantedItem ? grantedItem.rarity : 'common'] || 2;
         this.engine.totalRenownEarned += renownGain;
@@ -1585,12 +1605,13 @@ class GameUI {
     if (effects.morale && effects.morale > 0) outcomeText += ` (+${effects.morale} Morale)`;
     if (effects.morale && effects.morale < 0) outcomeText += ` (${effects.morale} Morale)`;
     if (effects.grantItem) {
-      const item = getItemData(effects.grantItem);
       if (this.pendingEventItem) {
-        if (item) outcomeText += ` (Found: ${item.name})`;
+        const foundItem = getItemData(this.pendingEventItem);
+        if (foundItem) outcomeText += ` (Found: ${foundItem.name})`;
       } else {
-        const renownGain = { common: 2, uncommon: 5, rare: 10, epic: 20 }[item ? item.rarity : 'common'] || 2;
-        outcomeText += ` (No one can use ${item ? item.name : 'this'} — +${renownGain} Renown)`;
+        const origItem = getItemData(effects.grantItem);
+        const renownGain = { common: 2, uncommon: 5, rare: 10, epic: 20 }[origItem ? origItem.rarity : 'common'] || 2;
+        outcomeText += ` (Nothing usable found — +${renownGain} Renown)`;
       }
     }
 
