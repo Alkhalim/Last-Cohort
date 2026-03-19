@@ -451,8 +451,8 @@ const RAW_CLASSES = {
       {
         "id": "resonance", "name": "Resonance", "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_ally",
-        "description": "Mark an ally. The next heal they receive is doubled. Grant 2 Block.",
-        "effects": { "resonance": true, "block": 2 }
+        "description": "Mark an ally. The next heal they receive is doubled. Grant 4 Block.",
+        "effects": { "resonance": true, "block": 4 }
       },
       {
         "id": "echoing_blast", "name": "Echoing Blast", "cooldown": 2,
