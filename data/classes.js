@@ -563,7 +563,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 3 }
       },
       {
-        "id": "pinning_shot", "name": "Pinning Shot", "starter": true,
+        "id": "pinning_shot", "name": "Pinning Shot", "starter": true, "cooldown": 3,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "A heavy bolt that pins the target. Deals 5 damage. Target deals 30% less damage for next 2 actions.",
