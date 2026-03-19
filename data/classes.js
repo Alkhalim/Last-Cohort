@@ -62,8 +62,8 @@ const RAW_CLASSES = {
       {
         "id": "counter_stance", "name": "Counter Stance", "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "self",
-        "description": "Enter counter stance. If hit this enemy turn, deal 6 damage back to the attacker.",
-        "effects": { "counterStance": 6 }
+        "description": "Enter counter stance. If hit this enemy turn, reflect the damage back +2.",
+        "effects": { "counterStance": true }
       },
       {
         "id": "shieldbreak", "name": "Shieldbreak",

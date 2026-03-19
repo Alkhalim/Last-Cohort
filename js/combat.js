@@ -1800,10 +1800,10 @@ class CombatEngine {
 
       // Counter Stance: retaliate damage
       if (target._counterStance && dmg > 0) {
-        const counterDmg = target._counterStance;
+        const counterDmg = dmg + 2;
         enemy.hp = Math.max(0, enemy.hp - counterDmg);
         target._counterStance = 0;
-        this.addLog(`${target.name} retaliates for ${counterDmg} damage!`);
+        this.addLog(`${target.name} retaliates for ${counterDmg} damage! (${dmg}+2)`);
         if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Counter!', color: 'var(--red-bright)' });
       }
 
