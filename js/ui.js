@@ -1556,6 +1556,34 @@ class GameUI {
         : Math.round(effects.morale * diffScale); // negative scales too (harsher)
       this.engine.morale = Math.max(-100, Math.min(100, this.engine.morale + scaledMorale));
     }
+    // Event buffs: grant damage/block buffs to all allies for next combat
+    if (effects.buffDamage) {
+      this.engine.party.forEach(u => {
+        if (!u.downed) u.buffs.push({ damage: effects.buffDamage, attacksLeft: effects.buffAttacks || 2 });
+      });
+    }
+    if (effects.grantBlock) {
+      this.engine.party.forEach(u => {
+        if (!u.downed) u.block = (u.block || 0) + effects.grantBlock;
+      });
+    }
+    if (effects.poisonParty) {
+      this.engine.party.forEach(u => {
+        if (!u.downed) u.poison = (u.poison || 0) + effects.poisonParty;
+      });
+    }
+    if (effects.extraDiceNext) {
+      this.engine._eventBonusDice = (this.engine._eventBonusDice || 0) + effects.extraDiceNext;
+    }
+    if (effects.maxHpAll) {
+      this.engine.party.forEach(u => {
+        if (!u.downed) {
+          u.maxHp += effects.maxHpAll;
+          u.baseMaxHp += effects.maxHpAll;
+          u.hp += effects.maxHpAll;
+        }
+      });
+    }
     if (effects.grantItem) {
       const grantedItem = getItemData(effects.grantItem);
       const canUse = grantedItem && this.engine.party.some(u => canEquipItem(u, grantedItem));
@@ -1604,6 +1632,11 @@ class GameUI {
     if (effects.damageAll) outcomeText += ` (Party took ${effects.damageAll} damage)`;
     if (effects.morale && effects.morale > 0) outcomeText += ` (+${effects.morale} Morale)`;
     if (effects.morale && effects.morale < 0) outcomeText += ` (${effects.morale} Morale)`;
+    if (effects.buffDamage) outcomeText += ` (+${effects.buffDamage} damage for ${effects.buffAttacks || 2} attacks)`;
+    if (effects.grantBlock) outcomeText += ` (+${effects.grantBlock} Block)`;
+    if (effects.poisonParty) outcomeText += ` (${effects.poisonParty} Poison to all)`;
+    if (effects.extraDiceNext) outcomeText += ` (+${effects.extraDiceNext} bonus dice next combat)`;
+    if (effects.maxHpAll) outcomeText += ` (+${effects.maxHpAll} max HP to all)`;
     if (effects.grantItem) {
       if (this.pendingEventItem) {
         const foundItem = getItemData(this.pendingEventItem);

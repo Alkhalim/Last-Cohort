@@ -34,8 +34,8 @@ const RAW_EVENTS = [
     "intro": "One of your forward scouts returns at a sprint, white-faced. 'Ambush ahead,' he gasps. 'A full war band, dug in across the trail. They haven't seen us yet.' You have moments to decide.",
     "choices": [
       { "text": "Prepare your men for a head-on fight.", "outcomes": [
-        { "weight": 0.5, "text": "Your men brace shields and ready weapons. The preparation steadies their nerves.", "effects": { "morale": 10, "healAll": 4 } },
-        { "weight": 0.5, "text": "Forewarned is forearmed. Your men sharpen blades and set formations.", "effects": { "morale": 8 } }
+        { "weight": 0.5, "text": "Your men brace shields and ready weapons. The preparation steadies their nerves.", "effects": { "morale": 8, "grantBlock": 6, "buffDamage": 1, "buffAttacks": 2 } },
+        { "weight": 0.5, "text": "Forewarned is forearmed. Your men dig in and fortify.", "effects": { "morale": 6, "grantBlock": 8 } }
       ]},
       { "text": "Your scout leads you on a hidden path around them.", "requiresTag": "ranged", "outcomes": [
         { "weight": 0.6, "text": "The scout's keen eyes find a deer trail through the thicket. You bypass the ambush entirely.", "effects": { "morale": 15 } },
@@ -57,9 +57,9 @@ const RAW_EVENTS = [
     "intro": "You come upon a weathered shrine to some forgotten god. Offerings of fruit and bone litter the base. The men look to you for guidance.",
     "choices": [
       { "text": "Leave an offering and pray.", "outcomes": [
-        { "weight": 0.5, "text": "A warm light fills the glade. The men feel renewed.", "effects": { "healAll": 8, "morale": 10 } },
+        { "weight": 0.5, "text": "A warm light fills the glade. The men feel blessed — their weapons gleam.", "effects": { "healAll": 5, "morale": 8, "buffDamage": 2, "buffAttacks": 3 } },
         { "weight": 0.3, "text": "Nothing happens. The gods are silent.", "effects": {} },
-        { "weight": 0.2, "text": "A cold wind sweeps through. The shrine crumbles. An ill omen.", "effects": { "morale": -10 } }
+        { "weight": 0.2, "text": "A cold wind sweeps through. Poisoned thorns lash from the crumbling shrine.", "effects": { "morale": -8, "poisonParty": 2 } }
       ]},
       { "text": "Smash the shrine and take the offerings.", "outcomes": [
         { "weight": 0.4, "text": "You find a charm hidden among the bones.", "effects": { "grantItem": "woad_charm" } },
@@ -115,7 +115,7 @@ const RAW_EVENTS = [
         { "weight": 0.2, "text": "He breaks free and screams an alarm. You must move quickly.", "effects": { "morale": -12 } }
       ]},
       { "text": "Your centurion takes command of the interrogation.", "requiresClass": "centurion", "outcomes": [
-        { "weight": 0.6, "text": "Under firm questioning, the scout reveals enemy positions. Invaluable intelligence.", "effects": { "morale": 12, "healAll": 3 } },
+        { "weight": 0.6, "text": "Under firm questioning, the scout reveals enemy positions. Your men prepare accordingly.", "effects": { "morale": 12, "grantBlock": 5, "extraDiceNext": 1 } },
         { "weight": 0.4, "text": "The centurion's authority breaks him. He begs for mercy and offers his blade.", "effects": { "grantItem": "wolf_fang_blade", "morale": 5 } }
       ]},
       { "text": "Release him as a show of mercy.", "outcomes": [
@@ -153,7 +153,7 @@ const RAW_EVENTS = [
       ]},
       { "text": "Your centurion rallies them with authority.", "requiresClass": "centurion", "outcomes": [
         { "weight": 0.7, "text": "The centurion's voice carries the weight of Rome. Every man falls in line without a word. Morale soars.", "effects": { "morale": 22 } },
-        { "weight": 0.3, "text": "They recognize the rank and offer their best supplies as penance.", "effects": { "morale": 12, "healAll": 8, "grantItem": "iron_gladius" } }
+        { "weight": 0.3, "text": "They recognize the rank and share their fortified position. Your men rest and sharpen blades.", "effects": { "morale": 12, "healAll": 6, "buffDamage": 1, "buffAttacks": 4, "grantBlock": 3 } }
       ]},
       { "text": "Trade supplies with them.", "outcomes": [
         { "weight": 0.6, "text": "They share medicine and a warm meal. A brief taste of civilization.", "effects": { "healAll": 10, "morale": 5 } },
@@ -179,9 +179,9 @@ const RAW_EVENTS = [
         { "weight": 0.2, "text": "Nothing but rot and bone. The men grow uneasy.", "effects": { "morale": -8 } }
       ]},
       { "text": "Burn the tree.", "outcomes": [
-        { "weight": 0.4, "text": "The fire catches fast. The carved faces scream as they burn. Your men feel a dark satisfaction.", "effects": { "morale": 5 } },
+        { "weight": 0.4, "text": "The fire catches fast. The power of the tree seeps into your men as it burns. They feel tougher.", "effects": { "morale": 5, "maxHpAll": 1 } },
         { "weight": 0.3, "text": "The fire reveals a hidden cache at the roots.", "effects": { "grantItem": "runic_stone", "morale": 5 } },
-        { "weight": 0.3, "text": "The smoke draws attention. You hear war horns in the distance.", "effects": { "morale": -12 } }
+        { "weight": 0.3, "text": "The smoke draws attention. Poison lingers in the air.", "effects": { "morale": -12, "poisonParty": 3 } }
       ]}
     ]
   },
@@ -252,7 +252,7 @@ const RAW_EVENTS = [
         { "weight": 0.2, "text": "The stairs collapse. A soldier is injured in the fall.", "effects": { "damageAll": 5, "morale": -5 } }
       ]},
       { "text": "Your officer organizes a defensive rest.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.6, "text": "The watchtower provides cover. Your men rest properly for the first time in days.", "effects": { "healAll": 10, "morale": 12 } },
+        { "weight": 0.6, "text": "The watchtower provides cover. Your men rest and fortify their defenses.", "effects": { "healAll": 8, "morale": 10, "grantBlock": 6 } },
         { "weight": 0.4, "text": "A well-organized camp. The officer finds a Roman cache bricked into the wall.", "effects": { "healAll": 8, "morale": 8, "grantItem": "shieldbearers_grip" } }
       ]},
       { "text": "Search the ruins for supplies.", "outcomes": [
@@ -274,7 +274,7 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "You destroy the site but find a powerful artifact beneath the altar.", "effects": { "grantItem": "arm_ring_of_arminius", "damageAll": 4 } }
       ]},
       { "text": "Your medicus studies the herbs and symbols.", "requiresClass": "medicus", "outcomes": [
-        { "weight": 0.5, "text": "Your medicus recognizes the herbs and harvests them. Potent medicine.", "effects": { "healAll": 12, "morale": 5 } },
+        { "weight": 0.5, "text": "Your medicus recognizes the herbs and brews a powerful stimulant. Your men feel sharper.", "effects": { "healAll": 8, "morale": 5, "extraDiceNext": 2 } },
         { "weight": 0.3, "text": "The medicus deciphers a ward against poison and applies it to your weapons.", "effects": { "morale": 8, "grantItem": "viper_venom_vial" } },
         { "weight": 0.2, "text": "Deep study reveals the ritual's purpose — a protection charm, repurposed.", "effects": { "healAll": 6, "grantItem": "woad_charm" } }
       ]},
@@ -326,7 +326,7 @@ const RAW_EVENTS = [
       ]},
       { "text": "Follow the drag marks.", "outcomes": [
         { "weight": 0.4, "text": "The trail leads to a shallow grave. Among the dead, a fine weapon.", "effects": { "grantItem": "chiefs_spear", "morale": -8 } },
-        { "weight": 0.3, "text": "You find nothing but torn earth and claw marks. The men are shaken.", "effects": { "morale": -15 } },
+        { "weight": 0.3, "text": "You find nothing but torn earth and claw marks. Poisonous fungi line the drag trail.", "effects": { "morale": -10, "poisonParty": 2 } },
         { "weight": 0.3, "text": "The trail ends at a ravine. Below, supplies that tumbled during the retreat.", "effects": { "healAll": 8, "morale": -3 } }
       ]},
       { "text": "Leave. This place is death.", "outcomes": [
@@ -348,7 +348,7 @@ const RAW_EVENTS = [
       { "text": "Your medicus examines the runes and bones.", "requiresClass": "medicus", "outcomes": [
         { "weight": 0.5, "text": "The medicus identifies the poison on the bone tips and prepares a counter-agent. Knowledge is armor.", "effects": { "healAll": 6, "morale": 8 } },
         { "weight": 0.3, "text": "Careful study reveals a ward pattern. Your medicus repurposes it as protection.", "effects": { "morale": 10, "grantItem": "seers_eye" } },
-        { "weight": 0.2, "text": "The runes resist understanding. The medicus pulls back, shaken but wiser.", "effects": { "morale": -3, "healAll": 4 } }
+        { "weight": 0.2, "text": "The runes resist understanding, but the medicus brews a tonic from the ritual herbs. Everyone feels tougher.", "effects": { "maxHpAll": 1, "healAll": 3 } }
       ]},
       { "text": "Your fighters carve a new path around them.", "requiresTag": "melee", "outcomes": [
         { "weight": 0.6, "text": "Brute force wins. Your soldiers hack through the undergrowth, avoiding the markers entirely.", "effects": { "morale": 8, "damageAll": 2 } },
@@ -401,7 +401,7 @@ const RAW_EVENTS = [
       ]},
       { "text": "Your centurion leads funeral rites.", "requiresClass": "centurion", "outcomes": [
         { "weight": 0.7, "text": "The centurion speaks the words of Rome. Every man stands at attention. For a moment, the forest is silent.", "effects": { "morale": 22, "healAll": 5 } },
-        { "weight": 0.3, "text": "The rites bring peace. Your men find strength in tradition.", "effects": { "morale": 15 } }
+        { "weight": 0.3, "text": "The rites bring cold fury. Your men swear vengeance. Blades are sharpened.", "effects": { "morale": 15, "buffDamage": 3, "buffAttacks": 2 } }
       ]},
       { "text": "March past in silence.", "outcomes": [
         { "weight": 1.0, "text": "No one speaks. The forest swallows the dead behind you.", "effects": { "morale": -5 } }

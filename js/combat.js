@@ -378,6 +378,12 @@ class CombatEngine {
       this.addLog(`Heartwood Charm grants ${this._heartwoodBonusDice} extra dice!`);
       this._heartwoodBonusDice = 0;
     }
+    // Event bonus dice (from event choices)
+    if (this._eventBonusDice) {
+      extraDice += this._eventBonusDice;
+      this.addLog(`Event bonus: +${this._eventBonusDice} extra dice this combat!`);
+      this._eventBonusDice = 0;
+    }
     // Curse: Golden Challenge — start with 1 fewer die
     const curseDiceReduction = this.getActiveCurses().includes('golden_challenge') ? 1 : 0;
     this.dicePool.count = Math.max(1, 4 + extraDice - curseDiceReduction);
