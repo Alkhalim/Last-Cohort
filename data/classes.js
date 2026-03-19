@@ -413,14 +413,15 @@ const RAW_CLASSES = {
       {
         "id": "war_drums", "name": "War Drums", "cooldown": 1, "starter": true,
         "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
-        "description": "Beat the war drums. All allies gain +1 damage for next attack. +6 Morale.",
-        "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 1 }, "morale": 6 }
+        "description": "Beat the war drums. All allies gain +3 damage for next attack. Shatters all enemy block.",
+        "effects": { "buffAllies": { "bonusDamage": 3, "attacks": 1 }, "shieldbreakAll": true }
       },
       {
         "id": "dissonant_note", "name": "Dissonant Note",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "A piercing note. Deals 3 damage and applies 3 Poison.",
-        "effects": { "damage": 3, "poison": 3 }
+        "ignoreRow": true,
+        "description": "A piercing note that reaches any target. Deals 4 damage and applies 3 Poison.",
+        "effects": { "damage": 4, "poison": 3 }
       },
       {
         "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 2,

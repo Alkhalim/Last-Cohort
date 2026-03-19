@@ -284,6 +284,9 @@ function buildSkillExecute(skillData) {
     // Condemn: target takes +30% damage from all sources
     if (effects.condemn) result.condemn = effects.condemn;
 
+    // Shieldbreak All: remove all block from all enemies
+    if (effects.shieldbreakAll) result.shieldbreakAll = true;
+
     return result;
   };
 }

@@ -1259,6 +1259,18 @@ class CombatEngine {
       }
     }
 
+    // Shieldbreak All: remove all block from all enemies
+    if (result.shieldbreakAll) {
+      let totalRemoved = 0;
+      this.enemies.forEach(e => {
+        if (!e.dead && e.block > 0) {
+          totalRemoved += e.block;
+          e.block = 0;
+        }
+      });
+      if (totalRemoved > 0) parts.push(`All enemy block shattered! (-${totalRemoved} Block total)`);
+    }
+
     // Condemn: target takes +30% damage from all sources for N turns
     if (result.condemn && result.target) {
       result.target._condemned = result.condemn;
