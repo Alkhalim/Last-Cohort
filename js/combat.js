@@ -108,6 +108,12 @@ class CombatEngine {
       }
     });
 
+    // Special: War Hound Collar — apply 2 poison to a random enemy at combat start
+    if (this.partyHasItem('hound_collar')) {
+      // Deferred — enemies aren't spawned yet during initEncounter
+      this._houndCollarPending = true;
+    }
+
     // Special: Arm Ring of Arminius — +10 morale at encounter start
     if (this.partyHasItem('arm_ring_of_arminius')) {
       this.morale = Math.min(100, this.morale + 10);
@@ -141,6 +147,16 @@ class CombatEngine {
         this.update();
         setTimeout(() => this.executeEnemyTurn(), 600);
         return;
+      }
+      // War Hound Collar: apply 2 poison to a random enemy
+      if (this._houndCollarPending) {
+        this._houndCollarPending = false;
+        const alive = this.enemies.filter(e => !e.dead);
+        if (alive.length > 0) {
+          const victim = alive[Math.floor(Math.random() * alive.length)];
+          victim.poison = (victim.poison || 0) + 2;
+          this.addLog(`War Hound's spirit strikes — ${victim.name} is poisoned! (+2 Poison)`);
+        }
       }
       this.addLog('Prepare yourselves!');
       this.startRollPhase();

@@ -61,7 +61,7 @@ const RAW_ITEMS = {
   "marksmans_brigandine": { "id": "marksmans_brigandine", "name": "Marksman's Brigandine", "slot": "armor", "rarity": "rare", "classTags": ["ranged"], "stats": { "maxHp": 5, "block": 1, "damage": 1 }, "minDifficulty": 3, "description": "Studded leather with iron plates at the vitals. Built for soldiers who fight standing still." },
 
   // --- Difficulty 3+ unique drops ---
-  "hound_collar": { "id": "hound_collar", "name": "War Hound Collar", "slot": "trinket", "rarity": "uncommon", "classTags": ["melee", "command"], "stats": { "damage": 1, "maxHp": 3 }, "minDifficulty": 3, "description": "A spiked collar from a war hound. Wearing it feels wrong, but it toughens the spirit." },
+  "hound_collar": { "id": "hound_collar", "name": "War Hound Collar", "slot": "trinket", "rarity": "uncommon", "classTags": ["melee", "command"], "stats": { "damage": 1, "maxHp": 3 }, "minDifficulty": 3, "special": "At the start of combat, apply 2 poison to a random enemy.", "description": "A spiked collar from a war hound. The spirit of the beast bites first." },
   "mire_mothers_tusk": { "id": "mire_mothers_tusk", "name": "Mire Mother's Tusk", "slot": "weapon", "rarity": "rare", "classTags": ["melee"], "stats": { "damage": 4, "maxHp": 2 }, "special": "Kills heal the wielder for 3 HP.", "minDifficulty": 3, "description": "A massive tusk ripped from the Mire Mother. It pulses with feral vitality." },
 
   // --- March 4 new items ---
