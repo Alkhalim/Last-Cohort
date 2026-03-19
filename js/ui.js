@@ -857,6 +857,49 @@ class GameUI {
     confirmBtn.classList.add('hidden');
   }
 
+  showUnitLootTooltip(unitIndex, el) {
+    this.hideUnitLootTooltip();
+    const u = this.engine.party[unitIndex];
+    if (!u) return;
+    const tag = getPrimaryTag(u.classId);
+    const classData = CLASS_DATA[u.classId];
+    const passiveHtml = classData && classData.passive
+      ? `<div class="ult-passive"><strong>${classData.passive.name}:</strong> ${classData.passive.description}</div>`
+      : '';
+    const skillsHtml = u.skills.map(s => {
+      const cdText = s.cooldown ? ` <span style="color:var(--text-dim)">[CD ${s.cooldown}]</span>` : '';
+      return `<div class="ult-skill">${s.name}${cdText}</div>`;
+    }).join('');
+    const equipHtml = ['weapon', 'armor', 'trinket'].flatMap(slot =>
+      u.equipment[slot].filter(Boolean).map(id => {
+        const it = getItemData(id);
+        if (!it) return '';
+        return `<div class="ult-item"><span class="rarity-${it.rarity}">${it.name}</span> <span style="color:var(--text-dim);font-size:0.6rem">${formatItemStats(it.stats)}</span></div>`;
+      }).filter(Boolean)
+    ).join('') || '<span style="color:var(--text-dim)">No equipment</span>';
+
+    const tooltip = document.createElement('div');
+    tooltip.id = 'unit-loot-tooltip';
+    tooltip.className = 'unit-loot-tooltip';
+    tooltip.innerHTML = `
+      <div class="ult-header"><span style="color:var(--class-${tag})">${u.title}</span> ${u.name} <span style="color:var(--text-dim)">${u.hp}/${u.maxHp} HP</span></div>
+      ${passiveHtml}
+      <div class="ult-section-title">Skills</div>
+      ${skillsHtml}
+      <div class="ult-section-title">Equipment</div>
+      ${equipHtml}
+    `;
+    const rect = el.getBoundingClientRect();
+    tooltip.style.left = Math.max(4, rect.left) + 'px';
+    tooltip.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+    document.body.appendChild(tooltip);
+  }
+
+  hideUnitLootTooltip() {
+    const existing = document.getElementById('unit-loot-tooltip');
+    if (existing) existing.remove();
+  }
+
   showCooldownPopup(element, turnsLeft) {
     const popup = document.createElement('div');
     popup.className = 'cooldown-popup';
@@ -2150,7 +2193,12 @@ class GameUI {
               replaceHtml = `<span class="loot-replace">Replaces: ${worstItem.name}</span><span class="loot-replace-stats">${worstStats}${worstSpecial}</span>`;
             }
           }
-          return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}">
+          const skillNames = u.skills.map(s => s.name).join(', ');
+          const equipNames = ['weapon','armor','trinket'].flatMap(slot =>
+            u.equipment[slot].filter(Boolean).map(id => { const it = getItemData(id); return it ? it.name : ''; }).filter(Boolean)
+          ).join(', ');
+          const tooltipText = `${u.name} (${u.hp}/${u.maxHp} HP)\nSkills: ${skillNames}\nGear: ${equipNames || 'None'}`;
+          return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}" title="${tooltipText.replace(/"/g, '&quot;')}">
             Equip <span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>${replaceHtml}
           </button>`;
         }).join('');
@@ -2173,6 +2221,16 @@ class GameUI {
             const ui = parseInt(btn.dataset.unit);
             this.equipLootItem(li, ui);
           });
+          // Hover tooltip showing unit details
+          const unitIdx = parseInt(btn.dataset.unit);
+          btn.addEventListener('mouseenter', () => this.showUnitLootTooltip(unitIdx, btn));
+          btn.addEventListener('mouseleave', () => this.hideUnitLootTooltip());
+          let holdTimer = null;
+          btn.addEventListener('touchstart', () => {
+            holdTimer = setTimeout(() => this.showUnitLootTooltip(unitIdx, btn), 300);
+          }, { passive: true });
+          btn.addEventListener('touchend', () => { clearTimeout(holdTimer); this.hideUnitLootTooltip(); });
+          btn.addEventListener('touchcancel', () => { clearTimeout(holdTimer); this.hideUnitLootTooltip(); });
         });
 
         dropsEl.appendChild(card);

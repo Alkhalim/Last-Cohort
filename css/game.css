@@ -2006,6 +2006,56 @@ html, body {
   font-style: italic;
 }
 
+.unit-loot-tooltip {
+  position: fixed;
+  background: rgba(20, 15, 12, 0.95);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  padding: 8px 10px;
+  max-width: 280px;
+  z-index: 100;
+  font-size: 0.7rem;
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+.ult-header {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.ult-passive {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+.ult-section-title {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 5px;
+  margin-bottom: 2px;
+}
+
+.ult-skill {
+  font-size: 0.65rem;
+  padding: 1px 0;
+}
+
+.ult-item {
+  font-size: 0.65rem;
+  padding: 1px 0;
+}
+
+.ult-item .rarity-common { color: var(--text); }
+.ult-item .rarity-uncommon { color: var(--blue-bright); }
+.ult-item .rarity-rare { color: var(--gold); }
+.ult-item .rarity-epic { color: #cc44ff; }
+
 .loot-replace-stats {
   display: block;
   font-family: 'Inter', sans-serif;
