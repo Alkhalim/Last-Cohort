@@ -257,23 +257,24 @@ const RAW_CLASSES = {
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
-        "id": "suppressing_fire", "name": "Suppressing Fire", "starter": true, "cooldown": 1,
+        "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Rain arrows on the front row. Deals 2 damage to target and all enemies in the same row.",
-        "effects": { "damage": 2, "splashRow": true }
+        "ignoreRow": true,
+        "description": "A treated arrowhead. Deals 3 damage and applies 2 Poison. Doubles poison if target is already poisoned.",
+        "effects": { "damage": 3, "poison": 2, "doublePoison": true }
       },
       {
-        "id": "piercing_shot", "name": "Piercing Shot", "cooldown": 1,
+        "id": "kill_shot", "name": "Kill Shot", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A powerful shot that pierces all armor. Deals 8 damage, ignores all block.",
-        "effects": { "damage": 8, "pierceBlock": 99 }
+        "description": "A lethal shot. Deals 5 damage, ignores block. Double damage to marked or poisoned targets.",
+        "effects": { "damage": 5, "pierceBlock": 99, "killShot": true }
       },
       {
         "id": "arrow_volley", "name": "Arrow Volley", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
-        "description": "2 dice totaling 6+. Deals 3 damage to all enemies.",
-        "effects": { "damageAll": 3 }
+        "description": "2 dice totaling 6+. Deals 3 damage to all enemies (half bonus from equipment).",
+        "effects": { "damageAll": 3, "halfBonusDmg": true }
       },
       {
         "id": "mark_target", "name": "Mark Target",
@@ -290,11 +291,10 @@ const RAW_CLASSES = {
         "effects": { "damage": 7, "poison": 3 }
       },
       {
-        "id": "crippling_shot", "name": "Crippling Shot", "cooldown": 1,
+        "id": "caltrops", "name": "Caltrops", "cooldown": 2,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "ignoreRow": true,
-        "description": "Deal 3 damage. Target deals 30% less damage for next 2 actions.",
-        "effects": { "damage": 3, "cripple": 2 }
+        "description": "Scatter caltrops across the front line. Target and adjacent enemies are marked (+20% damage). They take 3 damage if they attack.",
+        "effects": { "caltrops": 3 }
       },
       {
         "id": "snare_trap", "name": "Snare Trap", "cooldown": 1,
@@ -556,11 +556,18 @@ const RAW_CLASSES = {
     },
     "skills": [
       {
-        "id": "crossbow_bolt", "name": "Crossbow Bolt", "starter": true,
+        "id": "snap_shot", "name": "Snap Shot", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Fire a bolt at any target. Deals 3 damage.",
+        "description": "A quick shot at any target. Deals 3 damage.",
         "effects": { "damage": 3 }
+      },
+      {
+        "id": "ballista_bolt", "name": "Ballista Bolt", "starter": true, "cooldown": 1,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Fire a heavy bolt at any target. Deals 5 damage.",
+        "effects": { "damage": 5 }
       },
       {
         "id": "pinning_shot", "name": "Pinning Shot", "starter": true, "cooldown": 3,
@@ -576,23 +583,22 @@ const RAW_CLASSES = {
         "effects": { "damage": 2, "splashRow": true }
       },
       {
-        "id": "fire_bolt", "name": "Fire Bolt", "cooldown": 1,
+        "id": "burning_pitch", "name": "Burning Pitch", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A flaming bolt. Deals 4 damage and applies 3 Poison.",
+        "description": "Hurl burning pitch. Deals 4 damage and applies 3 Poison.",
         "effects": { "damage": 4, "poison": 3 }
       },
       {
-        "id": "armor_piercer", "name": "Armor Piercer",
-        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_enemy",
-        "ignoreRow": true,
-        "description": "A bolt designed to punch through shields. Deals 4 damage, ignores block.",
-        "effects": { "damage": 4, "pierceBlock": 99 }
+        "id": "brace_position", "name": "Brace Position", "cooldown": 1,
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
+        "description": "Hunker behind the siege weapon. Gain 5 Block and +2 damage on next attack.",
+        "effects": { "block": 5, "buffSelf": { "bonusDamage": 2, "attacks": 1 } }
       },
       {
-        "id": "scorpio_bolt", "name": "Scorpio Bolt", "cooldown": 1,
+        "id": "scorpio", "name": "Scorpio", "cooldown": 1,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 6+. A siege bolt that pierces the line. Deals 5 damage to target and the enemy directly behind.",
+        "description": "2 dice totaling 6+. A siege shot that pierces the line. Deals 5 damage to target and the enemy directly behind.",
         "effects": { "damage": 5, "pierceRow": true }
       },
       {
@@ -609,13 +615,13 @@ const RAW_CLASSES = {
         "effects": { "damage": 12 }
       },
       {
-        "id": "tripwire_bolt", "name": "Tripwire Bolt", "cooldown": 1,
+        "id": "staggering_shot", "name": "Staggering Shot", "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Trap a front-row enemy. If it attacks this turn, it takes 5 damage and is stunned next turn.",
-        "effects": { "snareTrap": 5 }
+        "description": "A heavy impact that dazes. Deals 3 damage and stuns the target next turn.",
+        "effects": { "damage": 3, "stun": true }
       },
       {
-        "id": "smoke_bolt", "name": "Smoke Bolt", "cooldown": 2,
+        "id": "smokescreen", "name": "Smokescreen", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
         "ignoreRow": true,
         "description": "2 dice totaling 6+. All enemies have 40% chance to miss their next attack.",

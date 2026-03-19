@@ -295,6 +295,27 @@ function buildSkillExecute(skillData) {
     // Shieldbreak All: remove all block from all enemies
     if (effects.shieldbreakAll) result.shieldbreakAll = true;
 
+    // Double Poison: doubles poison if target already poisoned
+    if (effects.doublePoison) result.doublePoison = true;
+
+    // Kill Shot: double damage to marked or poisoned targets
+    if (effects.killShot) result.killShot = true;
+
+    // Caltrops: mark + snare trap on target and adjacent front-row enemies
+    if (effects.caltrops) result.caltrops = effects.caltrops;
+
+    // Buff Self: buff only the caster
+    if (effects.buffSelf) result.buffSelf = {
+      bonusDamage: effects.buffSelf.bonusDamage,
+      attacks: effects.buffSelf.attacks || 1,
+    };
+
+    // Stun: stun target next turn
+    if (effects.stun) result.stun = true;
+
+    // Half bonus damage on AoE
+    if (effects.halfBonusDmg) result.halfBonusDmg = true;
+
     return result;
   };
 }

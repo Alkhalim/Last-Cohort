@@ -959,6 +959,12 @@ class CombatEngine {
         parts.push('EXECUTE!');
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Execute!', color: 'var(--red-bright)' });
       }
+      // Kill Shot: double damage to marked or poisoned targets
+      if (result.killShot && ((result.target._marked && result.target._marked > 0) || (result.target.poison && result.target.poison > 0))) {
+        total *= 2;
+        parts.push('Kill Shot!');
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Kill Shot!', color: 'var(--red-bright)' });
+      }
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);
@@ -1286,13 +1292,27 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 allies gain +${scaledBonusDmg} damage (${attackStr}).`);
       }
     }
+    // Buff Self: buff only the caster
+    if (result.buffSelf) {
+      const selfAttacks = result.buffSelf.attacks || 1;
+      const selfBonusDmg = (result.buffSelf.bonusDamage || 0) + (unit.equipDamage || 0);
+      let buffAttacks = selfAttacks;
+      if (this.unitHasItem(unit, 'sigil_of_the_ninth')) buffAttacks += 1;
+      unit.buffs.push({ damage: selfBonusDmg, attacksLeft: buffAttacks });
+      const attackStr = selfAttacks === 1 ? 'next attack' : `next ${selfAttacks} attacks`;
+      parts.push(`${unit.name} gains +${selfBonusDmg} damage (${attackStr}).`);
+    }
     // Poison (single target)
     if (result.poison && result.target) {
-      const totalPoison = result.poison + (unit.equipPoison || 0);
+      let totalPoison = result.poison + (unit.equipPoison || 0);
+      // Double Poison: doubles applied poison if target is already poisoned
+      const doubled = result.doublePoison && (result.target.poison || 0) > 0;
+      if (doubled) totalPoison *= 2;
       result.target.poison = (result.target.poison || 0) + totalPoison;
       unit.stats.poisonInflicted += totalPoison;
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
-      parts.push(`Applies ${totalPoison}${bonusStr} Poison.`);
+      const doubledStr = doubled ? ' Doubled!' : '';
+      parts.push(`Applies ${totalPoison}${bonusStr} Poison.${doubledStr}`);
     }
     // Mark Target: enemy takes +20% damage for 1 turn
     if (result.markTarget && result.target) {
@@ -1323,7 +1343,8 @@ class CombatEngine {
     }
     // Damage all enemies (AoE)
     if (result.damageAll) {
-      const aoeDmg = result.damageAll + bonusDmg;
+      const aoeBonus = result.halfBonusDmg ? Math.floor(bonusDmg / 2) : bonusDmg;
+      const aoeDmg = result.damageAll + aoeBonus;
       this.enemies.forEach(e => {
         if (!e.dead) {
           let dmg = aoeDmg;
@@ -1471,6 +1492,32 @@ class CombatEngine {
       result.target._snareTrap = result.snareTrap;
       parts.push(`A trap is set on ${result.target.name}!`);
       if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Trapped', color: 'var(--gold)' });
+    }
+
+    // Caltrops: mark + snare trap on target and adjacent front-row enemies
+    if (result.caltrops && result.target) {
+      const caltropTargets = [result.target];
+      // Find adjacent front-row enemies
+      const sameRow = this.enemies.filter(e => !e.dead && e.row === 'front' && e !== result.target);
+      sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
+      const adjacent = sameRow.filter(e => Math.abs(e.index - result.target.index) <= 2).slice(0, 2);
+      caltropTargets.push(...adjacent);
+      caltropTargets.forEach(e => {
+        e._marked = 2;
+        e._snareTrap = result.caltrops;
+      });
+      const names = caltropTargets.map(e => e.name).join(', ');
+      parts.push(`Caltrops! ${names} marked and trapped!`);
+      caltropTargets.forEach(e => {
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: e.index, text: 'Caltrops!', color: 'var(--gold)' });
+      });
+    }
+
+    // Stun: skip target's next action
+    if (result.stun && result.target) {
+      result.target._skipNextAction = true;
+      parts.push(`${result.target.name} is stunned!`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Stunned!', color: '#aa66aa' });
     }
 
     // Revive: bring a downed ally back
