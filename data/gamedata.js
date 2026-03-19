@@ -14,7 +14,7 @@ const RAW_ENCOUNTERS = {
     { "name": "Arminius's Champion", "enemies": ["arminius_champion", "cheruscan_raider"], "intro": "The Champion of Arminius blocks your path." },
     { "name": "The Grove Witch", "enemies": ["grove_witch", "bog_seer", "marsh_wolf"], "intro": "Green flame parts the trees. The forest itself rises." },
     { "name": "The Silent Huntsman", "minDifficulty": 2, "enemies": ["silent_huntsman", "sling_hunter", "cheruscan_raider"], "intro": "Arrows from the shadows. The Huntsman has found you." },
-    { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "marsh_wolf", "marsh_wolf"], "intro": "The swamp shakes. Something massive rises." },
+    { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "war_boar", "boar_youngling", "boar_youngling"], "intro": "The swamp shakes. Something massive rises, flanked by her brood." },
     { "name": "The Bone Speaker", "minDifficulty": 4, "enemies": ["bone_speaker", "cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Bones rattle. The dead walk at his command. A seer chants behind them." }
   ],
   "threatLevels": {
@@ -41,7 +41,8 @@ const RAW_ENCOUNTERS = {
       { "name": "War Hound Pack", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "cheruscan_raider"], "intro": "Armored hounds bound through the undergrowth, a handler driving them forward." },
       { "name": "Runed Shield Line", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_shieldbearer", "cheruscan_raider"], "intro": "A runecarver crouches behind a shield line, carving wards into every surface." },
       { "name": "Cursed Patrol", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Black-veined warriors shamble through the mist. A seer chants behind them." },
-      { "name": "Ironbound Vanguard", "minDifficulty": 3, "enemies": ["ironbound_champion", "cheruscan_shieldbearer", "sling_hunter"], "intro": "An iron-clad warrior advances behind a shieldbearer. The more they protect him, the harder he hits." }
+      { "name": "Ironbound Vanguard", "minDifficulty": 3, "enemies": ["ironbound_champion", "cheruscan_shieldbearer", "sling_hunter"], "intro": "An iron-clad warrior advances behind a shieldbearer. The more they protect him, the harder he hits." },
+      { "name": "Boar Stampede", "minDifficulty": 3, "enemies": ["war_boar", "boar_youngling", "boar_youngling"], "intro": "The ground trembles. A massive boar leads its young through the undergrowth, tusks lowered." }
     ],
     "hard": [
       { "name": "The Clearing", "enemies": ["cheruscan_raider", "cheruscan_raider", "marsh_wolf", "sling_hunter"], "intro": "You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you." },
@@ -58,7 +59,8 @@ const RAW_ENCOUNTERS = {
       { "name": "The Kennels", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "war_hound", "sling_hunter"], "intro": "A pack of armored war hounds pours from a makeshift kennel. A handler slings stones from behind." },
       { "name": "Warded Warband", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Rune-warded warriors advance behind a wall of carved shields. Every blow glances off." },
       { "name": "Bone Court", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Three cursed warriors stand in a circle of bones. A seer orchestrates their suffering." },
-      { "name": "The Iron Wall", "minDifficulty": 3, "enemies": ["ironbound_champion", "cheruscan_shieldbearer", "cheruscan_shieldbearer", "sling_hunter"], "intro": "Two shieldbearers funnel their defenses into an iron-clad champion. He grows stronger with every shield raised." }
+      { "name": "The Iron Wall", "minDifficulty": 3, "enemies": ["ironbound_champion", "cheruscan_shieldbearer", "cheruscan_shieldbearer", "sling_hunter"], "intro": "Two shieldbearers funnel their defenses into an iron-clad champion. He grows stronger with every shield raised." },
+      { "name": "The Sow's Fury", "minDifficulty": 3, "enemies": ["war_boar", "war_boar", "boar_youngling", "boar_youngling"], "intro": "Two massive boars and their young block the trail. The ground shakes with their fury." }
     ]
   },
   "dropTables": {

@@ -231,8 +231,37 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Gore Charge", "damage": 10, "chance": 0.3, "text": "charges with lowered tusks" },
       { "name": "Thrashing Fury", "damage": 7, "chance": 0.25, "text": "thrashes wildly, striking everything", "aoe": true },
-      { "name": "Call the Brood", "damage": 0, "chance": 0.25, "text": "bellows into the swamp — her young answer", "spawn": "marsh_wolf" },
+      { "name": "Call the Brood", "damage": 0, "chance": 0.25, "text": "bellows into the swamp — her young answer", "spawn": "boar_youngling" },
       { "name": "Mother's Wrath", "damage": 12, "morale": -10, "chance": 0.2, "text": "rears up and brings crushing weight down", "cooldown": 1 }
+    ]
+  },
+
+  "boar_youngling": {
+    "id": "boar_youngling", "name": "Boar Youngling",
+    "maxHp": 10, "row": "front", "damage": [2, 4], "speed": 3, "xpValue": 3,
+    "minDifficulty": 3,
+    "description": "A squealing piglet with razor tusks. Small but vicious in packs. The Mire Mother's brood.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Tusk Nip", "damage": 3, "chance": 0.6, "text": "nips with small sharp tusks" },
+      { "name": "Squeal", "damage": 0, "morale": -5, "chance": 0.2, "text": "squeals — a piercing sound that rattles nerves" },
+      { "name": "Swarm Bite", "damage": 4, "chance": 0.2, "text": "bites with surprising ferocity" }
+    ]
+  },
+
+  "war_boar": {
+    "id": "war_boar", "name": "War Boar",
+    "maxHp": 20, "row": "back", "damage": [5, 8], "speed": 2, "xpValue": 6,
+    "minDifficulty": 3,
+    "description": "A massive bristle-backed boar, armored in mud and rage. It waits in the rear before charging with devastating force.",
+    "ai": "aggressive",
+    "phaseShift": { "afterTurns": 99, "toRow": "front" },
+    "actions": [
+      { "name": "Snort", "damage": 0, "morale": -8, "chance": 0.4, "text": "snorts and stamps, building fury", "phase": "ranged" },
+      { "name": "Mud Sling", "damage": 3, "chance": 0.6, "text": "flings mud and debris", "ignoreRow": true, "phase": "ranged" },
+      { "name": "Boar Charge", "damage": 7, "chance": 0.3, "text": "charges from the back line with devastating force", "cooldown": 4, "boarCharge": true },
+      { "name": "Gore", "damage": 6, "chance": 0.4, "text": "gores with massive tusks", "phase": "melee" },
+      { "name": "Trample", "damage": 4, "chance": 0.3, "text": "tramples underfoot", "aoe": true, "phase": "melee" }
     ]
   },
 

@@ -1372,9 +1372,9 @@ class CombatEngine {
             }
           }
 
-          // Mire Mother: gains +2 damage per action when a wolf dies
+          // Mire Mother: gains +2 damage per action when a boar dies
           const mireMother = this.enemies.find(b => b.id === 'mire_mother' && !b.dead);
-          if (mireMother && e.id === 'marsh_wolf') {
+          if (mireMother && (e.id === 'boar_youngling' || e.id === 'war_boar')) {
             mireMother.actions.forEach(a => { if (a.damage > 0) a.damage += 2; });
             this.addLog(`${mireMother.name} howls with rage! Her attacks grow stronger!`);
           }
@@ -1736,6 +1736,16 @@ class CombatEngine {
       this.addLog(`${enemy.name}'s attack hits the whole line!`);
     }
 
+    // Boar Charge: move to front row and stun the target
+    if (action.boarCharge && target) {
+      if (enemy.row === 'back') {
+        enemy.row = 'front';
+        this.addLog(`${enemy.name} charges from the back line!`);
+      }
+      target._stunNextTurn = true;
+      this.addLog(`${target.name} is stunned by the charge!`);
+    }
+
     // Shieldbearer: grant block to all other enemies
     if (action.blockAllEnemies) {
       this.enemies.forEach(e => {
@@ -2066,14 +2076,14 @@ class CombatEngine {
         if (!boss._phase70 && boss.hp <= boss.maxHp * 0.7) {
           boss._phase70 = true;
           this.addLog(`${boss.name} bellows! Her brood answers!`);
-          this.spawnBossMinion('marsh_wolf');
-          this.spawnBossMinion('marsh_wolf');
+          this.spawnBossMinion('boar_youngling');
+          this.spawnBossMinion('boar_youngling');
         }
         if (!boss._phase40 && boss.hp <= boss.maxHp * 0.4) {
           boss._phase40 = true;
-          this.addLog(`${boss.name} screams in fury! More wolves pour from the swamp!`);
-          this.spawnBossMinion('marsh_wolf');
-          this.spawnBossMinion('marsh_wolf');
+          this.addLog(`${boss.name} screams in fury! War boars crash through the undergrowth!`);
+          this.spawnBossMinion('war_boar');
+          this.spawnBossMinion('boar_youngling');
         }
       }
     }
