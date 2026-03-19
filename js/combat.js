@@ -811,6 +811,13 @@ class CombatEngine {
     const logText = this.applySkillResult(unit, skill, result);
     this.addLog(logText);
 
+    // Gladiator's Wraps: gain 3 block after using a 2+ dice skill
+    if (diceIds.length >= 2 && this.unitHasItem(unit, 'gladiators_wraps')) {
+      unit.block = (unit.block || 0) + 3;
+      this.addLog(`Gladiator's Wraps grant ${unit.name} 3 Block.`);
+      if (this.onVisual) this.onVisual('unitBlock', { unitIndex: unit.index, amount: 3 });
+    }
+
     // Mark unit as acted
     unit.actedThisTurn = true;
 
