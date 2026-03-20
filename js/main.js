@@ -372,14 +372,7 @@ class Game {
         this.musicStarted = true;
         this.musicMode = 'menu';
       }
-      // First run: default party. Subsequent runs: party selection.
-      if (this.stats.runsCompleted + this.stats.runsLost === 0) {
-        this.selectedPartyClasses = ['legionary', 'centurion', 'medicus'];
-        this.activeCurses = [];
-        this.startNewRun();
-      } else {
-        this.showPartySelectScreen();
-      }
+      this.showPartySelectScreen();
     });
   }
 
@@ -393,8 +386,7 @@ class Game {
 
   renderPartySelect() {
     const container = document.getElementById('party-select-classes');
-    const curseContainer = document.getElementById('party-select-curses');
-    const marchBtn = document.getElementById('btn-march');
+    const continueBtn = document.getElementById('btn-party-continue');
     const countLabel = document.getElementById('party-select-count');
 
     // Render class cards
@@ -436,32 +428,55 @@ class Game {
 
     // Update count and button
     countLabel.textContent = `${this.selectedPartyClasses.length} / 3 selected`;
-    marchBtn.disabled = this.selectedPartyClasses.length !== 3;
+    continueBtn.disabled = this.selectedPartyClasses.length !== 3;
 
-    // Render curses
-    let curseHtml = '';
+    // Continue button: go to curse select (or straight to run if no curses unlocked)
+    continueBtn.onclick = () => {
+      if (this.selectedPartyClasses.length === 3) {
+        const anyUnlocked = CURSE_DEFS.some(c => !!this.achievements[c.achievement]);
+        if (anyUnlocked) {
+          this.showCurseSelectScreen();
+        } else {
+          this.startNewRun();
+        }
+      }
+    };
+  }
+
+  // --- Curse Selection Screen ---
+  showCurseSelectScreen() {
+    this.ui.showScreen('curse-select-screen');
+    this.renderCurseSelect();
+  }
+
+  renderCurseSelect() {
+    const curseContainer = document.getElementById('curse-select-curses');
+    const marchBtn = document.getElementById('btn-march');
+    const totalLabel = document.getElementById('curse-renown-total');
     const unlockedAchievements = this.achievements;
-    let anyUnlocked = false;
+
+    let curseHtml = '';
     CURSE_DEFS.forEach(curse => {
       const unlocked = !!unlockedAchievements[curse.achievement];
       if (!unlocked) return;
-      anyUnlocked = true;
       const active = this.activeCurses.includes(curse.id);
       curseHtml += `<div class="ps-curse-card ${active ? 'active' : ''}" data-curse-id="${curse.id}">
         <div class="ps-curse-name">${curse.name}</div>
         <div class="ps-curse-desc">${curse.description}</div>
+        <div class="ps-curse-renown" style="color:var(--gold);font-size:0.75rem;margin-top:4px;">+15% Renown</div>
       </div>`;
     });
-    if (!anyUnlocked) {
-      curseHtml = '<div class="ps-curse-none">No curses unlocked yet. Earn achievements to unlock modifiers.</div>';
-    }
     curseContainer.innerHTML = curseHtml;
+
+    // Show total renown bonus
+    const curseCount = this.activeCurses.length;
+    const totalBonus = curseCount * 15;
+    totalLabel.textContent = totalBonus > 0 ? `Total bonus: +${totalBonus}% Renown` : 'No curses selected';
 
     // Bind curse clicks
     curseContainer.querySelectorAll('.ps-curse-card').forEach(card => {
       card.addEventListener('click', () => {
         const cid = card.dataset.curseId;
-        // Ultimate Test: toggles all curses
         if (cid === 'ultimate_test') {
           if (this.activeCurses.includes('ultimate_test')) {
             this.activeCurses = [];
@@ -472,23 +487,17 @@ class Game {
           const idx = this.activeCurses.indexOf(cid);
           if (idx >= 0) {
             this.activeCurses.splice(idx, 1);
-            // Remove ultimate_test if deselecting individual curse
             const utIdx = this.activeCurses.indexOf('ultimate_test');
             if (utIdx >= 0) this.activeCurses.splice(utIdx, 1);
           } else {
             this.activeCurses.push(cid);
           }
         }
-        this.renderPartySelect();
+        this.renderCurseSelect();
       });
     });
 
-    // March button handler (re-bind each render)
-    marchBtn.onclick = () => {
-      if (this.selectedPartyClasses.length === 3) {
-        this.startNewRun();
-      }
-    };
+    marchBtn.onclick = () => this.startNewRun();
   }
 
   bindMenuButtons() {
