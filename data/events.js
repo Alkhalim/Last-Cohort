@@ -186,10 +186,18 @@ const RAW_EVENTS = [
     ]
   },
   {
+    "id": "trading_post",
+    "name": "Trading Post",
+    "type": "item_trade",
+    "minDifficulty": 2,
+    "weight": 2,
+    "intro": "A weathered trader has set up camp at a crossroads, surrounded by salvaged wares. He eyes your equipment with interest. Trade something for a better piece of the same kind."
+  },
+  {
     "id": "training_ground",
     "name": "Training Ground",
     "type": "skill_upgrade",
-    "minDifficulty": 2,
+    "minDifficulty": 3,
     "weight": 2,
     "intro": "You find a clearing where fallen trees form a natural arena. Your men could use this to hone their techniques. One soldier can push a skill beyond its limits."
   },
@@ -197,7 +205,7 @@ const RAW_EVENTS = [
     "id": "wandering_smith",
     "name": "Wandering Smith",
     "type": "item_upgrade",
-    "minDifficulty": 2,
+    "minDifficulty": 3,
     "weight": 2,
     "intro": "A grizzled man sits by a makeshift forge, hammering at glowing metal. He was a Roman smith before the ambush. He offers to improve one piece of equipment."
   },

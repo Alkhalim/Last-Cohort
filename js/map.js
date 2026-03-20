@@ -188,7 +188,7 @@ function generateMap(difficulty = 1, recentBosses = []) {
       node.encounter = chosenBoss;
     } else if (node.type === 'event') {
       // Filter by difficulty, then weighted random — no regular event repeats per march
-      const repeatable = ['skill_upgrade', 'item_upgrade']; // these can repeat
+      const repeatable = ['skill_upgrade', 'item_upgrade', 'item_trade']; // these can repeat
       const eligible = EVENT_DATA.filter(e => {
         if (e.minDifficulty && e.minDifficulty > difficulty) return false;
         if (e.maxDifficulty && e.maxDifficulty < difficulty) return false;

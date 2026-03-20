@@ -1380,7 +1380,13 @@ class GameUI {
       let icon = '';
       switch (node.type) {
         case 'combat': icon = '\u2694'; break;
-        case 'event': icon = '\uD83D\uDCDC'; break;
+        case 'event':
+          // Unique icons for special event types
+          if (node.encounter && node.encounter.type === 'item_trade') icon = '\uD83C\uDFEA';       // 🏪 Shop
+          else if (node.encounter && node.encounter.type === 'item_upgrade') icon = '\uD83D\uDD28'; // 🔨 Blacksmith
+          else if (node.encounter && node.encounter.type === 'skill_upgrade') icon = '\uD83C\uDFAF'; // 🎯 Skill trainer
+          else icon = '\uD83D\uDCDC';                                                               // 📜 Generic event
+          break;
         case 'rest': icon = '\uD83D\uDD25'; break;
         case 'boss': icon = '\uD83D\uDC80'; break;
       }
@@ -1527,6 +1533,10 @@ class GameUI {
     }
     if (event.type === 'item_upgrade') {
       this.showItemUpgradeEvent(event);
+      return;
+    }
+    if (event.type === 'item_trade') {
+      this.showItemTradeEvent(event);
       return;
     }
 
@@ -1943,6 +1953,117 @@ class GameUI {
     const skipBtn = document.createElement('button');
     skipBtn.className = 'btn-event-choice';
     skipBtn.innerHTML = '<span style="color:var(--text-dim)">Decline the smith\'s offer.</span>';
+    skipBtn.addEventListener('click', () => this.showMapScreen());
+    choicesEl.appendChild(skipBtn);
+  }
+
+  // ================================================================
+  // SHOP (ITEM TRADE) SCREEN
+  // ================================================================
+
+  showItemTradeEvent(event) {
+    this.showScreen('event-screen');
+    document.getElementById('event-title').textContent = event.name;
+    document.getElementById('event-intro').textContent = event.intro;
+    document.getElementById('event-outcome').classList.add('hidden');
+    const choicesEl = document.getElementById('event-choices');
+    choicesEl.innerHTML = '';
+
+    const rarityOrder = ['common', 'uncommon', 'rare', 'epic'];
+
+    // Gather all equipped items that can be upgraded in rarity
+    const allItems = [];
+    this.engine.party.forEach(u => {
+      if (!u.downed) {
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach((id, slotIdx) => {
+            if (!id) return;
+            const item = getItemData(id);
+            if (!item) return;
+            const rarityIdx = rarityOrder.indexOf(item.rarity);
+            if (rarityIdx < 0 || rarityIdx >= rarityOrder.length - 1) return; // already max rarity
+            allItems.push({ unit: u, itemId: id, item, slot, slotIdx, rarityIdx });
+          });
+        }
+      }
+    });
+
+    // Pick up to 5 random items
+    const shuffled = allItems.sort(() => Math.random() - 0.5).slice(0, 5);
+
+    if (shuffled.length === 0) {
+      choicesEl.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">Nothing to trade.</div>';
+      document.getElementById('event-outcome').classList.remove('hidden');
+      document.getElementById('event-outcome-text').textContent = 'The trader shrugs and packs up.';
+      document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+      return;
+    }
+
+    shuffled.forEach(({ unit, itemId, item, slot, slotIdx, rarityIdx }) => {
+      const nextRarity = rarityOrder[rarityIdx + 1];
+      const tag = getPrimaryTag(unit.classId);
+
+      const btn = document.createElement('button');
+      btn.className = 'btn-event-choice';
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--gold)">Trade for a ${nextRarity} ${slot}</span>`;
+
+      btn.addEventListener('click', () => {
+        // Find eligible replacement items: same slot, higher rarity, matching class tags
+        const unitTags = CLASS_DATA[unit.classId] ? CLASS_DATA[unit.classId].tags : [];
+        const candidates = Object.values(ITEM_DATA).filter(candidate => {
+          if (candidate.slot !== slot) return false;
+          if (candidate.rarity !== nextRarity) return false;
+          if (candidate.id === itemId) return false;
+          // Check class tag compatibility
+          if (!candidate.classTags.some(ct => ct === 'roman' || unitTags.includes(ct))) return false;
+          // Check minDifficulty
+          if (candidate.minDifficulty && candidate.minDifficulty > this.engine.difficulty) return false;
+          return true;
+        });
+
+        if (candidates.length === 0) {
+          document.getElementById('event-outcome').classList.remove('hidden');
+          document.getElementById('event-outcome-text').textContent = 'The trader has nothing suitable to offer in return.';
+          document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+          choicesEl.innerHTML = '';
+          return;
+        }
+
+        // Pick a random replacement
+        const replacement = candidates[Math.floor(Math.random() * candidates.length)];
+
+        // Clone the item data so upgrades don't affect the base template
+        const newId = replacement.id + '_trade_' + Date.now();
+        ITEM_DATA[newId] = JSON.parse(JSON.stringify(replacement));
+        ITEM_DATA[newId].id = newId;
+
+        // Swap the item on the unit
+        unit.equipment[slot][slotIdx] = newId;
+        this.engine.computeEquipmentStats(unit);
+
+        // Handle maxHp changes
+        const oldMaxHp = item.stats.maxHp || 0;
+        const newMaxHp = replacement.stats.maxHp || 0;
+        if (newMaxHp !== oldMaxHp) {
+          const diff = newMaxHp - oldMaxHp;
+          unit.maxHp += diff;
+          unit.baseMaxHp += diff;
+          unit.hp = Math.min(unit.hp + Math.max(0, diff), unit.maxHp);
+        }
+
+        choicesEl.innerHTML = '';
+        document.getElementById('event-outcome').classList.remove('hidden');
+        document.getElementById('event-outcome-text').textContent = `Traded ${item.name} for ${replacement.name}!`;
+        document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+      });
+
+      choicesEl.appendChild(btn);
+    });
+
+    // Skip option
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn-event-choice';
+    skipBtn.innerHTML = '<span style="color:var(--text-dim)">Leave without trading.</span>';
     skipBtn.addEventListener('click', () => this.showMapScreen());
     choicesEl.appendChild(skipBtn);
   }

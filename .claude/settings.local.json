@@ -16,7 +16,8 @@
       "Bash(while read:*)",
       "Bash(do echo:*)",
       "Bash(done)",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Bash(grep -A 5 '\"\"training_ground\"\"\\\\|\"\"wandering_smith\"\"' data/events.js)"
     ]
   }
 }
