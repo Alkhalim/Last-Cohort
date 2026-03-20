@@ -457,8 +457,8 @@ const RAW_CLASSES = {
       {
         "id": "echoing_blast", "name": "Echoing Blast", "cooldown": 2,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 5+. Deal 2 damage. If target dies, deal 2 damage to a random other enemy.",
-        "effects": { "damage": 2, "echoOnKill": 2 }
+        "description": "2 dice totaling 5+. Deal 3 damage. If target dies, deal 3 damage to a random other enemy.",
+        "effects": { "damage": 3, "echoOnKill": 3 }
       }
     ]
   },

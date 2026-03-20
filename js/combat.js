@@ -1468,7 +1468,8 @@ class CombatEngine {
 
     // Transfusion: transfer HP from self to target
     if (result.transfusion && result.target) {
-      const maxTransfer = Math.min(result.transfusion, unit.hp - 1, result.target.maxHp - result.target.hp);
+      const transfusionAmount = result.transfusion + bonusHeal * 2;
+      const maxTransfer = Math.min(transfusionAmount, unit.hp - 1, result.target.maxHp - result.target.hp);
       if (maxTransfer > 0) {
         unit.hp -= maxTransfer;
         result.target.hp += maxTransfer;
