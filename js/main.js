@@ -70,7 +70,7 @@ class Game {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return { musicVolume: 15, soundVolume: 50, trackingEnabled: true };
+    return { musicVolume: 15, soundVolume: 50, trackingEnabled: true, fullSoundtrack: false };
   }
 
   saveSettings() {
@@ -282,6 +282,16 @@ class Game {
   }
 
   playNextGameplayTrack() {
+    if (!this.settings.fullSoundtrack) {
+      // Use menu track on loop to save mobile data
+      if (this.currentTrack && this.musicStarted) {
+        this.fadeToTrack(MUSIC_MENU, true);
+      } else {
+        this.currentTrack = this.playTrack(MUSIC_MENU, true);
+        this.musicStarted = true;
+      }
+      return;
+    }
     const src = MUSIC_GAMEPLAY[Math.floor(Math.random() * MUSIC_GAMEPLAY.length)];
     if (this.currentTrack && this.musicStarted) {
       this.fadeToTrack(src, false);
@@ -299,7 +309,8 @@ class Game {
       this.stopTrack(this.currentTrack, 0);
       this.currentTrack = null;
     }
-    this.currentTrack = this.playTrack(MUSIC_BOSS, true);
+    const bossSrc = this.settings.fullSoundtrack ? MUSIC_BOSS : MUSIC_MENU;
+    this.currentTrack = this.playTrack(bossSrc, true);
   }
 
   resumeGameplayMusic() {
@@ -362,6 +373,9 @@ class Game {
     const trackingCheckbox = document.getElementById('opt-tracking');
     trackingCheckbox.checked = this.isTrackingEnabled();
     document.getElementById('opt-tracking-val').textContent = this.isTrackingEnabled() ? 'On' : 'Off';
+    const soundtrackCheckbox = document.getElementById('opt-full-soundtrack');
+    soundtrackCheckbox.checked = !!this.settings.fullSoundtrack;
+    document.getElementById('opt-full-soundtrack-val').textContent = this.settings.fullSoundtrack ? 'On' : 'Off';
   }
 
   // --- Bindings ---
@@ -532,6 +546,15 @@ class Game {
       const v = parseInt(soundSlider.value);
       soundVal.textContent = v + '%';
       this.setSoundVolume(v);
+    });
+
+    // Full soundtrack toggle
+    const soundtrackCheckbox = document.getElementById('opt-full-soundtrack');
+    const soundtrackVal = document.getElementById('opt-full-soundtrack-val');
+    soundtrackCheckbox.addEventListener('change', () => {
+      this.settings.fullSoundtrack = soundtrackCheckbox.checked;
+      soundtrackVal.textContent = soundtrackCheckbox.checked ? 'On' : 'Off';
+      this.saveSettings();
     });
 
     // Tracking toggle
