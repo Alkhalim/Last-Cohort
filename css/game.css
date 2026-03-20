@@ -819,7 +819,6 @@ html, body {
   font-weight: 600;
   color: var(--text-bright);
   margin-bottom: 4px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }

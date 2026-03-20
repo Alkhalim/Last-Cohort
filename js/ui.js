@@ -791,33 +791,60 @@ class GameUI {
       };
       const costType = skill.cost && skill.cost.type;
       if (skill.effects && skill.effects.dieScaleDamage) {
+        const isHalfBonusD = skill.effects.halfBonusDmg;
+        const dieBonusDmg = isHalfBonusD ? Math.floor(effectiveBonusDmg / 2) : effectiveBonusDmg;
         // "X + die value damage" pattern
         desc = desc.replace(/(\d+) \+ die value damage/g, (match, base) => {
           const b = parseInt(base);
           const vals = dieRange(costType);
-          return `<span class="stat-dmg">${b + vals[0]}-${b + vals[vals.length - 1]}</span> damage`;
+          const lo = Math.max(1, b + vals[0] + dieBonusDmg);
+          const hi = Math.max(1, b + vals[vals.length - 1] + dieBonusDmg);
+          if (dieBonusDmg !== 0) {
+            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(${b}+die${dieBonusDmg >= 0 ? '+' : ''}${dieBonusDmg})</span> damage`;
+          }
+          return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
         });
         // "damage equal to die value" pattern
         desc = desc.replace(/damage equal to die value/g, () => {
           const vals = dieRange(costType);
-          return `<span class="stat-dmg">${vals[0]}-${vals[vals.length - 1]}</span> damage`;
+          const lo = Math.max(1, vals[0] + dieBonusDmg);
+          const hi = Math.max(1, vals[vals.length - 1] + dieBonusDmg);
+          if (dieBonusDmg !== 0) {
+            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(die${dieBonusDmg >= 0 ? '+' : ''}${dieBonusDmg})</span> damage`;
+          }
+          return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
         });
       }
       if (skill.effects && skill.effects.dieScaleBlock) {
         desc = desc.replace(/(\d+) \+ die value Block/g, (match, base) => {
           const b = parseInt(base);
           const vals = dieRange(costType);
-          return `<span class="stat-block">${b + vals[0]}-${b + vals[vals.length - 1]}</span> Block`;
+          const lo = b + vals[0] + equipBlock;
+          const hi = b + vals[vals.length - 1] + equipBlock;
+          if (equipBlock > 0) {
+            return `<span class="stat-block">${lo}-${hi}</span> <span class="stat-breakdown">(${b}+die+${equipBlock})</span> Block`;
+          }
+          return `<span class="stat-block">${lo}-${hi}</span> Block`;
         });
         desc = desc.replace(/Block equal to die value/g, () => {
           const vals = dieRange(costType);
-          return `<span class="stat-block">${vals[0]}-${vals[vals.length - 1]}</span> Block`;
+          const lo = vals[0] + equipBlock;
+          const hi = vals[vals.length - 1] + equipBlock;
+          if (equipBlock > 0) {
+            return `<span class="stat-block">${lo}-${hi}</span> <span class="stat-breakdown">(die+${equipBlock})</span> Block`;
+          }
+          return `<span class="stat-block">${lo}-${hi}</span> Block`;
         });
       }
       if (skill.effects && skill.effects.dieScaleHeal) {
         desc = desc.replace(/HP equal to die value/g, () => {
           const vals = dieRange(costType);
-          return `<span class="stat-heal">${vals[0]}-${vals[vals.length - 1]}</span> HP`;
+          const lo = Math.max(0, vals[0] + totalBonusHeal);
+          const hi = Math.max(0, vals[vals.length - 1] + totalBonusHeal);
+          if (totalBonusHeal !== 0) {
+            return `<span class="stat-heal">${lo}-${hi}</span> <span class="stat-breakdown">(die${totalBonusHeal >= 0 ? '+' : ''}${totalBonusHeal})</span> HP`;
+          }
+          return `<span class="stat-heal">${lo}-${hi}</span> HP`;
         });
       }
 

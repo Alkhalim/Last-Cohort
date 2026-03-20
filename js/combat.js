@@ -698,28 +698,36 @@ class CombatEngine {
     const cost = skill.cost;
 
     switch (cost.type) {
-      case 'any':
-        // Pick lowest die
-        return available.length > 0 ? [available.reduce((min, d) => d.value < min.value ? d : min, available[0]).id] : [];
+      case 'any': {
+        if (available.length === 0) return [];
+        // Pick highest die if skill scales with die value, lowest otherwise
+        const hasDieScale = skill.effects && (skill.effects.dieScaleDamage || skill.effects.dieScaleBlock || skill.effects.dieScaleHeal);
+        if (hasDieScale) {
+          return [available.reduce((max, d) => d.value > max.value ? d : max, available[0]).id];
+        }
+        return [available.reduce((min, d) => d.value < min.value ? d : min, available[0]).id];
+      }
       case 'threshold': {
-        const validT = available.filter(d => d.value >= cost.min).sort((a, b) => a.value - b.value);
+        const hasDieScaleT = skill.effects && (skill.effects.dieScaleDamage || skill.effects.dieScaleBlock || skill.effects.dieScaleHeal);
+        const validT = available.filter(d => d.value >= cost.min).sort((a, b) => hasDieScaleT ? b.value - a.value : a.value - b.value);
         return validT.length > 0 ? [validT[0].id] : [];
       }
       case 'range': {
-        const validR = available.filter(d => d.value >= cost.min && d.value <= cost.max).sort((a, b) => a.value - b.value);
+        const hasDieScaleR = skill.effects && (skill.effects.dieScaleDamage || skill.effects.dieScaleBlock || skill.effects.dieScaleHeal);
+        const validR = available.filter(d => d.value >= cost.min && d.value <= cost.max).sort((a, b) => hasDieScaleR ? b.value - a.value : a.value - b.value);
         return validR.length > 0 ? [validR[0].id] : [];
       }
       case 'exact':
         const exact = available.find(d => d.value === cost.val);
         return exact ? [exact.id] : [];
       case 'combined': {
-        // Find pair with lowest total that meets threshold
+        const hasDieScaleC = skill.effects && (skill.effects.dieScaleDamage || skill.effects.dieScaleBlock || skill.effects.dieScaleHeal);
         let bestPair = null;
-        let bestSum = Infinity;
+        let bestSum = hasDieScaleC ? -Infinity : Infinity;
         for (let i = 0; i < available.length; i++) {
           for (let j = i + 1; j < available.length; j++) {
             const sum = available[i].value + available[j].value;
-            if (sum >= cost.min && sum < bestSum) {
+            if (sum >= cost.min && (hasDieScaleC ? sum > bestSum : sum < bestSum)) {
               bestSum = sum;
               bestPair = [available[i].id, available[j].id];
             }
@@ -1405,8 +1413,8 @@ class CombatEngine {
     }
     if (result.buffAllies) {
       const attacks = result.buffAllies.attacks || 1;
-      // Buff damage scales with caster's equipment damage
-      const scaledBonusDmg = (result.buffAllies.bonusDamage || 0) + (unit.equipDamage || 0);
+      // Buff damage scales with half of caster's equipment damage
+      const scaledBonusDmg = (result.buffAllies.bonusDamage || 0) + Math.floor((unit.equipDamage || 0) / 2);
       this.party.forEach(u => {
         if (!u.downed) {
           let buffAttacks = attacks;
@@ -1423,7 +1431,7 @@ class CombatEngine {
     // Buff Self: buff only the caster
     if (result.buffSelf) {
       const selfAttacks = result.buffSelf.attacks || 1;
-      const selfBonusDmg = (result.buffSelf.bonusDamage || 0) + (unit.equipDamage || 0);
+      const selfBonusDmg = (result.buffSelf.bonusDamage || 0) + Math.floor((unit.equipDamage || 0) / 2);
       let buffAttacks = selfAttacks;
       if (this.unitHasItem(unit, 'sigil_of_the_ninth')) buffAttacks += 1;
       unit.buffs.push({ damage: selfBonusDmg, attacksLeft: buffAttacks });
