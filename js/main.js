@@ -21,14 +21,14 @@ const MUSIC_BOSS = 'assets/Shadow of Arminius.mp3';
 
 // --- Curse Definitions ---
 const CURSE_DEFS = [
-  { id: 'champions_mark', name: "Champion's Mark", achievement: 'boss_arminius_champion_x3', description: "Bosses have +20% HP." },
-  { id: 'witchs_gaze', name: "Witch's Gaze", achievement: 'boss_grove_witch_x3', description: "Morale decay +2 per turn." },
-  { id: 'hunters_shadow', name: "Hunter's Shadow", achievement: 'boss_silent_huntsman_x3', description: "Enemies deal +1 damage." },
-  { id: 'mothers_brood', name: "Mother's Brood", achievement: 'boss_mire_mother_x3', description: "Enemies that can spawn always spawn on first opportunity." },
-  { id: 'deaths_whisper', name: "Death's Whisper", achievement: 'boss_bone_speaker_x3', description: "Start each encounter at -10 morale." },
-  { id: 'rare_collector', name: "Rare Collector", achievement: 'hero_three_rares', description: "Uncommon/rare items drop 30% less." },
-  { id: 'golden_challenge', name: "Golden Challenge", achievement: 'hero_only_rares', description: "Start with 1 fewer die (3 instead of 4)." },
-  { id: 'ultimate_test', name: "Ultimate Test", achievement: 'party_all_rares', description: "All curses active simultaneously." },
+  { id: 'champions_mark', name: "Champion's Mark", achievement: 'boss_arminius_champion_x3', description: "Bosses have +20% HP.", renown: 10 },
+  { id: 'witchs_gaze', name: "Witch's Gaze", achievement: 'boss_grove_witch_x3', description: "Morale decay +2 per turn.", renown: 20 },
+  { id: 'hunters_shadow', name: "Hunter's Shadow", achievement: 'boss_silent_huntsman_x3', description: "Enemies deal +1 damage.", renown: 25 },
+  { id: 'mothers_brood', name: "Mother's Brood", achievement: 'boss_mire_mother_x3', description: "Enemies that can spawn always spawn on first opportunity.", renown: 15 },
+  { id: 'deaths_whisper', name: "Death's Whisper", achievement: 'boss_bone_speaker_x3', description: "Start each encounter at -10 morale.", renown: 20 },
+  { id: 'rare_collector', name: "Rare Collector", achievement: 'hero_three_rares', description: "Uncommon/rare items drop 30% less.", renown: 10 },
+  { id: 'golden_challenge', name: "Golden Challenge", achievement: 'hero_only_rares', description: "Start with 1 fewer die (3 instead of 4).", renown: 30 },
+  { id: 'ultimate_test', name: "Ultimate Test", achievement: 'party_all_rares', description: "All curses active simultaneously.", renown: 50 },
 ];
 
 class Game {
@@ -463,14 +463,16 @@ class Game {
       curseHtml += `<div class="ps-curse-card ${active ? 'active' : ''}" data-curse-id="${curse.id}">
         <div class="ps-curse-name">${curse.name}</div>
         <div class="ps-curse-desc">${curse.description}</div>
-        <div class="ps-curse-renown" style="color:var(--gold);font-size:0.75rem;margin-top:4px;">+15% Renown</div>
+        <div class="ps-curse-renown" style="color:var(--gold);font-size:0.75rem;margin-top:4px;">+${curse.renown}% Renown</div>
       </div>`;
     });
     curseContainer.innerHTML = curseHtml;
 
     // Show total renown bonus
-    const curseCount = this.activeCurses.length;
-    const totalBonus = curseCount * 15;
+    const totalBonus = this.activeCurses.reduce((sum, cid) => {
+      const curse = CURSE_DEFS.find(c => c.id === cid);
+      return sum + (curse ? curse.renown : 0);
+    }, 0);
     totalLabel.textContent = totalBonus > 0 ? `Total bonus: +${totalBonus}% Renown` : 'No curses selected';
 
     // Bind curse clicks
