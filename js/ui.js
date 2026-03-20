@@ -143,8 +143,9 @@ class GameUI {
   // --- Main render ---
   render() {
     this.hideEnemyTooltip();
-    // Victory/Defeat: only render phase UI, skip heavy combat rendering
+    // Victory/Defeat: render enemies one final time (so death animations show), then phase UI
     if (this.engine.phase === PHASE.VICTORY || this.engine.phase === PHASE.DEFEAT) {
+      this.renderEnemies();
       this.renderPhaseUI();
       return;
     }
