@@ -82,7 +82,7 @@ const RAW_CLASSES = {
   "centurion": {
     "name": "Centurion",
     "title": "CEN",
-    "maxHp": 28,
+    "maxHp": 27,
     "tags": ["command", "roman"],
     "equipSlots": { "weapon": 2, "armor": 2, "trinket": 3 },
     "description": "Officer. Buffs allies and controls the battlefield.",
@@ -157,7 +157,7 @@ const RAW_CLASSES = {
   "medicus": {
     "name": "Medicus",
     "title": "MED",
-    "maxHp": 22,
+    "maxHp": 23,
     "tags": ["support", "roman"],
     "equipSlots": { "weapon": 1, "armor": 1, "trinket": 5 },
     "description": "Field surgeon. Heals, poisons, and manages attrition.",
@@ -233,7 +233,7 @@ const RAW_CLASSES = {
   "sagittarius": {
     "name": "Sagittarius",
     "title": "SAG",
-    "maxHp": 20,
+    "maxHp": 22,
     "tags": ["ranged", "roman"],
     "equipSlots": { "weapon": 3, "armor": 1, "trinket": 3 },
     "description": "Roman archer. Fragile but strikes any row with precision.",
@@ -465,7 +465,7 @@ const RAW_CLASSES = {
   "equites": {
     "name": "Equites",
     "title": "EQU",
-    "maxHp": 26,
+    "maxHp": 25,
     "tags": ["melee", "roman"],
     "equipSlots": { "weapon": 3, "armor": 2, "trinket": 2 },
     "description": "Roman cavalry. Devastating charge openers that can strike any target.",
