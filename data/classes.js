@@ -336,7 +336,7 @@ const RAW_CLASSES = {
         "effects": { "morale": 11, "block": 3 }
       },
       {
-        "id": "inspire", "name": "Inspire", "starter": true, "cooldown": 4,
+        "id": "inspire", "name": "Inspire", "starter": true, "cooldown": 5,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
         "description": "Inspire the troops. All allies gain +1 damage for next 4 attacks.",
         "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 4 } }
