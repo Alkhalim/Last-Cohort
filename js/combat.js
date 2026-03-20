@@ -281,6 +281,15 @@ class CombatEngine {
             });
             this.addLog("Serpent's Coil spreads venom! (+2 Poison to all enemies)");
           }
+          // Corpsebloom: heal all allies when enemy dies from poison (scales with level)
+          if (this.partyHasItem('corpsebloom')) {
+            const cbLv = this.getPartyItemLevel('corpsebloom');
+            const cbHeal = 1 * cbLv;
+            this.party.forEach(u => {
+              if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + cbHeal);
+            });
+            this.addLog(`Corpsebloom blooms — all allies heal ${cbHeal} HP!`);
+          }
         }
       }
     });
@@ -567,7 +576,7 @@ class CombatEngine {
 
   // --- Centurion passive / Seer's Knucklebone ---
   canAdjustDie() {
-    if (!this.dicePool.adjustUsed && this.party.some(u => u.classId === 'centurion' && !u.downed)) return true;
+    if (!this.dicePool.adjustUsed && this.morale < 50 && this.party.some(u => u.classId === 'centurion' && !u.downed)) return true;
     if (!this.dicePool.itemAdjustUsed && this.partyHasItem('seers_knucklebone')) return true;
     return false;
   }
@@ -582,7 +591,7 @@ class CombatEngine {
     die.value = newVal;
 
     // Use class passive first, then item
-    const hasCenturion = !this.dicePool.adjustUsed && this.party.some(u => u.classId === 'centurion' && !u.downed);
+    const hasCenturion = !this.dicePool.adjustUsed && this.morale < 50 && this.party.some(u => u.classId === 'centurion' && !u.downed);
     if (hasCenturion) {
       this.dicePool.adjustUsed = true;
       this.addLog(`Centurion adjusts die: ${oldVal} \u2192 ${die.value}`);
@@ -1299,6 +1308,17 @@ class CombatEngine {
         this.enemies.forEach(e => { if (!e.dead) e.hp = Math.max(0, e.hp - cotDmg); });
         parts.push(`Crown of Thorns — ${cotDmg} damage to all enemies!`);
       }
+      // Bitter Remedy: when this unit is healed, poison a random enemy (scales with level)
+      if (this.unitHasItem(result.target, 'bitter_remedy') && actual > 0) {
+        const brLv = this.getItemLevel(result.target, 'bitter_remedy');
+        const brPoison = 1 * brLv;
+        const aliveEnemies = this.enemies.filter(e => !e.dead);
+        if (aliveEnemies.length > 0) {
+          const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          victim.poison = (victim.poison || 0) + brPoison;
+          parts.push(`Bitter Remedy poisons ${victim.name}. (+${brPoison} Poison)`);
+        }
+      }
     }
     if (result.selfDamage) {
       const totalSelfDmg = result.selfDamage + (result.halfScaleSelfDamage ? Math.floor((unit.equipDamage || 0) / 2) : 0);
@@ -1498,6 +1518,17 @@ class CombatEngine {
             const cotDmg = 2 * cotLv;
             this.enemies.forEach(e => { if (!e.dead) e.hp = Math.max(0, e.hp - cotDmg); });
             parts.push(`Crown of Thorns — ${cotDmg} damage to all enemies!`);
+          }
+          // Bitter Remedy: when this unit is healed, poison a random enemy (scales with level)
+          if (this.unitHasItem(u, 'bitter_remedy') && actual > 0) {
+            const brLv = this.getItemLevel(u, 'bitter_remedy');
+            const brPoison = 1 * brLv;
+            const aliveEnemies = this.enemies.filter(e => !e.dead);
+            if (aliveEnemies.length > 0) {
+              const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+              victim.poison = (victim.poison || 0) + brPoison;
+              parts.push(`Bitter Remedy poisons ${victim.name}. (+${brPoison} Poison)`);
+            }
           }
         }
       });
