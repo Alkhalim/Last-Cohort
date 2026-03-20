@@ -350,6 +350,9 @@ function buildSkillExecute(skillData) {
     // Half bonus damage on AoE
     if (effects.halfBonusDmg) result.halfBonusDmg = true;
 
+    // Custom bonus damage scaling (e.g. 1.5x)
+    if (effects.bonusDmgScale) result.bonusDmgScale = effects.bonusDmgScale;
+
     return result;
   };
 }

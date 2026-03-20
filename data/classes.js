@@ -139,7 +139,7 @@ const RAW_CLASSES = {
         "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 2,
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling exactly 7. Deals 17 damage. -5 Morale.",
-        "effects": { "damage": 17, "morale": -5 }
+        "effects": { "damage": 17, "morale": -5, "bonusDmgScale": 1.5 }
       },
       {
         "id": "overwatch", "name": "Overwatch", "cooldown": 1,

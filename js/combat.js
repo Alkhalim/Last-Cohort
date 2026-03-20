@@ -1038,8 +1038,9 @@ class CombatEngine {
         scaledDamage = Math.round(result.damage * scale);
         if (scale > 1.05) parts.push(`Morale fuels the charge! (x${scale.toFixed(1)})`);
       }
-      // Half bonus damage: light strikes only get half equipment/buff bonus
-      const effectiveBonusDmg = result.halfBonusDmg ? Math.floor(bonusDmg / 2) : bonusDmg;
+      // Bonus damage scaling: halfBonusDmg = 0.5x, bonusDmgScale = custom multiplier
+      const dmgScale = result.bonusDmgScale || (result.halfBonusDmg ? 0.5 : 1);
+      const effectiveBonusDmg = dmgScale !== 1 ? Math.floor(bonusDmg * dmgScale) : bonusDmg;
       // Overrun: log bonus from matching dice
       if (result._overrunBonus) {
         parts.push(`Overrun! (+${result._overrunBonus})`);

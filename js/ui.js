@@ -849,8 +849,8 @@ class GameUI {
       }
 
       // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
-      const isHalfBonus = skill.effects && skill.effects.halfBonusDmg;
-      const skillBonusDmg = isHalfBonus ? Math.floor(effectiveBonusDmg / 2) : effectiveBonusDmg;
+      const dmgScale = (skill.effects && skill.effects.bonusDmgScale) || (skill.effects && skill.effects.halfBonusDmg ? 0.5 : 1);
+      const skillBonusDmg = dmgScale !== 1 ? Math.floor(effectiveBonusDmg * dmgScale) : effectiveBonusDmg;
       desc = desc.replace(/([Dd]eal[s]?) (\d+) damage/g, (match, verb, base) => {
         const b = parseInt(base);
         const chargeBonus = cavalryCharge ? Math.floor(b * 0.5) : 0;
@@ -861,12 +861,13 @@ class GameUI {
         }
         return `${verb} <span class="stat-dmg">${b}</span> damage`;
       });
-      // Buff damage preview: scale "+X damage" with caster's equipDamage
-      if (skill.effects && skill.effects.buffAllies && equipDmg > 0) {
+      // Buff damage preview: scale "+X damage" with half of caster's equipDamage
+      const halfEquipDmg = Math.floor(equipDmg / 2);
+      if (skill.effects && (skill.effects.buffAllies || skill.effects.buffSelf) && halfEquipDmg > 0) {
         desc = desc.replace(/\+(\d+) damage/g, (match, base) => {
           const b = parseInt(base);
-          const total = b + equipDmg;
-          return `+<span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${equipDmg})</span> damage`;
+          const total = b + halfEquipDmg;
+          return `+<span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${halfEquipDmg})</span> damage`;
         });
       }
       // Color-code remaining "X damage" (that hasn't been wrapped in spans already)
