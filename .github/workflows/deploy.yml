@@ -27,7 +27,7 @@ jobs:
 
       - name: Convert assets
         run: |
-          cd folder/asset
+          cd assets
           for f in *.mp3; do
             if [ -f "$f" ]; then
               ffmpeg -i "$f" -acodec libvorbis "${f%.mp3}.ogg"
