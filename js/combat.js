@@ -1251,12 +1251,11 @@ class CombatEngine {
     }
     if (result.blockAll) {
       const totalBlock = result.blockAll + bonusBlock;
-      const count = this.party.filter(u => !u.downed).length;
-      this.party.forEach(u => {
-        if (!u.downed) {
-          u.block = (u.block || 0) + totalBlock;
-          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: totalBlock });
-        }
+      const recipients = this.party.filter(u => !u.downed && (!result.blockOthersOnly || u !== unit));
+      const count = recipients.length;
+      recipients.forEach(u => {
+        u.block = (u.block || 0) + totalBlock;
+        if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: totalBlock });
       });
       unit.stats.blockGenerated += totalBlock * count;
       // Shieldbearer's Grip: grant extra block to a random other ally on blockAll (scales with level)
@@ -1272,8 +1271,21 @@ class CombatEngine {
       }
       const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
       if (!result.damage && !result.heal && !result.block) {
-        parts.push(`${unit.name} uses ${skill.name} \u2014 all gain ${totalBlock}${bonusStr} Block.`);
+        parts.push(`${unit.name} uses ${skill.name} \u2014 ${result.blockOthersOnly ? 'other allies' : 'all'} gain ${totalBlock}${bonusStr} Block.`);
       }
+    }
+    // Morale Heal All: heal all allies if morale is 50+
+    if (result.moraleHealAll && this.morale >= 50) {
+      const healAmt = result.moraleHealAll + bonusHeal;
+      this.party.forEach(u => {
+        if (!u.downed) {
+          const actual = Math.min(healAmt, u.maxHp - u.hp);
+          u.hp += actual;
+          unit.stats.healingDone += actual;
+          if (this.onVisual && actual > 0) this.onVisual('unitHeal', { unitIndex: u.index, amount: actual });
+        }
+      });
+      parts.push(`High morale! All allies heal ${healAmt} HP.`);
     }
     if (result.buffAllies) {
       const attacks = result.buffAllies.attacks || 1;

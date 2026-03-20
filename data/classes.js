@@ -105,7 +105,7 @@ const RAW_CLASSES = {
         "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 1 } }
       },
       {
-        "id": "reform_the_line", "name": "Reform the Line", "starter": true,
+        "id": "tighten_ranks", "name": "Tighten Ranks", "starter": true, "cooldown": 1,
         "cost": { "type": "threshold", "min": 4 }, "target": "all_allies",
         "description": "All allies gain 4 Block.",
         "effects": { "blockAll": 4 }
@@ -123,10 +123,10 @@ const RAW_CLASSES = {
         "effects": { "damage": 8, "blockAll": 3 }
       },
       {
-        "id": "no_retreat", "name": "No Retreat", "cooldown": 1,
+        "id": "no_retreat", "name": "No Retreat",
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
-        "description": "All allies gain 5 Block and +8 Morale.",
-        "effects": { "blockAll": 5, "morale": 8 }
+        "description": "All allies gain 5 Block. -5 Morale.",
+        "effects": { "blockAll": 5, "morale": -5 }
       },
       {
         "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
@@ -137,8 +137,8 @@ const RAW_CLASSES = {
       {
         "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 2,
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling exactly 7. Deals 15 damage.",
-        "effects": { "damage": 15 }
+        "description": "2 dice totaling exactly 7. Deals 17 damage. -5 Morale.",
+        "effects": { "damage": 17, "morale": -5 }
       },
       {
         "id": "overwatch", "name": "Overwatch", "cooldown": 1,
@@ -342,10 +342,10 @@ const RAW_CLASSES = {
         "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 4 } }
       },
       {
-        "id": "hold_the_line", "name": "Hold the Line", "cooldown": 1,
+        "id": "shield_the_standard", "name": "Shield the Standard",
         "cost": { "type": "threshold", "min": 4 }, "target": "all_allies",
-        "description": "All allies gain 3 Block. +5 Morale.",
-        "effects": { "blockAll": 3, "morale": 5 }
+        "description": "Other allies gain 3 Block. +5 Morale.",
+        "effects": { "blockAll": 3, "blockOthersOnly": true, "morale": 5 }
       },
       {
         "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 5,
@@ -356,8 +356,8 @@ const RAW_CLASSES = {
       {
         "id": "defiant_stand", "name": "Defiant Stand", "cooldown": 2,
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
-        "description": "All allies gain 6 Block and +8 Morale.",
-        "effects": { "blockAll": 6, "morale": 8 }
+        "description": "All allies gain 6 Block. If morale is 50+, also heal all allies for 2 HP.",
+        "effects": { "blockAll": 6, "moraleHealAll": 2 }
       },
       {
         "id": "standard_charge", "name": "Standard Charge", "cooldown": 1,

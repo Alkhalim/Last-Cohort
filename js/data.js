@@ -295,6 +295,12 @@ function buildSkillExecute(skillData) {
     // Shieldbreak All: remove all block from all enemies
     if (effects.shieldbreakAll) result.shieldbreakAll = true;
 
+    // Block others only: blockAll skips the caster
+    if (effects.blockOthersOnly) result.blockOthersOnly = true;
+
+    // Morale Heal All: heal all allies if morale is 50+
+    if (effects.moraleHealAll) result.moraleHealAll = effects.moraleHealAll;
+
     // Double Poison: doubles poison if target already poisoned
     if (effects.doublePoison) result.doublePoison = true;
 
