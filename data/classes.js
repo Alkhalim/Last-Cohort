@@ -319,8 +319,9 @@ const RAW_CLASSES = {
     "description": "Standard Bearer. Rallies the cohort with morale and buffs.",
     "passive": {
       "name": "Standard of the Legion",
-      "description": "+1 extra die per turn. The standard inspires focus.",
-      "extraDice": true
+      "description": "+1 extra die per turn while morale is 25+.",
+      "extraDice": true,
+      "moraleThreshold": 25
     },
     "skills": [
       {

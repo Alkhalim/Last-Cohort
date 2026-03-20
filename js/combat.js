@@ -2605,8 +2605,8 @@ class CombatEngine {
     this.party.forEach(u => {
       if (!u.downed) {
         extra += (u.equipExtraDice || 0);
-        // Signifer passive: +1 extra die
-        if (u.classId === 'signifer') extra += 1;
+        // Signifer passive: +1 extra die while morale is 25+
+        if (u.classId === 'signifer' && this.morale >= 25) extra += 1;
       }
     });
     return extra;
