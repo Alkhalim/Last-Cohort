@@ -24,15 +24,15 @@ const RAW_CLASSES = {
       },
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
-        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
-        "description": "Gain 5 Block.",
-        "effects": { "block": 5 }
+        "cost": { "type": "even" }, "target": "self",
+        "description": "Requires an even die. Gain 3 + die value Block.",
+        "effects": { "block": 3, "dieScaleBlock": true }
       },
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
-        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "Precise thrust. Deals 7 damage.",
-        "effects": { "damage": 7 }
+        "cost": { "type": "odd" }, "target": "single_enemy",
+        "description": "Requires an odd die. Precise thrust. Deals 4 + die value damage.",
+        "effects": { "damage": 4, "dieScaleDamage": true }
       },
       {
         "id": "hold_fast", "name": "Hold Fast", "cooldown": 1,
@@ -49,14 +49,14 @@ const RAW_CLASSES = {
       },
       {
         "id": "twin_slash", "name": "Twin Slash", "cooldown": 1,
-        "cost": { "type": "pair" }, "target": "dual_enemy",
-        "description": "Requires a pair (two matching dice). Deals 5 damage to each of two targets.",
+        "cost": { "type": "pairOdd" }, "target": "dual_enemy",
+        "description": "Requires a pair of odd dice. Deals 5 damage to each of two targets.",
         "effects": { "damage": 10, "splitDamage": true }
       },
       {
         "id": "shield_wall", "name": "Shield Wall", "cooldown": 2,
-        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 8+. All allies gain 5 Block.",
+        "cost": { "type": "pairEven" }, "target": "all_allies",
+        "description": "Requires a pair of even dice. All allies gain 5 Block.",
         "effects": { "blockAll": 5 }
       },
       {
@@ -66,7 +66,7 @@ const RAW_CLASSES = {
         "effects": { "counterStance": true }
       },
       {
-        "id": "shieldbreak", "name": "Shieldbreak",
+        "id": "sunder", "name": "Sunder",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "description": "Smash through defenses. Remove all block from target and deal 3 damage.",
         "effects": { "damage": 3, "shieldbreak": true }
@@ -273,7 +273,7 @@ const RAW_CLASSES = {
       {
         "id": "arrow_volley", "name": "Arrow Volley", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
-        "description": "2 dice totaling 6+. Deals 3 damage to all enemies (half bonus from equipment).",
+        "description": "2 dice totaling 6+. Deals 3 damage to all enemies (light volley).",
         "effects": { "damageAll": 3, "halfBonusDmg": true }
       },
       {
@@ -478,15 +478,15 @@ const RAW_CLASSES = {
         "id": "lance_thrust", "name": "Lance Thrust", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Thrust with the lance at any target. Deals 3 damage.",
-        "effects": { "damage": 3 }
+        "description": "A quick lance jab at any target. Deals 2 damage (light strike).",
+        "effects": { "damage": 2, "halfBonusDmg": true }
       },
       {
         "id": "charging_strike", "name": "Charging Strike", "starter": true, "cooldown": 1,
-        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A powerful charging blow. Deals 7 damage.",
-        "effects": { "damage": 7 }
+        "description": "A powerful charging blow. Deals 8 damage.",
+        "effects": { "damage": 8 }
       },
       {
         "id": "trample", "name": "Trample", "starter": true,
@@ -509,10 +509,10 @@ const RAW_CLASSES = {
         "effects": { "damage": 10 }
       },
       {
-        "id": "shield_breaker", "name": "Shield Breaker", "cooldown": 1,
+        "id": "lance_pierce", "name": "Lance Pierce", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Smash through defenses. Deals 6 damage, ignores block.",
+        "description": "Drive the lance through armor. Deals 6 damage, ignores block.",
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {

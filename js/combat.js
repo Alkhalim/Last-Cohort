@@ -643,10 +643,24 @@ class CombatEngine {
         return this.findCombinedDice(available, cost.dice, cost.min, '>=');
       case 'combinedExact':
         return this.findCombinedDice(available, cost.dice, cost.val, '===');
+      case 'even':
+        return available.some(d => d.value % 2 === 0);
+      case 'odd':
+        return available.some(d => d.value % 2 === 1);
       case 'pair': {
         const vals = {};
         for (const d of available) { vals[d.value] = (vals[d.value] || 0) + 1; }
         return Object.values(vals).some(c => c >= 2);
+      }
+      case 'pairEven': {
+        const evens = {};
+        for (const d of available) { if (d.value % 2 === 0) evens[d.value] = (evens[d.value] || 0) + 1; }
+        return Object.values(evens).some(c => c >= 2);
+      }
+      case 'pairOdd': {
+        const odds = {};
+        for (const d of available) { if (d.value % 2 === 1) odds[d.value] = (odds[d.value] || 0) + 1; }
+        return Object.values(odds).some(c => c >= 2);
       }
       default:
         return false;
@@ -698,12 +712,42 @@ class CombatEngine {
         }
         return [];
       }
+      case 'even': {
+        // Pick highest even die (more block/damage from die value scaling)
+        const evens = available.filter(d => d.value % 2 === 0).sort((a, b) => b.value - a.value);
+        return evens.length > 0 ? [evens[0].id] : [];
+      }
+      case 'odd': {
+        // Pick highest odd die
+        const odds = available.filter(d => d.value % 2 === 1).sort((a, b) => b.value - a.value);
+        return odds.length > 0 ? [odds[0].id] : [];
+      }
       case 'pair': {
         // Find lowest value pair
         const sorted = [...available].sort((a, b) => a.value - b.value);
         for (let i = 0; i < sorted.length - 1; i++) {
           if (sorted[i].value === sorted[i + 1].value) {
             return [sorted[i].id, sorted[i + 1].id];
+          }
+        }
+        return [];
+      }
+      case 'pairEven': {
+        // Find highest even pair
+        const sortedE = [...available].filter(d => d.value % 2 === 0).sort((a, b) => b.value - a.value);
+        for (let i = 0; i < sortedE.length - 1; i++) {
+          if (sortedE[i].value === sortedE[i + 1].value) {
+            return [sortedE[i].id, sortedE[i + 1].id];
+          }
+        }
+        return [];
+      }
+      case 'pairOdd': {
+        // Find highest odd pair
+        const sortedO = [...available].filter(d => d.value % 2 === 1).sort((a, b) => b.value - a.value);
+        for (let i = 0; i < sortedO.length - 1; i++) {
+          if (sortedO[i].value === sortedO[i + 1].value) {
+            return [sortedO[i].id, sortedO[i + 1].id];
           }
         }
         return [];
@@ -933,8 +977,10 @@ class CombatEngine {
         scaledDamage = Math.round(result.damage * scale);
         if (scale > 1.05) parts.push(`Morale fuels the charge! (x${scale.toFixed(1)})`);
       }
+      // Half bonus damage: light strikes only get half equipment/buff bonus
+      const effectiveBonusDmg = result.halfBonusDmg ? Math.floor(bonusDmg / 2) : bonusDmg;
       // Split damage: calculate total first, then halve for each target
-      let total = (result.splitDamage ? Math.floor((scaledDamage + bonusDmg) / 2) : scaledDamage + bonusDmg);
+      let total = (result.splitDamage ? Math.floor((scaledDamage + effectiveBonusDmg) / 2) : scaledDamage + effectiveBonusDmg);
       // Mark Target: +20% damage to marked enemies
       if (result.target._marked && result.target._marked > 0) {
         total = Math.round(total * 1.2);

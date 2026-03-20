@@ -8,9 +8,13 @@ const COST = {
   range: (min, max) => ({ type: 'range', min, max, dice: 1, label: `${min}-${max}` }),
   exact: (val) => ({ type: 'exact', val, dice: 1, label: `=${val}` }),
   any: () => ({ type: 'any', dice: 1, label: 'Any' }),
+  even: () => ({ type: 'even', dice: 1, label: 'Even' }),
+  odd: () => ({ type: 'odd', dice: 1, label: 'Odd' }),
   combined: (min, count = 2) => ({ type: 'combined', min, dice: count, label: `${count}d ${min}+` }),
   combinedExact: (val, count = 2) => ({ type: 'combinedExact', val, dice: count, label: `${count}d =${val}` }),
   pair: () => ({ type: 'pair', dice: 2, label: 'Pair' }),
+  pairEven: () => ({ type: 'pairEven', dice: 2, label: 'Even Pair' }),
+  pairOdd: () => ({ type: 'pairOdd', dice: 2, label: 'Odd Pair' }),
 };
 
 // --- Target types ---
@@ -57,6 +61,14 @@ function buildCost(costData) {
       return COST.combinedExact(costData.val, costData.dice || 2);
     case 'pair':
       return COST.pair();
+    case 'even':
+      return COST.even();
+    case 'odd':
+      return COST.odd();
+    case 'pairEven':
+      return COST.pairEven();
+    case 'pairOdd':
+      return COST.pairOdd();
     default:
       return COST.any();
   }
@@ -69,18 +81,21 @@ function buildSkillExecute(skillData) {
 
   return function execute(unit, targets, dice) {
     const result = {};
+    // Die value scaling: add die value(s) to base damage or block
+    const dieTotal = dice.reduce((s, d) => s + (d ? d.value : 0), 0);
 
     // Damage (single target or split across dual targets)
     if (effects.damage !== undefined) {
+      const dmg = effects.damage + (effects.dieScaleDamage ? dieTotal : 0);
       if (effects.splitDamage && targets.length >= 2) {
         result.splitDamage = true;
-        result.damage = effects.damage; // full base damage — will be split after bonuses in applySkillResult
-        result.baseDamage = effects.damage;
+        result.damage = dmg; // full base damage — will be split after bonuses in applySkillResult
+        result.baseDamage = dmg;
         result.target = targets[0];
         result.secondTarget = targets[1];
       } else {
-        result.damage = effects.damage;
-        result.baseDamage = effects.damage;
+        result.damage = dmg;
+        result.baseDamage = dmg;
         if (targets[0]) result.target = targets[0];
       }
     }
@@ -100,7 +115,7 @@ function buildSkillExecute(skillData) {
 
     // Block (self — but don't override target if damage already set it to an enemy)
     if (effects.block !== undefined) {
-      let block = effects.block;
+      let block = effects.block + (effects.dieScaleBlock ? dieTotal : 0);
       if (passiveTrigger) {
         if (dice[0] && dice[0].value >= passiveTrigger.dieMin && !unit.passiveTriggered) {
           block += passiveTrigger.bonusBlock;

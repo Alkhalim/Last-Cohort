@@ -780,11 +780,35 @@ class GameUI {
       // Equites passive: Cavalry Charge — preview +50% on first attack
       const cavalryCharge = unit.classId === 'equites' && !unit.passiveTriggered;
 
+      // Die-value scaling preview: show range (e.g. "4 + die value" → "5-9" for odd, "5-10" for even)
+      if (skill.effects && skill.effects.dieScaleDamage) {
+        desc = desc.replace(/(\d+) \+ die value damage/g, (match, base) => {
+          const b = parseInt(base);
+          const isOdd = skill.cost && skill.cost.type === 'odd';
+          const vals = isOdd ? [1, 3, 5] : [2, 4, 6];
+          const min = b + vals[0];
+          const max = b + vals[vals.length - 1];
+          return `<span class="stat-dmg">${min}-${max}</span> damage`;
+        });
+      }
+      if (skill.effects && skill.effects.dieScaleBlock) {
+        desc = desc.replace(/(\d+) \+ die value Block/g, (match, base) => {
+          const b = parseInt(base);
+          const isEven = skill.cost && skill.cost.type === 'even';
+          const vals = isEven ? [2, 4, 6] : [1, 3, 5];
+          const min = b + vals[0];
+          const max = b + vals[vals.length - 1];
+          return `<span class="stat-block">${min}-${max}</span> Block`;
+        });
+      }
+
       // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
+      const isHalfBonus = skill.effects && skill.effects.halfBonusDmg;
+      const skillBonusDmg = isHalfBonus ? Math.floor(effectiveBonusDmg / 2) : effectiveBonusDmg;
       desc = desc.replace(/([Dd]eal[s]?) (\d+) damage/g, (match, verb, base) => {
         const b = parseInt(base);
         const chargeBonus = cavalryCharge ? Math.floor(b * 0.5) : 0;
-        const totalBonus = effectiveBonusDmg + chargeBonus;
+        const totalBonus = skillBonusDmg + chargeBonus;
         if (totalBonus !== 0) {
           const total = Math.max(1, b + totalBonus);
           return `${verb} <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${totalBonus})</span> damage`;

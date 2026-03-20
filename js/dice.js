@@ -89,8 +89,16 @@ class DicePool {
       case 'combinedExact':
         if (selected.length !== cost.dice) return false;
         return selected.reduce((sum, d) => sum + d.value, 0) === cost.val;
+      case 'even':
+        return selected.length === 1 && selected[0].value % 2 === 0;
+      case 'odd':
+        return selected.length === 1 && selected[0].value % 2 === 1;
       case 'pair':
         return selected.length === 2 && selected[0].value === selected[1].value;
+      case 'pairEven':
+        return selected.length === 2 && selected[0].value === selected[1].value && selected[0].value % 2 === 0;
+      case 'pairOdd':
+        return selected.length === 2 && selected[0].value === selected[1].value && selected[0].value % 2 === 1;
       default:
         return false;
     }
