@@ -1466,16 +1466,18 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('statusText', { unitIndex: result.target.index, text: 'Stimulant!', color: 'var(--green-bright)' });
     }
 
-    // Transfusion: transfer HP from self to target
+    // Transfusion: transfer HP from self to target (ally receives double heal bonus)
     if (result.transfusion && result.target) {
-      const transfusionAmount = result.transfusion + bonusHeal * 2;
-      const maxTransfer = Math.min(transfusionAmount, unit.hp - 1, result.target.maxHp - result.target.hp);
-      if (maxTransfer > 0) {
-        unit.hp -= maxTransfer;
-        result.target.hp += maxTransfer;
-        unit.stats.healingDone += maxTransfer;
-        parts.push(`${unit.name} transfers ${maxTransfer} HP to ${result.target.name}.`);
-        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: result.target.index, amount: maxTransfer });
+      const selfCost = result.transfusion + bonusHeal;
+      const allyHeal = result.transfusion + bonusHeal * 2;
+      const maxCost = Math.min(selfCost, unit.hp - 1);
+      const maxHeal = Math.min(allyHeal, result.target.maxHp - result.target.hp);
+      if (maxCost > 0 && maxHeal > 0) {
+        unit.hp -= maxCost;
+        result.target.hp += maxHeal;
+        unit.stats.healingDone += maxHeal;
+        parts.push(`${unit.name} sacrifices ${maxCost} HP \u2014 ${result.target.name} heals ${maxHeal} HP.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: result.target.index, amount: maxHeal });
       } else {
         parts.push('No HP to transfer.');
       }
