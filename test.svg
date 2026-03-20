@@ -1,0 +1,29 @@
+<svg width="100%" height="100%" style="background-color: darkblue;" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="fog" x="0" y="0" width="100%" height="100%">
+      <feTurbulence baseFrequency="0.012 0.008" type="fractalNoise" numOctaves="4" stitchTiles="stitch" seed="4" result="turbulence">
+        <animate attributeName="numOctaves" from="4" to="6" dur="10s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+  
+  <!-- Fog: two stitched tiles slide left in a seamless eternal loop -->
+  <g>
+    <rect x="0"    y="0" width="1000" height="1000" fill="gray" filter="url(#fog)" />
+  </g>
+
+  <!-- Mountain -->
+  <polygon fill="black" points="0,600 1000,650 1000,1000 0,1000" />
+
+  <!-- Trees -->
+  <g id="tree">
+    <!-- Trunk -->
+    <rect x="10" y="550" width="5" height="50" fill="darkslategray" />
+
+    <!-- Foliage -->
+    <circle cx="15" cy="500" r="15" fill="green"/>
+  </g>
+</svg>
