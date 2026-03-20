@@ -780,25 +780,43 @@ class GameUI {
       // Equites passive: Cavalry Charge — preview +50% on first attack
       const cavalryCharge = unit.classId === 'equites' && !unit.passiveTriggered;
 
-      // Die-value scaling preview: show range (e.g. "4 + die value" → "5-9" for odd, "5-10" for even)
+      // Die-value scaling preview: show range based on cost type
+      const dieRange = (costType) => {
+        if (costType === 'odd') return [1, 3, 5];
+        if (costType === 'even') return [2, 4, 6];
+        const c = skill.cost;
+        if (c && c.min && c.max) return Array.from({ length: c.max - c.min + 1 }, (_, i) => c.min + i);
+        return [1, 2, 3, 4, 5, 6];
+      };
+      const costType = skill.cost && skill.cost.type;
       if (skill.effects && skill.effects.dieScaleDamage) {
+        // "X + die value damage" pattern
         desc = desc.replace(/(\d+) \+ die value damage/g, (match, base) => {
           const b = parseInt(base);
-          const isOdd = skill.cost && skill.cost.type === 'odd';
-          const vals = isOdd ? [1, 3, 5] : [2, 4, 6];
-          const min = b + vals[0];
-          const max = b + vals[vals.length - 1];
-          return `<span class="stat-dmg">${min}-${max}</span> damage`;
+          const vals = dieRange(costType);
+          return `<span class="stat-dmg">${b + vals[0]}-${b + vals[vals.length - 1]}</span> damage`;
+        });
+        // "damage equal to die value" pattern
+        desc = desc.replace(/damage equal to die value/g, () => {
+          const vals = dieRange(costType);
+          return `<span class="stat-dmg">${vals[0]}-${vals[vals.length - 1]}</span> damage`;
         });
       }
       if (skill.effects && skill.effects.dieScaleBlock) {
         desc = desc.replace(/(\d+) \+ die value Block/g, (match, base) => {
           const b = parseInt(base);
-          const isEven = skill.cost && skill.cost.type === 'even';
-          const vals = isEven ? [2, 4, 6] : [1, 3, 5];
-          const min = b + vals[0];
-          const max = b + vals[vals.length - 1];
-          return `<span class="stat-block">${min}-${max}</span> Block`;
+          const vals = dieRange(costType);
+          return `<span class="stat-block">${b + vals[0]}-${b + vals[vals.length - 1]}</span> Block`;
+        });
+        desc = desc.replace(/Block equal to die value/g, () => {
+          const vals = dieRange(costType);
+          return `<span class="stat-block">${vals[0]}-${vals[vals.length - 1]}</span> Block`;
+        });
+      }
+      if (skill.effects && skill.effects.dieScaleHeal) {
+        desc = desc.replace(/HP equal to die value/g, () => {
+          const vals = dieRange(costType);
+          return `<span class="stat-heal">${vals[0]}-${vals[vals.length - 1]}</span> HP`;
         });
       }
 

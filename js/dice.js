@@ -99,6 +99,10 @@ class DicePool {
         return selected.length === 2 && selected[0].value === selected[1].value && selected[0].value % 2 === 0;
       case 'pairOdd':
         return selected.length === 2 && selected[0].value === selected[1].value && selected[0].value % 2 === 1;
+      case 'oddEven':
+        return selected.length === 2 && selected[0].value % 2 !== selected[1].value % 2;
+      case 'consecutive':
+        return selected.length === 2 && Math.abs(selected[0].value - selected[1].value) === 1;
       default:
         return false;
     }

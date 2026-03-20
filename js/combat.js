@@ -662,6 +662,18 @@ class CombatEngine {
         for (const d of available) { if (d.value % 2 === 1) odds[d.value] = (odds[d.value] || 0) + 1; }
         return Object.values(odds).some(c => c >= 2);
       }
+      case 'oddEven': {
+        const hasOdd = available.some(d => d.value % 2 === 1);
+        const hasEven = available.some(d => d.value % 2 === 0);
+        return hasOdd && hasEven;
+      }
+      case 'consecutive': {
+        const vals = [...new Set(available.map(d => d.value))].sort((a, b) => a - b);
+        for (let i = 0; i < vals.length - 1; i++) {
+          if (vals[i + 1] - vals[i] === 1) return true;
+        }
+        return false;
+      }
       default:
         return false;
     }
@@ -748,6 +760,22 @@ class CombatEngine {
         for (let i = 0; i < sortedO.length - 1; i++) {
           if (sortedO[i].value === sortedO[i + 1].value) {
             return [sortedO[i].id, sortedO[i + 1].id];
+          }
+        }
+        return [];
+      }
+      case 'oddEven': {
+        // Pick lowest odd + lowest even
+        const oddD = available.filter(d => d.value % 2 === 1).sort((a, b) => a.value - b.value);
+        const evenD = available.filter(d => d.value % 2 === 0).sort((a, b) => a.value - b.value);
+        return (oddD.length > 0 && evenD.length > 0) ? [oddD[0].id, evenD[0].id] : [];
+      }
+      case 'consecutive': {
+        // Find lowest consecutive pair
+        const sortedC = [...available].sort((a, b) => a.value - b.value);
+        for (let i = 0; i < sortedC.length - 1; i++) {
+          if (sortedC[i + 1].value - sortedC[i].value === 1) {
+            return [sortedC[i].id, sortedC[i + 1].id];
           }
         }
         return [];

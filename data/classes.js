@@ -118,8 +118,8 @@ const RAW_CLASSES = {
       },
       {
         "id": "measured_advance", "name": "Measured Advance", "cooldown": 1,
-        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 7+. Deals 8 damage and all allies gain 3 Block.",
+        "cost": { "type": "consecutive" }, "target": "single_enemy",
+        "description": "Requires two consecutive dice. Deals 8 damage and all allies gain 3 Block.",
         "effects": { "damage": 8, "blockAll": 3 }
       },
       {
@@ -130,8 +130,8 @@ const RAW_CLASSES = {
       },
       {
         "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
-        "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 6+. +10 Morale and +1 damage for next 2 attacks.",
+        "cost": { "type": "oddEven" }, "target": "all_allies",
+        "description": "Requires one odd and one even die. +10 Morale and +1 damage for next 2 attacks.",
         "effects": { "morale": 10, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
       },
       {
@@ -169,8 +169,8 @@ const RAW_CLASSES = {
       {
         "id": "bind_wounds", "name": "Bind Wounds", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal an ally for 3 HP.",
-        "effects": { "heal": 3 }
+        "description": "Heal an ally for HP equal to die value.",
+        "effects": { "heal": 0, "dieScaleHeal": true }
       },
       {
         "id": "aconitum", "name": "Aconitum", "starter": true,
@@ -246,8 +246,8 @@ const RAW_CLASSES = {
         "id": "loose_arrow", "name": "Loose Arrow", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Loose an arrow at any target. Deals 3 damage.",
-        "effects": { "damage": 3 }
+        "description": "Loose an arrow at any target. Deals damage equal to die value.",
+        "effects": { "damage": 0, "dieScaleDamage": true }
       },
       {
         "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 1, "starter": true,
@@ -450,9 +450,9 @@ const RAW_CLASSES = {
       },
       {
         "id": "resonance", "name": "Resonance", "cooldown": 1,
-        "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_ally",
-        "description": "Mark an ally. The next heal they receive is doubled. Grant 4 Block.",
-        "effects": { "resonance": true, "block": 4 }
+        "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_ally",
+        "description": "Mark an ally. The next heal they receive is doubled. Grant Block equal to die value.",
+        "effects": { "resonance": true, "block": 0, "dieScaleBlock": true }
       },
       {
         "id": "echoing_blast", "name": "Echoing Blast", "cooldown": 2,
@@ -555,13 +555,6 @@ const RAW_CLASSES = {
       "description": "Enemies damaged by this unit deal 15% less damage on their next action."
     },
     "skills": [
-      {
-        "id": "snap_shot", "name": "Snap Shot", "starter": true,
-        "cost": { "type": "any" }, "target": "single_enemy",
-        "ignoreRow": true,
-        "description": "A quick shot at any target. Deals 3 damage.",
-        "effects": { "damage": 3 }
-      },
       {
         "id": "ballista_bolt", "name": "Ballista Bolt", "starter": true, "cooldown": 1,
         "cost": { "type": "any" }, "target": "single_enemy",

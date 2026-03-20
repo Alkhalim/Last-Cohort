@@ -15,6 +15,8 @@ const COST = {
   pair: () => ({ type: 'pair', dice: 2, label: 'Pair' }),
   pairEven: () => ({ type: 'pairEven', dice: 2, label: 'Even Pair' }),
   pairOdd: () => ({ type: 'pairOdd', dice: 2, label: 'Odd Pair' }),
+  oddEven: () => ({ type: 'oddEven', dice: 2, label: 'Odd+Even' }),
+  consecutive: () => ({ type: 'consecutive', dice: 2, label: 'Consecutive' }),
 };
 
 // --- Target types ---
@@ -69,6 +71,10 @@ function buildCost(costData) {
       return COST.pairEven();
     case 'pairOdd':
       return COST.pairOdd();
+    case 'oddEven':
+      return COST.oddEven();
+    case 'consecutive':
+      return COST.consecutive();
     default:
       return COST.any();
   }
@@ -102,8 +108,9 @@ function buildSkillExecute(skillData) {
 
     // Heal (single target)
     if (effects.heal !== undefined) {
-      result.heal = effects.heal;
-      result.baseHeal = effects.heal;
+      const healAmt = effects.heal + (effects.dieScaleHeal ? dieTotal : 0);
+      result.heal = healAmt;
+      result.baseHeal = healAmt;
       if (targets[0]) result.target = targets[0];
     }
 
