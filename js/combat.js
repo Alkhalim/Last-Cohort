@@ -860,8 +860,20 @@ class CombatEngine {
     const key = `${unit.classId}:${skillId}`;
     this.skillUsageStats[key] = (this.skillUsageStats[key] || 0) + 1;
 
+    const usedDice = diceIds.map(id => this.dicePool.dice.find(d => d.id === id));
     diceIds.forEach(id => this.dicePool.useDie(id));
-    const result = skill.execute(unit, targets, diceIds.map(id => this.dicePool.dice.find(d => d.id === id)));
+    const result = skill.execute(unit, targets, usedDice);
+
+    // Overrun: bonus damage for each other die in the roll matching the used die's value
+    if (result.overrun && usedDice.length === 1 && usedDice[0]) {
+      const matchVal = usedDice[0].value;
+      const extraMatches = this.dicePool.dice.filter(d => d !== usedDice[0] && d.value === matchVal).length;
+      if (extraMatches > 0) {
+        const overrunBonus = extraMatches * (1 + (this.difficulty || 1));
+        result.damage = (result.damage || 0) + overrunBonus;
+        result._overrunBonus = overrunBonus;
+      }
+    }
 
     // Mars's Denarius: every 5th skill used doubles all numeric effects
     if (!this._marsSkillCount) this._marsSkillCount = 0;
@@ -979,6 +991,11 @@ class CombatEngine {
       }
       // Half bonus damage: light strikes only get half equipment/buff bonus
       const effectiveBonusDmg = result.halfBonusDmg ? Math.floor(bonusDmg / 2) : bonusDmg;
+      // Overrun: log bonus from matching dice
+      if (result._overrunBonus) {
+        parts.push(`Overrun! (+${result._overrunBonus})`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'Overrun!', color: 'var(--gold)' });
+      }
       // Split damage: calculate total first, then halve for each target
       let total = (result.splitDamage ? Math.floor((scaledDamage + effectiveBonusDmg) / 2) : scaledDamage + effectiveBonusDmg);
       // Mark Target: +20% damage to marked enemies
@@ -1252,9 +1269,10 @@ class CombatEngine {
       }
     }
     if (result.selfDamage) {
-      unit.hp = Math.max(1, unit.hp - result.selfDamage);
-      unit.stats.damageTaken += result.selfDamage;
-      parts.push(`(${unit.name} takes ${result.selfDamage} self-damage.)`);
+      const totalSelfDmg = result.selfDamage + (result.halfScaleSelfDamage ? Math.floor((unit.equipDamage || 0) / 2) : 0);
+      unit.hp = Math.max(1, unit.hp - totalSelfDmg);
+      unit.stats.damageTaken += totalSelfDmg;
+      parts.push(`(${unit.name} takes ${totalSelfDmg} self-damage.)`);
     }
     if (result.block) {
       const blockTarget = result.blockTarget || result.target || unit;

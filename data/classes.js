@@ -502,18 +502,18 @@ const RAW_CLASSES = {
         "effects": { "damage": 3, "block": 3 }
       },
       {
-        "id": "devastating_charge", "name": "Devastating Charge", "cooldown": 1,
-        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
+        "id": "reckless_charge", "name": "Reckless Charge", "cooldown": 3,
+        "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "2 dice totaling 7+. A thunderous charge. Deals 10 damage.",
-        "effects": { "damage": 10 }
+        "description": "Requires a 6. A wild, reckless charge. Deals 14 damage to any target. Take 5 self-damage.",
+        "effects": { "damage": 14, "selfDamage": 5, "halfScaleSelfDamage": true }
       },
       {
-        "id": "lance_pierce", "name": "Lance Pierce", "cooldown": 1,
-        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "id": "overrun", "name": "Overrun",
+        "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Drive the lance through armor. Deals 6 damage, ignores block.",
-        "effects": { "damage": 6, "pierceBlock": 99 }
+        "description": "Ride down a target. Deals 3 damage. Deals bonus damage for each other die matching the one used.",
+        "effects": { "damage": 3, "overrun": true }
       },
       {
         "id": "rally_charge", "name": "Rally Charge", "cooldown": 2,
@@ -523,14 +523,14 @@ const RAW_CLASSES = {
         "effects": { "damage": 8, "morale": 10 }
       },
       {
-        "id": "lasso", "name": "Lasso", "cooldown": 1,
+        "id": "drag_down", "name": "Drag Down", "cooldown": 1,
         "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Pull a back-row enemy to the front row. Deal 2 damage.",
+        "description": "Drag a back-row enemy to the front row. Deal 2 damage.",
         "effects": { "damage": 2, "pullToFront": true }
       },
       {
-        "id": "cavalry_escape", "name": "Cavalry Escape", "cooldown": 2,
+        "id": "cavalry_escape", "name": "Cavalry Escape", "cooldown": 4,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 5+. All allies take 50% less damage during the next enemy turn.",
         "effects": { "damageShield": 0.5 }

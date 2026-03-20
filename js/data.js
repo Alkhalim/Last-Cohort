@@ -334,6 +334,12 @@ function buildSkillExecute(skillData) {
     // Stun: stun target next turn
     if (effects.stun) result.stun = true;
 
+    // Overrun: bonus damage per matching die in the roll
+    if (effects.overrun) result.overrun = true;
+
+    // Half-scaled self damage (scales with half of equipDamage)
+    if (effects.halfScaleSelfDamage) result.halfScaleSelfDamage = true;
+
     // Half bonus damage on AoE
     if (effects.halfBonusDmg) result.halfBonusDmg = true;
 
