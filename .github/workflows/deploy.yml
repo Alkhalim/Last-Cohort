@@ -22,7 +22,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Convert assets
+        run: |
+          cd folder/asset
+          for f in *.mp3; do
+            if [ -f "$f" ]; then
+              ffmpeg -i "$f" -acodec libvorbis "${f%.mp3}.ogg"
+              rm "$f"
+            fi
+          done
+
+      - name: Update file references
+        run: |
+          find . -type f \( -name "*.html" -name "*.js" \) -exec sed -i 's/\.mp3/.ogg/g' {} +
+
+      - id: upload
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
