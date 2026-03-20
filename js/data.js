@@ -632,6 +632,40 @@ function createLeveledItem(itemId, bonusLevels) {
   return instanceId;
 }
 
+// Scale item special text to reflect current level
+const ITEM_SPECIAL_SCALING = {
+  raider_shield:       { base: 6, formula: lv => 6 + (lv - 1) * 2 },
+  herb_pouch:          { base: 1, formula: lv => 1 * lv },
+  scouts_leather:      { base: 3, formula: lv => 3 + (lv - 1) },
+  gladiators_wraps:    { base: 3, formula: lv => 3 + (lv - 1) },
+  night_owl_pendant:   { base: 2, formula: lv => 2 + (lv - 1) },
+  scorpio_crossbow:    { base: 5, formula: lv => 5 + (lv - 1) * 2 },
+  legion_composite_bow:{ base: 1, formula: lv => 1 * lv },
+  venomous_blade:      { base: 1, formula: lv => 1 * lv },
+  blood_iron_gladius:  { base: 1, formula: lv => 1 * lv },
+  herbalists_satchel:  { base: 1, formula: lv => 1 * lv },
+  marsh_root_brew:     { base: 1, formula: lv => 1 * lv },
+  crown_of_thorns:     { base: 2, formula: lv => 2 * lv },
+  bitter_remedy:       { base: 1, formula: lv => 1 * lv },
+  shieldbearers_grip:  { base: 2, formula: lv => 2 + (lv - 1) },
+  fang_necklace:       { base: 1, formula: lv => 1 * lv },
+  wolf_pelt:           { base: 3, formula: lv => 3 + (lv - 1) },
+  thorn_mantle:        { base: 2, formula: lv => 2 * lv },
+  corpsebloom:         { base: 1, formula: lv => 1 * lv },
+};
+
+function formatItemSpecial(item) {
+  if (!item.special) return '';
+  const lv = item.level || 1;
+  if (lv <= 1) return item.special;
+  const baseId = item.baseId || item.id;
+  const scaling = ITEM_SPECIAL_SCALING[baseId];
+  if (!scaling) return item.special;
+  const scaled = scaling.formula(lv);
+  // Replace the first occurrence of the base number with the scaled value
+  return item.special.replace(new RegExp('\\b' + scaling.base + '\\b'), String(scaled));
+}
+
 function formatItemStats(stats) {
   const fmt = (val, label) => val > 0 ? `+${val} ${label}` : `${val} ${label}`;
   const parts = [];

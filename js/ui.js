@@ -791,8 +791,17 @@ class GameUI {
       };
       const costType = skill.cost && skill.cost.type;
       if (skill.effects && skill.effects.dieScaleDamage) {
-        const isHalfBonusD = skill.effects.halfBonusDmg;
-        const dieBonusDmg = isHalfBonusD ? Math.floor(effectiveBonusDmg / 2) : effectiveBonusDmg;
+        const dieScale = skill.effects.bonusDmgScale || (skill.effects.halfBonusDmg ? 0.5 : 1);
+        const dieBonusDmg = dieScale !== 1 ? Math.floor(ownBonusDmg * dieScale) + buffDmg : effectiveBonusDmg;
+        // Build bonus breakdown string for die-scaling
+        const dieBreakdown = () => {
+          if (dieScale !== 1 && ownBonusDmg !== 0) {
+            const parts = [`${ownBonusDmg}*${dieScale}`];
+            if (buffDmg) parts.push(`${buffDmg}`);
+            return '+' + parts.join('+');
+          }
+          return dieBonusDmg >= 0 ? `+${dieBonusDmg}` : `${dieBonusDmg}`;
+        };
         // "X + die value damage" pattern
         desc = desc.replace(/(\d+) \+ die value damage/g, (match, base) => {
           const b = parseInt(base);
@@ -800,7 +809,7 @@ class GameUI {
           const lo = Math.max(1, b + vals[0] + dieBonusDmg);
           const hi = Math.max(1, b + vals[vals.length - 1] + dieBonusDmg);
           if (dieBonusDmg !== 0) {
-            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(${b}+die${dieBonusDmg >= 0 ? '+' : ''}${dieBonusDmg})</span> damage`;
+            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(${b}+die${dieBreakdown()})</span> damage`;
           }
           return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
         });
@@ -810,7 +819,7 @@ class GameUI {
           const lo = Math.max(1, vals[0] + dieBonusDmg);
           const hi = Math.max(1, vals[vals.length - 1] + dieBonusDmg);
           if (dieBonusDmg !== 0) {
-            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(die${dieBonusDmg >= 0 ? '+' : ''}${dieBonusDmg})</span> damage`;
+            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(die${dieBreakdown()})</span> damage`;
           }
           return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
         });
@@ -849,15 +858,28 @@ class GameUI {
       }
 
       // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
+      // Bonus damage scaling: only scales own equip+morale, buff damage always full
       const dmgScale = (skill.effects && skill.effects.bonusDmgScale) || (skill.effects && skill.effects.halfBonusDmg ? 0.5 : 1);
-      const skillBonusDmg = dmgScale !== 1 ? Math.floor(effectiveBonusDmg * dmgScale) : effectiveBonusDmg;
+      const ownBonusDmg = equipDmg + moraleMod - auraReduction;
+      const skillBonusDmg = dmgScale !== 1 ? Math.floor(ownBonusDmg * dmgScale) + buffDmg : effectiveBonusDmg;
       desc = desc.replace(/([Dd]eal[s]?) (\d+) damage/g, (match, verb, base) => {
         const b = parseInt(base);
         const chargeBonus = cavalryCharge ? Math.floor(b * 0.5) : 0;
         const totalBonus = skillBonusDmg + chargeBonus;
         if (totalBonus !== 0) {
           const total = Math.max(1, b + totalBonus);
-          return `${verb} <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${totalBonus})</span> damage`;
+          // Show scaling formula when modifier isn't 1x
+          let breakdownStr;
+          if (dmgScale !== 1 && ownBonusDmg !== 0) {
+            const scaledOwn = Math.floor(ownBonusDmg * dmgScale);
+            const parts = [`${b}`, `${ownBonusDmg}*${dmgScale}`];
+            if (buffDmg) parts.push(`${buffDmg}`);
+            if (chargeBonus) parts.push(`${chargeBonus}`);
+            breakdownStr = parts.join('+');
+          } else {
+            breakdownStr = `${b}+${totalBonus}`;
+          }
+          return `${verb} <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${breakdownStr})</span> damage`;
         }
         return `${verb} <span class="stat-dmg">${b}</span> damage`;
       });
@@ -1811,29 +1833,32 @@ class GameUI {
     }
 
     shuffled.forEach(({ unit, skill, baseDef }) => {
-      // Determine what to upgrade
+      // Gather all upgradeable stats for this skill, then pick one randomly
       const effects = baseDef.effects || {};
-      let upgradeText = '';
-      if (effects.damage) upgradeText = `+1 damage (${effects.damage} → ${effects.damage + 1})`;
-      else if (effects.heal) upgradeText = `+1 healing (${effects.heal} → ${effects.heal + 1})`;
-      else if (effects.healAll) upgradeText = `+1 healing to all (${effects.healAll} → ${effects.healAll + 1})`;
-      else if (effects.block) upgradeText = `+1 block (${effects.block} → ${effects.block + 1})`;
-      else if (effects.blockAll) upgradeText = `+1 block to all (${effects.blockAll} → ${effects.blockAll + 1})`;
-      else if (effects.poison) upgradeText = `+1 poison (${effects.poison} → ${effects.poison + 1})`;
-      else if (effects.poisonAll) upgradeText = `+1 poison to all (${effects.poisonAll} → ${effects.poisonAll + 1})`;
-      else if (effects.morale) upgradeText = `+5 morale (${effects.morale} → ${effects.morale + 5})`;
-      else if (effects.damageAll) upgradeText = `+1 damage to all (${effects.damageAll} → ${effects.damageAll + 1})`;
-      else if (effects.selfDamage) upgradeText = `-1 self damage (${effects.selfDamage} → ${effects.selfDamage - 1})`;
-      else if (effects.buffAllies) upgradeText = `+1 buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + 1})`;
-      else {
-        // Fallback: find the first numeric effect and name it
-        const friendlyNames = { counterStance: 'counter damage', overwatch: 'overwatch damage', snareTrap: 'trap damage', suppress: 'suppress duration', cripple: 'cripple duration', deafen: 'deafen duration', condemn: 'condemn duration', transfusion: 'transfer HP' };
-        const key = Object.keys(effects).find(k => typeof effects[k] === 'number');
-        if (key) {
-          const label = friendlyNames[key] || key;
-          upgradeText = `+1 ${label} (${effects[key]} → ${effects[key] + 1})`;
+      const friendlyNames = { counterStance: 'counter damage', overwatch: 'overwatch damage', snareTrap: 'trap damage', suppress: 'suppress duration', cripple: 'cripple duration', deafen: 'deafen duration', condemn: 'condemn duration', transfusion: 'transfer HP' };
+      const candidates = [];
+      if (effects.damage) candidates.push({ key: 'damage', text: `+1 damage (${effects.damage} → ${effects.damage + 1})`, apply: () => baseDef.effects.damage++ });
+      if (effects.heal) candidates.push({ key: 'heal', text: `+1 healing (${effects.heal} → ${effects.heal + 1})`, apply: () => baseDef.effects.heal++ });
+      if (effects.healAll) candidates.push({ key: 'healAll', text: `+1 healing to all (${effects.healAll} → ${effects.healAll + 1})`, apply: () => baseDef.effects.healAll++ });
+      if (effects.block) candidates.push({ key: 'block', text: `+1 block (${effects.block} → ${effects.block + 1})`, apply: () => baseDef.effects.block++ });
+      if (effects.blockAll) candidates.push({ key: 'blockAll', text: `+1 block to all (${effects.blockAll} → ${effects.blockAll + 1})`, apply: () => baseDef.effects.blockAll++ });
+      if (effects.poison) candidates.push({ key: 'poison', text: `+1 poison (${effects.poison} → ${effects.poison + 1})`, apply: () => baseDef.effects.poison++ });
+      if (effects.poisonAll) candidates.push({ key: 'poisonAll', text: `+1 poison to all (${effects.poisonAll} → ${effects.poisonAll + 1})`, apply: () => baseDef.effects.poisonAll++ });
+      if (effects.morale) candidates.push({ key: 'morale', text: `+5 morale (${effects.morale} → ${effects.morale + 5})`, apply: () => baseDef.effects.morale += 5 });
+      if (effects.damageAll) candidates.push({ key: 'damageAll', text: `+1 damage to all (${effects.damageAll} → ${effects.damageAll + 1})`, apply: () => baseDef.effects.damageAll++ });
+      if (effects.selfDamage) candidates.push({ key: 'selfDamage', text: `-1 self damage (${effects.selfDamage} → ${effects.selfDamage - 1})`, apply: () => baseDef.effects.selfDamage-- });
+      if (effects.buffAllies) candidates.push({ key: 'buffAllies', text: `+1 buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + 1})`, apply: () => baseDef.effects.buffAllies.bonusDamage++ });
+      // Fallback numeric effects
+      for (const k of Object.keys(effects)) {
+        if (typeof effects[k] === 'number' && !candidates.some(c => c.key === k)) {
+          const label = friendlyNames[k] || k;
+          candidates.push({ key: k, text: `+1 ${label} (${effects[k]} → ${effects[k] + 1})`, apply: () => baseDef.effects[k]++ });
         }
       }
+
+      if (candidates.length === 0) return;
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      const upgradeText = chosen.text;
 
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
@@ -1841,16 +1866,8 @@ class GameUI {
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
 
       btn.addEventListener('click', () => {
-        // Apply upgrade to the skill's effects on the baseDef (permanent)
-        if (effects.damage) baseDef.effects.damage++;
-        else if (effects.heal) baseDef.effects.heal++;
-        else if (effects.healAll) baseDef.effects.healAll++;
-        else if (effects.block) baseDef.effects.block++;
-        else if (effects.blockAll) baseDef.effects.blockAll++;
-        else if (effects.poison) baseDef.effects.poison++;
-        else if (effects.poisonAll) baseDef.effects.poisonAll++;
-        else if (effects.morale) baseDef.effects.morale += 5;
-        else if (effects.buffAllies) baseDef.effects.buffAllies.bonusDamage++;
+        // Apply the randomly chosen upgrade
+        chosen.apply();
 
         // Also update the runtime skill copy
         const runtimeSkill = unit.skills.find(s => s.id === skill.id);
@@ -2045,8 +2062,7 @@ class GameUI {
           if (candidate.id === itemId) return false;
           // Check class tag compatibility
           if (!candidate.classTags.some(ct => ct === 'roman' || unitTags.includes(ct))) return false;
-          // Check minDifficulty
-          if (candidate.minDifficulty && candidate.minDifficulty > this.engine.difficulty) return false;
+          // Trader ignores minDifficulty — gambling should circumvent restrictions
           return true;
         });
 
@@ -2082,7 +2098,8 @@ class GameUI {
 
         choicesEl.innerHTML = '';
         document.getElementById('event-outcome').classList.remove('hidden');
-        document.getElementById('event-outcome-text').textContent = `Traded ${item.name} for ${replacement.name}!`;
+        const specialLine = replacement.special ? `<br><span style="font-size:0.75rem;color:var(--gold)">${formatItemSpecial(replacement)}</span>` : '';
+        document.getElementById('event-outcome-text').innerHTML = `Traded <strong>${item.name}</strong> for:<br><br><strong style="color:var(--text-bright)">${replacement.name}</strong> <span style="font-size:0.75rem;color:var(--text-dim)">(${replacement.rarity})</span><br><span style="font-size:0.85rem">${formatItemStats(replacement.stats)}</span>${specialLine}`;
         document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
       });
 
@@ -2469,7 +2486,7 @@ class GameUI {
             const worstItem = getItemData(slots[worstIdx]);
             if (worstItem) {
               const worstStats = formatItemStats(worstItem.stats);
-              const worstSpecial = worstItem.special ? ` | ${worstItem.special}` : '';
+              const worstSpecial = worstItem.special ? ` | ${formatItemSpecial(worstItem)}` : '';
               replaceHtml = `<span class="loot-replace">Replaces: ${worstItem.name}</span><span class="loot-replace-stats">${worstStats}${worstSpecial}</span>`;
             }
           }
@@ -2490,7 +2507,7 @@ class GameUI {
           </div>
           <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
           <div class="loot-item-desc">${item.description}</div>
-          ${item.special ? `<div class="loot-item-special">${item.special}</div>` : ''}
+          ${item.special ? `<div class="loot-item-special">${formatItemSpecial(item)}</div>` : ''}
           <div class="loot-item-skip">Skip: +${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown</div>
           <div class="loot-equip-actions">${equipBtns}</div>
         `;
@@ -2591,7 +2608,7 @@ class GameUI {
       <div class="item-tooltip-name rarity-${item.rarity}">${item.name}</div>
       <div class="item-tooltip-meta">${item.slot} &middot; ${item.rarity}${item.level > 1 ? ` Lv${item.level}` : ''} ${renderTagPips(item.classTags)}</div>
       <div class="item-tooltip-stats">${formatItemStats(item.stats)}</div>
-      ${item.special ? `<div class="item-tooltip-special">${item.special}</div>` : ''}
+      ${item.special ? `<div class="item-tooltip-special">${formatItemSpecial(item)}</div>` : ''}
       <div class="item-tooltip-desc">${item.description}</div>
     `;
 

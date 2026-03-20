@@ -110,6 +110,15 @@ class CombatEngine {
       }
     });
 
+    // Special: Lorica of the Damned — start combat with block equal to 20% max HP
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'lorica_of_the_damned')) {
+        const loricaBlock = Math.floor(u.maxHp * 0.2);
+        u.block = (u.block || 0) + loricaBlock;
+        this.addLog(`${u.name}'s Lorica of the Damned grants ${loricaBlock} Block.`);
+      }
+    });
+
     // Special: War Hound Collar — apply 2 poison to a random enemy at combat start
     if (this.partyHasItem('hound_collar')) {
       // Deferred — enemies aren't spawned yet during initEncounter
@@ -371,6 +380,22 @@ class CombatEngine {
       }
     });
 
+    // Vestments of Flora: heal the most wounded ally for 2 HP each turn
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'vestments_of_flora')) {
+        const wounded = this.party.filter(a => !a.downed && a.hp < a.maxHp).sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp));
+        if (wounded.length > 0) {
+          const target = wounded[0];
+          const healAmt = Math.min(2, target.maxHp - target.hp);
+          if (healAmt > 0) {
+            target.hp += healAmt;
+            this.addLog(`Vestments of Flora heals ${target.name} for ${healAmt} HP.`);
+            if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: healAmt });
+          }
+        }
+      }
+    });
+
     // Eagle of the Lost Ninth: on turn 7, deal 20 damage to all enemies
     if (this.turn === 7 && !this._eagleUsed && this.partyHasItem('eagle_lost_ninth')) {
       this._eagleUsed = true;
@@ -413,7 +438,18 @@ class CombatEngine {
           u._scoutsLeatherBonus = 0;
         }
       }
+      // Sniper's Harness: if not hit last turn, gain +2 block and attacks ignore row
+      if (this.turn > 1 && this.unitHasItem(u, 'sniper_harness')) {
+        if (!u._wasHitThisTurn) {
+          u.block = (u.block || 0) + 2;
+          u._sniperHarnessActive = true;
+          this.addLog(`${u.name}'s Sniper's Harness grants +2 Block and row-piercing attacks.`);
+        } else {
+          u._sniperHarnessActive = false;
+        }
+      }
       u._wasHitThisTurn = false;
+      u._bearskinRage = 0;
       u._damageShield = 0;
       u._intercept = false;
       // Bone Totem stun: skip this turn
@@ -893,8 +929,8 @@ class CombatEngine {
   getValidEnemyTargets(skill, unit) {
     const alive = this.enemies.filter(e => !e.dead);
     if (skill.ignoreRow) return alive;
-    // Huntsman's Arrow: attacks can target any row
-    if (unit && this.unitHasItem(unit, 'huntsmans_arrow')) return alive;
+    // Huntsman's Arrow / Sniper's Harness: attacks can target any row
+    if (unit && (this.unitHasItem(unit, 'huntsmans_arrow') || unit._sniperHarnessActive)) return alive;
     const front = alive.filter(e => e.row === 'front');
     if (front.length > 0) return front;
     return alive;
@@ -1038,9 +1074,10 @@ class CombatEngine {
         scaledDamage = Math.round(result.damage * scale);
         if (scale > 1.05) parts.push(`Morale fuels the charge! (x${scale.toFixed(1)})`);
       }
-      // Bonus damage scaling: halfBonusDmg = 0.5x, bonusDmgScale = custom multiplier
+      // Bonus damage scaling: only scales own equipment damage, buff damage always full
       const dmgScale = result.bonusDmgScale || (result.halfBonusDmg ? 0.5 : 1);
-      const effectiveBonusDmg = dmgScale !== 1 ? Math.floor(bonusDmg * dmgScale) : bonusDmg;
+      const ownBonusDmg = (unit.equipDamage || 0) + moraleMod + chargeBonus;
+      const effectiveBonusDmg = dmgScale !== 1 ? Math.floor(ownBonusDmg * dmgScale) + buffDmg : bonusDmg;
       // Overrun: log bonus from matching dice
       if (result._overrunBonus) {
         parts.push(`Overrun! (+${result._overrunBonus})`);
@@ -1058,6 +1095,17 @@ class CombatEngine {
       if (result.target._condemned && result.target._condemned > 0) {
         total = Math.round(total * 1.3);
         parts.push('Condemned! (+30%)');
+      }
+      // Pilum of the Lost: every 3rd attack deals double damage
+      if (this.unitHasItem(unit, 'pilum_of_the_lost')) {
+        if (!unit._pilumCount) unit._pilumCount = 0;
+        unit._pilumCount++;
+        if (unit._pilumCount >= 3) {
+          unit._pilumCount = 0;
+          total *= 2;
+          parts.push('Pilum of the Lost strikes true! (x2)');
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'x2!', color: 'var(--gold)' });
+        }
       }
       // Night Owl Pendant: +bonus damage vs back-row enemies (scales with level)
       if (result.target.row === 'back' && this.unitHasItem(unit, 'night_owl_pendant')) {
@@ -1132,6 +1180,33 @@ class CombatEngine {
         unit.hp = Math.min(unit.maxHp, unit.hp + bigHeal);
         unit.stats.healingDone += bigHeal;
         parts.push(`Blood-Iron Gladius heals ${bigHeal} HP.`);
+      }
+
+      // Fury of Vulcan: attacks deal 50% splash damage to adjacent enemies
+      if (this.unitHasItem(unit, 'fury_of_vulcan') && total > 0 && result.target.row) {
+        const vulcanDmg = Math.max(1, Math.round(total * 0.5));
+        const sameRow = this.enemies.filter(e => !e.dead && e.row === result.target.row && e !== result.target);
+        sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
+        const adjacent = sameRow.filter(e => Math.abs(e.index - result.target.index) <= 2).slice(0, 2);
+        adjacent.forEach(e => {
+          let sDmg = vulcanDmg;
+          if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+          e.hp = Math.max(0, e.hp - sDmg);
+          unit.stats.damageDealt += sDmg;
+        });
+        if (adjacent.length > 0) parts.push(`Fury of Vulcan burns ${adjacent.map(e => e.name).join(' and ')} for ${vulcanDmg} damage!`);
+      }
+
+      // Scorpion Greatbow: attacks pierce through to deal 3 damage to all enemies behind target
+      if (this.unitHasItem(unit, 'scorpion_greatbow') && total > 0 && result.target.row === 'front') {
+        const backRow = this.enemies.filter(e => !e.dead && e.row === 'back');
+        backRow.forEach(e => {
+          let sDmg = 3;
+          if (e.block && e.block > 0) { const ab = Math.min(e.block, sDmg); e.block -= ab; sDmg -= ab; }
+          e.hp = Math.max(0, e.hp - sDmg);
+          unit.stats.damageDealt += sDmg;
+        });
+        if (backRow.length > 0) parts.push(`Scorpion Greatbow pierces through — 3 damage to back row!`);
       }
 
       // Arminius's Champion: 15% damage reflection
@@ -1287,6 +1362,13 @@ class CombatEngine {
       if (actual > 0 && this.onVisual) {
         this.onVisual('unitHeal', { unitIndex: result.target.index, amount: actual });
       }
+      // Bone Saw of Asclepius: healing grants target +2 damage for 1 attack
+      if (this.unitHasItem(unit, 'bone_saw_of_asclepius') && actual > 0) {
+        let bsAttacks = 1;
+        if (this.unitHasItem(result.target, 'sigil_of_the_ninth')) bsAttacks += 1;
+        result.target.buffs.push({ damage: 2, attacksLeft: bsAttacks });
+        parts.push(`Bone Saw of Asclepius empowers ${result.target.name} — +2 damage (${bsAttacks === 1 ? 'next attack' : bsAttacks + ' attacks'}).`);
+      }
       // Special: Marsh Fang — healing clears 1 poison from target
       if (this.unitHasItem(unit, 'marsh_fang') && result.target.poison > 0) {
         result.target.poison = Math.max(0, result.target.poison - 1);
@@ -1421,6 +1503,8 @@ class CombatEngine {
           let buffAttacks = attacks;
           // Sigil of the Ninth: buff effects last 1 extra attack
           if (this.unitHasItem(u, 'sigil_of_the_ninth')) buffAttacks += 1;
+          // Eagle Standard: buff skills grant 1 extra attack
+          if (this.unitHasItem(unit, 'eagle_standard')) buffAttacks += 1;
           u.buffs.push({ damage: scaledBonusDmg, attacksLeft: buffAttacks });
         }
       });
@@ -1435,6 +1519,7 @@ class CombatEngine {
       const selfBonusDmg = (result.buffSelf.bonusDamage || 0) + Math.floor((unit.equipDamage || 0) / 2);
       let buffAttacks = selfAttacks;
       if (this.unitHasItem(unit, 'sigil_of_the_ninth')) buffAttacks += 1;
+      if (this.unitHasItem(unit, 'eagle_standard')) buffAttacks += 1;
       unit.buffs.push({ damage: selfBonusDmg, attacksLeft: buffAttacks });
       const attackStr = selfAttacks === 1 ? 'next attack' : `next ${selfAttacks} attacks`;
       parts.push(`${unit.name} gains +${selfBonusDmg} damage (${attackStr}).`);
@@ -1856,6 +1941,17 @@ class CombatEngine {
           }
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
           if (this.partyHasItem('chiefs_spear')) moraleRestore += 3;
+          // Sword of Germanicus: kills grant +5 morale and heal 2 HP
+          if (this.partyHasItem('sword_of_germanicus')) {
+            moraleRestore += 5;
+            this.party.forEach(u => {
+              if (!u.downed && this.unitHasItem(u, 'sword_of_germanicus') && u.hp < u.maxHp) {
+                const healAmt = Math.min(2, u.maxHp - u.hp);
+                u.hp += healAmt;
+                if (healAmt > 0) this.addLog(`Sword of Germanicus heals ${u.name} for ${healAmt} HP.`);
+              }
+            });
+          }
           this.morale = Math.min(100, this.morale + moraleRestore);
           this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
@@ -2214,6 +2310,15 @@ class CombatEngine {
           target.equipDamage++;
           this.addLog(`${target.name}'s rage grows! (+1 damage, ${target._mushroomRage}/5)`);
           if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: `Rage ${target._mushroomRage}!`, color: 'var(--red-bright)' });
+        }
+      }
+      // Bearskin Aegis: when hit, gain +1 damage for next attack (max +4)
+      if (dmg > 0 && this.unitHasItem(target, 'bearskin_aegis')) {
+        if (!target._bearskinRage) target._bearskinRage = 0;
+        if (target._bearskinRage < 4) {
+          target._bearskinRage++;
+          target.buffs.push({ damage: 1, attacksLeft: 1 });
+          this.addLog(`Bearskin Aegis — ${target.name} channels pain into fury! (+1 damage)`);
         }
       }
       // Wolf Pelt: first hit each combat deals less damage (scales with level)
