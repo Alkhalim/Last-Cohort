@@ -232,7 +232,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Gore Charge", "damage": 10, "chance": 0.3, "text": "charges with lowered tusks" },
       { "name": "Thrashing Fury", "damage": 7, "chance": 0.25, "text": "thrashes wildly, striking everything", "aoe": true },
-      { "name": "Call the Brood", "damage": 0, "chance": 0.25, "text": "bellows into the swamp — her young answer", "spawn": "boar_youngling", "cooldown": 3 },
+      { "name": "Call the Brood", "damage": 0, "chance": 0.20, "text": "bellows into the swamp — her young answer", "spawn": "boar_youngling", "cooldown": 5 },
       { "name": "Mother's Wrath", "damage": 12, "morale": -10, "chance": 0.2, "text": "rears up and brings crushing weight down", "cooldown": 1 }
     ]
   },

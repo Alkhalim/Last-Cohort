@@ -14,7 +14,7 @@ const RAW_ENCOUNTERS = {
     { "name": "Arminius's Champion", "enemies": ["arminius_champion", "cheruscan_raider"], "intro": "The Champion of Arminius blocks your path." },
     { "name": "The Grove Witch", "enemies": ["grove_witch", "bog_seer", "marsh_wolf"], "intro": "Green flame parts the trees. The forest itself rises." },
     { "name": "The Silent Huntsman", "minDifficulty": 2, "enemies": ["silent_huntsman", "sling_hunter", "cheruscan_raider"], "intro": "Arrows from the shadows. The Huntsman has found you." },
-    { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "war_boar", "boar_youngling", "boar_youngling"], "intro": "The swamp shakes. Something massive rises, flanked by her brood." },
+    { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "war_boar", "boar_youngling"], "intro": "The swamp shakes. Something massive rises, flanked by her brood." },
     { "name": "The Bone Speaker", "minDifficulty": 4, "enemies": ["bone_speaker", "cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Bones rattle. The dead walk at his command. A seer chants behind them." }
   ],
   "threatLevels": {
