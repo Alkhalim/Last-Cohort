@@ -424,6 +424,11 @@ class Game {
       const selected = this.selectedPartyClasses.includes(classId);
       const primaryTag = data.tags.find(t => t !== 'roman') || 'roman';
       const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
+      const complexity = data.complexity || 1;
+      const complexityLabel = ['Simple', 'Moderate', 'Complex'][complexity - 1];
+      const complexityPips = Array.from({ length: 3 }, (_, i) =>
+        `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
+      ).join('');
       html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
         <div class="ps-class-header">
           <span class="ps-class-name" style="color:var(--class-${primaryTag})">${data.name}</span>
@@ -431,7 +436,10 @@ class Game {
           <span class="ps-class-tags">${tagPips}</span>
         </div>
         <div class="ps-class-desc">${data.description}</div>
-        <div class="ps-class-hp">HP: ${data.maxHp}</div>
+        <div class="ps-class-meta">
+          <span class="ps-class-hp">HP: ${data.maxHp}</span>
+          <span class="ps-class-complexity">${complexityPips} <span class="complexity-label">${complexityLabel}</span></span>
+        </div>
         <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
       </div>`;
     }

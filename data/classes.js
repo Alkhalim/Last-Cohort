@@ -9,6 +9,7 @@ const RAW_CLASSES = {
     "title": "LEG",
     "maxHp": 32,
     "tags": ["melee", "roman"],
+    "complexity": 1,
     "equipSlots": { "weapon": 2, "armor": 3, "trinket": 2 },
     "description": "Heavy infantry. Reliable damage and strong defense.",
     "passive": {
@@ -84,6 +85,7 @@ const RAW_CLASSES = {
     "title": "CEN",
     "maxHp": 27,
     "tags": ["command", "roman"],
+    "complexity": 2,
     "equipSlots": { "weapon": 2, "armor": 2, "trinket": 3 },
     "description": "Officer. Buffs allies and controls the battlefield.",
     "passive": {
@@ -160,6 +162,7 @@ const RAW_CLASSES = {
     "title": "MED",
     "maxHp": 23,
     "tags": ["support", "roman"],
+    "complexity": 1,
     "equipSlots": { "weapon": 1, "armor": 1, "trinket": 5 },
     "description": "Field surgeon. Heals, poisons, and manages attrition.",
     "passive": {
@@ -236,6 +239,7 @@ const RAW_CLASSES = {
     "title": "SAG",
     "maxHp": 22,
     "tags": ["ranged", "roman"],
+    "complexity": 2,
     "equipSlots": { "weapon": 3, "armor": 1, "trinket": 3 },
     "description": "Roman archer. Fragile but strikes any row with precision.",
     "passive": {
@@ -316,6 +320,7 @@ const RAW_CLASSES = {
     "title": "SIG",
     "maxHp": 25,
     "tags": ["command", "roman"],
+    "complexity": 3,
     "equipSlots": { "weapon": 1, "armor": 3, "trinket": 3 },
     "description": "Standard Bearer. Rallies the cohort with morale and buffs.",
     "passive": {
@@ -392,6 +397,7 @@ const RAW_CLASSES = {
     "title": "COR",
     "maxHp": 23,
     "tags": ["support", "roman"],
+    "complexity": 3,
     "equipSlots": { "weapon": 1, "armor": 2, "trinket": 4 },
     "description": "Trumpeter. Debuffs enemies and supports allies with sound.",
     "passive": {
@@ -469,6 +475,7 @@ const RAW_CLASSES = {
     "title": "EQU",
     "maxHp": 25,
     "tags": ["melee", "roman"],
+    "complexity": 2,
     "equipSlots": { "weapon": 3, "armor": 2, "trinket": 2 },
     "description": "Roman cavalry. Devastating charge openers that can strike any target.",
     "passive": {
@@ -550,6 +557,7 @@ const RAW_CLASSES = {
     "title": "BAL",
     "maxHp": 20,
     "tags": ["ranged", "roman"],
+    "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 1, "trinket": 4 },
     "description": "Roman siege crossbowman. Every hit weakens the enemy, reducing their damage.",
     "passive": {
@@ -629,6 +637,7 @@ const RAW_CLASSES = {
     "title": "PRA",
     "maxHp": 30,
     "tags": ["melee", "elite", "roman"],
+    "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
     "unlockCondition": "Beat March 5",

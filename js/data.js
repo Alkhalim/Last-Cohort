@@ -387,6 +387,7 @@ function buildClassData(rawClasses) {
       passive: { ...rawClass.passive },
       skills: rawClass.skills.map(s => buildSkill(s)),
       equipSlots: rawClass.equipSlots || { weapon: 2, armor: 2, trinket: 3 },
+      complexity: rawClass.complexity || 1,
     };
     if (rawClass.hidden) result[classId].hidden = true;
     if (rawClass.unlockCondition) result[classId].unlockCondition = rawClass.unlockCondition;
