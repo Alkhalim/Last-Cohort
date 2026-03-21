@@ -91,6 +91,9 @@ class GameUI {
           this.showStatusPopup(`enemy-${data.enemyIndex}`, data.text, data.color || 'var(--gold)');
         }
         break;
+      case 'skillCutIn':
+        this.showSkillCutIn(data.classTitle, data.skillName);
+        break;
       case 'dicePassive':
         if (data.triggers) {
           data.triggers.forEach(t => {
@@ -130,6 +133,31 @@ class GameUI {
 
     screen.classList.add(shakeClass);
     setTimeout(() => screen.classList.remove(shakeClass), duration);
+  }
+
+  // Skill cut-in portrait — slides in from left, holds, drifts out right
+  showSkillCutIn(classTitle, skillName) {
+    // Remove any existing cut-in
+    const existing = document.getElementById('skill-cutin');
+    if (existing) existing.remove();
+
+    const cutin = document.createElement('div');
+    cutin.id = 'skill-cutin';
+    cutin.className = 'skill-cutin';
+    cutin.innerHTML = `
+      <img class="skill-cutin-portrait" src="assets/${classTitle}.png" alt="${classTitle}">
+      <div class="skill-cutin-name">${skillName}</div>
+    `;
+    document.getElementById('game').appendChild(cutin);
+
+    // Trigger animation
+    requestAnimationFrame(() => cutin.classList.add('active'));
+
+    // Remove after animation completes
+    setTimeout(() => {
+      cutin.classList.add('exit');
+      setTimeout(() => cutin.remove(), 400);
+    }, 600);
   }
 
   showScreen(id) {

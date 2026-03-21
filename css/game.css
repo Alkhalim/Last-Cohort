@@ -3810,3 +3810,113 @@ html, body {
   0% { text-shadow: 0 0 10px rgba(201, 162, 39, 0.4); }
   100% { text-shadow: 0 0 25px rgba(201, 162, 39, 0.8), 0 0 50px rgba(201, 162, 39, 0.3); }
 }
+
+/* ================================================================
+   SKILL CUT-IN PORTRAIT
+   ================================================================ */
+
+.skill-cutin {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 900;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.skill-cutin-portrait {
+  position: absolute;
+  left: -50%;
+  height: 80%;
+  max-height: 400px;
+  object-fit: contain;
+  filter: drop-shadow(4px 0 15px rgba(0, 0, 0, 0.8));
+  opacity: 0;
+  transition: none;
+}
+
+.skill-cutin-name {
+  position: absolute;
+  bottom: 18%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 0.15em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(201, 162, 39, 0.4);
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: none;
+}
+
+/* Slide in */
+.skill-cutin.active .skill-cutin-portrait {
+  animation: cutin-slide-in 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.skill-cutin.active .skill-cutin-name {
+  animation: cutin-name-in 0.25s 0.1s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+/* Slide out */
+.skill-cutin.exit .skill-cutin-portrait {
+  animation: cutin-slide-out 0.35s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
+}
+
+.skill-cutin.exit .skill-cutin-name {
+  animation: cutin-name-out 0.25s ease-in forwards;
+}
+
+@keyframes cutin-slide-in {
+  0% {
+    left: -50%;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    left: 2%;
+    opacity: 0.9;
+  }
+}
+
+@keyframes cutin-slide-out {
+  0% {
+    left: 2%;
+    opacity: 0.9;
+  }
+  100% {
+    left: 15%;
+    opacity: 0;
+  }
+}
+
+@keyframes cutin-name-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes cutin-name-out {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}

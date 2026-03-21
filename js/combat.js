@@ -1045,6 +1045,10 @@ class CombatEngine {
 
     const usedDice = diceIds.map(id => this.dicePool.dice.find(d => d.id === id));
     diceIds.forEach(id => this.dicePool.useDie(id));
+
+    // Trigger cut-in portrait for the attacking unit
+    if (this.onVisual) this.onVisual('skillCutIn', { classTitle: unit.title, skillName: skill.name });
+
     const result = skill.execute(unit, targets, usedDice);
 
     // Overrun: bonus damage for each other die in the roll matching the used die's value
