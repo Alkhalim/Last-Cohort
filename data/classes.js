@@ -299,7 +299,7 @@ const RAW_CLASSES = {
         "id": "caltrops", "name": "Caltrops", "cooldown": 2,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "description": "Scatter caltrops across the front line. Target and adjacent enemies are marked (+20% damage). They take 3 damage if they attack.",
-        "effects": { "caltrops": 3 }
+        "effects": { "caltrops": 3, "bonusDmgScale": 0.3 }
       },
       {
         "id": "snare_trap", "name": "Snare Trap", "cooldown": 1,
@@ -381,8 +381,8 @@ const RAW_CLASSES = {
       {
         "id": "sacrifice_standard", "name": "Sacrifice the Standard", "cooldown": 2,
         "cost": { "type": "any" }, "target": "all_enemies",
-        "description": "Spend 20 Morale to deal 8 damage to all enemies.",
-        "effects": { "damageAll": 8, "moraleCost": 20 }
+        "description": "Spend 20 Morale to deal 8 damage to all enemies. Consumes all damage buffs.",
+        "effects": { "damageAll": 8, "moraleCost": 20, "consumeAllBuffs": true }
       },
       {
         "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 3,

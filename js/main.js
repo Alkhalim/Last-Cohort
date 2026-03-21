@@ -6,6 +6,7 @@ const RENOWN_STORAGE_KEY = 'lastCohort_renown';
 const SETTINGS_STORAGE_KEY = 'lastCohort_settings';
 const STATS_STORAGE_KEY = 'lastCohort_stats';
 const ACHIEVEMENTS_STORAGE_KEY = 'lastCohort_achievements';
+const RUN_HISTORY_STORAGE_KEY = 'lastCohort_runHistory';
 
 const MUSIC_MENU = 'assets/music.mp3';
 const MUSIC_GAMEPLAY = [
@@ -589,6 +590,11 @@ class Game {
     document.getElementById('btn-stats-back').addEventListener('click', () => this.showHomeScreen());
     document.getElementById('btn-achievements').addEventListener('click', () => this.showAchievementsScreen());
     document.getElementById('btn-achievements-back').addEventListener('click', () => this.showHomeScreen());
+
+    // Run History
+    document.getElementById('btn-run-history').addEventListener('click', () => this.showRunHistoryScreen());
+    document.getElementById('btn-run-history-back').addEventListener('click', () => this.showHomeScreen());
+    document.getElementById('btn-run-detail-back').addEventListener('click', () => this.showRunHistoryScreen());
   }
 
   // --- Stats ---
@@ -628,6 +634,168 @@ class Game {
     this.saveStats();
     this.checkAchievements();
     this.sendAnalytics(victory);
+    this.saveRunToHistory(victory);
+  }
+
+  // --- Run History ---
+  loadRunHistory() {
+    try {
+      const stored = localStorage.getItem(RUN_HISTORY_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) { return []; }
+  }
+
+  saveRunToHistory(victory) {
+    const history = this.loadRunHistory();
+    const party = this.engine.party.map(u => ({
+      classId: u.classId,
+      name: u.name,
+      title: u.title,
+      hp: u.hp,
+      maxHp: u.maxHp,
+      downed: u.downed,
+      skills: u.skills.map(s => s.name),
+      equipment: Object.entries(u.equipment).reduce((acc, [slot, ids]) => {
+        acc[slot] = ids.filter(Boolean).map(id => {
+          const item = getItemData(id);
+          return item ? { name: item.name, rarity: item.rarity, level: item.level || 1 } : null;
+        }).filter(Boolean);
+        return acc;
+      }, {}),
+      stats: { ...u.stats },
+    }));
+
+    // Determine cause of death (last log entry mentioning "falls" or "downed")
+    let causeOfDeath = '';
+    if (!victory && this.engine.combatLog) {
+      const logs = this.engine.combatLog;
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i] && (logs[i].includes('falls') || logs[i].includes('downed') || logs[i].includes('defeated'))) {
+          causeOfDeath = logs[i];
+          break;
+        }
+      }
+    }
+
+    const entry = {
+      date: new Date().toISOString(),
+      victory: victory,
+      marchesCleared: this.marchCount,
+      difficulty: this.difficulty,
+      renownEarned: this.engine.totalRenownEarned,
+      encountersCompleted: this.engine.encountersCompleted,
+      enemiesKilled: this.engine.totalEnemiesKilled,
+      party: party,
+      causeOfDeath: causeOfDeath,
+    };
+
+    history.unshift(entry);
+    // Keep only the 20 most recent runs
+    if (history.length > 20) history.length = 20;
+
+    try {
+      localStorage.setItem(RUN_HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch (e) {}
+  }
+
+  showRunHistoryScreen() {
+    this.ui.showScreen('run-history-screen');
+    const content = document.getElementById('run-history-content');
+    const history = this.loadRunHistory();
+
+    if (history.length === 0) {
+      content.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No runs recorded yet.</div>';
+      return;
+    }
+
+    // Sort by renown (highest first)
+    const sorted = [...history].sort((a, b) => b.renownEarned - a.renownEarned);
+
+    let html = '';
+    sorted.forEach((run, idx) => {
+      const partyStr = run.party.map(u => {
+        const tag = (CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags.find(t => t !== 'roman') : '') || 'roman';
+        return `<span style="color:var(--class-${tag})">${u.title}</span>`;
+      }).join(' ');
+      const date = new Date(run.date).toLocaleDateString();
+      const outcome = run.victory ? '<span style="color:var(--green-bright)">Victory</span>' : '<span style="color:var(--red-bright)">Defeat</span>';
+
+      html += `<div class="rh-entry" data-run-idx="${idx}">
+        <div class="rh-entry-top">
+          <span class="rh-entry-rank">#${idx + 1}</span>
+          <span class="rh-entry-party">${partyStr}</span>
+          <span class="rh-entry-outcome">${outcome}</span>
+        </div>
+        <div class="rh-entry-bottom">
+          <span class="rh-entry-renown">+${run.renownEarned} Renown</span>
+          <span class="rh-entry-marches">${run.marchesCleared} march${run.marchesCleared !== 1 ? 'es' : ''}</span>
+          <span class="rh-entry-date">${date}</span>
+        </div>
+      </div>`;
+    });
+    content.innerHTML = html;
+
+    // Bind clicks to show detail
+    content.querySelectorAll('.rh-entry').forEach(el => {
+      el.addEventListener('click', () => {
+        const ridx = parseInt(el.dataset.runIdx);
+        this.showRunDetail(sorted[ridx]);
+      });
+    });
+  }
+
+  showRunDetail(run) {
+    this.ui.showScreen('run-detail-screen');
+    const title = document.getElementById('run-detail-title');
+    title.textContent = run.victory ? 'VICTORY' : 'DEFEAT';
+    const content = document.getElementById('run-detail-content');
+
+    let html = '<div class="rd-stats">';
+    html += `<div class="run-summary-stat"><span class="run-summary-label">Marches Cleared</span><span class="run-summary-value">${run.marchesCleared}</span></div>`;
+    html += `<div class="run-summary-stat"><span class="run-summary-label">Encounters</span><span class="run-summary-value">${run.encountersCompleted}</span></div>`;
+    html += `<div class="run-summary-stat"><span class="run-summary-label">Enemies Killed</span><span class="run-summary-value">${run.enemiesKilled}</span></div>`;
+    html += `<div class="run-summary-stat renown-stat"><span class="run-summary-label">Renown</span><span class="run-summary-value renown-value">+${run.renownEarned}</span></div>`;
+    html += '</div>';
+
+    if (run.causeOfDeath) {
+      html += `<div class="rd-death"><strong>Last moment:</strong> ${run.causeOfDeath}</div>`;
+    }
+
+    html += '<h3 style="color:var(--text-bright);margin:12px 0 6px;font-family:Cinzel,serif;font-size:0.85rem;">COHORT</h3>';
+    run.party.forEach(u => {
+      const tag = (CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags.find(t => t !== 'roman') : '') || 'roman';
+      const status = u.downed ? '<span style="color:var(--red-bright)">FALLEN</span>' : `<span style="color:var(--green-bright)">${u.hp}/${u.maxHp} HP</span>`;
+      html += `<div class="rd-unit">
+        <div class="rd-unit-header">
+          <span style="color:var(--class-${tag})">${u.name}</span> ${status}
+        </div>`;
+
+      // Stats
+      const s = u.stats || {};
+      html += `<div class="rd-unit-stats">`;
+      if (s.damageDealt) html += `<span>${s.damageDealt} dmg dealt</span>`;
+      if (s.healingDone) html += `<span>${s.healingDone} healed</span>`;
+      if (s.damageTaken) html += `<span>${s.damageTaken} dmg taken</span>`;
+      html += `</div>`;
+
+      // Skills
+      if (u.skills && u.skills.length > 0) {
+        html += `<div class="rd-unit-skills">${u.skills.join(', ')}</div>`;
+      }
+
+      // Equipment
+      const equip = u.equipment || {};
+      const allItems = [...(equip.weapon || []), ...(equip.armor || []), ...(equip.trinket || [])];
+      if (allItems.length > 0) {
+        html += `<div class="rd-unit-items">${allItems.map(i =>
+          `<span class="rd-item rarity-${i.rarity}">${i.name}${i.level > 1 ? ' +' + (i.level - 1) : ''}</span>`
+        ).join(', ')}</div>`;
+      }
+
+      html += '</div>';
+    });
+
+    content.innerHTML = html;
   }
 
   // --- Analytics (Umami) ---

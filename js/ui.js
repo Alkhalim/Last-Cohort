@@ -1727,7 +1727,9 @@ class GameUI {
       if (finalItemId) {
         const finalItem = getItemData(finalItemId);
         const itemNativeDiff = finalItem ? (finalItem.minDifficulty || 1) : 1;
-        const bonusLevels = Math.max(0, difficulty - itemNativeDiff);
+        const scaledBonus = Math.max(0, difficulty - itemNativeDiff);
+        const minBonus = Math.max(0, Math.floor((difficulty - 1) / 2));
+        const bonusLevels = Math.max(scaledBonus, minBonus);
         this.pendingEventItem = bonusLevels > 0 ? createLeveledItem(finalItemId, bonusLevels) : finalItemId;
       } else {
         // No usable item at all — convert to Renown
@@ -2416,8 +2418,11 @@ class GameUI {
       }
       // Scale item level relative to its native difficulty tier
       // March 1 items in March 3 get +2, March 3 items in March 3 get +0
+      // Minimum floor: items always get at least floor((difficulty-1)/2) bonus levels
       const itemNativeDiff = item.minDifficulty || 1;
-      const bonusLevels = Math.max(0, difficulty - itemNativeDiff);
+      const scaledBonusLevels = Math.max(0, difficulty - itemNativeDiff);
+      const minBonusLevels = Math.max(0, Math.floor((difficulty - 1) / 2));
+      const bonusLevels = Math.max(scaledBonusLevels, minBonusLevels);
       const scaledId = bonusLevels > 0 ? createLeveledItem(itemId, bonusLevels) : itemId;
       this.pendingLoot.push(scaledId);
     }
@@ -2429,7 +2434,13 @@ class GameUI {
         return item && this.engine.party.some(u => canEquipItem(u, item));
       });
       if (usableBossItems.length > 0) {
-        this.pendingLoot.push(usableBossItems[Math.floor(Math.random() * usableBossItems.length)]);
+        const bossItemId = usableBossItems[Math.floor(Math.random() * usableBossItems.length)];
+        const bossItem = getItemData(bossItemId);
+        const bossNativeDiff = bossItem ? (bossItem.minDifficulty || 1) : 1;
+        const bossScaled = Math.max(0, difficulty - bossNativeDiff);
+        const bossMin = Math.max(0, Math.floor((difficulty - 1) / 2));
+        const bossBonusLevels = Math.max(bossScaled, bossMin);
+        this.pendingLoot.push(bossBonusLevels > 0 ? createLeveledItem(bossItemId, bossBonusLevels) : bossItemId);
       } else {
         // No usable boss items — grant Renown instead
         this.engine.totalRenownEarned += 10;
@@ -2437,9 +2448,17 @@ class GameUI {
       }
     }
 
-    // Event-triggered combat: override loot with the specified items
+    // Event-triggered combat: override loot with the specified items (scaled)
     if (this.pendingEventCombatLoot && this.pendingEventCombatLoot.length > 0) {
-      this.pendingLoot = [...this.pendingEventCombatLoot];
+      this.pendingLoot = this.pendingEventCombatLoot.map(itemId => {
+        const item = getItemData(itemId);
+        if (!item) return itemId;
+        const itemNativeDiff = item.minDifficulty || 1;
+        const scaledBonus = Math.max(0, difficulty - itemNativeDiff);
+        const minBonus = Math.max(0, Math.floor((difficulty - 1) / 2));
+        const bonusLevels = Math.max(scaledBonus, minBonus);
+        return bonusLevels > 0 ? createLeveledItem(itemId, bonusLevels) : itemId;
+      });
       this.pendingEventCombatLoot = null;
     }
 
@@ -2791,9 +2810,14 @@ class GameUI {
     const diff = window.game.difficulty || 1;
     const marchLabel = diff === 1 ? 'First March' : `March ${diff}`;
 
-    document.getElementById('run-complete-title').textContent = 'VICTORY';
-    document.getElementById('run-complete-text').textContent =
-      `Your cohort has defeated the Champion and broken through. The forest grows darker ahead, but there is still work to be done. Will you press on?`;
+    // Check if this was the final boss (march 10 - spirits defeated)
+    const isFinalVictory = diff >= 10 && this.engine.enemies &&
+      this.engine.enemies.some(e => e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus');
+
+    document.getElementById('run-complete-title').textContent = isFinalVictory ? 'THE FOREST IS SILENCED' : 'VICTORY';
+    document.getElementById('run-complete-text').textContent = isFinalVictory
+      ? 'The spirits of Arminius and Varus dissolve into the mist. The forest releases its grip. After ten marches through darkness, your cohort has broken the curse of Teutoburg. Rome will remember what you did here.'
+      : `Your cohort has defeated the Champion and broken through. The forest grows darker ahead, but there is still work to be done. Will you press on?`;
 
     const statsEl = document.getElementById('run-complete-stats');
     let html = '<div class="run-summary-section">';

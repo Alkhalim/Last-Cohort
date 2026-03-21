@@ -425,7 +425,7 @@ const RAW_EVENTS = [
     "intro": "Deep in the forest, your men stumble upon a mound of ancient stone half-swallowed by roots. Runes older than Rome are carved into the entrance. The air is cold and still. Your scouts recognize the markings — this is the barrow of Ariovistus, the great Germanic king who defied Caesar himself. His grave was never found... until now.",
     "choices": [
       { "text": "Break the seal and enter the barrow.", "outcomes": [
-        { "weight": 1.0, "text": "The stones groan as the seal shatters. From the darkness, something stirs. The dead king does not rest easy.", "effects": { "triggerCombat": { "enemies": ["revenant_of_ariovistus", "barrow_guardian", "barrow_guardian"], "name": "The Barrow of Ariovistus", "intro": "The Revenant of Ariovistus rises from his throne of bones.", "loot": ["crown_of_ariovistus", "blade_of_ariovistus"] } } }
+        { "weight": 1.0, "text": "The stones groan as the seal shatters. From the darkness, something stirs. The dead king does not rest easy.", "effects": { "triggerCombat": { "enemies": ["revenant_of_ariovistus", "barrow_guardian", "barrow_guardian", "barrow_guardian"], "name": "The Barrow of Ariovistus", "intro": "The Revenant of Ariovistus rises from his throne of bones. His court rises with him.", "loot": ["crown_of_ariovistus", "blade_of_ariovistus"] } } }
       ]},
       { "text": "Pay your respects and take what the grave offers.", "outcomes": [
         { "weight": 0.5, "text": "You kneel at the entrance. The cold wind carries a whisper — and something rolls from the darkness into the light. The dead king's crown.", "effects": { "grantItem": "crown_of_ariovistus", "morale": 10 } },

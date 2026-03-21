@@ -3607,3 +3607,113 @@ html, body {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ================================================================
+   RUN HISTORY
+   ================================================================ */
+
+.rh-entry {
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.rh-entry:hover {
+  border-color: var(--gold);
+}
+
+.rh-entry-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rh-entry-rank {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  color: var(--gold);
+  min-width: 28px;
+}
+
+.rh-entry-party {
+  flex: 1;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+.rh-entry-outcome {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.rh-entry-bottom {
+  display: flex;
+  gap: 12px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.rh-entry-renown {
+  color: var(--gold);
+}
+
+/* Run detail */
+
+.rd-stats {
+  margin-bottom: 12px;
+}
+
+.rd-death {
+  font-size: 0.75rem;
+  color: var(--red-bright);
+  padding: 8px;
+  background: rgba(200, 60, 60, 0.1);
+  border: 1px solid rgba(200, 60, 60, 0.3);
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.rd-unit {
+  padding: 8px;
+  margin-bottom: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.rd-unit-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.rd-unit-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+
+.rd-unit-skills {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+
+.rd-unit-items {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+}
+
+.rd-item.rarity-common { color: var(--text-dim); }
+.rd-item.rarity-uncommon { color: var(--green-bright); }
+.rd-item.rarity-rare { color: var(--blue-bright); }
+.rd-item.rarity-epic { color: var(--purple); }

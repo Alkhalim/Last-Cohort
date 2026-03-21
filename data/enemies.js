@@ -101,24 +101,28 @@ const RAW_ENEMIES = {
   },
   "revenant_of_ariovistus": {
     "id": "revenant_of_ariovistus", "name": "Revenant of Ariovistus",
-    "maxHp": 48, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 25,
-    "description": "The dead king rises from his barrow, crowned in rust and fury. His strikes carry the weight of a kingdom that refused to kneel.",
+    "maxHp": 55, "row": "back", "damage": [8, 14], "speed": 2, "xpValue": 25,
+    "description": "The dead king commands from behind his court. His ranged strikes are weaker, but when his guardians fall he strides forward — crowned in rust and fury, consuming the bones of the fallen to grow stronger.",
     "ai": "aggressive",
     "actions": [
-      { "name": "King's Wrath", "damage": 12, "chance": 0.35, "text": "strikes with the fury of a dead kingdom" },
-      { "name": "Barrow Chill", "damage": 5, "morale": -15, "chance": 0.25, "text": "breathes the cold of the grave", "aoe": true, "cooldown": 1 },
-      { "name": "Undying Defiance", "damage": 0, "chance": 0.2, "text": "roars in defiance — all soldiers lose their nerve", "morale": -20 },
-      { "name": "Grave Strike", "damage": 9, "chance": 0.2, "text": "lunges from the darkness", "ignoreRow": true }
-    ]
+      { "name": "King's Wrath", "damage": 11, "chance": 0.3, "text": "strikes with the fury of a dead kingdom", "phase": "melee" },
+      { "name": "Grave Command", "damage": 4, "morale": -10, "chance": 0.3, "text": "points from the shadows — dread washes over a soldier", "ignoreRow": true, "phase": "ranged" },
+      { "name": "Barrow Chill", "damage": 5, "morale": -15, "chance": 0.2, "text": "breathes the cold of the grave", "aoe": true, "cooldown": 1 },
+      { "name": "Raise Guardian", "damage": 0, "chance": 0.2, "text": "claws at the earth — bones reassemble", "spawn": "barrow_guardian" },
+      { "name": "Crown of the Dead", "damage": 0, "chance": 0.15, "text": "raises his crown — the grave answers", "blockSelf": 10, "morale": -10, "phase": "ranged" },
+      { "name": "Grave Strike", "damage": 9, "chance": 0.15, "text": "lunges from the darkness", "phase": "melee" }
+    ],
+    "phaseShift": { "afterTurns": 99, "toRow": "front" }
   },
   "barrow_guardian": {
     "id": "barrow_guardian", "name": "Barrow Guardian",
-    "maxHp": 16, "row": "front", "damage": [4, 7], "speed": 1, "xpValue": 5,
-    "description": "Skeletal warriors that claw from the earth around the king's grave, bound to protect him in death as they did in life.",
+    "maxHp": 14, "row": "front", "damage": [4, 7], "speed": 1, "xpValue": 3,
+    "description": "Skeletal warriors bound to the king in death. When they fall, Ariovistus consumes their essence — healing himself and growing stronger.",
     "ai": "aggressive",
     "actions": [
-      { "name": "Bone Claw", "damage": 5, "chance": 0.6, "text": "rakes with bony claws" },
-      { "name": "Grave Grasp", "damage": 3, "chance": 0.4, "text": "drags at a soldier's legs", "morale": -5 }
+      { "name": "Bone Claw", "damage": 5, "chance": 0.5, "text": "rakes with bony claws" },
+      { "name": "Grave Grasp", "damage": 3, "chance": 0.3, "text": "drags at a soldier's legs", "morale": -5 },
+      { "name": "Shield the King", "damage": 0, "chance": 0.2, "text": "throws itself before the king", "blockAllEnemies": 3 }
     ]
   },
   "arminius_champion": {
@@ -222,14 +226,14 @@ const RAW_ENEMIES = {
 
   "ironbound_champion": {
     "id": "ironbound_champion", "name": "Ironbound Champion",
-    "maxHp": 24, "row": "front", "damage": [5, 10], "speed": 1, "xpValue": 7,
+    "maxHp": 24, "row": "front", "damage": [8, 16], "speed": 1, "xpValue": 7,
     "minDifficulty": 3,
     "description": "A warrior encased in layers of scavenged shields and iron plate. He builds his defenses, then unleashes them in a single devastating charge. Kill him before the shieldbearers make him unstoppable.",
     "ai": "aggressive",
     "actions": [
-      { "name": "Iron Brace", "damage": 0, "chance": 0.4, "text": "hunkers behind layered shields", "blockSelf": 5 },
-      { "name": "Shield Charge", "damage": 3, "chance": 0.35, "text": "charges forward, smashing with his shield wall", "damageFromBlock": true },
-      { "name": "Crushing Slam", "damage": 6, "chance": 0.25, "text": "brings an armored fist down" }
+      { "name": "Iron Brace", "damage": 0, "chance": 0.35, "text": "hunkers behind layered shields", "blockSelf": 8 },
+      { "name": "Shield Charge", "damage": 5, "chance": 0.35, "text": "charges forward, smashing with his shield wall", "damageFromBlock": true },
+      { "name": "Crushing Slam", "damage": 10, "chance": 0.3, "text": "brings an armored fist down" }
     ]
   },
 
@@ -355,7 +359,7 @@ const RAW_ENEMIES = {
   },
   "fog_illusion": {
     "id": "fog_illusion", "name": "Fog Illusion",
-    "maxHp": 8, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 1,
+    "maxHp": 16, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 1,
     "description": "A shape in the fog that looks like a warrior but dissolves when struck. It draws attacks away from the Weaver.",
     "ai": "aggressive",
     "actions": [
@@ -375,6 +379,64 @@ const RAW_ENEMIES = {
       { "name": "Trample", "damage": 7, "chance": 0.25, "text": "tramples everything in its path", "aoe": true, "cooldown": 1 },
       { "name": "Antler Rake", "damage": 8, "poisonTarget": 3, "chance": 0.25, "text": "rakes with cursed antlers — wounds bleed freely" },
       { "name": "Retreat", "damage": 0, "chance": 0.2, "text": "leaps to the treeline and begins to heal" }
+    ]
+  },
+
+  // === STORY BOSSES ===
+
+  "corpse_of_arminius": {
+    "id": "corpse_of_arminius", "name": "Corpse of Arminius",
+    "maxHp": 65, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 30,
+    "minDifficulty": 6,
+    "isBoss": true, "ai": "boss",
+    "description": "The reanimated corpse of the Germanic chieftain who destroyed three Roman legions at Teutoburg. He wears Roman training armor, corrupted by death. His discipline is inhuman.",
+    "actions": [
+      { "name": "Betrayer's Blade", "damage": 12, "chance": 0.3, "text": "strikes with the blade that betrayed Rome" },
+      { "name": "Legionary Drill", "damage": 8, "chance": 0.25, "text": "executes a Roman drill strike against the whole line", "aoe": true, "cooldown": 1 },
+      { "name": "Ghost Command", "damage": 0, "chance": 0.2, "text": "raises a hand — a cursed warrior claws from the mud", "spawn": "cursed_warrior" },
+      { "name": "Death's Discipline", "damage": 0, "chance": 0.25, "text": "barks a dead command — his warriors brace", "blockAllEnemies": 4, "blockSelf": 6 }
+    ]
+  },
+
+  "corpse_of_varus": {
+    "id": "corpse_of_varus", "name": "Corpse of Varus",
+    "maxHp": 50, "row": "back", "damage": [6, 12], "speed": 1, "xpValue": 35,
+    "minDifficulty": 8,
+    "isBoss": true, "ai": "boss",
+    "description": "The corrupted spirit of Publius Quinctilius Varus, the Roman general who led his legions to slaughter. He commands the dead from the back row, whispering Rome's failure.",
+    "actions": [
+      { "name": "Commander's Lash", "damage": 7, "morale": -15, "chance": 0.3, "text": "lashes out with spectral authority", "ignoreRow": true },
+      { "name": "Rally the Dead", "damage": 0, "chance": 0.2, "text": "raises a hand — the dead answer his command", "spawn": "cursed_warrior" },
+      { "name": "Shield Formation", "damage": 0, "chance": 0.25, "text": "commands a ghostly formation — all warriors brace", "blockAllEnemies": 6 },
+      { "name": "Varus's Shame", "damage": 0, "morale": -25, "chance": 0.25, "text": "whispers of Rome's failure — your men's resolve crumbles", "cooldown": 2 }
+    ]
+  },
+
+  "spirit_of_arminius": {
+    "id": "spirit_of_arminius", "name": "Spirit of Arminius",
+    "maxHp": 45, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 40,
+    "minDifficulty": 10,
+    "isBoss": true, "ai": "boss",
+    "description": "The defiant spirit of Arminius, bound to Varus in death. They cannot be separated — damaging one heals the other. Both must fall.",
+    "actions": [
+      { "name": "Phantom Blade", "damage": 10, "chance": 0.35, "text": "slashes with a spectral blade" },
+      { "name": "Spirit Charge", "damage": 7, "chance": 0.25, "text": "charges through the line as a ghost", "aoe": true, "cooldown": 1 },
+      { "name": "Defiance", "damage": 0, "morale": -12, "chance": 0.2, "text": "roars defiance — his spirit hardens", "blockSelf": 8 },
+      { "name": "Wrath of the Forest", "damage": 12, "poisonTarget": 3, "chance": 0.2, "text": "channels the forest's wrath", "ignoreRow": true }
+    ]
+  },
+
+  "spirit_of_varus": {
+    "id": "spirit_of_varus", "name": "Spirit of Varus",
+    "maxHp": 40, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 40,
+    "minDifficulty": 10,
+    "isBoss": true, "ai": "boss",
+    "description": "The guilt-wracked spirit of Varus, bound to Arminius in death. They cannot be separated — damaging one heals the other. Both must fall.",
+    "actions": [
+      { "name": "Spectral Command", "damage": 6, "morale": -12, "chance": 0.3, "text": "commands from beyond the grave", "ignoreRow": true },
+      { "name": "Legion's Ghost", "damage": 5, "chance": 0.25, "text": "summons the ghosts of the lost legions", "aoe": true },
+      { "name": "Guilt's Embrace", "damage": 0, "morale": -20, "chance": 0.2, "text": "drowns your men in the weight of Rome's guilt", "cooldown": 1 },
+      { "name": "Death's Verdict", "damage": 14, "chance": 0.25, "text": "passes a final verdict from beyond death", "ignoreRow": true, "cooldown": 1 }
     ]
   }
 };

@@ -215,6 +215,18 @@ class CombatEngine {
       justSpawned: true,
     };
     this.enemies.push(enemy);
+    // Ironbound Champion: starts with block equal to half HP
+    if (data.id === 'ironbound_champion') {
+      const ironBlock = Math.floor(enemy.maxHp / 2);
+      enemy.block += ironBlock;
+      startBlock += ironBlock;
+    }
+    // Fog Illusion: starts with block equal to HP
+    if (data.id === 'fog_illusion') {
+      enemy.block += enemy.maxHp;
+      startBlock += enemy.maxHp;
+    }
+
     this.addLog(`${enemy.name} appears!${startBlock > 0 ? ` (${startBlock} Block)` : ''}`);
 
     // Runecarver: grant block to all other enemies when spawning (scales with difficulty)
@@ -557,12 +569,45 @@ class CombatEngine {
       }
     }
 
+    // Corpse of Varus: every 2 turns, corrupt one die to become a 1
+    const corpseVarus = this.enemies.find(e => e.id === 'corpse_of_varus' && !e.dead);
+    if (corpseVarus && this.turn % 2 === 0) {
+      const available = this.dicePool.dice.filter(d => !d.used && d.value > 1);
+      if (available.length > 0) {
+        const victim = available[Math.floor(Math.random() * available.length)];
+        const oldVal = victim.value;
+        victim.value = 1;
+        this.addLog(`Varus's corrupted command forces a die from ${oldVal} to 1!`);
+        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
+      }
+    }
+
     // Blood Stag: regenerates 3 HP per turn while in back row
     const bloodStag = this.enemies.find(e => e.id === 'blood_stag' && !e.dead && e.row === 'back');
     if (bloodStag && bloodStag.hp < bloodStag.maxHp) {
       const regen = Math.min(3, bloodStag.maxHp - bloodStag.hp);
       bloodStag.hp += regen;
       this.addLog(`${bloodStag.name} regenerates ${regen} HP in the treeline.`);
+    }
+
+    // Spirits of Arminius & Varus: resurrection timer
+    for (const spirit of this.enemies) {
+      if (!spirit.dead && spirit._resurrectTimer !== undefined && spirit._resurrectTimer > 0) {
+        spirit._resurrectTimer--;
+        if (spirit._resurrectTimer <= 0 && spirit._resurrectTarget) {
+          const fallen = spirit._resurrectTarget;
+          fallen.dead = false;
+          fallen.hp = Math.floor(fallen.maxHp * 0.3);
+          fallen.poison = 0;
+          fallen.block = 0;
+          this.addLog(`${spirit.name} channels — ${fallen.name} rises again at ${fallen.hp} HP!`);
+          if (this.onVisual) this.onVisual('screenShake', {});
+          spirit._resurrectTarget = null;
+          spirit._resurrectTimer = undefined;
+        } else if (spirit._resurrectTimer > 0) {
+          this.addLog(`${spirit.name} channels resurrection... ${spirit._resurrectTimer} turn(s) remain.`);
+        }
+      }
     }
 
     // Dice passives trigger on rolled values
@@ -1255,6 +1300,24 @@ class CombatEngine {
         parts.push(`Champion's armor reflects ${reflected} damage!`);
       }
 
+      // Spirits of Arminius & Varus: damaging one heals the other 25%
+      if (result.target.id === 'spirit_of_arminius' && total > 0) {
+        const otherSpirit = this.enemies.find(e => e.id === 'spirit_of_varus' && !e.dead);
+        if (otherSpirit) {
+          const healAmt = Math.max(1, Math.floor(total * 0.25));
+          otherSpirit.hp = Math.min(otherSpirit.maxHp, otherSpirit.hp + healAmt);
+          parts.push(`The bond between spirits heals ${otherSpirit.name} for ${healAmt} HP!`);
+        }
+      }
+      if (result.target.id === 'spirit_of_varus' && total > 0) {
+        const otherSpirit = this.enemies.find(e => e.id === 'spirit_of_arminius' && !e.dead);
+        if (otherSpirit) {
+          const healAmt = Math.max(1, Math.floor(total * 0.25));
+          otherSpirit.hp = Math.min(otherSpirit.maxHp, otherSpirit.hp + healAmt);
+          parts.push(`The bond between spirits heals ${otherSpirit.name} for ${healAmt} HP!`);
+        }
+      }
+
       // Splash: half damage to all other enemies
       if (result.splashHalf) {
         const halfDmg = Math.max(1, Math.floor((result.damage + bonusDmg) / 2));
@@ -1622,6 +1685,22 @@ class CombatEngine {
         }
       });
       parts.push(`${unit.name} uses ${skill.name} \u2014 deals ${aoeDmg} damage to all enemies.`);
+      // Spirits of Arminius & Varus: AoE heals the other spirit 25% of damage dealt to each
+      const spiritA = this.enemies.find(e => e.id === 'spirit_of_arminius' && !e.dead);
+      const spiritV = this.enemies.find(e => e.id === 'spirit_of_varus' && !e.dead);
+      if (spiritA && spiritV) {
+        // Each spirit heals the other for 25% of AoE damage taken
+        const healForV = Math.max(1, Math.floor(aoeDmg * 0.25));
+        const healForA = Math.max(1, Math.floor(aoeDmg * 0.25));
+        spiritV.hp = Math.min(spiritV.maxHp, spiritV.hp + healForV);
+        spiritA.hp = Math.min(spiritA.maxHp, spiritA.hp + healForA);
+        parts.push(`The spirits' bond pulses — each heals ${healForV} HP!`);
+      }
+    }
+    // Consume all damage buffs after dealing damage
+    if (result.consumeAllBuffs) {
+      unit.buffs = [];
+      parts.push(`All damage buffs consumed.`);
     }
     // Heal all allies
     if (result.healAll) {
@@ -1776,9 +1855,11 @@ class CombatEngine {
       sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
       const adjacent = sameRow.filter(e => Math.abs(e.index - result.target.index) <= 2).slice(0, 2);
       caltropTargets.push(...adjacent);
+      const caltropBonus = Math.floor((unit.equipDamage || 0) * 0.3);
+      const caltropDmg = result.caltrops + caltropBonus;
       caltropTargets.forEach(e => {
         e._marked = 2;
-        e._snareTrap = result.caltrops;
+        e._snareTrap = caltropDmg;
       });
       const names = caltropTargets.map(e => e.name).join(', ');
       parts.push(`Caltrops! ${names} marked and trapped!`);
@@ -2056,6 +2137,24 @@ class CombatEngine {
             this.addLog(`${mireMother.name} howls with rage! Her attacks grow stronger!`);
           }
 
+          // Revenant of Ariovistus: consumes fallen guardians — heals and gains damage
+          const revenant = this.enemies.find(b => b.id === 'revenant_of_ariovistus' && !b.dead);
+          if (revenant && e.id === 'barrow_guardian') {
+            const healAmt = Math.min(8, revenant.maxHp - revenant.hp);
+            revenant.hp += healAmt;
+            revenant.actions.forEach(a => { if (a.damage > 0) a.damage += 2; });
+            revenant.block = (revenant.block || 0) + 5;
+            this.addLog(`${revenant.name} consumes the fallen guardian! (+${healAmt} HP, +2 damage, +5 Block)`);
+            if (this.onVisual) this.onVisual('statusText', { enemyIndex: revenant.index, text: 'Consumed!', color: 'var(--purple)' });
+            // Move to front row when 2+ guardians have fallen
+            const deadGuardians = this.enemies.filter(g => g.id === 'barrow_guardian' && g.dead).length;
+            if (deadGuardians >= 2 && revenant.row === 'back') {
+              revenant.row = 'front';
+              this.addLog(`${revenant.name} strides forward from the darkness! The king fights!`);
+              if (this.onVisual) this.onVisual('screenShake', {});
+            }
+          }
+
           // Bone Speaker: raise dead allies as bone totems
           const boneSpeaker = this.enemies.find(b => b.id === 'bone_speaker' && !b.dead);
           if (boneSpeaker && !e.isBoss && !e.isStructure && e.id !== 'bone_totem' && e.id !== 'healing_totem' && !e._raisedAsTotem) {
@@ -2083,6 +2182,18 @@ class CombatEngine {
               this.enemies.push(totem);
               this.addLog(`${boneSpeaker.name} raises ${e.name}'s bones as a totem!`);
               setTimeout(() => { totem.justSpawned = false; this.update(); }, 500);
+            }
+          }
+
+          // Spirits of Arminius & Varus: if one dies, start resurrection timer on the other
+          if (e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus') {
+            const otherId = e.id === 'spirit_of_arminius' ? 'spirit_of_varus' : 'spirit_of_arminius';
+            const other = this.enemies.find(b => b.id === otherId && !b.dead);
+            if (other) {
+              // The surviving spirit will resurrect the fallen one after 2 turns
+              other._resurrectTarget = e;
+              other._resurrectTimer = 2;
+              this.addLog(`${other.name} begins channeling — the fallen spirit will rise again in 2 turns!`);
             }
           }
 
@@ -2407,6 +2518,13 @@ class CombatEngine {
 
       if (this.onVisual) {
         this.onVisual('unitHit', { unitIndex: target.index, damage: dmg });
+      }
+
+      // Corpse of Arminius: Undying Rage — attacks also drain 10 morale
+      if (enemy._undyingRage && dmg > 0) {
+        this.morale = Math.max(-100, this.morale - 10);
+        this.addLog(`Undying Rage! ${enemy.name}'s attack drains 10 Morale!`);
+        if (this.onVisual) this.onVisual('morale', { amount: -10 });
       }
 
       // Counter Stance: retaliate damage
@@ -3053,6 +3171,41 @@ class CombatEngine {
           // Apply bleed (poison) to all party
           this.party.forEach(u => { if (!u.downed) u.poison = (u.poison || 0) + 3; });
           this.addLog(`${boss.name} charges with berserk fury! Antlers rake everyone — 3 Poison to all!`);
+          if (this.onVisual) this.onVisual('screenShake', {});
+        }
+      }
+
+      // Corpse of Arminius: at 50% all allies gain +3 damage, at 25% gains Undying Rage (morale drain)
+      if (boss.id === 'corpse_of_arminius') {
+        if (!boss._phase50 && boss.hp <= boss.maxHp * 0.5) {
+          boss._phase50 = true;
+          this.enemies.forEach(e => {
+            if (!e.dead && e !== boss) {
+              e.actions.forEach(a => { if (a.damage > 0) a.damage += 3; });
+            }
+          });
+          this.addLog(`${boss.name}'s eyes blaze! His warriors fight with renewed fury! (+3 damage to all allies)`);
+          if (this.onVisual) this.onVisual('screenShake', {});
+        }
+        if (!boss._phase25 && boss.hp <= boss.maxHp * 0.25) {
+          boss._phase25 = true;
+          boss._undyingRage = true;
+          this.addLog(`${boss.name} enters Undying Rage! His attacks drain your men's will!`);
+          if (this.onVisual) this.onVisual('screenShake', {});
+        }
+      }
+
+      // Corpse of Varus: at 40% moves to front row, gains Final Order melee attack
+      if (boss.id === 'corpse_of_varus') {
+        if (!boss._phase40 && boss.hp <= boss.maxHp * 0.4) {
+          boss._phase40 = true;
+          boss.row = 'front';
+          // Replace Commander's Lash with Final Order
+          const lashIdx = boss.actions.findIndex(a => a.name === "Commander's Lash");
+          if (lashIdx >= 0) {
+            boss.actions[lashIdx] = { name: "Final Order", damage: 15, chance: 0.3, text: "draws a ghostly gladius and strikes with a general's fury" };
+          }
+          this.addLog(`${boss.name} strides forward! "If Rome must die, I will lead the charge!" He draws a spectral gladius!`);
           if (this.onVisual) this.onVisual('screenShake', {});
         }
       }

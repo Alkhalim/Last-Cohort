@@ -353,6 +353,9 @@ function buildSkillExecute(skillData) {
     // Custom bonus damage scaling (e.g. 1.5x)
     if (effects.bonusDmgScale) result.bonusDmgScale = effects.bonusDmgScale;
 
+    // Consume all damage buffs after dealing damage
+    if (effects.consumeAllBuffs) result.consumeAllBuffs = true;
+
     return result;
   };
 }

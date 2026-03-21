@@ -18,7 +18,10 @@ const RAW_ENCOUNTERS = {
     { "name": "The Bone Speaker", "minDifficulty": 4, "enemies": ["bone_speaker", "cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Bones rattle. The dead walk at his command. A seer chants behind them." },
     { "name": "Serpent Shaman", "minDifficulty": 2, "enemies": ["serpent_shaman", "fen_viper", "fen_viper"], "intro": "A painted figure sways between the trees. The ground writhes with snakes." },
     { "name": "The Fog Weaver", "minDifficulty": 4, "enemies": ["fog_weaver", "fog_illusion", "fog_illusion"], "intro": "The fog thickens until you cannot see your own hands. Shapes move within it. A voice whispers." },
-    { "name": "The Blood Stag", "minDifficulty": 5, "enemies": ["blood_stag", "marsh_wolf", "marsh_wolf"], "intro": "Crimson antlers rise above the mist. A god of the forest stands before you, wreathed in blood." }
+    { "name": "The Blood Stag", "minDifficulty": 5, "enemies": ["blood_stag", "marsh_wolf", "marsh_wolf"], "intro": "Crimson antlers rise above the mist. A god of the forest stands before you, wreathed in blood." },
+    { "name": "Corpse of Arminius", "minDifficulty": 6, "enemies": ["corpse_of_arminius", "cursed_warrior", "cursed_warrior"], "intro": "The earth splits. A figure in Roman armor claws from the battlefield mud — Arminius, the Betrayer, risen from death." },
+    { "name": "Corpse of Varus", "minDifficulty": 8, "enemies": ["corpse_of_varus", "cheruscan_guardian", "cursed_warrior", "bog_seer"], "intro": "A spectral figure in a Roman general's cloak materializes. Varus speaks — and the dead obey." },
+    { "name": "Spirits of Arminius & Varus", "minDifficulty": 10, "enemies": ["spirit_of_arminius", "spirit_of_varus"], "intro": "Two ghosts rise from the blood-soaked earth — Arminius and Varus, bound in death, enemies and mirrors of each other. Both must fall." }
   ],
   "threatLevels": {
     "easy": [
@@ -201,7 +204,11 @@ const RAW_ENCOUNTERS = {
     "grove_witch": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
     "silent_huntsman": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
     "mire_mother": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
-    "bone_speaker": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] }
+    "bone_speaker": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
+    "corpse_of_arminius": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
+    "corpse_of_varus": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
+    "spirit_of_arminius": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
+    "spirit_of_varus": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] }
   }
 };
 
