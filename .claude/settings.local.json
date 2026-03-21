@@ -20,7 +20,12 @@
       "Bash(grep -A 5 '\"\"training_ground\"\"\\\\|\"\"wandering_smith\"\"' data/events.js)",
       "Bash(where ffmpeg:*)",
       "Bash(winget install:*)",
-      "Bash(ffmpeg -version)"
+      "Bash(ffmpeg -version)",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/event.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/smith.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/camp.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/hardEncounter.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/mediumEncounter.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")"
     ]
   }
 }

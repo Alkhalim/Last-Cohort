@@ -1429,25 +1429,24 @@ class GameUI {
       el.style.top = (pos.y - 22) + 'px';
 
       let icon = '';
+      const iconImg = (src) => `<img src="assets/map-icons/${src}" class="map-node-img">`;
       switch (node.type) {
-        case 'combat': icon = '\u2694'; break;
-        case 'event':
-          // Unique icons for special event types
-          if (node.encounter && node.encounter.type === 'item_trade') icon = '\uD83C\uDFEA';       // 🏪 Shop
-          else if (node.encounter && node.encounter.type === 'item_upgrade') icon = '\uD83D\uDD28'; // 🔨 Blacksmith
-          else if (node.encounter && node.encounter.type === 'skill_upgrade') icon = '\uD83C\uDFAF'; // 🎯 Skill trainer
-          else icon = '\uD83D\uDCDC';                                                               // 📜 Generic event
+        case 'combat':
+          if (node.threat >= 3) icon = iconImg('hardEncounter.png');
+          else if (node.threat >= 2) icon = iconImg('mediumEncounter.png');
+          else icon = iconImg('easyEncounter.png');
           break;
-        case 'rest': icon = '\uD83D\uDD25'; break;
-        case 'boss': icon = '\uD83D\uDC80'; break;
+        case 'event':
+          if (node.encounter && node.encounter.type === 'item_trade') icon = iconImg('merchant.png');
+          else if (node.encounter && node.encounter.type === 'item_upgrade') icon = iconImg('smith.png');
+          else if (node.encounter && node.encounter.type === 'skill_upgrade') icon = iconImg('skillTeacher.png');
+          else icon = iconImg('event.png');
+          break;
+        case 'rest': icon = iconImg('camp.png'); break;
+        case 'boss': icon = iconImg('bossFight.png'); break;
       }
 
-      let threatSkulls = '';
-      if (node.type === 'combat' && node.threat > 0) {
-        threatSkulls = `<div class="map-node-threat">${'\u2620'.repeat(node.threat)}</div>`;
-      }
-
-      el.innerHTML = `<span class="map-node-icon">${icon}</span>${threatSkulls}`;
+      el.innerHTML = `<span class="map-node-icon">${icon}</span>`;
 
       if (isReachableNode && !node.visited) {
         el.addEventListener('click', () => this.onMapNodeClick(node));
