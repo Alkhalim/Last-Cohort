@@ -1860,9 +1860,20 @@ class GameUI {
       if (effects.damageAll) candidates.push({ key: 'damageAll', text: `+1 damage to all (${effects.damageAll} → ${effects.damageAll + 1})`, apply: () => baseDef.effects.damageAll++ });
       if (effects.selfDamage) candidates.push({ key: 'selfDamage', text: `-1 self damage (${effects.selfDamage} → ${effects.selfDamage - 1})`, apply: () => baseDef.effects.selfDamage-- });
       if (effects.buffAllies) candidates.push({ key: 'buffAllies', text: `+1 buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + 1})`, apply: () => baseDef.effects.buffAllies.bonusDamage++ });
-      // Fallback numeric effects
+      // Fallback numeric effects — exclude non-upgradeable mechanics
+      const excludeFromUpgrade = new Set([
+        'pierceBlock', 'moraleCost', 'bonusDmgScale', 'caltrops', 'splashAdjacentPct',
+        'dieScaleDamage', 'dieScaleBlock', 'dieScaleHeal', 'splitDamage', 'splashHalf',
+        'splashRow', 'pierceRow', 'splashBackRow', 'execute', 'markTarget', 'knockback',
+        'shieldbreak', 'shieldbreakAll', 'blockOthersOnly', 'halfBonusDmg',
+        'halfScaleSelfDamage', 'moraleScaling', 'killShot', 'doublePoison',
+        'ignoreRow', 'taunt', 'cleanse', 'revive', 'stimulant', 'intercept',
+        'stun', 'overrun', 'shoulderCharge', 'echoOnKill', 'warhorseKick',
+        'smokeScreen', 'damageShield', 'resonance', 'pullToFront',
+        'consumeAllBuffs', 'moraleHealAll', 'avengeDamage',
+      ]);
       for (const k of Object.keys(effects)) {
-        if (typeof effects[k] === 'number' && !candidates.some(c => c.key === k)) {
+        if (typeof effects[k] === 'number' && !candidates.some(c => c.key === k) && !excludeFromUpgrade.has(k)) {
           const label = friendlyNames[k] || k;
           candidates.push({ key: k, text: `+1 ${label} (${effects[k]} → ${effects[k] + 1})`, apply: () => baseDef.effects[k]++ });
         }
@@ -2286,18 +2297,18 @@ class GameUI {
     if (window.game) window.game.trackEncounterStats();
 
     // Calculate renown for this encounter
-    const renownEarned = this.engine.calculateRenown();
-    this.engine.totalRenownEarned += renownEarned;
+    const renownBreakdown = this.engine.calculateRenown();
+    this.engine.totalRenownEarned += renownBreakdown.total;
     this.engine.encountersCompleted++;
 
-    this.showSummary(title, text, isBoss, renownEarned);
+    this.showSummary(title, text, isBoss, renownBreakdown);
   }
 
   onDefeat() {
     this.showRunSummary(false);
   }
 
-  showSummary(title, text, isBossOrDefeat, renownEarned) {
+  showSummary(title, text, isBossOrDefeat, renownBreakdown) {
     this.showScreen('summary-screen');
     document.getElementById('summary-title').textContent = title;
     document.getElementById('summary-text').textContent = text;
@@ -2305,9 +2316,17 @@ class GameUI {
     const statsEl = document.getElementById('summary-stats');
     let statsHtml = '';
 
-    // Renown earned line
-    if (renownEarned > 0) {
-      statsHtml += `<div class="summary-renown">+${renownEarned} Renown</div>`;
+    // Renown breakdown
+    if (renownBreakdown && renownBreakdown.total > 0) {
+      const r = renownBreakdown;
+      const speedLabel = r.speedMultiplier >= 1.2 ? 'Swift' : r.speedMultiplier >= 0.9 ? 'Steady' : 'Prolonged';
+      const speedColor = r.speedMultiplier >= 1.2 ? 'var(--green-bright)' : r.speedMultiplier >= 0.9 ? 'var(--text-dim)' : 'var(--red-bright)';
+      statsHtml += `<div class="summary-renown">+${r.total} Renown</div>`;
+      statsHtml += `<div class="summary-renown-breakdown">`;
+      statsHtml += `<span>${r.kills} kills — ${r.baseRenown} base</span>`;
+      statsHtml += `<span style="color:${speedColor}">${r.turns} turns — ${speedLabel} (x${r.speedMultiplier.toFixed(1)})</span>`;
+      if (r.hasCurses) statsHtml += `<span style="color:var(--purple)">Curse bonus (x${r.curseMultiplier.toFixed(1)})</span>`;
+      statsHtml += `</div>`;
     }
 
     statsHtml += this.engine.party.map(u => {
@@ -2842,25 +2861,31 @@ class GameUI {
     // Reset run renown counter so it doesn't double-count
     this.engine.totalRenownEarned = 0;
 
-    // Two buttons: continue deeper or return home
     const btnContainer = document.getElementById('btn-run-complete');
-    btnContainer.textContent = 'Deeper into the Forest';
-    btnContainer.onclick = () => this.showMarchRestScreen();
-
-    // Add a secondary "Return Home" link if not already there
     let homeBtn = document.getElementById('btn-run-home');
     if (!homeBtn) {
       homeBtn = document.createElement('button');
       homeBtn.id = 'btn-run-home';
       homeBtn.className = 'btn-secondary';
-      homeBtn.textContent = 'Return Home';
       btnContainer.parentElement.appendChild(homeBtn);
     }
-    homeBtn.classList.remove('hidden');
-    homeBtn.onclick = () => {
+
+    if (isFinalVictory) {
+      // Final victory: only return home
+      btnContainer.textContent = 'Return Home';
+      btnContainer.onclick = () => window.game.returnHome();
       homeBtn.classList.add('hidden');
-      window.game.returnHome();
-    };
+    } else {
+      // Normal boss: continue or return
+      btnContainer.textContent = 'Deeper into the Forest';
+      btnContainer.onclick = () => this.showMarchRestScreen();
+      homeBtn.textContent = 'Return Home';
+      homeBtn.classList.remove('hidden');
+      homeBtn.onclick = () => {
+        homeBtn.classList.add('hidden');
+        window.game.returnHome();
+      };
+    }
   }
 
   showMarchRestScreen() {

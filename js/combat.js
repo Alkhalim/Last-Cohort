@@ -255,21 +255,29 @@ class CombatEngine {
   }
 
   // --- Phase management ---
-  // Calculate renown earned from a completed encounter
+  // Calculate renown earned from a completed encounter (returns breakdown object)
   calculateRenown() {
     const baseRenown = this.killedEnemies.reduce((sum, eid) => {
       const data = ENEMY_DATA[eid];
       return sum + (data ? (data.xpValue || 0) * 2 : 0);
     }, 0);
-    const bonusMultiplier = Math.max(0.5, 1.5 - (this.turnCount * 0.1));
-    // Active curses increase renown yield by their individual bonus percentages
+    const speedMultiplier = Math.max(0.5, 1.5 - (this.turnCount * 0.1));
     const activeCurses = this.getActiveCurses();
     const curseBonus = activeCurses.reduce((sum, cid) => {
       const def = typeof CURSE_DEFS !== 'undefined' ? CURSE_DEFS.find(c => c.id === cid) : null;
       return sum + (def ? def.renown / 100 : 0.15);
     }, 0);
     const curseMultiplier = 1 + curseBonus;
-    return Math.round(baseRenown * bonusMultiplier * curseMultiplier);
+    const total = Math.round(baseRenown * speedMultiplier * curseMultiplier);
+    return {
+      total,
+      baseRenown,
+      kills: this.killedEnemies.length,
+      turns: this.turnCount,
+      speedMultiplier,
+      curseMultiplier,
+      hasCurses: activeCurses.length > 0,
+    };
   }
 
   startRollPhase() {
@@ -578,6 +586,18 @@ class CombatEngine {
         const oldVal = victim.value;
         victim.value = 1;
         this.addLog(`Varus's corrupted command forces a die from ${oldVal} to 1!`);
+        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
+      }
+    }
+
+    // Corpse of Varus: corrupts one die to a 1 every 2 turns
+    const varus = this.enemies.find(e => e.id === 'corpse_of_varus' && !e.dead);
+    if (varus && this.turn % 2 === 0) {
+      const available = this.dicePool.dice.filter(d => !d.used && d.value > 1);
+      if (available.length > 0) {
+        const victim = available[Math.floor(Math.random() * available.length)];
+        victim.value = 1;
+        this.addLog(`Varus's corrupted command forces a die to 1!`);
         if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
       }
     }

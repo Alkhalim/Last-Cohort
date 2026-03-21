@@ -634,7 +634,10 @@ class Game {
     this.saveStats();
     this.checkAchievements();
     this.sendAnalytics(victory);
-    this.saveRunToHistory(victory);
+    const leaderboardPos = this.saveRunToHistory(victory);
+    if (leaderboardPos >= 0 && leaderboardPos < 10) {
+      this.showHighscorePopup(leaderboardPos + 1);
+    }
   }
 
   // --- Run History ---
@@ -689,13 +692,44 @@ class Game {
       causeOfDeath: causeOfDeath,
     };
 
-    history.unshift(entry);
-    // Keep only the 20 most recent runs
-    if (history.length > 20) history.length = 20;
+    history.push(entry);
+    // Keep top 25 by renown
+    history.sort((a, b) => b.renownEarned - a.renownEarned);
+    if (history.length > 25) history.length = 25;
+
+    // Find where this entry landed
+    const position = history.findIndex(e => e === entry);
 
     try {
       localStorage.setItem(RUN_HISTORY_STORAGE_KEY, JSON.stringify(history));
     } catch (e) {}
+
+    return position; // -1 if didn't make top 25
+  }
+
+  showHighscorePopup(rank) {
+    const popup = document.createElement('div');
+    popup.className = 'highscore-popup';
+    popup.innerHTML = `
+      <div class="highscore-popup-content">
+        <div class="highscore-title">NEW HIGHSCORE</div>
+        <div class="highscore-rank">#${rank}</div>
+        <div class="highscore-subtitle">on the Leaderboard</div>
+      </div>
+    `;
+    document.getElementById('game').appendChild(popup);
+
+    // Auto-fade after 3 seconds
+    setTimeout(() => {
+      popup.classList.add('fade-out');
+      setTimeout(() => popup.remove(), 600);
+    }, 3000);
+
+    // Click to dismiss
+    popup.addEventListener('click', () => {
+      popup.classList.add('fade-out');
+      setTimeout(() => popup.remove(), 600);
+    });
   }
 
   showRunHistoryScreen() {
@@ -708,11 +742,8 @@ class Game {
       return;
     }
 
-    // Sort by renown (highest first)
-    const sorted = [...history].sort((a, b) => b.renownEarned - a.renownEarned);
-
     let html = '';
-    sorted.forEach((run, idx) => {
+    history.forEach((run, idx) => {
       const partyStr = run.party.map(u => {
         const tag = (CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags.find(t => t !== 'roman') : '') || 'roman';
         return `<span style="color:var(--class-${tag})">${u.title}</span>`;
@@ -720,9 +751,10 @@ class Game {
       const date = new Date(run.date).toLocaleDateString();
       const outcome = run.victory ? '<span style="color:var(--green-bright)">Victory</span>' : '<span style="color:var(--red-bright)">Defeat</span>';
 
-      html += `<div class="rh-entry" data-run-idx="${idx}">
+      const isTopTen = idx < 10;
+      html += `<div class="rh-entry${isTopTen ? ' top-ten' : ''}" data-run-idx="${idx}">
         <div class="rh-entry-top">
-          <span class="rh-entry-rank">#${idx + 1}</span>
+          <span class="rh-entry-rank${isTopTen ? ' rank-big' : ''}">#${idx + 1}</span>
           <span class="rh-entry-party">${partyStr}</span>
           <span class="rh-entry-outcome">${outcome}</span>
         </div>
@@ -739,7 +771,7 @@ class Game {
     content.querySelectorAll('.rh-entry').forEach(el => {
       el.addEventListener('click', () => {
         const ridx = parseInt(el.dataset.runIdx);
-        this.showRunDetail(sorted[ridx]);
+        this.showRunDetail(history[ridx]);
       });
     });
   }

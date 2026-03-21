@@ -175,17 +175,32 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
         node.encounter = { ...node.encounter, isAmbush: true };
       }
     } else if (node.type === 'boss') {
-      const eligibleBosses = BOSS_ENCOUNTERS.filter(b => !b.minDifficulty || b.minDifficulty <= difficulty);
-      // Avoid repeating bosses until all eligible have been fought
-      let unseenBosses = eligibleBosses.filter(b => !recentBosses.includes(b.name));
-      if (unseenBosses.length === 0) {
-        // All eligible bosses have been seen — reset the list
-        recentBosses.length = 0;
-        unseenBosses = eligibleBosses;
+      // Story bosses are forced at specific marches
+      const storyBosses = { 6: 'Corpse of Arminius', 8: 'Corpse of Varus', 10: 'Spirits of Arminius & Varus' };
+      const forcedBossName = storyBosses[difficulty];
+      if (forcedBossName) {
+        const forcedBoss = BOSS_ENCOUNTERS.find(b => b.name === forcedBossName);
+        if (forcedBoss) {
+          node.encounter = forcedBoss;
+        }
       }
-      const chosenBoss = unseenBosses[Math.floor(Math.random() * unseenBosses.length)];
-      recentBosses.push(chosenBoss.name);
-      node.encounter = chosenBoss;
+      if (!node.encounter) {
+        const eligibleBosses = BOSS_ENCOUNTERS.filter(b => {
+          if (b.minDifficulty && b.minDifficulty > difficulty) return false;
+          // Exclude story bosses from random pool
+          if (b.minDifficulty >= 6 && Object.values(storyBosses).includes(b.name)) return false;
+          return true;
+        });
+        // Avoid repeating bosses until all eligible have been fought
+        let unseenBosses = eligibleBosses.filter(b => !recentBosses.includes(b.name));
+        if (unseenBosses.length === 0) {
+          recentBosses.length = 0;
+          unseenBosses = eligibleBosses;
+        }
+        const chosenBoss = unseenBosses[Math.floor(Math.random() * unseenBosses.length)];
+        recentBosses.push(chosenBoss.name);
+        node.encounter = chosenBoss;
+      }
     } else if (node.type === 'event') {
       // Filter by difficulty, then weighted random — no regular event repeats per march
       const repeatable = ['skill_upgrade', 'item_upgrade', 'item_trade']; // these can repeat
