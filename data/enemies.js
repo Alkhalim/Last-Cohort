@@ -315,5 +315,66 @@ const RAW_ENEMIES = {
       { "name": "Soul Shackle", "damage": 17, "morale": -10, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true, "cooldown": 1 },
       { "name": "Raise the Dead", "damage": 0, "chance": 0.2, "text": "raises a cursed warrior from the mud", "spawn": "cursed_warrior" }
     ]
+  },
+
+  "serpent_shaman": {
+    "id": "serpent_shaman", "name": "Serpent Shaman",
+    "maxHp": 42, "row": "back", "damage": [5, 10], "speed": 2, "xpValue": 25,
+    "minDifficulty": 3,
+    "isBoss": true, "ai": "boss",
+    "description": "A painted shaman who dances between the lines, swapping places with her serpents. Fen vipers obey her call. Her venom weakens the body while her chants shatter the mind. Pin her down — if you can.",
+    "actions": [
+      { "name": "Venom Spit", "damage": 4, "poisonTarget": 4, "chance": 0.3, "text": "spits a stream of dark venom", "ignoreRow": true },
+      { "name": "Serpent Dance", "damage": 0, "chance": 0.2, "text": "dances — swapping places with a serpent" },
+      { "name": "Fang Strike", "damage": 9, "poisonTarget": 3, "chance": 0.25, "text": "lunges with a fanged staff" },
+      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 2, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 1 }
+    ]
+  },
+  "serpent_shade": {
+    "id": "serpent_shade", "name": "Serpent Shade",
+    "maxHp": 10, "row": "front", "damage": [2, 4], "speed": 1, "xpValue": 2,
+    "description": "A spectral snake left behind by the Shaman's dance. It bites once, then dissolves.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Phantom Bite", "damage": 3, "poisonTarget": 2, "chance": 1.0, "text": "strikes with ghostly fangs" }
+    ]
+  },
+
+  "fog_weaver": {
+    "id": "fog_weaver", "name": "The Fog Weaver",
+    "maxHp": 38, "row": "back", "damage": [4, 8], "speed": 1, "xpValue": 27,
+    "minDifficulty": 5,
+    "isBoss": true, "ai": "boss",
+    "description": "A spectral seeress who fights from behind a veil of fog. Attacks miss, dice fail, and illusions draw your steel. You must cut through the fog to reach the weaver within.",
+    "actions": [
+      { "name": "Mind Shatter", "damage": 6, "morale": -12, "chance": 0.3, "text": "reaches into a soldier's mind and tears", "ignoreRow": true },
+      { "name": "Fog Pulse", "damage": 4, "chance": 0.25, "text": "sends a pulse of fog that chills the blood", "aoe": true },
+      { "name": "Weave Illusion", "damage": 0, "chance": 0.25, "text": "weaves a fog illusion to fight for her", "spawn": "fog_illusion" },
+      { "name": "Hex", "damage": 0, "morale": -20, "chance": 0.2, "text": "speaks a hex — a die crumbles to dust", "cooldown": 1 }
+    ]
+  },
+  "fog_illusion": {
+    "id": "fog_illusion", "name": "Fog Illusion",
+    "maxHp": 8, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 1,
+    "description": "A shape in the fog that looks like a warrior but dissolves when struck. It draws attacks away from the Weaver.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Phantom Strike", "damage": 4, "chance": 0.7, "text": "lashes out with foggy tendrils" },
+      { "name": "Fade", "damage": 0, "morale": -5, "chance": 0.3, "text": "shimmers and fades — your men swing at nothing" }
+    ]
+  },
+
+  "blood_stag": {
+    "id": "blood_stag", "name": "The Blood Stag",
+    "maxHp": 58, "row": "front", "damage": [7, 14], "speed": 2, "xpValue": 28,
+    "minDifficulty": 6,
+    "isBoss": true, "ai": "boss",
+    "description": "A monstrous stag wreathed in dripping crimson. Worshipped as a forest god by the tribes. It charges, gores, and tramples — then retreats to the back line to regenerate. Its antlers leave wounds that never stop bleeding.",
+    "actions": [
+      { "name": "Gore", "damage": 10, "chance": 0.3, "text": "gores with blood-soaked antlers" },
+      { "name": "Trample", "damage": 7, "chance": 0.25, "text": "tramples everything in its path", "aoe": true, "cooldown": 1 },
+      { "name": "Antler Rake", "damage": 8, "poisonTarget": 3, "chance": 0.25, "text": "rakes with cursed antlers — wounds bleed freely" },
+      { "name": "Retreat", "damage": 0, "chance": 0.2, "text": "leaps to the treeline and begins to heal" }
+    ]
   }
 };

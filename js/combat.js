@@ -544,6 +544,27 @@ class CombatEngine {
       }
     }
 
+    // Fog Weaver: Hex — destroy a random die (set by previous turn's Hex action)
+    const fogWeaver = this.enemies.find(e => e.id === 'fog_weaver' && !e.dead && e._hexPending);
+    if (fogWeaver) {
+      fogWeaver._hexPending = false;
+      const available = this.dicePool.dice.filter(d => !d.used);
+      if (available.length > 0) {
+        const victim = available[Math.floor(Math.random() * available.length)];
+        this.dicePool.useDie(victim.id);
+        this.addLog(`The Fog Weaver's hex crumbles a die! (${victim.value} destroyed)`);
+        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
+      }
+    }
+
+    // Blood Stag: regenerates 3 HP per turn while in back row
+    const bloodStag = this.enemies.find(e => e.id === 'blood_stag' && !e.dead && e.row === 'back');
+    if (bloodStag && bloodStag.hp < bloodStag.maxHp) {
+      const regen = Math.min(3, bloodStag.maxHp - bloodStag.hp);
+      bloodStag.hp += regen;
+      this.addLog(`${bloodStag.name} regenerates ${regen} HP in the treeline.`);
+    }
+
     // Dice passives trigger on rolled values
     this.processDicePassives();
 
@@ -2548,6 +2569,49 @@ class CombatEngine {
         this.addLog(`${enemy.name} writhes but cannot spawn again.`);
       }
     }
+
+    // Serpent Shaman: Serpent Dance — swap position with a snake/shade ally
+    if (enemy.id === 'serpent_shaman' && action.name === 'Serpent Dance') {
+      const snakes = this.enemies.filter(e => !e.dead && e !== enemy &&
+        (e.id === 'fen_viper' || e.id === 'serpent_shade'));
+      if (snakes.length > 0) {
+        // Pick a snake in the opposite row if possible, otherwise any snake
+        const oppositeRow = enemy.row === 'front' ? 'back' : 'front';
+        let swapTarget = snakes.find(s => s.row === oppositeRow);
+        if (!swapTarget) swapTarget = snakes[Math.floor(Math.random() * snakes.length)];
+        // Swap rows
+        const shamanRow = enemy.row;
+        enemy.row = swapTarget.row;
+        swapTarget.row = shamanRow;
+        this.addLog(`${enemy.name} dances — swapping places with ${swapTarget.name}!`);
+      } else {
+        // No snakes to swap with — just move
+        enemy.row = enemy.row === 'front' ? 'back' : 'front';
+        this.addLog(`${enemy.name} dances to the ${enemy.row} row!`);
+      }
+      // Spawn a serpent shade on the dance
+      this.spawnBossMinion('serpent_shade');
+    }
+
+    // Fog Weaver: Hex — destroy a random die next turn
+    if (enemy.id === 'fog_weaver' && action.name === 'Hex') {
+      enemy._hexPending = true;
+      this.addLog(`${enemy.name} curses your dice — one will crumble next turn!`);
+    }
+
+    // Blood Stag: Retreat — move to back row and regenerate
+    if (enemy.id === 'blood_stag' && action.name === 'Retreat') {
+      if (enemy.row !== 'back') {
+        enemy.row = 'back';
+        const regen = Math.min(6, enemy.maxHp - enemy.hp);
+        enemy.hp += regen;
+        this.addLog(`${enemy.name} leaps to the treeline and heals ${regen} HP!`);
+      } else {
+        // Already in back, charge to front instead
+        enemy.row = 'front';
+        this.addLog(`${enemy.name} charges from the treeline!`);
+      }
+    }
   }
 
   // Pre-roll enemy intents for display during player turn
@@ -2929,6 +2993,67 @@ class CombatEngine {
           this.addLog(`${boss.name} screams in fury! War boars crash through the undergrowth!`);
           this.spawnBossMinion('war_boar');
           this.spawnBossMinion('boar_youngling');
+        }
+      }
+
+      // Serpent Shaman: spawns serpent shades at 60% and 30%
+      if (boss.id === 'serpent_shaman') {
+        if (!boss._phase60 && boss.hp <= boss.maxHp * 0.6) {
+          boss._phase60 = true;
+          this.addLog(`${boss.name} hisses — spectral serpents slither from the shadows!`);
+          this.spawnBossMinion('serpent_shade');
+          this.spawnBossMinion('fen_viper');
+        }
+        if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
+          boss._phase30 = true;
+          this.addLog(`${boss.name}'s eyes blaze! The venom thickens!`);
+          this.spawnBossMinion('serpent_shade');
+          this.spawnBossMinion('serpent_shade');
+          // Apply 2 poison to all party members
+          this.party.forEach(u => { if (!u.downed) u.poison = (u.poison || 0) + 2; });
+          this.addLog('Venom fills the air — all soldiers take 2 Poison!');
+        }
+      }
+
+      // Fog Weaver: spawns illusions at 60%, destroys a die at 30%
+      if (boss.id === 'fog_weaver') {
+        if (!boss._phase60 && boss.hp <= boss.maxHp * 0.6) {
+          boss._phase60 = true;
+          this.addLog(`The fog thickens! Shapes multiply in the mist!`);
+          this.spawnBossMinion('fog_illusion');
+          this.spawnBossMinion('fog_illusion');
+        }
+        if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
+          boss._phase30 = true;
+          this.addLog(`${boss.name} shrieks! The fog becomes impenetrable!`);
+          // Give all illusions +5 HP
+          this.enemies.forEach(e => {
+            if (!e.dead && e.id === 'fog_illusion') {
+              e.hp = Math.min(e.maxHp + 5, e.hp + 5);
+              e.maxHp += 5;
+            }
+          });
+          this.spawnBossMinion('fog_illusion');
+        }
+      }
+
+      // Blood Stag: alternates charge/retreat phases
+      if (boss.id === 'blood_stag') {
+        if (!boss._phase60 && boss.hp <= boss.maxHp * 0.6) {
+          boss._phase60 = true;
+          boss.row = 'back';
+          const regen = Math.min(8, boss.maxHp - boss.hp);
+          boss.hp += regen;
+          this.addLog(`${boss.name} leaps back and regenerates ${regen} HP!`);
+          this.spawnBossMinion('marsh_wolf');
+        }
+        if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
+          boss._phase30 = true;
+          boss.row = 'front';
+          // Apply bleed (poison) to all party
+          this.party.forEach(u => { if (!u.downed) u.poison = (u.poison || 0) + 3; });
+          this.addLog(`${boss.name} charges with berserk fury! Antlers rake everyone — 3 Poison to all!`);
+          if (this.onVisual) this.onVisual('screenShake', {});
         }
       }
     }

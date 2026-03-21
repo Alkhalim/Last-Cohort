@@ -20,6 +20,7 @@ const MUSIC_GAMEPLAY = [
 const MUSIC_BOSS = 'assets/Shadow of Arminius.mp3';
 const MUSIC_BOSS_OVERRIDE = {
   'grove_witch': 'assets/Swamp Fury Unleashed.mp3',
+  'serpent_shaman': 'assets/Venom Rite.mp3',
 };
 
 // --- Curse Definitions ---
@@ -714,7 +715,7 @@ class Game {
     const a = this.achievements;
 
     // Boss kill achievements (3 kills each)
-    const bossIds = ['arminius_champion', 'grove_witch', 'silent_huntsman', 'mire_mother', 'bone_speaker'];
+    const bossIds = ['arminius_champion', 'grove_witch', 'silent_huntsman', 'mire_mother', 'bone_speaker', 'serpent_shaman', 'fog_weaver', 'blood_stag'];
     bossIds.forEach(bid => {
       const key = 'boss_' + bid + '_x3';
       if (!a[key] && (s.enemiesKilled[bid] || 0) >= 3) {

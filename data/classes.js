@@ -25,13 +25,13 @@ const RAW_CLASSES = {
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
         "cost": { "type": "even" }, "target": "self",
-        "description": "Requires an even die. Gain 3 + die value Block.",
+        "description": "Requires an even die. Gain 3 + die value Block, depending on die used.",
         "effects": { "block": 3, "dieScaleBlock": true }
       },
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
         "cost": { "type": "odd" }, "target": "single_enemy",
-        "description": "Requires an odd die. Precise thrust. Deals 4 + die value damage.",
+        "description": "Requires an odd die. Precise thrust. Deals 4 + die value damage, depending on die used.",
         "effects": { "damage": 4, "dieScaleDamage": true }
       },
       {
@@ -170,7 +170,7 @@ const RAW_CLASSES = {
       {
         "id": "bind_wounds", "name": "Bind Wounds", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal an ally for HP equal to die value.",
+        "description": "Heal an ally for HP equal to die value, depending on die used.",
         "effects": { "heal": 0, "dieScaleHeal": true }
       },
       {
@@ -247,7 +247,7 @@ const RAW_CLASSES = {
         "id": "loose_arrow", "name": "Loose Arrow", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Loose an arrow at any target. Deals damage equal to die value.",
+        "description": "Loose an arrow at any target. Deals damage equal to die value, depending on die used.",
         "effects": { "damage": 0, "dieScaleDamage": true }
       },
       {
@@ -453,7 +453,7 @@ const RAW_CLASSES = {
       {
         "id": "resonance", "name": "Resonance", "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_ally",
-        "description": "Mark an ally. The next heal they receive is doubled. Grant Block equal to die value.",
+        "description": "Mark an ally. The next heal they receive is doubled. Grant Block equal to die value, depending on die used.",
         "effects": { "resonance": true, "block": 0, "dieScaleBlock": true }
       },
       {
