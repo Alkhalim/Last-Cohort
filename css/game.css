@@ -3841,36 +3841,35 @@ html, body {
   pointer-events: none;
   z-index: 900;
   overflow: hidden;
-  display: flex;
-  align-items: center;
 }
 
 .skill-cutin-portrait {
   position: absolute;
-  left: 5%;
-  height: 65%;
-  max-height: 340px;
+  left: 50%;
+  bottom: 0;
+  height: 45%;
+  max-height: 240px;
   object-fit: contain;
-  filter: drop-shadow(4px 0 12px rgba(0, 0, 0, 0.8));
+  filter: drop-shadow(2px 0 10px rgba(0, 0, 0, 0.8));
   opacity: 0;
-  transform: translateX(-120%);
+  transform: translateX(-50%) translateX(-60px);
   transition: none;
 }
 
 .skill-cutin-name {
   position: absolute;
-  bottom: 22%;
+  bottom: 2%;
   left: 0;
   right: 0;
   text-align: center;
   font-family: 'Cinzel', serif;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-bright);
   letter-spacing: 0.15em;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(201, 162, 39, 0.4);
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateY(10px);
   transition: none;
 }
 
@@ -3880,7 +3879,7 @@ html, body {
 }
 
 .skill-cutin.active .skill-cutin-name {
-  animation: cutin-name-in 0.25s 0.1s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  animation: cutin-name-in 0.25s 0.15s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
 }
 
 /* Slide out */
@@ -3889,30 +3888,30 @@ html, body {
 }
 
 .skill-cutin.exit .skill-cutin-name {
-  animation: cutin-name-out 0.25s ease-in forwards;
+  animation: cutin-name-out 0.2s ease-in forwards;
 }
 
 @keyframes cutin-slide-in {
   0% {
-    transform: translateX(-120%);
+    transform: translateX(-50%) translateX(-60px);
     opacity: 0;
   }
   30% {
-    opacity: 1;
+    opacity: 0.9;
   }
   100% {
-    transform: translateX(0);
-    opacity: 0.9;
+    transform: translateX(-50%) translateX(0);
+    opacity: 0.85;
   }
 }
 
 @keyframes cutin-slide-out {
   0% {
-    transform: translateX(0);
-    opacity: 0.9;
+    transform: translateX(-50%) translateX(0);
+    opacity: 0.85;
   }
   100% {
-    transform: translateX(30%);
+    transform: translateX(-50%) translateX(40px);
     opacity: 0;
   }
 }
@@ -3920,21 +3919,107 @@ html, body {
 @keyframes cutin-name-in {
   0% {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateY(10px);
   }
   100% {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
+}
+
+/* Enemy cut-in banner */
+
+.enemy-cutin {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 900;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.enemy-cutin.active {
+  animation: enemy-cutin-in 0.25s ease-out forwards;
+}
+
+.enemy-cutin.exit {
+  animation: enemy-cutin-out 0.25s ease-in forwards;
+}
+
+.enemy-cutin-portrait {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  height: 45%;
+  max-height: 240px;
+  object-fit: contain;
+  filter: drop-shadow(2px 0 10px rgba(0, 0, 0, 0.8)) saturate(0.7) brightness(0.85);
+  transform: translateX(-50%) translateX(60px);
+  opacity: 0;
+}
+
+.enemy-cutin.active .enemy-cutin-portrait {
+  animation: enemy-portrait-in 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.enemy-cutin.exit .enemy-cutin-portrait {
+  animation: enemy-portrait-out 0.25s ease-in forwards;
+}
+
+.enemy-cutin-name {
+  position: absolute;
+  bottom: 2%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--red-bright);
+  letter-spacing: 0.15em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8), 0 0 12px rgba(200, 50, 50, 0.4);
+  opacity: 0;
+}
+
+.enemy-cutin.active .enemy-cutin-name {
+  animation: cutin-name-in 0.2s 0.1s ease-out forwards;
+}
+
+.enemy-cutin.exit .enemy-cutin-name {
+  animation: cutin-name-out 0.2s ease-in forwards;
+}
+
+@keyframes enemy-cutin-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes enemy-cutin-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes enemy-portrait-in {
+  0% { transform: translateX(-50%) translateX(60px); opacity: 0; }
+  30% { opacity: 0.8; }
+  100% { transform: translateX(-50%) translateX(0); opacity: 0.8; }
+}
+
+@keyframes enemy-portrait-out {
+  0% { transform: translateX(-50%) translateX(0); opacity: 0.8; }
+  100% { transform: translateX(-50%) translateX(-40px); opacity: 0; }
 }
 
 @keyframes cutin-name-out {
   0% {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
   100% {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateY(-10px);
   }
 }

@@ -2301,36 +2301,46 @@ class CombatEngine {
 
     const enemy = enemies[index];
     if (enemy.dead) {
-      // Skip dead enemies (could have died to another enemy's death effect)
       setTimeout(() => this.executeEnemySequence(enemies, index + 1), 100);
       return;
     }
-    this.executeEnemyAction(enemy);
 
-    // Check for second strike (boss enrage or wounded frenzy)
-    const needsSecondStrike =
-      (enemy.isBoss && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5) ||
-      (!enemy.isBoss && enemy.woundedDoubleAttack && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5);
+    // Show enemy portrait before action
+    if (this.onVisual) this.onVisual('enemyCutIn', { enemyName: enemy.name, enemyId: enemy.id });
 
-    if (needsSecondStrike) {
-      this.update();
-      setTimeout(() => {
-        if (enemy.dead || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
-          this.executeEnemySequence(enemies, index + 1);
-          return;
-        }
-        const msg = enemy.isBoss ? `${enemy.name} is enraged and strikes again!` : `${enemy.name} is wounded and attacks in a frenzy!`;
-        this.addLog(msg);
-        this.executeEnemySingleAction(enemy);
+    // Delay action slightly so portrait is visible
+    setTimeout(() => {
+      if (enemy.dead || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
+        this.executeEnemySequence(enemies, index + 1);
+        return;
+      }
+      this.executeEnemyAction(enemy);
+
+      // Check for second strike (boss enrage or wounded frenzy)
+      const needsSecondStrike =
+        (enemy.isBoss && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5) ||
+        (!enemy.isBoss && enemy.woundedDoubleAttack && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5);
+
+      if (needsSecondStrike) {
+        this.update();
+        setTimeout(() => {
+          if (enemy.dead || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
+            this.executeEnemySequence(enemies, index + 1);
+            return;
+          }
+          const msg = enemy.isBoss ? `${enemy.name} is enraged and strikes again!` : `${enemy.name} is wounded and attacks in a frenzy!`;
+          this.addLog(msg);
+          this.executeEnemySingleAction(enemy);
+          this.checkPartyDowned();
+          this.update();
+          setTimeout(() => this.executeEnemySequence(enemies, index + 1), 1200);
+        }, 800);
+      } else {
         this.checkPartyDowned();
         this.update();
-        setTimeout(() => this.executeEnemySequence(enemies, index + 1), 800);
-      }, 600);
-    } else {
-      this.checkPartyDowned();
-      this.update();
-      setTimeout(() => this.executeEnemySequence(enemies, index + 1), 800);
-    }
+        setTimeout(() => this.executeEnemySequence(enemies, index + 1), 1200);
+      }
+    }, 400);
   }
 
   executeEnemyAction(enemy) {

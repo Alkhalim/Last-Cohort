@@ -94,6 +94,9 @@ class GameUI {
       case 'skillCutIn':
         this.showSkillCutIn(data.classTitle, data.skillName);
         break;
+      case 'enemyCutIn':
+        this.showEnemyCutIn(data.enemyName);
+        break;
       case 'dicePassive':
         if (data.triggers) {
           data.triggers.forEach(t => {
@@ -160,6 +163,29 @@ class GameUI {
       cutin.classList.add('exit');
       setTimeout(() => cutin.remove(), 400);
     }, 600);
+  }
+
+  // Enemy cut-in — portrait + name
+  showEnemyCutIn(enemyName) {
+    const existing = document.getElementById('enemy-cutin');
+    if (existing) existing.remove();
+
+    const cutin = document.createElement('div');
+    cutin.id = 'enemy-cutin';
+    cutin.className = 'enemy-cutin';
+    cutin.innerHTML = `
+      <img class="enemy-cutin-portrait" src="assets/enemy_portrait.png" alt="${enemyName}">
+      <span class="enemy-cutin-name">${enemyName}</span>
+    `;
+    const combatScreen = document.getElementById('combat-screen');
+    if (combatScreen) combatScreen.appendChild(cutin);
+
+    requestAnimationFrame(() => cutin.classList.add('active'));
+
+    setTimeout(() => {
+      cutin.classList.add('exit');
+      setTimeout(() => cutin.remove(), 300);
+    }, 500);
   }
 
   showScreen(id) {
