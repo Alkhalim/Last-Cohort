@@ -2178,43 +2178,58 @@ class CombatEngine {
     // Tick down enemy action cooldowns
     if (!enemy._actionCooldowns) enemy._actionCooldowns = {};
 
-    // Defensive AI: only attack if last alive in row, otherwise only use non-damage actions
-    let availableActions = enemy.actions;
-    if (enemy.ai === 'defensive') {
-      const sameRowAlive = this.enemies.filter(e => !e.dead && e.row === enemy.row && e !== enemy);
-      if (sameRowAlive.length > 0) {
-        const nonDamage = availableActions.filter(a => !a.damage || a.damage === 0);
-        if (nonDamage.length > 0) availableActions = nonDamage;
+    // Use pre-rolled intent if available, otherwise re-roll
+    let action, target;
+    if (enemy._intent && enemy._intent.action) {
+      action = enemy._intent.action;
+      // Validate target is still alive
+      const intendedTarget = this.party[enemy._intent.targetIndex];
+      if (intendedTarget && !intendedTarget.downed) {
+        target = intendedTarget;
+      } else {
+        target = this.pickEnemyTarget(enemy, action);
       }
-    }
-
-    // Phase-based filtering: only use actions matching current phase (ranged = back row, melee = front row)
-    if (enemy.phaseShift) {
-      const currentPhase = enemy.row === 'back' ? 'ranged' : 'melee';
-      const phaseFiltered = availableActions.filter(a => !a.phase || a.phase === currentPhase);
-      if (phaseFiltered.length > 0) availableActions = phaseFiltered;
-    }
-
-    // Filter out actions on cooldown
-    const offCooldown = availableActions.filter(a => !a.cooldown || !(enemy._actionCooldowns[a.name] > 0));
-    if (offCooldown.length > 0) availableActions = offCooldown;
-
-    // Normalize chances for filtered actions
-    const totalChance = availableActions.reduce((s, a) => s + a.chance, 0);
-    const roll = Math.random() * totalChance;
-    let cumulative = 0;
-    let action = availableActions[0];
-    for (const a of availableActions) {
-      cumulative += a.chance;
-      if (roll <= cumulative) { action = a; break; }
+      // Check taunt override: if someone taunted since intent was rolled
+      const taunting = this.party.find(u => !u.downed && u.taunt);
+      if (taunting && !action.aoe) target = taunting;
+    } else {
+      // Fallback: re-roll action and target
+      let availableActions = enemy.actions;
+      if (enemy.ai === 'defensive') {
+        const sameRowAlive = this.enemies.filter(e => !e.dead && e.row === enemy.row && e !== enemy);
+        if (sameRowAlive.length > 0) {
+          const nonDamage = availableActions.filter(a => !a.damage || a.damage === 0);
+          if (nonDamage.length > 0) availableActions = nonDamage;
+        }
+      }
+      if (enemy.phaseShift) {
+        const currentPhase = enemy.row === 'back' ? 'ranged' : 'melee';
+        const phaseFiltered = availableActions.filter(a => !a.phase || a.phase === currentPhase);
+        if (phaseFiltered.length > 0) availableActions = phaseFiltered;
+      }
+      if (!enemy._actionCooldowns) enemy._actionCooldowns = {};
+      const offCooldown = availableActions.filter(a => !a.cooldown || !(enemy._actionCooldowns[a.name] > 0));
+      if (offCooldown.length > 0) availableActions = offCooldown;
+      const totalChance = availableActions.reduce((s, a) => s + a.chance, 0);
+      const roll = Math.random() * totalChance;
+      let cumulative = 0;
+      action = availableActions[0];
+      for (const a of availableActions) {
+        cumulative += a.chance;
+        if (roll <= cumulative) { action = a; break; }
+      }
+      target = this.pickEnemyTarget(enemy, action);
     }
 
     // Set cooldown on used action
     if (action.cooldown) {
+      if (!enemy._actionCooldowns) enemy._actionCooldowns = {};
       enemy._actionCooldowns[action.name] = action.cooldown + 1;
     }
 
-    const target = this.pickEnemyTarget(enemy, action);
+    // Clear the used intent
+    enemy._intent = null;
+
     if (!target) return;
 
     // Smoke Screen: chance to miss entirely
@@ -2527,8 +2542,15 @@ class CombatEngine {
       const alive = this.party.filter(u => !u.downed);
       if (alive.length === 0) { e._intent = null; return; }
 
-      // Pick most likely action (filter by phase, cooldown, AI)
+      // Pick most likely action (filter by phase, cooldown, defensive AI)
       let availableActions = e.actions;
+      if (e.ai === 'defensive') {
+        const sameRowAlive = this.enemies.filter(other => !other.dead && other.row === e.row && other !== e);
+        if (sameRowAlive.length > 0) {
+          const nonDamage = availableActions.filter(a => !a.damage || a.damage === 0);
+          if (nonDamage.length > 0) availableActions = nonDamage;
+        }
+      }
       if (e.phaseShift) {
         const phase = e.row === 'back' ? 'ranged' : 'melee';
         const filtered = availableActions.filter(a => !a.phase || a.phase === phase);

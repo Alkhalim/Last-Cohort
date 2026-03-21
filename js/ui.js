@@ -793,6 +793,8 @@ class GameUI {
       if (skill.effects && skill.effects.dieScaleDamage) {
         const dieScale = skill.effects.bonusDmgScale || (skill.effects.halfBonusDmg ? 0.5 : 1);
         const dieBonusDmg = dieScale !== 1 ? Math.floor(ownBonusDmg * dieScale) + buffDmg : effectiveBonusDmg;
+        const baseDmg = skill.effects.damage || 0;
+        const vals = dieRange(costType);
         // Build bonus breakdown string for die-scaling
         const dieBreakdown = () => {
           if (dieScale !== 1 && ownBonusDmg !== 0) {
@@ -802,22 +804,19 @@ class GameUI {
           }
           return dieBonusDmg >= 0 ? `+${dieBonusDmg}` : `${dieBonusDmg}`;
         };
-        // "X + die value damage" pattern
-        desc = desc.replace(/(\d+) \+ die value damage/g, (match, base) => {
-          const b = parseInt(base);
-          const vals = dieRange(costType);
-          const lo = Math.max(1, b + vals[0] + dieBonusDmg);
-          const hi = Math.max(1, b + vals[vals.length - 1] + dieBonusDmg);
+        // "X + die value damage" pattern — use effects.damage as base, not the text number
+        desc = desc.replace(/(\d+) \+ die value damage/g, () => {
+          const lo = Math.max(1, baseDmg + vals[0] + dieBonusDmg);
+          const hi = Math.max(1, baseDmg + vals[vals.length - 1] + dieBonusDmg);
           if (dieBonusDmg !== 0) {
-            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(${b}+die${dieBreakdown()})</span> damage`;
+            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(${baseDmg}+die${dieBreakdown()})</span> damage`;
           }
           return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
         });
         // "damage equal to die value" pattern
         desc = desc.replace(/damage equal to die value/g, () => {
-          const vals = dieRange(costType);
-          const lo = Math.max(1, vals[0] + dieBonusDmg);
-          const hi = Math.max(1, vals[vals.length - 1] + dieBonusDmg);
+          const lo = Math.max(1, baseDmg + vals[0] + dieBonusDmg);
+          const hi = Math.max(1, baseDmg + vals[vals.length - 1] + dieBonusDmg);
           if (dieBonusDmg !== 0) {
             return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(die${dieBreakdown()})</span> damage`;
           }
@@ -825,20 +824,20 @@ class GameUI {
         });
       }
       if (skill.effects && skill.effects.dieScaleBlock) {
-        desc = desc.replace(/(\d+) \+ die value Block/g, (match, base) => {
-          const b = parseInt(base);
-          const vals = dieRange(costType);
-          const lo = b + vals[0] + equipBlock;
-          const hi = b + vals[vals.length - 1] + equipBlock;
+        const baseBlock = skill.effects.block || 0;
+        const vals = dieRange(costType);
+        // "X + die value Block" — use effects.block as base
+        desc = desc.replace(/(\d+) \+ die value Block/g, () => {
+          const lo = baseBlock + vals[0] + equipBlock;
+          const hi = baseBlock + vals[vals.length - 1] + equipBlock;
           if (equipBlock > 0) {
-            return `<span class="stat-block">${lo}-${hi}</span> <span class="stat-breakdown">(${b}+die+${equipBlock})</span> Block`;
+            return `<span class="stat-block">${lo}-${hi}</span> <span class="stat-breakdown">(${baseBlock}+die+${equipBlock})</span> Block`;
           }
           return `<span class="stat-block">${lo}-${hi}</span> Block`;
         });
         desc = desc.replace(/Block equal to die value/g, () => {
-          const vals = dieRange(costType);
-          const lo = vals[0] + equipBlock;
-          const hi = vals[vals.length - 1] + equipBlock;
+          const lo = baseBlock + vals[0] + equipBlock;
+          const hi = baseBlock + vals[vals.length - 1] + equipBlock;
           if (equipBlock > 0) {
             return `<span class="stat-block">${lo}-${hi}</span> <span class="stat-breakdown">(die+${equipBlock})</span> Block`;
           }
@@ -846,10 +845,11 @@ class GameUI {
         });
       }
       if (skill.effects && skill.effects.dieScaleHeal) {
+        const baseHeal = skill.effects.heal || 0;
+        const vals = dieRange(costType);
         desc = desc.replace(/HP equal to die value/g, () => {
-          const vals = dieRange(costType);
-          const lo = Math.max(0, vals[0] + totalBonusHeal);
-          const hi = Math.max(0, vals[vals.length - 1] + totalBonusHeal);
+          const lo = Math.max(0, baseHeal + vals[0] + totalBonusHeal);
+          const hi = Math.max(0, baseHeal + vals[vals.length - 1] + totalBonusHeal);
           if (totalBonusHeal !== 0) {
             return `<span class="stat-heal">${lo}-${hi}</span> <span class="stat-breakdown">(die${totalBonusHeal >= 0 ? '+' : ''}${totalBonusHeal})</span> HP`;
           }
@@ -1876,9 +1876,35 @@ class GameUI {
           // The execute is rebuilt from effects via buildSkillExecute
         }
 
-        // Update description
-        const oldDesc = baseDef.description;
-        baseDef.description = oldDesc.replace(/\d+/, (m) => String(parseInt(m) + 1));
+        // Update description — replace the number matching the upgraded stat
+        const descPatterns = {
+          damage: /([Dd]eal[s]?\s+)(\d+)(\s+damage|.*\+ die value damage)/,
+          damageAll: /(\d+)(\s+damage)/,
+          heal: /(\d+)(\s+HP|.*healing)/,
+          healAll: /(\d+)(\s+HP|.*healing)/,
+          block: /(\d+)(\s+Block|\s+\+ die value Block)/,
+          blockAll: /(\d+)(\s+Block)/,
+          poison: /(\d+)(\s+[Pp]oison)/,
+          poisonAll: /(\d+)(\s+[Pp]oison)/,
+          morale: /([+-]?\d+)(\s+[Mm]orale)/,
+          selfDamage: /(\d+)(\s+HP)/,
+          buffAllies: /\+(\d+)(\s+damage)/,
+        };
+        const pattern = descPatterns[chosen.key];
+        if (pattern) {
+          const oldDesc = baseDef.description;
+          baseDef.description = oldDesc.replace(pattern, (match, ...groups) => {
+            // Find which group is the number and increment/decrement it
+            const numGroupIdx = groups.findIndex(g => typeof g === 'string' && /^[+-]?\d+$/.test(g));
+            if (numGroupIdx >= 0) {
+              const oldVal = parseInt(groups[numGroupIdx]);
+              const newVal = chosen.key === 'selfDamage' ? oldVal - 1 : (chosen.key === 'morale' ? oldVal + 5 : oldVal + 1);
+              groups[numGroupIdx] = String(newVal);
+              return groups.slice(0, -2).join(''); // exclude offset and full string
+            }
+            return match;
+          });
+        }
 
         choicesEl.innerHTML = '';
         document.getElementById('event-outcome').classList.remove('hidden');
