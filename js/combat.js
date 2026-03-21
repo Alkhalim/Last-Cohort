@@ -380,6 +380,18 @@ class CombatEngine {
       }
     });
 
+    // Crown of Ariovistus: gain block equal to number of living enemies
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'crown_of_ariovistus')) {
+        const livingEnemies = this.enemies.filter(e => !e.dead).length;
+        if (livingEnemies > 0) {
+          u.block = (u.block || 0) + livingEnemies;
+          this.addLog(`Crown of Ariovistus grants ${u.name} ${livingEnemies} Block.`);
+          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: livingEnemies });
+        }
+      }
+    });
+
     // Vestments of Flora: heal the most wounded ally for 2 HP each turn
     this.party.forEach(u => {
       if (!u.downed && this.unitHasItem(u, 'vestments_of_flora')) {
@@ -1095,6 +1107,11 @@ class CombatEngine {
       if (result.target._condemned && result.target._condemned > 0) {
         total = Math.round(total * 1.3);
         parts.push('Condemned! (+30%)');
+      }
+      // Blade of Ariovistus: bonus damage equal to enemies killed this combat
+      if (this.unitHasItem(unit, 'blade_of_ariovistus') && this.killedEnemies.length > 0) {
+        total += this.killedEnemies.length;
+        parts.push(`Blade of Ariovistus! (+${this.killedEnemies.length})`);
       }
       // Pilum of the Lost: every 3rd attack deals double damage
       if (this.unitHasItem(unit, 'pilum_of_the_lost')) {

@@ -99,6 +99,28 @@ const RAW_ENEMIES = {
       { "name": "Burning Effigy", "damage": 0, "chance": 1.0, "text": "burns — all soldiers take 2 damage per turn, and nearby enemies take 2 less damage from attacks" }
     ]
   },
+  "revenant_of_ariovistus": {
+    "id": "revenant_of_ariovistus", "name": "Revenant of Ariovistus",
+    "maxHp": 48, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 25,
+    "description": "The dead king rises from his barrow, crowned in rust and fury. His strikes carry the weight of a kingdom that refused to kneel.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "King's Wrath", "damage": 12, "chance": 0.35, "text": "strikes with the fury of a dead kingdom" },
+      { "name": "Barrow Chill", "damage": 5, "morale": -15, "chance": 0.25, "text": "breathes the cold of the grave", "aoe": true, "cooldown": 1 },
+      { "name": "Undying Defiance", "damage": 0, "chance": 0.2, "text": "roars in defiance — all soldiers lose their nerve", "morale": -20 },
+      { "name": "Grave Strike", "damage": 9, "chance": 0.2, "text": "lunges from the darkness", "ignoreRow": true }
+    ]
+  },
+  "barrow_guardian": {
+    "id": "barrow_guardian", "name": "Barrow Guardian",
+    "maxHp": 16, "row": "front", "damage": [4, 7], "speed": 1, "xpValue": 5,
+    "description": "Skeletal warriors that claw from the earth around the king's grave, bound to protect him in death as they did in life.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Bone Claw", "damage": 5, "chance": 0.6, "text": "rakes with bony claws" },
+      { "name": "Grave Grasp", "damage": 3, "chance": 0.4, "text": "drags at a soldier's legs", "morale": -5 }
+    ]
+  },
   "arminius_champion": {
     "id": "arminius_champion", "name": "Arminius's Champion",
     "maxHp": 55, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 20,

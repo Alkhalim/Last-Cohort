@@ -2,7 +2,7 @@
 // Last Cohort – Map Generator
 // ============================================================
 
-function generateMap(difficulty = 1, recentBosses = []) {
+function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Set()) {
   const nodes = [];
   let idCounter = 0;
 
@@ -192,6 +192,7 @@ function generateMap(difficulty = 1, recentBosses = []) {
       const eligible = EVENT_DATA.filter(e => {
         if (e.minDifficulty && e.minDifficulty > difficulty) return false;
         if (e.maxDifficulty && e.maxDifficulty < difficulty) return false;
+        if (e.oncePerRun && usedRunEventIds.has(e.id)) return false;
         return true;
       });
       // Remove already-used non-repeatable events
@@ -211,6 +212,7 @@ function generateMap(difficulty = 1, recentBosses = []) {
       const chosen = pool[Math.floor(Math.random() * pool.length)];
       node.encounter = chosen;
       if (chosen && !repeatable.includes(chosen.type)) usedEventIds.add(chosen.id);
+      if (chosen && chosen.oncePerRun) usedRunEventIds.add(chosen.id);
     }
   }
 

@@ -507,8 +507,8 @@ const RAW_CLASSES = {
         "id": "reckless_charge", "name": "Reckless Charge", "cooldown": 3,
         "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Requires a 6. A wild, reckless charge. Deals 14 damage to any target. Take 5 self-damage.",
-        "effects": { "damage": 14, "selfDamage": 5, "halfScaleSelfDamage": true }
+        "description": "Requires a 6. A wild, reckless charge. Deals 14 damage to any target. Take 4 self-damage.",
+        "effects": { "damage": 14, "selfDamage": 4, "halfScaleSelfDamage": true }
       },
       {
         "id": "overrun", "name": "Overrun",

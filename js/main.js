@@ -18,6 +18,9 @@ const MUSIC_GAMEPLAY = [
   'assets/Teutoburgs Black Earth.mp3',
 ];
 const MUSIC_BOSS = 'assets/Shadow of Arminius.mp3';
+const MUSIC_BOSS_OVERRIDE = {
+  'grove_witch': 'assets/Swamp Fury Unleashed.mp3',
+};
 
 // --- Curse Definitions ---
 const CURSE_DEFS = [
@@ -301,7 +304,7 @@ class Game {
     }
   }
 
-  startBossMusic() {
+  startBossMusic(bossId) {
     if (this.musicMode === 'boss') return;
     this.musicMode = 'boss';
     // Start from silence — the intro splash already faded out previous music
@@ -309,7 +312,14 @@ class Game {
       this.stopTrack(this.currentTrack, 0);
       this.currentTrack = null;
     }
-    const bossSrc = this.settings.fullSoundtrack ? MUSIC_BOSS : MUSIC_MENU;
+    let bossSrc;
+    if (!this.settings.fullSoundtrack) {
+      bossSrc = MUSIC_MENU;
+    } else if (bossId && MUSIC_BOSS_OVERRIDE[bossId]) {
+      bossSrc = MUSIC_BOSS_OVERRIDE[bossId];
+    } else {
+      bossSrc = MUSIC_BOSS;
+    }
     this.currentTrack = this.playTrack(bossSrc, true);
   }
 
@@ -805,6 +815,7 @@ class Game {
     this.difficulty = 1;
     this.marchCount = 0;
     this.recentBosses = [];
+    this.usedRunEventIds = new Set();
     this.engine.morale = 50;
     this.engine.totalEnemiesKilled = 0;
     this.engine.encountersCompleted = 0;
@@ -821,7 +832,7 @@ class Game {
 
     this.startGameplayMusic();
 
-    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses);
+    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
     this.ui.showMapScreen();
@@ -834,7 +845,7 @@ class Game {
 
     this.resumeGameplayMusic();
 
-    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses);
+    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
     this.ui.showMapScreen();

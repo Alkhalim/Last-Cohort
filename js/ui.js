@@ -928,20 +928,24 @@ class GameUI {
 
       const cdLeft = skill.cooldownLeft > 0 ? skill.cooldownLeft - 1 : 0;
       let cdText = '';
-      if (skill.cooldownLeft > 0 && cdLeft > 0) {
-        // On cooldown: show filled icons for remaining, empty for spent
-        const icons = Array.from({ length: cdLeft }, () => '<span class="cd-icon active"></span>').join('');
-        cdText = `<span class="skill-cd">${icons}</span>`;
-      } else if (skill.cooldownLeft > 0) {
-        cdText = '<span class="skill-cd">Ready next turn</span>';
-      } else if (skill.cooldown) {
-        // Ready: show empty icons for base cooldown
+      if (skill.cooldown && !skill.cooldownLeft) {
         const icons = Array.from({ length: skill.cooldown }, () => '<span class="cd-icon ready"></span>').join('');
         cdText = `<span class="skill-cd-ready">${icons}</span>`;
+      }
+      const onCooldown = skill.cooldownLeft > 0 && cdLeft > 0;
+      const readyNextTurn = skill.cooldownLeft > 0 && cdLeft === 0;
+      let cooldownOverlay = '';
+      if (onCooldown) {
+        el.classList.add('on-cooldown');
+        cooldownOverlay = `<div class="skill-cooldown-overlay">Ready in ${cdLeft} turn${cdLeft > 1 ? 's' : ''}</div>`;
+      } else if (readyNextTurn) {
+        el.classList.add('on-cooldown', 'ready-soon');
+        cooldownOverlay = `<div class="skill-cooldown-overlay ready">Ready next turn</div>`;
       }
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span> ${cdText}</div>
         <div class="skill-desc">${desc}</div>
+        ${cooldownOverlay}
       `;
 
       if (skill.canUse) {
@@ -1314,7 +1318,7 @@ class GameUI {
 
     // Calculate dimensions
     const maxDepth = 8;
-    const nodeSpacing = 90;
+    const nodeSpacing = 110;
     const topPadding = 60;
     const bottomPadding = 60;
     const totalHeight = topPadding + (maxDepth + 1) * nodeSpacing + bottomPadding;
@@ -1365,7 +1369,7 @@ class GameUI {
     const nodePositions = {};
     for (const node of this.mapNodes) {
       const y = totalHeight - bottomPadding - node.depth * nodeSpacing;
-      const x = node.x * (wrapperWidth - 80) + 40;
+      const x = node.x * (wrapperWidth - 40) + 20;
       nodePositions[node.id] = { x, y };
     }
 
@@ -1425,8 +1429,8 @@ class GameUI {
       const isUnreachable = !node.visited && !futureReachable.has(node.id);
 
       el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''}${isUnreachable ? ' unreachable' : ''} type-${node.type}`;
-      el.style.left = (pos.x - 22) + 'px';
-      el.style.top = (pos.y - 22) + 'px';
+      el.style.left = (pos.x - 32) + 'px';
+      el.style.top = (pos.y - 32) + 'px';
 
       let icon = '';
       const iconImg = (src) => `<img src="assets/map-icons/${src}" class="map-node-img">`;
@@ -1505,7 +1509,7 @@ class GameUI {
     splash.innerHTML = `
       <div class="boss-intro-content">
         <div class="boss-intro-line"></div>
-        <div class="boss-intro-name">${bossName}</div>
+        <div class="boss-intro-name">${bossName.includes(' ') ? bossName.replace(/(.*)\s/, '$1<br>') : bossName}</div>
         <div class="boss-intro-desc">${bossFlavorText}</div>
         <div class="boss-intro-line"></div>
       </div>
@@ -1521,7 +1525,7 @@ class GameUI {
     // After 2.5s: fade out splash, start boss music, auto-start fight
     setTimeout(() => {
       splash.classList.add('fade-out');
-      window.game.startBossMusic();
+      window.game.startBossMusic(bossEnemyId);
       setTimeout(() => {
         splash.remove();
         // Auto-start: skip "Begin Encounter" and go straight to spawning
@@ -1605,14 +1609,6 @@ class GameUI {
       let meetsRequirement = true;
       let requirementLabel = '';
 
-      if (choice.requiresClass) {
-        const hasClass = aliveParty.some(u => u.classId === choice.requiresClass);
-        if (!hasClass) {
-          meetsRequirement = false;
-          const classData = CLASS_DATA[choice.requiresClass];
-          requirementLabel = classData ? classData.name : choice.requiresClass;
-        }
-      }
       if (choice.requiresTag) {
         const hasTag = aliveParty.some(u => {
           const tags = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags : [];
@@ -1771,7 +1767,22 @@ class GameUI {
     document.getElementById('event-outcome-text').textContent = outcomeText;
 
     document.getElementById('btn-event-continue').onclick = () => {
-      if (this.pendingEventItem) {
+      if (effects.triggerCombat) {
+        // Start combat encounter from event
+        const combatData = effects.triggerCombat;
+        this.pendingEventCombatLoot = combatData.loot || [];
+        const encounter = { name: combatData.name, enemies: combatData.enemies, intro: combatData.intro };
+        this.currentNodeThreat = 3;
+        this.engine.initEncounter(encounter);
+        this.showScreen('combat-screen');
+        this.selectedUnitIndex = null;
+        this.stagedSkill = null;
+        this.prevEnemyHp = {};
+        this.prevUnitHp = {};
+        this._prevBossHpPct = undefined;
+        this.diceRevealRunning = false;
+        this.render();
+      } else if (this.pendingEventItem) {
         this.showEventItemScreen(this.pendingEventItem);
       } else {
         this.showMapScreen();
@@ -2424,6 +2435,12 @@ class GameUI {
         this.engine.totalRenownEarned += 10;
         this.engine.addLog('No usable spoils found — +10 Renown instead.');
       }
+    }
+
+    // Event-triggered combat: override loot with the specified items
+    if (this.pendingEventCombatLoot && this.pendingEventCombatLoot.length > 0) {
+      this.pendingLoot = [...this.pendingEventCombatLoot];
+      this.pendingEventCombatLoot = null;
     }
 
     this.lootScreenFinal = isBossVictory;

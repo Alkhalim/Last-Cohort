@@ -75,9 +75,9 @@ const RAW_EVENTS = [
     "id": "fallen_legionary", "name": "Fallen Legionary",
     "intro": "A Roman soldier lies against a tree, barely alive. His armor is shattered and his eyes are dim. He clutches a leather satchel.",
     "choices": [
-      { "text": "Have your medicus tend to his wounds.", "requiresClass": "medicus", "outcomes": [
-        { "weight": 0.6, "text": "Your medicus works quickly. He dies in your arms, but the satchel holds useful supplies.", "effects": { "grantItem": "herb_pouch", "morale": -5 } },
-        { "weight": 0.4, "text": "Your medicus stabilizes him. He whispers a warning about the path ahead. The satchel holds medicine.", "effects": { "healAll": 8, "morale": 8 } }
+      { "text": "Have your healer tend to his wounds.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.6, "text": "Your healer works quickly. He dies in your arms, but the satchel holds useful supplies.", "effects": { "grantItem": "herb_pouch", "morale": -5 } },
+        { "weight": 0.4, "text": "Your healer stabilizes him. He whispers a warning about the path ahead. The satchel holds medicine.", "effects": { "healAll": 8, "morale": 8 } }
       ]},
       { "text": "Take his equipment and move on.", "outcomes": [
         { "weight": 0.5, "text": "His gladius is still sharp.", "effects": { "grantItem": "iron_gladius" } },
@@ -114,9 +114,9 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "He tells you nothing useful and manages to bite a soldier.", "effects": { "damageAll": 2 } },
         { "weight": 0.2, "text": "He breaks free and screams an alarm. You must move quickly.", "effects": { "morale": -12 } }
       ]},
-      { "text": "Your centurion takes command of the interrogation.", "requiresClass": "centurion", "outcomes": [
+      { "text": "Your officer takes command of the interrogation.", "requiresTag": "command", "outcomes": [
         { "weight": 0.6, "text": "Under firm questioning, the scout reveals enemy positions. Your men prepare accordingly.", "effects": { "morale": 12, "grantBlock": 5, "extraDiceNext": 1 } },
-        { "weight": 0.4, "text": "The centurion's authority breaks him. He begs for mercy and offers his blade.", "effects": { "grantItem": "wolf_fang_blade", "morale": 5 } }
+        { "weight": 0.4, "text": "The officer's authority breaks him. He begs for mercy and offers his blade.", "effects": { "grantItem": "wolf_fang_blade", "morale": 5 } }
       ]},
       { "text": "Release him as a show of mercy.", "outcomes": [
         { "weight": 0.6, "text": "The men question your judgment, but the gesture feels right.", "effects": { "morale": 8 } },
@@ -151,8 +151,8 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "They refuse and flee into the forest, but leave useful supplies behind.", "effects": { "healAll": 6, "grantItem": "iron_gladius" } },
         { "weight": 0.3, "text": "They attack in desperation. You put them down, but the fight costs you.", "effects": { "damageAll": 5, "morale": -10 } }
       ]},
-      { "text": "Your centurion rallies them with authority.", "requiresClass": "centurion", "outcomes": [
-        { "weight": 0.7, "text": "The centurion's voice carries the weight of Rome. Every man falls in line without a word. Morale soars.", "effects": { "morale": 22 } },
+      { "text": "Your officer rallies them with authority.", "requiresTag": "command", "outcomes": [
+        { "weight": 0.7, "text": "Your officer's voice carries the weight of Rome. Every man falls in line without a word. Morale soars.", "effects": { "morale": 22 } },
         { "weight": 0.3, "text": "They recognize the rank and share their fortified position. Your men rest and sharpen blades.", "effects": { "morale": 12, "healAll": 6, "buffDamage": 1, "buffAttacks": 4, "grantBlock": 3 } }
       ]},
       { "text": "Trade supplies with them.", "outcomes": [
@@ -281,9 +281,9 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "The blood ignites as you approach. A curse lashes out.", "effects": { "damageAll": 6, "morale": -12 } },
         { "weight": 0.3, "text": "You destroy the site but find a powerful artifact beneath the altar.", "effects": { "grantItem": "arm_ring_of_arminius", "damageAll": 4 } }
       ]},
-      { "text": "Your medicus studies the herbs and symbols.", "requiresClass": "medicus", "outcomes": [
-        { "weight": 0.5, "text": "Your medicus recognizes the herbs and brews a powerful stimulant. Your men feel sharper.", "effects": { "healAll": 8, "morale": 5, "extraDiceNext": 2 } },
-        { "weight": 0.3, "text": "The medicus deciphers a ward against poison and applies it to your weapons.", "effects": { "morale": 8, "grantItem": "viper_venom_vial" } },
+      { "text": "Your healer studies the herbs and symbols.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.5, "text": "Your healer recognizes the herbs and brews a powerful stimulant. Your men feel sharper.", "effects": { "healAll": 8, "morale": 5, "extraDiceNext": 2 } },
+        { "weight": 0.3, "text": "The healer deciphers a ward against poison and applies it to your weapons.", "effects": { "morale": 8, "grantItem": "viper_venom_vial" } },
         { "weight": 0.2, "text": "Deep study reveals the ritual's purpose — a protection charm, repurposed.", "effects": { "healAll": 6, "grantItem": "woad_charm" } }
       ]},
       { "text": "Study the symbols carefully.", "outcomes": [
@@ -307,7 +307,7 @@ const RAW_EVENTS = [
         { "weight": 0.5, "text": "The wolf dies quietly. Its pelt is thick and warm.", "effects": { "grantItem": "wolf_pelt", "morale": 3 } },
         { "weight": 0.5, "text": "As it dies, others howl in the distance. Its pack remembers.", "effects": { "morale": -8 } }
       ]},
-      { "text": "Have your medicus tend to it.", "requiresClass": "medicus", "outcomes": [
+      { "text": "Have your healer tend to it.", "requiresTag": "support", "outcomes": [
         { "weight": 0.4, "text": "Against all odds, the wolf accepts treatment. It limps away, turning back once. Your men feel... something.", "effects": { "morale": 20 } },
         { "weight": 0.3, "text": "It snaps and bites before fleeing. Worth the try.", "effects": { "damageAll": 3, "morale": 5 } },
         { "weight": 0.3, "text": "The wolf calms. Around its neck is a collar with a strange charm.", "effects": { "grantItem": "fang_necklace", "morale": 10 } }
@@ -353,10 +353,10 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "As the last totem falls, a curse lashes out. Pain sears through the column.", "effects": { "damageAll": 5, "morale": -8 } },
         { "weight": 0.2, "text": "Among the shattered bones, a charm pulses with stolen power.", "effects": { "grantItem": "woad_charm", "morale": 5 } }
       ]},
-      { "text": "Your medicus examines the runes and bones.", "requiresClass": "medicus", "outcomes": [
-        { "weight": 0.5, "text": "The medicus identifies the poison on the bone tips and prepares a counter-agent. Knowledge is armor.", "effects": { "healAll": 6, "morale": 8 } },
-        { "weight": 0.3, "text": "Careful study reveals a ward pattern. Your medicus repurposes it as protection.", "effects": { "morale": 10, "grantItem": "seers_eye" } },
-        { "weight": 0.2, "text": "The runes resist understanding, but the medicus brews a tonic from the ritual herbs. Everyone feels tougher.", "effects": { "maxHpAll": 1, "healAll": 3 } }
+      { "text": "Your healer examines the runes and bones.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.5, "text": "Your healer identifies the poison on the bone tips and prepares a counter-agent. Knowledge is armor.", "effects": { "healAll": 6, "morale": 8 } },
+        { "weight": 0.3, "text": "Careful study reveals a ward pattern. Your healer repurposes it as protection.", "effects": { "morale": 10, "grantItem": "seers_eye" } },
+        { "weight": 0.2, "text": "The runes resist understanding, but your healer brews a tonic from the ritual herbs. Everyone feels tougher.", "effects": { "maxHpAll": 1, "healAll": 3 } }
       ]},
       { "text": "Your fighters carve a new path around them.", "requiresTag": "melee", "outcomes": [
         { "weight": 0.6, "text": "Brute force wins. Your soldiers hack through the undergrowth, avoiding the markers entirely.", "effects": { "morale": 8, "damageAll": 2 } },
@@ -407,12 +407,32 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "A wolf pelt cloak, stiff with frost. It'll keep someone warm.", "effects": { "grantItem": "wolf_pelt", "morale": -8 } },
         { "weight": 0.2, "text": "Nothing but rot. The men stare at you with hollow eyes.", "effects": { "morale": -20 } }
       ]},
-      { "text": "Your centurion leads funeral rites.", "requiresClass": "centurion", "outcomes": [
-        { "weight": 0.7, "text": "The centurion speaks the words of Rome. Every man stands at attention. For a moment, the forest is silent.", "effects": { "morale": 22, "healAll": 5 } },
+      { "text": "Your officer leads funeral rites.", "requiresTag": "command", "outcomes": [
+        { "weight": 0.7, "text": "Your officer speaks the words of Rome. Every man stands at attention. For a moment, the forest is silent.", "effects": { "morale": 22, "healAll": 5 } },
         { "weight": 0.3, "text": "The rites bring cold fury. Your men swear vengeance. Blades are sharpened.", "effects": { "morale": 15, "buffDamage": 3, "buffAttacks": 2 } }
       ]},
       { "text": "March past in silence.", "outcomes": [
         { "weight": 1.0, "text": "No one speaks. The forest swallows the dead behind you.", "effects": { "morale": -5 } }
+      ]}
+    ]
+  },
+  {
+    "id": "grave_of_ariovistus",
+    "name": "The Barrow of Ariovistus",
+    "minDifficulty": 4,
+    "oncePerRun": true,
+    "weight": 1,
+    "intro": "Deep in the forest, your men stumble upon a mound of ancient stone half-swallowed by roots. Runes older than Rome are carved into the entrance. The air is cold and still. Your scouts recognize the markings — this is the barrow of Ariovistus, the great Germanic king who defied Caesar himself. His grave was never found... until now.",
+    "choices": [
+      { "text": "Break the seal and enter the barrow.", "outcomes": [
+        { "weight": 1.0, "text": "The stones groan as the seal shatters. From the darkness, something stirs. The dead king does not rest easy.", "effects": { "triggerCombat": { "enemies": ["revenant_of_ariovistus", "barrow_guardian", "barrow_guardian"], "name": "The Barrow of Ariovistus", "intro": "The Revenant of Ariovistus rises from his throne of bones.", "loot": ["crown_of_ariovistus", "blade_of_ariovistus"] } } }
+      ]},
+      { "text": "Pay your respects and take what the grave offers.", "outcomes": [
+        { "weight": 0.5, "text": "You kneel at the entrance. The cold wind carries a whisper — and something rolls from the darkness into the light. The dead king's crown.", "effects": { "grantItem": "crown_of_ariovistus", "morale": 10 } },
+        { "weight": 0.5, "text": "You kneel at the entrance. A rusted blade slides from the earth at your feet, as if offered. The dead king's weapon.", "effects": { "grantItem": "blade_of_ariovistus", "morale": 10 } }
+      ]},
+      { "text": "This place is cursed. Leave it undisturbed.", "outcomes": [
+        { "weight": 1.0, "text": "Your men breathe easier as you back away. Some things are better left buried. The forest seems to approve.", "effects": { "morale": 15 } }
       ]}
     ]
   }
