@@ -3833,7 +3833,7 @@ html, body {
    ================================================================ */
 
 .skill-cutin {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -3847,23 +3847,24 @@ html, body {
 
 .skill-cutin-portrait {
   position: absolute;
-  left: -50%;
-  height: 80%;
-  max-height: 400px;
+  left: 5%;
+  height: 65%;
+  max-height: 340px;
   object-fit: contain;
-  filter: drop-shadow(4px 0 15px rgba(0, 0, 0, 0.8));
+  filter: drop-shadow(4px 0 12px rgba(0, 0, 0, 0.8));
   opacity: 0;
+  transform: translateX(-120%);
   transition: none;
 }
 
 .skill-cutin-name {
   position: absolute;
-  bottom: 18%;
+  bottom: 22%;
   left: 0;
   right: 0;
   text-align: center;
   font-family: 'Cinzel', serif;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-bright);
   letter-spacing: 0.15em;
@@ -3893,25 +3894,25 @@ html, body {
 
 @keyframes cutin-slide-in {
   0% {
-    left: -50%;
+    transform: translateX(-120%);
     opacity: 0;
   }
   30% {
     opacity: 1;
   }
   100% {
-    left: 2%;
+    transform: translateX(0);
     opacity: 0.9;
   }
 }
 
 @keyframes cutin-slide-out {
   0% {
-    left: 2%;
+    transform: translateX(0);
     opacity: 0.9;
   }
   100% {
-    left: 15%;
+    transform: translateX(30%);
     opacity: 0;
   }
 }

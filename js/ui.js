@@ -148,7 +148,9 @@ class GameUI {
       <img class="skill-cutin-portrait" src="assets/${classTitle}.png" alt="${classTitle}">
       <div class="skill-cutin-name">${skillName}</div>
     `;
-    document.getElementById('game').appendChild(cutin);
+    const combatScreen = document.getElementById('combat-screen');
+    if (combatScreen) combatScreen.appendChild(cutin);
+    else document.getElementById('game').appendChild(cutin);
 
     // Trigger animation
     requestAnimationFrame(() => cutin.classList.add('active'));
