@@ -25,23 +25,23 @@ const RAW_ENCOUNTERS = {
   ],
   "threatLevels": {
     "easy": [
-      { "name": "Forest Scouts", "enemies": ["cheruscan_raider", "sling_hunter"], "intro": "A pair of scouts spot your column and attack." },
-      { "name": "Lone Wolves", "enemies": ["marsh_wolf", "marsh_wolf"], "intro": "Wolves slink from the undergrowth, hungry and desperate." },
-      { "name": "Eerie Chanting", "enemies": ["bog_seer", "cheruscan_raider"], "intro": "Chanting drifts from the fog. A seer and his guard block your path." },
-      { "name": "Viper Nest", "enemies": ["fen_viper", "fen_viper"], "intro": "You step into a nest of marsh vipers. They strike without warning." },
-      { "name": "Swamp Crawlers", "enemies": ["mire_leech", "mire_leech"], "intro": "Bloated shapes slither from the mud. The swamp breeds foul things." },
-      { "name": "Guarded Scouts", "enemies": ["cheruscan_guardian", "cheruscan_raider", "sling_hunter"], "intro": "A guardian crouches with shield raised while scouts press the attack." }
+      { "name": "Forest Scouts", "maxDifficulty": 4, "enemies": ["cheruscan_raider", "sling_hunter"], "intro": "A pair of scouts spot your column and attack." },
+      { "name": "Lone Wolves", "maxDifficulty": 5, "enemies": ["marsh_wolf", "marsh_wolf"], "intro": "Wolves slink from the undergrowth, hungry and desperate." },
+      { "name": "Eerie Chanting", "maxDifficulty": 5, "enemies": ["bog_seer", "cheruscan_raider"], "intro": "Chanting drifts from the fog. A seer and his guard block your path." },
+      { "name": "Viper Nest", "maxDifficulty": 5, "enemies": ["fen_viper", "fen_viper"], "intro": "You step into a nest of marsh vipers. They strike without warning." },
+      { "name": "Swamp Crawlers", "maxDifficulty": 4, "enemies": ["mire_leech", "mire_leech"], "intro": "Bloated shapes slither from the mud. The swamp breeds foul things." },
+      { "name": "Guarded Scouts", "maxDifficulty": 6, "enemies": ["cheruscan_guardian", "cheruscan_raider", "sling_hunter"], "intro": "A guardian crouches with shield raised while scouts press the attack." }
     ],
     "mid": [
-      { "name": "Ambush on the Trail", "enemies": ["cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Shapes burst from the undergrowth \u2014 Germanic warriors block the path." },
-      { "name": "Raiding Party", "enemies": ["cheruscan_raider", "sling_hunter", "sling_hunter"], "intro": "Stones whistle past. A raiding party has found your trail." },
-      { "name": "Wolf Pack", "enemies": ["marsh_wolf", "marsh_wolf", "marsh_wolf"], "intro": "A whole wolf pack emerges from the fog. There is no retreat." },
-      { "name": "Cursed Hollow", "enemies": ["bog_seer", "bog_seer", "cheruscan_raider"], "intro": "Two seers stand in a hollow, their chanting shaking the air. A warrior guards them." },
-      { "name": "Wolves and Whispers", "enemies": ["marsh_wolf", "marsh_wolf", "bog_seer"], "intro": "Wolves circle in the mist while eerie chanting echoes from behind the trees." },
-      { "name": "Venomous Ambush", "enemies": ["fen_viper", "fen_viper", "sling_hunter"], "intro": "Vipers and slingers attack from the swamp in a coordinated ambush." },
-      { "name": "Shield Line", "enemies": ["cheruscan_shieldbearer", "cheruscan_raider", "sling_hunter"], "intro": "A shieldbearer hunkers down while warriors form behind him. A disciplined formation." },
-      { "name": "Guardian Formation", "enemies": ["cheruscan_guardian", "cheruscan_guardian", "cheruscan_raider", "sling_hunter"], "intro": "Two guardians lock shields while attackers strike from behind the wall." },
-      { "name": "Leech Swarm", "enemies": ["mire_leech", "mire_leech", "mire_leech"], "intro": "The ground writhes. Bloated leeches pour from the mud in a sickening wave." },
+      { "name": "Ambush on the Trail", "maxDifficulty": 5, "enemies": ["cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Shapes burst from the undergrowth \u2014 Germanic warriors block the path." },
+      { "name": "Raiding Party", "maxDifficulty": 5, "enemies": ["cheruscan_raider", "sling_hunter", "sling_hunter"], "intro": "Stones whistle past. A raiding party has found your trail." },
+      { "name": "Wolf Pack", "maxDifficulty": 6, "enemies": ["marsh_wolf", "marsh_wolf", "marsh_wolf"], "intro": "A whole wolf pack emerges from the fog. There is no retreat." },
+      { "name": "Cursed Hollow", "maxDifficulty": 6, "enemies": ["bog_seer", "bog_seer", "cheruscan_raider"], "intro": "Two seers stand in a hollow, their chanting shaking the air. A warrior guards them." },
+      { "name": "Wolves and Whispers", "maxDifficulty": 6, "enemies": ["marsh_wolf", "marsh_wolf", "bog_seer"], "intro": "Wolves circle in the mist while eerie chanting echoes from behind the trees." },
+      { "name": "Venomous Ambush", "maxDifficulty": 6, "enemies": ["fen_viper", "fen_viper", "sling_hunter"], "intro": "Vipers and slingers attack from the swamp in a coordinated ambush." },
+      { "name": "Shield Line", "maxDifficulty": 7, "enemies": ["cheruscan_shieldbearer", "cheruscan_raider", "sling_hunter"], "intro": "A shieldbearer hunkers down while warriors form behind him. A disciplined formation." },
+      { "name": "Guardian Formation", "maxDifficulty": 7, "enemies": ["cheruscan_guardian", "cheruscan_guardian", "cheruscan_raider", "sling_hunter"], "intro": "Two guardians lock shields while attackers strike from behind the wall." },
+      { "name": "Leech Swarm", "maxDifficulty": 5, "enemies": ["mire_leech", "mire_leech", "mire_leech"], "intro": "The ground writhes. Bloated leeches pour from the mud in a sickening wave." },
       { "name": "Spear Rain", "minDifficulty": 2, "enemies": ["spear_thrower", "spear_thrower", "cheruscan_raider"], "intro": "Spears arc from the treeline. Two warriors hurl javelin after javelin before drawing blades." },
       { "name": "Berserker Charge", "minDifficulty": 2, "enemies": ["germanic_berserker", "cheruscan_raider", "sling_hunter"], "intro": "A foam-mouthed berserker charges from the trees, warriors at his back." },
       { "name": "War Hound Pack", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "cheruscan_raider"], "intro": "Armored hounds bound through the undergrowth, a handler driving them forward." },
@@ -51,22 +51,32 @@ const RAW_ENCOUNTERS = {
       { "name": "Boar Stampede", "minDifficulty": 3, "enemies": ["war_boar", "boar_youngling", "boar_youngling"], "intro": "The ground trembles. A massive boar leads its young through the undergrowth, tusks lowered." }
     ],
     "hard": [
-      { "name": "The Clearing", "enemies": ["cheruscan_raider", "cheruscan_raider", "marsh_wolf", "sling_hunter"], "intro": "You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you." },
-      { "name": "War Band", "enemies": ["cheruscan_raider", "cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "A full war band charges from the trees. Prepare for a desperate fight." },
-      { "name": "The Oak Shield", "enemies": ["oak_shield", "cheruscan_raider", "sling_hunter"], "intro": "A massive warrior blocks the trail, oak shield raised. His warband flanks you." },
-      { "name": "Ritual Guard", "enemies": ["oak_shield", "bog_seer", "bog_seer"], "intro": "An elite warrior guards two seers performing a dark ritual. Stop them or be consumed." },
-      { "name": "The Hunting Party", "enemies": ["oak_shield", "marsh_wolf", "marsh_wolf"], "intro": "An elite warrior commands a pair of trained war wolves. They advance as one." },
-      { "name": "Poison Grove", "enemies": ["fen_viper", "fen_viper", "bog_seer", "cheruscan_raider"], "intro": "Vipers slither among the roots as a seer chants protection. A warrior guards the approach." },
-      { "name": "The Burning Effigy", "enemies": ["wicker_man", "cheruscan_shieldbearer", "bog_seer"], "intro": "A towering wicker effigy burns in the clearing. Its smoke protects the warriors gathered around it." },
-      { "name": "Shield Wall", "enemies": ["cheruscan_shieldbearer", "cheruscan_shieldbearer", "sling_hunter", "sling_hunter"], "intro": "Two shieldbearers form an impenetrable wall while slingers rain stones from behind." },
-      { "name": "Swamp Horror", "enemies": ["mire_leech", "mire_leech", "fen_viper", "bog_seer"], "intro": "The swamp itself attacks \u2014 leeches, vipers, and a chanting seer drive the assault." },
+      { "name": "The Clearing", "maxDifficulty": 5, "enemies": ["cheruscan_raider", "cheruscan_raider", "marsh_wolf", "sling_hunter"], "intro": "You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you." },
+      { "name": "War Band", "maxDifficulty": 5, "enemies": ["cheruscan_raider", "cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "A full war band charges from the trees. Prepare for a desperate fight." },
+      { "name": "The Oak Shield", "maxDifficulty": 7, "enemies": ["oak_shield", "cheruscan_raider", "sling_hunter"], "intro": "A massive warrior blocks the trail, oak shield raised. His warband flanks you." },
+      { "name": "Ritual Guard", "maxDifficulty": 7, "enemies": ["oak_shield", "bog_seer", "bog_seer"], "intro": "An elite warrior guards two seers performing a dark ritual. Stop them or be consumed." },
+      { "name": "The Hunting Party", "maxDifficulty": 7, "enemies": ["oak_shield", "marsh_wolf", "marsh_wolf"], "intro": "An elite warrior commands a pair of trained war wolves. They advance as one." },
+      { "name": "Poison Grove", "maxDifficulty": 6, "enemies": ["fen_viper", "fen_viper", "bog_seer", "cheruscan_raider"], "intro": "Vipers slither among the roots as a seer chants protection. A warrior guards the approach." },
+      { "name": "The Burning Effigy", "maxDifficulty": 8, "enemies": ["wicker_man", "cheruscan_shieldbearer", "bog_seer"], "intro": "A towering wicker effigy burns in the clearing. Its smoke protects the warriors gathered around it." },
+      { "name": "Shield Wall", "maxDifficulty": 6, "enemies": ["cheruscan_shieldbearer", "cheruscan_shieldbearer", "sling_hunter", "sling_hunter"], "intro": "Two shieldbearers form an impenetrable wall while slingers rain stones from behind." },
+      { "name": "Swamp Horror", "maxDifficulty": 5, "enemies": ["mire_leech", "mire_leech", "fen_viper", "bog_seer"], "intro": "The swamp itself attacks \u2014 leeches, vipers, and a chanting seer drive the assault." },
       { "name": "Javelin Ambush", "minDifficulty": 2, "enemies": ["spear_thrower", "spear_thrower", "cheruscan_raider", "sling_hunter"], "intro": "Javelins rain from the trees as spearmen prepare to charge. You have moments before they close the gap." },
       { "name": "Berserker Warband", "minDifficulty": 2, "enemies": ["germanic_berserker", "germanic_berserker", "cheruscan_shieldbearer"], "intro": "Two berserkers charge screaming from the trees. A shieldbearer covers their flank." },
       { "name": "The Kennels", "minDifficulty": 3, "enemies": ["war_hound", "war_hound", "war_hound", "sling_hunter"], "intro": "A pack of armored war hounds pours from a makeshift kennel. A handler slings stones from behind." },
       { "name": "Warded Warband", "minDifficulty": 3, "enemies": ["runecarver", "cheruscan_raider", "cheruscan_raider", "sling_hunter"], "intro": "Rune-warded warriors advance behind a wall of carved shields. Every blow glances off." },
       { "name": "Bone Court", "minDifficulty": 4, "enemies": ["cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Three cursed warriors stand in a circle of bones. A seer orchestrates their suffering." },
       { "name": "The Iron Wall", "minDifficulty": 3, "enemies": ["ironbound_champion", "cheruscan_shieldbearer", "cheruscan_shieldbearer", "sling_hunter"], "intro": "Two shieldbearers funnel their defenses into an iron-clad champion. He grows stronger with every shield raised." },
-      { "name": "The Sow's Fury", "minDifficulty": 3, "enemies": ["war_boar", "war_boar", "boar_youngling", "boar_youngling"], "intro": "Two massive boars and their young block the trail. The ground shakes with their fury." }
+      { "name": "The Sow's Fury", "minDifficulty": 3, "enemies": ["war_boar", "war_boar", "boar_youngling", "boar_youngling"], "intro": "Two massive boars and their young block the trail. The ground shakes with their fury." },
+      { "name": "Shadow Ambush", "minDifficulty": 4, "enemies": ["shadow_stalker", "shadow_stalker", "cheruscan_raider"], "intro": "Blades flash from the shadows. Assassins strike at your weakest." },
+      { "name": "Plague Pit", "minDifficulty": 4, "enemies": ["plague_bearer", "plague_bearer", "bog_seer"], "intro": "The stench hits you first. Diseased warriors stumble from a mass grave." },
+      { "name": "Forest Fortress", "minDifficulty": 5, "enemies": ["warden_of_the_deep", "cheruscan_shieldbearer", "raven_caller"], "intro": "An ancient guardian blocks the path, flanked by a shield wall and a caller of ravens." },
+      { "name": "Raven Flock", "minDifficulty": 5, "enemies": ["raven_caller", "raven_caller", "shadow_stalker", "germanic_berserker"], "intro": "Two raven callers command the skies while assassins and berserkers close in." },
+      { "name": "Blood Circle", "minDifficulty": 6, "enemies": ["blood_druid", "ironhide_boar", "cursed_warrior"], "intro": "A druid chants in a circle of blood. A monstrous boar guards the ritual." },
+      { "name": "Iron Stampede", "minDifficulty": 6, "enemies": ["ironhide_boar", "ironhide_boar", "war_hound"], "intro": "The ground trembles. Two ironhide boars crash through the undergrowth." },
+      { "name": "The Haunted Trail", "minDifficulty": 7, "enemies": ["forest_wraith", "forest_wraith", "death_champion"], "intro": "The air turns cold. Wraiths drift between the trees. A dead champion stands among them." },
+      { "name": "Dead Legion", "minDifficulty": 7, "enemies": ["death_champion", "death_champion", "cursed_warrior", "cursed_warrior"], "intro": "Roman soldiers — dead for years — march in formation. They still remember how to fight." },
+      { "name": "The Elder's Court", "minDifficulty": 8, "enemies": ["elder_seer", "death_champion", "blood_druid", "shadow_stalker"], "intro": "An elder seer holds court among the dead. Her word is law, her curse is absolute." },
+      { "name": "Warden's Stand", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "blood_druid"], "intro": "Two ancient wardens block the path, healed endlessly by a blood druid behind them." }
     ]
   },
   "dropTables": {
@@ -208,7 +218,48 @@ const RAW_ENCOUNTERS = {
     "corpse_of_arminius": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
     "corpse_of_varus": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
     "spirit_of_arminius": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
-    "spirit_of_varus": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] }
+    "spirit_of_varus": { "nothingChance": 0.0, "tiers": [{ "chance": 1.0, "items": "__BOSS_DROP_POOL__" }] },
+    "shadow_stalker": { "nothingChance": 0.20, "tiers": [
+      { "chance": 0.30, "items": ["fang_necklace", "scouts_leather", "night_owl_pendant"] },
+      { "chance": 0.15, "items": ["huntsmans_arrow", "blood_iron_gladius"] },
+      { "chance": 0.10, "items": ["bloodstone_pendant"] }
+    ] },
+    "plague_bearer": { "nothingChance": 0.20, "tiers": [
+      { "chance": 0.30, "items": ["bone_needle_kit", "viper_venom_vial", "herb_pouch"] },
+      { "chance": 0.20, "items": ["herbalists_satchel", "bitter_remedy", "venomous_blade"] },
+      { "chance": 0.10, "items": ["corpsebloom"] }
+    ] },
+    "warden_of_the_deep": { "nothingChance": 0.10, "tiers": [
+      { "chance": 0.25, "items": ["oak_splinter", "shieldbearers_grip", "boar_tusk_pauldron"] },
+      { "chance": 0.15, "items": ["thorn_mantle", "champions_helm"] },
+      { "chance": 0.10, "items": ["bone_speakers_skull"] }
+    ] },
+    "raven_caller": { "nothingChance": 0.20, "tiers": [
+      { "chance": 0.30, "items": ["seers_eye", "spotters_lens", "night_owl_pendant"] },
+      { "chance": 0.15, "items": ["windreaders_charm", "moonstone_ring"] }
+    ] },
+    "blood_druid": { "nothingChance": 0.15, "tiers": [
+      { "chance": 0.25, "items": ["marsh_fang", "herbalists_robe", "healers_oath"] },
+      { "chance": 0.15, "items": ["apothecary_mortar", "corpsebloom"] }
+    ] },
+    "ironhide_boar": { "nothingChance": 0.15, "tiers": [
+      { "chance": 0.25, "items": ["boar_tusk_pauldron", "mire_mothers_tusk", "boarskin_bracers"] },
+      { "chance": 0.15, "items": ["warlords_blade", "berserker_mushroom"] }
+    ] },
+    "forest_wraith": { "nothingChance": 0.15, "tiers": [
+      { "chance": 0.25, "items": ["woad_charm", "seers_eye", "bone_speakers_skull"] },
+      { "chance": 0.15, "items": ["moonstone_ring", "runic_stone"] }
+    ] },
+    "death_champion": { "nothingChance": 0.10, "tiers": [
+      { "chance": 0.25, "items": ["iron_gladius", "cheruscan_torc", "wolf_fang_blade"] },
+      { "chance": 0.20, "items": ["chiefs_spear", "blood_iron_gladius", "bloodstone_pendant"] },
+      { "chance": 0.10, "items": ["champions_helm", "thorn_mantle"] }
+    ] },
+    "elder_seer": { "nothingChance": 0.10, "tiers": [
+      { "chance": 0.25, "items": ["seers_eye", "woad_charm", "marsh_fang"] },
+      { "chance": 0.20, "items": ["bone_speakers_skull", "moonstone_ring", "arm_ring_of_arminius"] },
+      { "chance": 0.10, "items": ["runic_stone"] }
+    ] }
   }
 };
 

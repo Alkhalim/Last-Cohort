@@ -782,11 +782,29 @@ class Game {
     title.textContent = run.victory ? 'VICTORY' : 'DEFEAT';
     const content = document.getElementById('run-detail-content');
 
+    // Compute run-wide totals from party stats
+    const totals = { damageDealt: 0, poisonDamageDealt: 0, healingDone: 0, blockAbsorbed: 0, damageTaken: 0 };
+    (run.party || []).forEach(u => {
+      const s = u.stats || {};
+      totals.damageDealt += s.damageDealt || 0;
+      totals.poisonDamageDealt += s.poisonDamageDealt || 0;
+      totals.healingDone += s.healingDone || 0;
+      totals.blockAbsorbed += s.blockAbsorbed || 0;
+      totals.damageTaken += s.damageTaken || 0;
+    });
+
     let html = '<div class="rd-stats">';
     html += `<div class="run-summary-stat"><span class="run-summary-label">Marches Cleared</span><span class="run-summary-value">${run.marchesCleared}</span></div>`;
     html += `<div class="run-summary-stat"><span class="run-summary-label">Encounters</span><span class="run-summary-value">${run.encountersCompleted}</span></div>`;
     html += `<div class="run-summary-stat"><span class="run-summary-label">Enemies Killed</span><span class="run-summary-value">${run.enemiesKilled}</span></div>`;
     html += `<div class="run-summary-stat renown-stat"><span class="run-summary-label">Renown</span><span class="run-summary-value renown-value">+${run.renownEarned}</span></div>`;
+    html += '</div>';
+
+    html += '<div class="rd-totals">';
+    html += `<span class="rd-total"><span class="stat-dmg">${totals.damageDealt}</span> damage dealt</span>`;
+    html += `<span class="rd-total"><span class="stat-poison">${totals.poisonDamageDealt}</span> poison damage</span>`;
+    html += `<span class="rd-total"><span class="stat-heal">${totals.healingDone}</span> HP healed</span>`;
+    html += `<span class="rd-total"><span class="stat-block">${totals.blockAbsorbed}</span> damage blocked</span>`;
     html += '</div>';
 
     if (run.causeOfDeath) {
@@ -805,9 +823,11 @@ class Game {
       // Stats
       const s = u.stats || {};
       html += `<div class="rd-unit-stats">`;
-      if (s.damageDealt) html += `<span>${s.damageDealt} dmg dealt</span>`;
-      if (s.healingDone) html += `<span>${s.healingDone} healed</span>`;
-      if (s.damageTaken) html += `<span>${s.damageTaken} dmg taken</span>`;
+      if (s.damageDealt) html += `<span class="stat-dmg">${s.damageDealt} dmg</span>`;
+      if (s.poisonDamageDealt) html += `<span class="stat-poison">${s.poisonDamageDealt} poison dmg</span>`;
+      if (s.healingDone) html += `<span class="stat-heal">${s.healingDone} healed</span>`;
+      if (s.blockAbsorbed) html += `<span class="stat-block">${s.blockAbsorbed} blocked</span>`;
+      if (s.damageTaken) html += `<span style="color:var(--red-bright)">${s.damageTaken} taken</span>`;
       html += `</div>`;
 
       // Skills

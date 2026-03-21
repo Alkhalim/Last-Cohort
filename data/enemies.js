@@ -382,6 +382,125 @@ const RAW_ENEMIES = {
     ]
   },
 
+  // === MID-LATE TIER ENEMIES ===
+
+  "shadow_stalker": {
+    "id": "shadow_stalker", "name": "Shadow Stalker",
+    "maxHp": 16, "row": "back", "damage": [5, 9], "speed": 3, "xpValue": 7,
+    "minDifficulty": 4,
+    "description": "A forest assassin who strikes from the shadows. Fast, fragile, and always targeting the weakest.",
+    "ai": "sniper",
+    "actions": [
+      { "name": "Shadow Strike", "damage": 8, "chance": 0.5, "text": "lunges from the shadows at the weakest soldier", "ignoreRow": true },
+      { "name": "Vanish", "damage": 0, "chance": 0.3, "text": "melts into the darkness", "blockSelf": 6 },
+      { "name": "Throat Cut", "damage": 12, "chance": 0.2, "text": "slits a throat from behind", "ignoreRow": true, "cooldown": 2 }
+    ]
+  },
+  "plague_bearer": {
+    "id": "plague_bearer", "name": "Plague Bearer",
+    "maxHp": 20, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 6,
+    "minDifficulty": 4,
+    "description": "A diseased warrior who poisons everything he touches. When he dies, his plague spreads to all soldiers.",
+    "ai": "aggressive",
+    "deathPoison": 3,
+    "actions": [
+      { "name": "Plague Touch", "damage": 4, "poisonTarget": 4, "chance": 0.5, "text": "grasps with rotting hands" },
+      { "name": "Bile Spray", "damage": 3, "poisonTarget": 2, "chance": 0.3, "text": "spews bile across the line", "aoe": true, "cooldown": 1 },
+      { "name": "Festering Wound", "damage": 6, "poisonTarget": 5, "chance": 0.2, "text": "drives a rusted blade deep" }
+    ]
+  },
+  "warden_of_the_deep": {
+    "id": "warden_of_the_deep", "name": "Warden of the Deep",
+    "maxHp": 28, "row": "front", "damage": [6, 11], "speed": 1, "xpValue": 8,
+    "minDifficulty": 5,
+    "description": "An ancient forest guardian bound in living bark. Immensely tough. Reduces damage to all nearby enemies.",
+    "ai": "defensive",
+    "aura": { "damageReduction": 2 },
+    "startWithSelfBlock": true,
+    "actions": [
+      { "name": "Root Slam", "damage": 8, "chance": 0.4, "text": "slams with gnarled roots" },
+      { "name": "Bark Shield", "damage": 0, "chance": 0.35, "text": "hardens its bark — all allies brace", "blockAllEnemies": 4, "blockSelf": 6 },
+      { "name": "Entangle", "damage": 5, "morale": -8, "chance": 0.25, "text": "wraps roots around a soldier" }
+    ]
+  },
+  "raven_caller": {
+    "id": "raven_caller", "name": "Raven Caller",
+    "maxHp": 14, "row": "back", "damage": [3, 6], "speed": 2, "xpValue": 7,
+    "minDifficulty": 5,
+    "description": "A gaunt seer who commands flocks of ravens. His crows peck at eyes and shred nerves.",
+    "ai": "sniper",
+    "actions": [
+      { "name": "Raven Swarm", "damage": 4, "morale": -8, "chance": 0.4, "text": "sends a flock of ravens at a soldier's face", "ignoreRow": true },
+      { "name": "Eye Peck", "damage": 6, "chance": 0.3, "text": "a raven dives for the eyes", "ignoreRow": true },
+      { "name": "Murder of Crows", "damage": 3, "morale": -5, "chance": 0.3, "text": "a storm of black feathers descends", "aoe": true, "cooldown": 1 }
+    ]
+  },
+  "blood_druid": {
+    "id": "blood_druid", "name": "Blood Druid",
+    "maxHp": 22, "row": "back", "damage": [4, 8], "speed": 1, "xpValue": 8,
+    "minDifficulty": 6,
+    "description": "A druid who heals allies with blood magic, draining the life from your soldiers to mend his own.",
+    "ai": "sniper",
+    "actions": [
+      { "name": "Blood Siphon", "damage": 6, "chance": 0.35, "text": "drains life from a soldier", "ignoreRow": true },
+      { "name": "Crimson Ward", "damage": 0, "chance": 0.3, "text": "weaves a ward of blood — allies brace", "blockAllEnemies": 5 },
+      { "name": "Hemorrhage", "damage": 4, "poisonTarget": 4, "chance": 0.2, "text": "opens wounds that won't close", "ignoreRow": true },
+      { "name": "Blood Offering", "damage": 0, "chance": 0.15, "text": "sacrifices his own blood to strengthen an ally", "blockSelf": -3 }
+    ]
+  },
+  "ironhide_boar": {
+    "id": "ironhide_boar", "name": "Ironhide Boar",
+    "maxHp": 30, "row": "front", "damage": [7, 12], "speed": 1, "xpValue": 8,
+    "minDifficulty": 6,
+    "description": "A massive boar with hide like iron plate. Its charge shatters shields and bones alike.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Tusk Gore", "damage": 9, "chance": 0.4, "text": "gores with iron-hard tusks" },
+      { "name": "Iron Charge", "damage": 7, "chance": 0.35, "text": "charges through the line", "aoe": true, "cooldown": 1 },
+      { "name": "Stomp", "damage": 11, "chance": 0.25, "text": "tramples a soldier underfoot" }
+    ]
+  },
+  "forest_wraith": {
+    "id": "forest_wraith", "name": "Forest Wraith",
+    "maxHp": 18, "row": "back", "damage": [5, 9], "speed": 2, "xpValue": 9,
+    "minDifficulty": 7,
+    "description": "A spectral figure that drifts through the trees. Its touch drains will and warmth. Nearly impossible to pin down.",
+    "ai": "sniper",
+    "actions": [
+      { "name": "Spectral Touch", "damage": 7, "morale": -10, "chance": 0.4, "text": "reaches through flesh with ghostly hands", "ignoreRow": true },
+      { "name": "Wail", "damage": 0, "morale": -18, "chance": 0.3, "text": "lets loose a wail that freezes the blood", "cooldown": 1 },
+      { "name": "Life Drain", "damage": 9, "chance": 0.3, "text": "drains the warmth from a soldier", "ignoreRow": true }
+    ]
+  },
+  "death_champion": {
+    "id": "death_champion", "name": "Death Champion",
+    "maxHp": 32, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 10,
+    "minDifficulty": 7,
+    "description": "A fallen warrior raised by dark power. He fights with the skill of a veteran and the relentlessness of the dead.",
+    "ai": "aggressive",
+    "woundedDoubleAttack": true,
+    "actions": [
+      { "name": "Deathblow", "damage": 12, "chance": 0.35, "text": "delivers a crushing strike" },
+      { "name": "Reaping Sweep", "damage": 8, "chance": 0.3, "text": "sweeps a blade through the front line", "aoe": true, "cooldown": 1 },
+      { "name": "Undying Fury", "damage": 10, "morale": -8, "chance": 0.2, "text": "attacks with inhuman ferocity" },
+      { "name": "Shield of Bone", "damage": 0, "chance": 0.15, "text": "raises a shield of dead bone", "blockSelf": 8 }
+    ]
+  },
+  "elder_seer": {
+    "id": "elder_seer", "name": "Elder Seer",
+    "maxHp": 16, "row": "back", "damage": [3, 6], "speed": 1, "xpValue": 9,
+    "minDifficulty": 8,
+    "description": "An ancient seer whose curses are absolute. She speaks, and soldiers forget how to fight.",
+    "ai": "sniper",
+    "deathMoraleMultiplier": 3,
+    "actions": [
+      { "name": "Doom Word", "damage": 5, "morale": -15, "chance": 0.35, "text": "speaks a word of doom", "ignoreRow": true },
+      { "name": "Fate Unraveled", "damage": 0, "morale": -25, "chance": 0.25, "text": "unravels fate itself — your men despair", "cooldown": 2 },
+      { "name": "Curse of Weakness", "damage": 3, "poisonTarget": 5, "chance": 0.25, "text": "curses a soldier with wasting sickness", "ignoreRow": true },
+      { "name": "Spirit Ward", "damage": 0, "chance": 0.15, "text": "weaves a ward over her allies", "blockAllEnemies": 6 }
+    ]
+  },
+
   // === STORY BOSSES ===
 
   "corpse_of_arminius": {

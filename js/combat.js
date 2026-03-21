@@ -95,7 +95,7 @@ class CombatEngine {
       u._mushroomRage = 0;
       u.skills.forEach(s => { s.cooldownLeft = 0; });
       u.actedThisTurn = false;
-      u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0 };
+      u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 };
       if (u.passive) u.passive.triggered = false;
       this.computeEquipmentStats(u);
     });
@@ -297,6 +297,10 @@ class CombatEngine {
       if (!e.dead && e.poison > 0) {
         const poisonDmg = e.poison;
         e.hp = Math.max(0, e.hp - poisonDmg);
+        // Attribute poison damage to the unit with highest poisonInflicted
+        const poisoner = this.party.filter(u => !u.downed && u.stats.poisonInflicted > 0)
+          .sort((a, b) => b.stats.poisonInflicted - a.stats.poisonInflicted)[0];
+        if (poisoner) poisoner.stats.poisonDamageDealt += poisonDmg;
         this.addLog(`${e.name} takes ${poisonDmg} poison damage.`);
         if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: e.index, type: 'poison' });
         e.poison = Math.max(0, e.poison - 1);
@@ -2487,6 +2491,7 @@ class CombatEngine {
         target.block -= absorbed;
         dmg -= absorbed;
         if (absorbed > 0) {
+          target.stats.blockAbsorbed += absorbed;
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
         }
       }

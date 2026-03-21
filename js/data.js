@@ -440,7 +440,11 @@ function loadGameData() {
 // --- Encounter generation by threat level ---
 function generateEncounterByThreat(threat, difficulty) {
   const diff = difficulty || 1;
-  const filterByDiff = (list) => list.filter(e => !e.minDifficulty || e.minDifficulty <= diff);
+  const filterByDiff = (list) => list.filter(e => {
+    if (e.minDifficulty && e.minDifficulty > diff) return false;
+    if (e.maxDifficulty && e.maxDifficulty < diff) return false;
+    return true;
+  });
   if (threat <= 1 && diff <= 3) {
     const pool = filterByDiff(_encounterThreatData.easy);
     return pool[Math.floor(Math.random() * pool.length)];

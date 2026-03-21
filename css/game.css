@@ -815,7 +815,7 @@ html, body {
 }
 
 .enemy-name {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-bright);
   margin-bottom: 4px;
@@ -1431,7 +1431,7 @@ html, body {
 
 .skill-name {
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--text-bright);
   margin-bottom: 2px;
 }
@@ -1439,13 +1439,13 @@ html, body {
 .skill-cost {
   font-weight: 400;
   color: var(--gold);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
 }
 
 .skill-desc {
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   color: var(--text-dim);
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .mod-value {
@@ -3692,6 +3692,23 @@ html, body {
 
 .rd-stats {
   margin-bottom: 12px;
+}
+
+.rd-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: center;
+  padding: 8px;
+  margin-bottom: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.rd-total {
+  color: var(--text-dim);
 }
 
 .rd-death {
