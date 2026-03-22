@@ -229,7 +229,7 @@ const RAW_CLASSES = {
       {
         "id": "transfusion", "name": "Transfusion",
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Transfer up to 6 HP from yourself to target ally. Heals 6 HP.",
+        "description": "Give 6 HP to an ally. Costs you 6 HP.",
         "effects": { "transfusion": 6 }
       }
     ]

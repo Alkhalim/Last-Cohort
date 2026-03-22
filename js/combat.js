@@ -1854,10 +1854,10 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('statusText', { unitIndex: result.target.index, text: 'Stimulant!', color: 'var(--green-bright)' });
     }
 
-    // Transfusion: transfer HP from self to target (ally receives double heal bonus)
+    // Transfusion: transfer HP from self to target (cost scales 0.5x, heal scales 1.5x with heal bonus)
     if (result.transfusion && result.target) {
-      const selfCost = result.transfusion + bonusHeal;
-      const allyHeal = result.transfusion + bonusHeal * 2;
+      const selfCost = result.transfusion + Math.floor(bonusHeal * 0.5);
+      const allyHeal = result.transfusion + Math.floor(bonusHeal * 1.5);
       const maxCost = Math.min(selfCost, unit.hp - 1);
       const maxHeal = Math.min(allyHeal, result.target.maxHp - result.target.hp);
       if (maxCost > 0 && maxHeal > 0) {

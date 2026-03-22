@@ -7,6 +7,7 @@ const SETTINGS_STORAGE_KEY = 'lastCohort_settings';
 const STATS_STORAGE_KEY = 'lastCohort_stats';
 const ACHIEVEMENTS_STORAGE_KEY = 'lastCohort_achievements';
 const RUN_HISTORY_STORAGE_KEY = 'lastCohort_runHistory';
+const SAVED_RUN_STORAGE_KEY = 'lastCohort_savedRun';
 
 const MUSIC_MENU = 'assets/music.mp3';
 const MUSIC_GAMEPLAY = [
@@ -378,11 +379,13 @@ class Game {
     this.ui.showScreen('title-screen');
     const renownEl = document.getElementById('home-renown-value');
     if (renownEl) renownEl.textContent = this.lifetimeRenown;
+    const continueBtn = document.getElementById('btn-continue');
+    if (continueBtn) continueBtn.style.display = this.hasSavedRun() ? 'block' : 'none';
     if (this.musicStarted) this.startMenuMusic();
   }
 
   returnHome() {
-    // Save to leaderboard when voluntarily ending a run
+    this.clearSavedRun();
     if (this.engine) {
       this.finalizeLeaderboard(true);
     }
@@ -420,6 +423,15 @@ class Game {
         this.musicMode = 'menu';
       }
       this.showPartySelectScreen();
+    });
+
+    document.getElementById('btn-continue').addEventListener('click', () => {
+      if (!this.musicStarted) {
+        this.currentTrack = this.playTrack(MUSIC_MENU, true);
+        this.musicStarted = true;
+        this.musicMode = 'menu';
+      }
+      this.resumeSavedRun();
     });
   }
 
@@ -659,6 +671,7 @@ class Game {
   }
 
   trackRunEnd(victory) {
+    this.clearSavedRun();
     if (victory) this.stats.runsCompleted++;
     else this.stats.runsLost++;
     this.saveStats();
@@ -676,6 +689,112 @@ class Game {
     const leaderboardPos = this.saveRunToHistory(victory);
     if (leaderboardPos >= 0 && leaderboardPos < 10) {
       this.showHighscorePopup(leaderboardPos + 1);
+    }
+  }
+
+  // --- Run Save/Resume ---
+  saveRun() {
+    try {
+      const data = {
+        difficulty: this.difficulty,
+        marchCount: this.marchCount,
+        activeCurses: [...(this.activeCurses || [])],
+        selectedPartyClasses: [...(this.selectedPartyClasses || [])],
+        currentRunRenown: this.currentRunRenown || 0,
+        recentBosses: [...(this.recentBosses || [])],
+        usedRunEventIds: [...(this.usedRunEventIds || [])],
+        morale: this.engine.morale,
+        totalEnemiesKilled: this.engine.totalEnemiesKilled,
+        encountersCompleted: this.engine.encountersCompleted,
+        totalRenownEarned: this.engine.totalRenownEarned,
+        pendingSkillPicks: this.engine.pendingSkillPicks,
+        encounterXP: this.engine.encounterXP || 0,
+        skillUsageStats: { ...(this.engine.skillUsageStats || {}) },
+        party: this.engine.party.map(u => ({
+          index: u.index, classId: u.classId, name: u.name, title: u.title,
+          hp: u.hp, maxHp: u.maxHp, baseMaxHp: u.baseMaxHp, downed: u.downed,
+          equipment: { weapon: [...u.equipment.weapon], armor: [...u.equipment.armor], trinket: [...u.equipment.trinket] },
+          learnedSkillIds: u.skills.map(s => s.id),
+          runStats: { ...(u.runStats || {}) },
+          stats: { ...(u.stats || {}) },
+        })),
+        mapNodes: this.ui.mapNodes,
+        currentNodeId: this.ui.currentNodeId,
+        uiDifficulty: this.ui.difficulty,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(SAVED_RUN_STORAGE_KEY, JSON.stringify(data));
+    } catch (e) { console.warn('Failed to save run:', e); }
+  }
+
+  clearSavedRun() {
+    try { localStorage.removeItem(SAVED_RUN_STORAGE_KEY); } catch (e) {}
+  }
+
+  hasSavedRun() {
+    try { return !!localStorage.getItem(SAVED_RUN_STORAGE_KEY); } catch (e) { return false; }
+  }
+
+  resumeSavedRun() {
+    try {
+      const raw = localStorage.getItem(SAVED_RUN_STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+
+      this.difficulty = data.difficulty;
+      this.marchCount = data.marchCount;
+      this.activeCurses = data.activeCurses || [];
+      this.selectedPartyClasses = data.selectedPartyClasses || [];
+      this.currentRunRenown = data.currentRunRenown || 0;
+      this.recentBosses = data.recentBosses || [];
+      this.usedRunEventIds = new Set(data.usedRunEventIds || []);
+      this._leaderboardSaved = false;
+
+      this.engine.morale = data.morale;
+      this.engine.totalEnemiesKilled = data.totalEnemiesKilled;
+      this.engine.encountersCompleted = data.encountersCompleted;
+      this.engine.totalRenownEarned = data.totalRenownEarned;
+      this.engine.pendingSkillPicks = data.pendingSkillPicks;
+      this.engine.encounterXP = data.encounterXP || 0;
+      this.engine.skillUsageStats = data.skillUsageStats || {};
+      this.engine.difficulty = this.difficulty;
+
+      this.engine.party = data.party.map(saved => {
+        const classData = CLASS_DATA[saved.classId];
+        const allSkills = classData.skills.map(s => ({ ...s }));
+        const learnedSet = new Set(saved.learnedSkillIds);
+        const skills = allSkills.filter(s => learnedSet.has(s.id)).map(s => ({ ...s }));
+        const unit = {
+          index: saved.index, classId: saved.classId, name: saved.name, title: saved.title,
+          maxHp: saved.maxHp, baseMaxHp: saved.baseMaxHp, hp: saved.hp, block: 0,
+          downed: saved.downed, poison: 0,
+          allSkills, skills,
+          passive: { ...classData.passive }, passiveTriggered: false,
+          buffs: [], taunt: false, actedThisTurn: false, conditions: [],
+          equipment: { weapon: saved.equipment.weapon, armor: saved.equipment.armor, trinket: saved.equipment.trinket },
+          equipDamage: 0, equipBlock: 0, equipHeal: 0, equipPoison: 0, equipExtraDice: 0,
+          stats: saved.stats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
+          runStats: saved.runStats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
+        };
+        this.engine.computeEquipmentStats(unit);
+        return unit;
+      });
+
+      this.ui.mapNodes = data.mapNodes;
+      this.ui.currentNodeId = data.currentNodeId;
+      this.ui.difficulty = data.uiDifficulty || data.difficulty;
+
+      this.startGameplayMusic();
+
+      const theme = MARCH_THEMES[this.difficulty] || { theme: 'forest' };
+      document.getElementById('map-screen').dataset.theme = theme.theme;
+
+      this.ui.showMapScreen();
+      return true;
+    } catch (e) {
+      console.warn('Failed to resume run:', e);
+      this.clearSavedRun();
+      return false;
     }
   }
 
@@ -1189,6 +1308,7 @@ class Game {
 
   // --- Run management ---
   startNewRun() {
+    this.clearSavedRun();
     this.difficulty = 1;
     this.marchCount = 0;
     this.recentBosses = [];

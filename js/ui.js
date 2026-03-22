@@ -1378,10 +1378,11 @@ class GameUI {
     this.renderMapPartyBar();
     this.renderMapMorale();
     this.renderMap();
-    // Resume gameplay music if coming back from boss
     if (window.game && window.game.musicMode === 'boss') {
       window.game.resumeGameplayMusic();
     }
+    // Auto-save at map screen
+    if (window.game && window.game.saveRun) window.game.saveRun();
   }
 
   renderMapPartyBar() {
