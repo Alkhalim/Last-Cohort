@@ -2808,27 +2808,22 @@ class CombatEngine {
       }
     }
 
-    // Serpent Shaman: Serpent Dance — swap position with a snake/shade ally
+    // Serpent Shaman: Serpent Dance — swap position with a snake/shade ally (no spawn)
     if (enemy.id === 'serpent_shaman' && action.name === 'Serpent Dance') {
       const snakes = this.enemies.filter(e => !e.dead && e !== enemy &&
         (e.id === 'fen_viper' || e.id === 'serpent_shade'));
       if (snakes.length > 0) {
-        // Pick a snake in the opposite row if possible, otherwise any snake
         const oppositeRow = enemy.row === 'front' ? 'back' : 'front';
         let swapTarget = snakes.find(s => s.row === oppositeRow);
         if (!swapTarget) swapTarget = snakes[Math.floor(Math.random() * snakes.length)];
-        // Swap rows
         const shamanRow = enemy.row;
         enemy.row = swapTarget.row;
         swapTarget.row = shamanRow;
         this.addLog(`${enemy.name} dances — swapping places with ${swapTarget.name}!`);
       } else {
-        // No snakes to swap with — just move
         enemy.row = enemy.row === 'front' ? 'back' : 'front';
         this.addLog(`${enemy.name} dances to the ${enemy.row} row!`);
       }
-      // Spawn a serpent shade on the dance
-      this.spawnBossMinion('serpent_shade');
     }
 
     // Fog Weaver: Hex — destroy a random die next turn
