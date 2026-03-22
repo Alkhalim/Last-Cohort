@@ -1479,7 +1479,7 @@ class GameUI {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Collect all edges with positions for crossing avoidance
+    // Collect all edges with positions
     const edges = [];
     for (const node of this.mapNodes) {
       if (!isVisible(node)) continue;
@@ -1493,22 +1493,70 @@ class GameUI {
       }
     }
 
-    // Compute stable meander offsets per edge using a seeded hash
-    const edgeOffset = (e) => {
-      const seed = (e.nodeId * 31 + e.childId * 17) % 100;
-      return ((seed / 100) - 0.5) * 30; // -15 to +15 px horizontal wobble
+    // Stable pseudo-random from seed
+    const seededRand = (seed) => {
+      let x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+      return x - Math.floor(x);
     };
 
-    // Check if two bezier segments would cross and adjust
-    const getControlPoints = (from, to, baseOffset) => {
-      const midY = (from.y + to.y) / 2;
-      const dx = to.x - from.x;
-      // Meander: offset control points horizontally
-      const cp1x = from.x + baseOffset + dx * 0.1;
-      const cp1y = from.y + (midY - from.y) * 0.5;
-      const cp2x = to.x + baseOffset - dx * 0.1;
-      const cp2y = to.y - (to.y - midY) * 0.5;
-      return { cp1x, cp1y, cp2x, cp2y };
+    // Group edges by depth to detect siblings that could cross
+    const edgesByDepth = {};
+    edges.forEach(e => {
+      const node = this.mapNodes.find(n => n.id === e.nodeId);
+      const d = node ? node.depth : 0;
+      if (!edgesByDepth[d]) edgesByDepth[d] = [];
+      edgesByDepth[d].push(e);
+    });
+
+    // For each edge, compute an offset that avoids crossing siblings
+    const edgeOffsets = new Map();
+    for (const depth in edgesByDepth) {
+      const group = edgesByDepth[depth];
+      // Sort edges by midpoint x to assign offsets that don't cross
+      group.sort((a, b) => {
+        const midA = (a.from.x + a.to.x) / 2;
+        const midB = (b.from.x + b.to.x) / 2;
+        return midA - midB;
+      });
+      group.forEach((e, i) => {
+        // Base offset: spread siblings apart, centered around 0
+        const spread = group.length > 1 ? ((i / (group.length - 1)) - 0.5) * 24 : 0;
+        // Add per-edge wobble from hash
+        const seed = e.nodeId * 31 + e.childId * 17;
+        const wobble = (seededRand(seed) - 0.5) * 16;
+        edgeOffsets.set(e, spread + wobble);
+      });
+    }
+
+    // Draw a wiggly path using multiple quadratic segments
+    const drawWigglyPath = (ctx, from, to, offset) => {
+      const seed = Math.abs(from.x * 7 + from.y * 13 + to.x * 19 + to.y * 23);
+      const segments = 4;
+      const points = [];
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const baseX = from.x + (to.x - from.x) * t;
+        const baseY = from.y + (to.y - from.y) * t;
+        // No wobble on endpoints
+        if (i === 0 || i === segments) {
+          points.push({ x: baseX, y: baseY });
+        } else {
+          const wiggleX = (seededRand(seed + i * 73) - 0.5) * 28 + offset * (1 - Math.abs(t - 0.5) * 2);
+          const wiggleY = (seededRand(seed + i * 137) - 0.5) * 12;
+          points.push({ x: baseX + wiggleX, y: baseY + wiggleY });
+        }
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        const cpx = (prev.x + curr.x) / 2 + (seededRand(seed + i * 51) - 0.5) * 10;
+        const cpy = (prev.y + curr.y) / 2;
+        ctx.quadraticCurveTo(cpx, cpy, curr.x, curr.y);
+      }
+      ctx.stroke();
     };
 
     // Draw all edges
@@ -1537,13 +1585,8 @@ class GameUI {
         ctx.setLineDash([3, 5]);
       }
 
-      const offset = edgeOffset(edge);
-      const cp = getControlPoints(from, to, offset);
-
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, to.x, to.y);
-      ctx.stroke();
+      const offset = edgeOffsets.get(edge) || 0;
+      drawWigglyPath(ctx, from, to, offset);
     }
     ctx.setLineDash([]);
 

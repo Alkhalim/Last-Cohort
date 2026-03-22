@@ -814,8 +814,8 @@ html, body {
   width: 90px;
   min-width: 70px;
   flex-shrink: 1;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: #201a1e;
+  border: 1px solid #3a2830;
   border-radius: 4px;
   padding: 6px 8px;
   transition: all 0.2s;
@@ -843,6 +843,7 @@ html, body {
 }
 
 .enemy-card.boss {
+  background: #241820;
   border-color: var(--purple);
   box-shadow: 0 0 12px rgba(90, 58, 106, 0.4);
   width: 130px;
@@ -856,7 +857,7 @@ html, body {
 .enemy-name {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-bright);
+  color: #f0e0d0;
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2171,6 +2172,7 @@ html, body {
 .loot-equip-btn {
   flex: 1;
   min-width: 80px;
+  max-width: 160px;
   padding: 8px 6px;
   font-family: 'Cinzel', serif;
   font-size: 0.7rem;
