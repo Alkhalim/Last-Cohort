@@ -949,9 +949,10 @@ class Game {
     const enemyIds = Object.keys(s.enemiesKilled).sort((a, b) => s.enemiesKilled[b] - s.enemiesKilled[a]);
     if (enemyIds.length > 0) {
       html += '<div class="stats-section-title">ENEMIES SLAIN</div><div class="stats-section">';
+      const friendlyNames = { bone_totem: 'Bone Totem', healing_totem: 'Healing Totem', serpent_shade: 'Serpent Shade', fog_illusion: 'Fog Illusion', barrow_guardian: 'Barrow Guardian' };
       enemyIds.forEach(eid => {
         const data = ENEMY_DATA[eid];
-        const name = data ? data.name : eid;
+        const name = data ? data.name : (friendlyNames[eid] || eid.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
         html += `<div class="stats-row"><span>${name}</span><span>${s.enemiesKilled[eid]}</span></div>`;
       });
       html += '</div>';
