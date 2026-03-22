@@ -2263,7 +2263,8 @@ class CombatEngine {
     if (this.phase !== PHASE.PLAYER_TURN) return;
     this.phase = PHASE.ENEMY_TURN;
     this.update();
-    setTimeout(() => this.executeEnemyTurn(), 600);
+    // Wait for any player cut-in portraits to fully exit before starting enemy turn
+    setTimeout(() => this.executeEnemyTurn(), 2200);
   }
 
   // --- Enemy turn (sequential) ---
