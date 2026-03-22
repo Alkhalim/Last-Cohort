@@ -1680,9 +1680,9 @@ class CombatEngine {
       result.target._marked = 2; // ticks down each enemy turn; active while > 0
       parts.push(`${result.target.name} is marked! (+20% damage next turn)`);
     }
-    // Poison splash: apply to all other enemies
+    // Poison splash: apply to all other enemies (includes equipment poison)
     if (result.poisonSplash && result.target) {
-      const splashPoison = result.poisonSplash;
+      const splashPoison = result.poisonSplash + (unit.equipPoison || 0);
       this.enemies.forEach(e => {
         if (!e.dead && e !== result.target) {
           e.poison = (e.poison || 0) + splashPoison;
@@ -1691,7 +1691,7 @@ class CombatEngine {
       });
       parts.push(`${splashPoison} Poison splashes to other enemies.`);
     }
-    // Poison all enemies
+    // Poison all enemies (includes equipment poison)
     if (result.poisonAll) {
       const totalPoison = result.poisonAll + (unit.equipPoison || 0);
       this.enemies.forEach(e => {
@@ -3261,9 +3261,9 @@ class CombatEngine {
           this.addLog(`${boss.name}'s eyes blaze! The venom thickens!`);
           this.spawnBossMinion('serpent_shade');
           this.spawnBossMinion('serpent_shade');
-          // Apply 2 poison to all party members
-          this.party.forEach(u => { if (!u.downed) u.poison = (u.poison || 0) + 2; });
-          this.addLog('Venom fills the air — all soldiers take 2 Poison!');
+          // Apply 1 poison to all party members
+          this.party.forEach(u => { if (!u.downed) u.poison = (u.poison || 0) + 1; });
+          this.addLog('Venom fills the air — all soldiers take 1 Poison!');
         }
       }
 
