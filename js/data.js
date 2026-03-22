@@ -377,6 +377,7 @@ function buildSkill(skillData) {
   if (skillData.starter) skill.starter = true;
   if (skillData.cooldown) skill.cooldown = skillData.cooldown;
   if (skillData.ignoreRow) skill.ignoreRow = true;
+  if (skillData.targetOthers) skill.targetOthers = true;
   return skill;
 }
 

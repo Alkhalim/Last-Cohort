@@ -204,8 +204,8 @@ const RAW_CLASSES = {
       },
       {
         "id": "sawbones_choice", "name": "Sawbones' Choice", "cooldown": 1,
-        "cost": { "type": "exact", "val": 1 }, "target": "single_ally",
-        "description": "Sacrifice 4 HP to heal ally for 10 HP and grant 3 Block.",
+        "cost": { "type": "exact", "val": 1 }, "target": "single_ally", "targetOthers": true,
+        "description": "Sacrifice 4 HP to heal another ally for 10 HP and grant 3 Block.",
         "effects": { "heal": 10, "selfDamage": 4, "block": 3 }
       },
       {
@@ -229,7 +229,7 @@ const RAW_CLASSES = {
       {
         "id": "transfusion", "name": "Transfusion",
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Transfer up to 6 HP from yourself to target ally.",
+        "description": "Transfer up to 6 HP from yourself to target ally. Heals 6 HP.",
         "effects": { "transfusion": 6 }
       }
     ]

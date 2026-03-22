@@ -997,7 +997,9 @@ class CombatEngine {
     } else if (skill.target === TARGET.SINGLE_ALLY) {
       const isRevive = skill.effects && skill.effects.revive;
       const unit = this.party[unitIndex];
-      const aliveAllies = isRevive ? this.party.filter(u => u.downed && u !== unit) : this.party.filter(u => !u.downed);
+      let aliveAllies = isRevive ? this.party.filter(u => u.downed && u !== unit) : this.party.filter(u => !u.downed);
+      // targetOthers: exclude self from valid targets
+      if (skill.targetOthers) aliveAllies = aliveAllies.filter(u => u !== unit);
       if (aliveAllies.length === 1) {
         this.executeSkill(unitIndex, skillId, diceIds, [aliveAllies[0]]);
       } else if (aliveAllies.length > 1) {
@@ -2073,7 +2075,6 @@ class CombatEngine {
     // grant an additional morale boost at victory
     const killedBoss = this.enemies.find(e => e.isBoss && e.dead);
     if (killedBoss) {
-      // Check if any non-boss enemies are also dead (meaning they died after/alongside the boss)
       const nonBossKills = this.enemies.filter(e => !e.isBoss && e.dead && !e.isStructure);
       if (nonBossKills.length > 0) {
         const bossBonus = 15;
@@ -2083,7 +2084,8 @@ class CombatEngine {
       }
     }
 
-    this.update();
+    // Delay showing the victory UI so animations (portraits, damage popups) finish
+    setTimeout(() => this.update(), 2000);
   }
 
   checkEnemyDeaths() {

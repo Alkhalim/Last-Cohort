@@ -792,13 +792,26 @@ class GameUI {
       endBtn.textContent = 'Cancel';
       endBtn.onclick = () => { this.engine.cancelTarget(); this.stagedSkill = null; this.render(); };
     } else if (this.engine.phase === PHASE.VICTORY) {
-      endBtn.classList.remove('hidden');
-      endBtn.textContent = 'Continue';
-      endBtn.onclick = () => this.onVictory();
+      // Delay showing button if a cut-in is still on screen
+      const hasCutIn = document.getElementById('skill-cutin') || document.getElementById('enemy-cutin');
+      if (hasCutIn) {
+        endBtn.classList.add('hidden');
+        setTimeout(() => this.render(), 800);
+      } else {
+        endBtn.classList.remove('hidden');
+        endBtn.textContent = 'Continue';
+        endBtn.onclick = () => this.onVictory();
+      }
     } else if (this.engine.phase === PHASE.DEFEAT) {
-      endBtn.classList.remove('hidden');
-      endBtn.textContent = 'Fall';
-      endBtn.onclick = () => this.onDefeat();
+      const hasCutIn = document.getElementById('skill-cutin') || document.getElementById('enemy-cutin');
+      if (hasCutIn) {
+        endBtn.classList.add('hidden');
+        setTimeout(() => this.render(), 800);
+      } else {
+        endBtn.classList.remove('hidden');
+        endBtn.textContent = 'Fall';
+        endBtn.onclick = () => this.onDefeat();
+      }
     } else {
       endBtn.classList.add('hidden');
       endBtn.textContent = 'End Turn';
