@@ -231,6 +231,39 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
     }
   }
 
+  // Enforce merchant spacing: no two merchants within 2 nodes of each other on any path
+  // and at least 1 combat node must separate them
+  const isMerchant = (n) => n.type === 'event' && n.encounter && n.encounter.type === 'item_trade';
+  const nonMerchantEvents = EVENT_DATA.filter(e => e.type !== 'item_trade' && (!e.minDifficulty || e.minDifficulty <= difficulty) && (!e.maxDifficulty || e.maxDifficulty >= difficulty));
+
+  for (const node of nodes) {
+    if (!isMerchant(node)) continue;
+    // Check parents (depth-1) and grandparents (depth-2) for merchants
+    for (const pid of node.parents) {
+      const parent = nodes.find(n => n.id === pid);
+      if (!parent) continue;
+      // Direct parent is merchant — too close
+      if (isMerchant(parent)) {
+        // Re-roll this node to a non-merchant event
+        if (nonMerchantEvents.length > 0) {
+          node.encounter = nonMerchantEvents[Math.floor(Math.random() * nonMerchantEvents.length)];
+        }
+        break;
+      }
+      // Check grandparents — merchant 2 nodes away with no combat in between
+      for (const gpid of parent.parents) {
+        const gp = nodes.find(n => n.id === gpid);
+        if (gp && isMerchant(gp) && parent.type !== 'combat') {
+          if (nonMerchantEvents.length > 0) {
+            node.encounter = nonMerchantEvents[Math.floor(Math.random() * nonMerchantEvents.length)];
+          }
+          break;
+        }
+      }
+      if (!isMerchant(node)) break;
+    }
+  }
+
   return nodes;
 }
 

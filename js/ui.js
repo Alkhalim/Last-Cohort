@@ -148,7 +148,7 @@ class GameUI {
     cutin.id = 'skill-cutin';
     cutin.className = 'skill-cutin';
     cutin.innerHTML = `
-      <img class="skill-cutin-portrait" src="assets/${classTitle}.png" alt="${classTitle}">
+      <img class="skill-cutin-portrait" src="${typeof getPlayerPortrait === 'function' ? getPlayerPortrait(classTitle) : 'assets/' + classTitle + '.png'}" alt="${classTitle}">
       <div class="skill-cutin-name">${skillName}</div>
     `;
     const combatScreen = document.getElementById('combat-screen');
@@ -170,7 +170,7 @@ class GameUI {
     const existing = document.getElementById('enemy-cutin');
     if (existing) existing.remove();
 
-    const portraitSrc = `assets/enemy_${enemyId}.png`;
+    const portraitSrc = typeof getEnemyPortrait === 'function' ? getEnemyPortrait(enemyId) : `assets/enemy_${enemyId}.png`;
     const fallbackSrc = 'assets/enemy_portrait.png';
 
     const cutin = document.createElement('div');
@@ -371,7 +371,7 @@ class GameUI {
     if (enemy.isElite) tags.push('<span class="enemy-tag tag-elite">ELITE</span>');
     tags.push(`<span class="enemy-tag">${enemy.row} row</span>`);
 
-    const portraitSrc = `assets/enemy_${enemy.id}.png`;
+    const portraitSrc = typeof getEnemyPortrait === 'function' ? getEnemyPortrait(enemy.id) : `assets/enemy_${enemy.id}.png`;
     const fallbackSrc = 'assets/enemy_portrait.png';
 
     tooltip.innerHTML = `
@@ -1459,6 +1459,8 @@ class GameUI {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Collect all edges with positions for crossing avoidance
+    const edges = [];
     for (const node of this.mapNodes) {
       if (!isVisible(node)) continue;
       const from = nodePositions[node.id];
@@ -1467,35 +1469,63 @@ class GameUI {
         if (!childNode || !isVisible(childNode)) continue;
         const to = nodePositions[childId];
         if (!to) continue;
-
-        // Determine line style
-        const bothVisited = visitedIds.has(node.id) && visitedIds.has(childId);
-        const isNextPath = (node.id === this.currentNodeId || (startReachable && node.depth === 0)) && reachableIds.includes(childId);
-
-        if (bothVisited) {
-          // Path taken — white
-          ctx.strokeStyle = 'rgba(220, 220, 220, 0.7)';
-          ctx.lineWidth = 3;
-        } else if (isNextPath) {
-          // Path to reachable nodes — golden
-          ctx.strokeStyle = 'rgba(201, 162, 39, 0.7)';
-          ctx.lineWidth = 2.5;
-        } else if (futureReachable.has(node.id) && futureReachable.has(childId)) {
-          // Future possible path — dim
-          ctx.strokeStyle = 'rgba(42, 46, 58, 0.5)';
-          ctx.lineWidth = 1.5;
-        } else {
-          // Unreachable — very dim
-          ctx.strokeStyle = 'rgba(42, 46, 58, 0.2)';
-          ctx.lineWidth = 1;
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
+        edges.push({ from, to, nodeId: node.id, childId });
       }
     }
+
+    // Compute stable meander offsets per edge using a seeded hash
+    const edgeOffset = (e) => {
+      const seed = (e.nodeId * 31 + e.childId * 17) % 100;
+      return ((seed / 100) - 0.5) * 30; // -15 to +15 px horizontal wobble
+    };
+
+    // Check if two bezier segments would cross and adjust
+    const getControlPoints = (from, to, baseOffset) => {
+      const midY = (from.y + to.y) / 2;
+      const dx = to.x - from.x;
+      // Meander: offset control points horizontally
+      const cp1x = from.x + baseOffset + dx * 0.1;
+      const cp1y = from.y + (midY - from.y) * 0.5;
+      const cp2x = to.x + baseOffset - dx * 0.1;
+      const cp2y = to.y - (to.y - midY) * 0.5;
+      return { cp1x, cp1y, cp2x, cp2y };
+    };
+
+    // Draw all edges
+    for (const edge of edges) {
+      const { from, to, nodeId, childId } = edge;
+
+      // Determine line style
+      const bothVisited = visitedIds.has(nodeId) && visitedIds.has(childId);
+      const isNextPath = (nodeId === this.currentNodeId || (startReachable && this.mapNodes.find(n => n.id === nodeId)?.depth === 0)) && reachableIds.includes(childId);
+
+      if (bothVisited) {
+        ctx.strokeStyle = 'rgba(220, 220, 220, 0.7)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 4]);
+      } else if (isNextPath) {
+        ctx.strokeStyle = 'rgba(201, 162, 39, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+      } else if (futureReachable.has(nodeId) && futureReachable.has(childId)) {
+        ctx.strokeStyle = 'rgba(42, 46, 58, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 5]);
+      } else {
+        ctx.strokeStyle = 'rgba(42, 46, 58, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 5]);
+      }
+
+      const offset = edgeOffset(edge);
+      const cp = getControlPoints(from, to, offset);
+
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, to.x, to.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
 
     // Render node elements
     for (const node of this.mapNodes) {

@@ -88,7 +88,7 @@ class Game {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return { musicVolume: 15, soundVolume: 50, trackingEnabled: true, fullSoundtrack: false };
+    return { musicVolume: 15, soundVolume: 50, trackingEnabled: true, fullSoundtrack: false, reducedArt: false };
   }
 
   saveSettings() {
@@ -405,6 +405,9 @@ class Game {
     const soundtrackCheckbox = document.getElementById('opt-full-soundtrack');
     soundtrackCheckbox.checked = !!this.settings.fullSoundtrack;
     document.getElementById('opt-full-soundtrack-val').textContent = this.settings.fullSoundtrack ? 'On' : 'Off';
+    const reducedArtCheckbox = document.getElementById('opt-reduced-art');
+    reducedArtCheckbox.checked = !!this.settings.reducedArt;
+    document.getElementById('opt-reduced-art-val').textContent = this.settings.reducedArt ? 'On' : 'Off';
   }
 
   // --- Bindings ---
@@ -591,6 +594,15 @@ class Game {
     soundtrackCheckbox.addEventListener('change', () => {
       this.settings.fullSoundtrack = soundtrackCheckbox.checked;
       soundtrackVal.textContent = soundtrackCheckbox.checked ? 'On' : 'Off';
+      this.saveSettings();
+    });
+
+    // Reduced art toggle
+    const reducedArtCheckbox = document.getElementById('opt-reduced-art');
+    const reducedArtVal = document.getElementById('opt-reduced-art-val');
+    reducedArtCheckbox.addEventListener('change', () => {
+      this.settings.reducedArt = reducedArtCheckbox.checked;
+      reducedArtVal.textContent = reducedArtCheckbox.checked ? 'On' : 'Off';
       this.saveSettings();
     });
 
@@ -1234,6 +1246,21 @@ class Game {
     `;
     document.getElementById('game').appendChild(splash);
 
+    // Preload enemy portraits for this march's encounters during the splash
+    if (this.settings.reducedArt) {
+      // Only preload the 5 category portraits
+      preloadImages(Object.values(REDUCED_ART_ENEMY));
+    } else {
+      const enemyIds = new Set();
+      this.ui.mapNodes.forEach(n => {
+        if (n.encounter && n.encounter.enemies) {
+          n.encounter.enemies.forEach(eid => enemyIds.add(eid));
+        }
+      });
+      preloadImages([...enemyIds].map(eid => `assets/enemy_${eid}.png`));
+    }
+    preloadImages(['assets/enemy_portrait.png']);
+
     // Show map behind the card
     this.ui.showMapScreen();
 
@@ -1246,7 +1273,84 @@ class Game {
 }
 
 // Boot
+// Reduced art: map class titles to trait-based generic portraits
+const REDUCED_ART_PLAYER = {
+  'LEG': 'assets/LEG.png', 'EQU': 'assets/LEG.png', 'PRA': 'assets/LEG.png',       // melee → LEG
+  'CEN': 'assets/CEN.png', 'SIG': 'assets/CEN.png',                                  // command → CEN
+  'MED': 'assets/MED.png', 'COR': 'assets/MED.png',                                   // support → MED
+  'SAG': 'assets/SAG.png', 'BAL': 'assets/SAG.png',                                   // ranged → SAG
+};
+
+// Reduced art: map enemy IDs to category-based generic portraits
+const REDUCED_ART_ENEMY_CATEGORY = {
+  // melee
+  cheruscan_raider: 'melee', germanic_berserker: 'melee', cheruscan_guardian: 'melee',
+  cheruscan_shieldbearer: 'melee', ironbound_champion: 'melee', cursed_warrior: 'melee',
+  death_champion: 'melee', barrow_guardian: 'melee', plague_bearer: 'melee',
+  // ranged
+  sling_hunter: 'ranged', spear_thrower: 'ranged', shadow_stalker: 'ranged', raven_caller: 'ranged',
+  // caster
+  bog_seer: 'caster', runecarver: 'caster', blood_druid: 'caster', elder_seer: 'caster',
+  forest_wraith: 'caster', fog_illusion: 'caster', serpent_shade: 'caster',
+  // monster
+  marsh_wolf: 'monster', fen_viper: 'monster', mire_leech: 'monster', war_hound: 'monster',
+  boar_youngling: 'monster', war_boar: 'monster', ironhide_boar: 'monster',
+  wicker_man: 'monster', oak_shield: 'monster',
+  // boss
+  arminius_champion: 'boss', grove_witch: 'boss', silent_huntsman: 'boss',
+  serpent_shaman: 'boss', mire_mother: 'boss', bone_speaker: 'boss',
+  fog_weaver: 'boss', blood_stag: 'boss', corpse_of_arminius: 'boss',
+  corpse_of_varus: 'boss', spirit_of_arminius: 'boss', spirit_of_varus: 'boss',
+  revenant_of_ariovistus: 'boss', healing_totem: 'monster', bone_totem: 'monster',
+};
+const REDUCED_ART_ENEMY = {
+  melee: 'assets/enemy_cheruscan_raider.png',
+  ranged: 'assets/enemy_sling_hunter.png',
+  caster: 'assets/enemy_bog_seer.png',
+  monster: 'assets/enemy_marsh_wolf.png',
+  boss: 'assets/enemy_arminius_champion.png',
+};
+
+function getPlayerPortrait(classTitle) {
+  if (window.game && window.game.settings.reducedArt) {
+    return REDUCED_ART_PLAYER[classTitle] || `assets/${classTitle}.png`;
+  }
+  return `assets/${classTitle}.png`;
+}
+
+function getEnemyPortrait(enemyId) {
+  if (window.game && window.game.settings.reducedArt) {
+    const cat = REDUCED_ART_ENEMY_CATEGORY[enemyId] || 'melee';
+    return REDUCED_ART_ENEMY[cat] || 'assets/enemy_portrait.png';
+  }
+  return `assets/enemy_${enemyId}.png`;
+}
+
+// Preload images into browser cache
+function preloadImages(srcs) {
+  srcs.forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   loadGameData();
   window.game = new Game();
+
+  // Preload map icons on boot so they're cached before the first march
+  preloadImages([
+    'assets/map-icons/bossFight.png', 'assets/map-icons/camp.png',
+    'assets/map-icons/easyEncounter.png', 'assets/map-icons/mediumEncounter.png',
+    'assets/map-icons/hardEncounter.png', 'assets/map-icons/event.png',
+    'assets/map-icons/merchant.png', 'assets/map-icons/skillTeacher.png',
+    'assets/map-icons/smith.png',
+  ]);
+
+  // Preload all unit portraits
+  preloadImages([
+    'assets/LEG.png', 'assets/CEN.png', 'assets/MED.png',
+    'assets/SAG.png', 'assets/SIG.png', 'assets/COR.png',
+    'assets/EQU.png', 'assets/BAL.png', 'assets/PRA.png',
+  ]);
 });
