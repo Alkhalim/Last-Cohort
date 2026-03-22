@@ -494,6 +494,14 @@ class CombatEngine {
       u._wasHitThisTurn = false;
       u._bearskinRage = 0;
       if (u._huntMarked && u._huntMarked > 0) u._huntMarked--;
+      // Wilderness Instinct: delayed heal + block
+      if (u._wildernessHealNext) {
+        u._wildernessHealNext = false;
+        const wheal = Math.min(4, u.maxHp - u.hp);
+        u.hp += wheal;
+        u.block = (u.block || 0) + 4;
+        if (wheal > 0) this.addLog(`${u.name}'s wilderness instincts kick in — +${wheal} HP, +4 Block.`);
+      }
       u._damageShield = 0;
       u._intercept = false;
       // Bone Totem stun: skip this turn
@@ -538,6 +546,12 @@ class CombatEngine {
     if (this.partyHasItem('moonstone_ring') && this.morale > 50) {
       extraDice++;
       this.addLog('Moonstone Ring shines — morale grants an extra die!');
+    }
+    // Bonus dice from abilities (Tactical Preparation, etc.)
+    if (this._bonusDiceNext) {
+      extraDice += this._bonusDiceNext;
+      this.addLog(`Tactical preparation grants ${this._bonusDiceNext} extra dice!`);
+      this._bonusDiceNext = 0;
     }
     // Heartwood Charm: +3 dice next turn after first damage taken
     if (this._heartwoodBonusDice) {
@@ -833,6 +847,10 @@ class CombatEngine {
         }
         return false;
       }
+      case 'pairExact6': {
+        const sixes = available.filter(d => d.value === 6);
+        return sixes.length >= 2;
+      }
       default:
         return false;
     }
@@ -938,7 +956,6 @@ class CombatEngine {
         return (oddD.length > 0 && evenD.length > 0) ? [oddD[0].id, evenD[0].id] : [];
       }
       case 'consecutive': {
-        // Find lowest consecutive pair
         const sortedC = [...available].sort((a, b) => a.value - b.value);
         for (let i = 0; i < sortedC.length - 1; i++) {
           if (sortedC[i + 1].value - sortedC[i].value === 1) {
@@ -946,6 +963,10 @@ class CombatEngine {
           }
         }
         return [];
+      }
+      case 'pairExact6': {
+        const sixes = available.filter(d => d.value === 6);
+        return sixes.length >= 2 ? [sixes[0].id, sixes[1].id] : [];
       }
       default:
         return [];
@@ -2060,6 +2081,231 @@ class CombatEngine {
       result.target._condemned = result.condemn;
       parts.push(`${result.target.name} is condemned! (+30% damage from all sources for ${result.condemn} turns)`);
       if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Condemned', color: 'var(--red-bright)' });
+    }
+
+    // --- NEW MECHANICS ---
+
+    // Fortified Strike: gain 2 block, deal damage = current block
+    if (result.fortifiedStrike) {
+      unit.block = (unit.block || 0) + 2;
+      const blockDmg = unit.block + bonusDmg;
+      if (result.target && result.target.hp !== undefined) {
+        let dmg = blockDmg;
+        if (result.target.block > 0) { const ab = Math.min(result.target.block, dmg); result.target.block -= ab; dmg -= ab; }
+        result.target.hp = Math.max(0, result.target.hp - dmg);
+        unit.stats.damageDealt += dmg;
+        parts.push(`${unit.name} uses ${skill.name} — gains 2 Block, strikes for ${blockDmg} damage (${unit.block} Block).`);
+      }
+    }
+
+    // Bonus dice next turn
+    if (result.bonusDiceNext) {
+      this._bonusDiceNext = (this._bonusDiceNext || 0) + result.bonusDiceNext;
+      parts.push(`+${result.bonusDiceNext} bonus dice next turn.`);
+    }
+
+    // Cleanse All: clear poison and stun from all allies
+    if (result.cleanseAll) {
+      this.party.forEach(u => {
+        if (!u.downed) {
+          u.poison = 0;
+          u._stunNextTurn = false;
+        }
+      });
+      parts.push(`All allies cleansed of poison and stun.`);
+    }
+
+    // Triage Strike: damage weakest enemy, heal weakest ally
+    if (result.triageStrike) {
+      const amt = result.triageStrike + bonusHeal;
+      const weakestEnemy = this.enemies.filter(e => !e.dead).sort((a, b) => a.hp - b.hp)[0];
+      const weakestAlly = this.party.filter(u => !u.downed).sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
+      if (weakestEnemy) {
+        let dmg = amt;
+        if (weakestEnemy.block > 0) { const ab = Math.min(weakestEnemy.block, dmg); weakestEnemy.block -= ab; dmg -= ab; }
+        weakestEnemy.hp = Math.max(0, weakestEnemy.hp - dmg);
+        unit.stats.damageDealt += dmg;
+        parts.push(`${weakestEnemy.name} takes ${dmg} damage.`);
+      }
+      if (weakestAlly && weakestAlly.hp < weakestAlly.maxHp) {
+        const heal = Math.min(amt, weakestAlly.maxHp - weakestAlly.hp);
+        weakestAlly.hp += heal;
+        unit.stats.healingDone += heal;
+        parts.push(`${weakestAlly.name} heals ${heal} HP.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: weakestAlly.index, amount: heal });
+      }
+    }
+
+    // Calculated Dosage: poison = unique die values, bonus damage if all unique
+    if (result.calculatedDosage && result.target) {
+      const allDice = this.dicePool.dice;
+      const uniqueValues = new Set(allDice.map(d => d.value)).size;
+      const poisonAmt = uniqueValues + (unit.equipPoison || 0);
+      result.target.poison = (result.target.poison || 0) + poisonAmt;
+      unit.stats.poisonInflicted += poisonAmt;
+      parts.push(`${result.target.name} takes ${poisonAmt} Poison (${uniqueValues} unique dice).`);
+      if (uniqueValues === allDice.length) {
+        const bonusDamage = 4 + bonusDmg;
+        if (result.target.block > 0) { const ab = Math.min(result.target.block, bonusDamage); result.target.block -= ab; }
+        result.target.hp = Math.max(0, result.target.hp - bonusDamage);
+        unit.stats.damageDealt += bonusDamage;
+        parts.push(`All dice unique! ${bonusDamage} bonus damage!`);
+      }
+    }
+
+    // Trick Shot: bouncing arrow, extra hits per additional 1 in dice pool
+    if (result.trickShot && result.target) {
+      const onesInPool = this.dicePool.dice.filter(d => d.value === 1 && !d.used).length;
+      const alive = this.enemies.filter(e => !e.dead);
+      let bounceTarget = result.target;
+      for (let b = 0; b < onesInPool && alive.length > 1; b++) {
+        const others = alive.filter(e => e !== bounceTarget);
+        if (others.length === 0) break;
+        bounceTarget = others[Math.floor(Math.random() * others.length)];
+        const dmg = result.damage + Math.floor(bonusDmg * 0.35);
+        bounceTarget.hp = Math.max(0, bounceTarget.hp - dmg);
+        unit.stats.damageDealt += dmg;
+        parts.push(`Arrow ricochets to ${bounceTarget.name} for ${dmg} damage!`);
+      }
+    }
+
+    // Wilderness Instinct: 50% damage reduction this turn, heal+block next turn
+    if (result.wildernessInstinct) {
+      unit._damageShield = 0.5;
+      unit._wildernessHealNext = true;
+      parts.push(`${unit.name} takes cover. 50% damage reduction this turn. Heal and Block next turn.`);
+    }
+
+    // Fortune's Favor: reroll all unused dice + add 1 die this turn
+    if (result.fortunesFavor) {
+      this.dicePool.dice.forEach(d => {
+        if (!d.used) d.value = Math.floor(Math.random() * 6) + 1;
+      });
+      // Add 1 bonus die
+      const newDie = { id: 'fortune_' + Date.now(), value: Math.floor(Math.random() * 6) + 1, used: false };
+      this.dicePool.dice.push(newDie);
+      parts.push(`All dice rerolled! +1 bonus die!`);
+    }
+
+    // Free Action: unit can act again this turn
+    if (result.freeAction) {
+      unit.actedThisTurn = false;
+      parts.push(`Free action — ${unit.name} can act again.`);
+    }
+
+    // Harmonic Frequency: pair-based heal or poison + free action
+    if (result.harmonicFrequency) {
+      const usedDice = this.dicePool.dice.filter(d => d.used);
+      const pairValue = usedDice.length >= 2 ? usedDice[usedDice.length - 1].value : 3;
+      if (pairValue % 2 === 0) {
+        // Even: heal all allies
+        this.party.forEach(u => {
+          if (!u.downed) {
+            const heal = Math.min(pairValue, u.maxHp - u.hp);
+            u.hp += heal;
+            unit.stats.healingDone += heal;
+          }
+        });
+        parts.push(`Harmonic healing! All allies heal ${pairValue} HP.`);
+      } else {
+        // Odd: poison all enemies
+        this.enemies.forEach(e => {
+          if (!e.dead) {
+            e.poison = (e.poison || 0) + pairValue;
+            unit.stats.poisonInflicted += pairValue;
+          }
+        });
+        parts.push(`Discordant poison! All enemies take ${pairValue} Poison.`);
+      }
+    }
+
+    // Flanking Strike: double vs back row, block vs front row
+    if (result.flankingStrike && result.target) {
+      if (result.target.row === 'back') {
+        // Already dealt base damage — deal it again for double
+        const extraDmg = result.damage + bonusDmg;
+        result.target.hp = Math.max(0, result.target.hp - extraDmg);
+        unit.stats.damageDealt += extraDmg;
+        parts.push(`Flanking strike! Double damage to back row!`);
+      } else {
+        unit.block = (unit.block || 0) + 5;
+        unit.stats.blockGenerated += 5;
+        parts.push(`${unit.name} gains 5 Block from flanking.`);
+      }
+    }
+
+    // Scouting Maneuver: mark random enemy, buff self
+    if (result.scoutingManeuver) {
+      const alive = this.enemies.filter(e => !e.dead);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        target._marked = 2;
+        parts.push(`${target.name} is scouted and marked!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: target.index, text: 'Scouted', color: 'var(--gold)' });
+      }
+      unit.buffs.push({ damage: 3, attacksLeft: 2 });
+      parts.push(`${unit.name} gains +3 damage (2 attacks).`);
+    }
+
+    // Heal Self
+    if (result.healSelf && unit.hp < unit.maxHp) {
+      const heal = Math.min(result.healSelf, unit.maxHp - unit.hp);
+      unit.hp += heal;
+      unit.stats.healingDone += heal;
+      parts.push(`${unit.name} heals ${heal} HP.`);
+      if (this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: heal });
+    }
+
+    // Skip Next Turn (self-stun for powerful abilities)
+    if (result.skipNextTurn) {
+      unit._stunNextTurn = true;
+      parts.push(`${unit.name} is exhausted — skips next turn.`);
+    }
+
+    // Imperial Decree: both other allies perform basic attack
+    if (result.imperialDecree) {
+      this.party.forEach(u => {
+        if (!u.downed && u !== unit) {
+          const basicSkill = u.skills.find(s => s.starter && s.effects && s.effects.damage);
+          if (basicSkill) {
+            const targets = this.enemies.filter(e => !e.dead);
+            if (targets.length > 0) {
+              const target = targets[Math.floor(Math.random() * targets.length)];
+              let dmg = (basicSkill.effects.damage || 0) + (u.equipDamage || 0);
+              if (target.block > 0) { const ab = Math.min(target.block, dmg); target.block -= ab; dmg -= ab; }
+              target.hp = Math.max(0, target.hp - dmg);
+              u.stats.damageDealt += dmg;
+              parts.push(`${u.name} strikes ${target.name} for ${dmg} damage!`);
+            }
+          }
+        }
+      });
+    }
+
+    // Last Stand: only works below 30% HP
+    if (result.lastStand) {
+      if (unit.hp > unit.maxHp * 0.3) {
+        parts.push(`${unit.name} is too healthy for Last Stand. No effect.`);
+        // Refund damage dealt
+        if (result.target) { result.target.hp = Math.min(result.target.maxHp, result.target.hp + 20); }
+      } else {
+        // Heal for half damage dealt
+        const healAmt = Math.min(10, unit.maxHp - unit.hp);
+        unit.hp += healAmt;
+        unit.stats.healingDone += healAmt;
+        parts.push(`LAST STAND! ${unit.name} heals ${healAmt} HP!`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: healAmt });
+      }
+    }
+
+    // Block Scale: multiply block bonus from equipment
+    if (result.blockScale && result.blockAll) {
+      // Already applied blockAll above, but we need to add the scaled equipment portion
+      const extraBlock = Math.floor((unit.equipBlock || 0) * (result.blockScale - 1));
+      if (extraBlock > 0) {
+        this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + extraBlock; });
+        parts.push(`Block bonus scaled! +${extraBlock} extra Block each.`);
+      }
     }
 
     if (parts.length === 0) parts.push(`${unit.name} uses ${skill.name}.`);

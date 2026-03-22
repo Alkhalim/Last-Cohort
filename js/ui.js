@@ -1504,6 +1504,161 @@ class GameUI {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Draw terrain decorations based on march theme
+    const marchTheme = (typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) ? MARCH_THEMES[this.difficulty].theme : 'forest';
+    const terrainSeed = (this.difficulty || 1) * 7919;
+    const tRand = (i) => { let x = Math.sin(terrainSeed + i * 127.1) * 43758.5453; return x - Math.floor(x); };
+    const terrainCount = 25 + Math.floor(tRand(999) * 10);
+
+    for (let i = 0; i < terrainCount; i++) {
+      const tx = tRand(i * 3) * wrapperWidth;
+      const ty = tRand(i * 3 + 1) * totalHeight;
+      const size = 3 + tRand(i * 3 + 2) * 8;
+      ctx.globalAlpha = 0.06 + tRand(i * 5) * 0.08;
+
+      switch (marchTheme) {
+        case 'forest':
+        case 'forest-dark': {
+          // Pine trees
+          ctx.fillStyle = marchTheme === 'forest-dark' ? '#1a3a1a' : '#1e4a1e';
+          ctx.beginPath();
+          ctx.moveTo(tx, ty - size * 2);
+          ctx.lineTo(tx - size, ty + size * 0.5);
+          ctx.lineTo(tx + size, ty + size * 0.5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillRect(tx - size * 0.15, ty + size * 0.5, size * 0.3, size * 0.6);
+          break;
+        }
+        case 'warcamp': {
+          // Tents and stakes
+          if (tRand(i * 7) > 0.5) {
+            ctx.fillStyle = '#3a2a1a';
+            ctx.beginPath();
+            ctx.moveTo(tx, ty - size * 1.5);
+            ctx.lineTo(tx - size * 1.2, ty + size * 0.5);
+            ctx.lineTo(tx + size * 1.2, ty + size * 0.5);
+            ctx.closePath();
+            ctx.fill();
+          } else {
+            ctx.strokeStyle = '#4a3020';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(tx, ty - size);
+            ctx.lineTo(tx, ty + size);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(tx - size * 0.4, ty - size * 0.3);
+            ctx.lineTo(tx + size * 0.4, ty - size * 0.3);
+            ctx.stroke();
+          }
+          break;
+        }
+        case 'bog': {
+          // Puddles and reeds
+          ctx.fillStyle = '#1a3030';
+          ctx.beginPath();
+          ctx.ellipse(tx, ty, size * 1.5, size * 0.6, tRand(i * 11) * Math.PI, 0, Math.PI * 2);
+          ctx.fill();
+          if (tRand(i * 9) > 0.6) {
+            ctx.strokeStyle = '#2a4a2a';
+            ctx.lineWidth = 1;
+            for (let r = 0; r < 3; r++) {
+              const rx = tx + (tRand(i * 13 + r) - 0.5) * size * 2;
+              ctx.beginPath();
+              ctx.moveTo(rx, ty);
+              ctx.lineTo(rx + (tRand(i * 17 + r) - 0.5) * 3, ty - size * 1.5);
+              ctx.stroke();
+            }
+          }
+          break;
+        }
+        case 'ancient': {
+          // Gnarled old trees and moss
+          ctx.fillStyle = '#2a3a18';
+          ctx.beginPath();
+          ctx.arc(tx, ty - size, size * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#1a2a10';
+          ctx.fillRect(tx - size * 0.3, ty - size * 0.5, size * 0.6, size * 1.5);
+          break;
+        }
+        case 'blood': {
+          // Ritual stones and dark marks
+          ctx.fillStyle = '#2a1010';
+          ctx.fillRect(tx - size * 0.5, ty - size, size, size * 2);
+          if (tRand(i * 19) > 0.6) {
+            ctx.fillStyle = '#4a1515';
+            ctx.beginPath();
+            ctx.arc(tx, ty - size * 1.3, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        }
+        case 'haunted': {
+          // Gravestones and wisps
+          if (tRand(i * 7) > 0.4) {
+            ctx.fillStyle = '#252530';
+            ctx.fillRect(tx - size * 0.4, ty - size, size * 0.8, size * 1.3);
+            ctx.beginPath();
+            ctx.arc(tx, ty - size, size * 0.4, Math.PI, 0);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = '#3535aa';
+            ctx.globalAlpha *= 0.6;
+            ctx.beginPath();
+            ctx.arc(tx, ty, size * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        }
+        case 'drowned': {
+          // Ruined columns and water
+          ctx.fillStyle = '#15252a';
+          ctx.beginPath();
+          ctx.ellipse(tx, ty, size * 2, size * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          if (tRand(i * 23) > 0.5) {
+            ctx.fillStyle = '#253035';
+            ctx.fillRect(tx - size * 0.3, ty - size * 2, size * 0.6, size * 2);
+            ctx.fillRect(tx - size * 0.5, ty - size * 2.2, size, size * 0.3);
+          }
+          break;
+        }
+        case 'heart': {
+          // Organic pulsing shapes, fungus
+          ctx.fillStyle = '#3a2010';
+          ctx.beginPath();
+          ctx.arc(tx, ty, size * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+          if (tRand(i * 29) > 0.5) {
+            ctx.fillStyle = '#4a2a15';
+            ctx.beginPath();
+            ctx.ellipse(tx + size, ty - size * 0.5, size * 0.5, size * 1, tRand(i * 31) * Math.PI, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        }
+        case 'threshold': {
+          // Spectral tears and void fragments
+          ctx.strokeStyle = '#3a2a4a';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(tx - size, ty - size * 0.5);
+          ctx.quadraticCurveTo(tx, ty + size, tx + size, ty - size * 0.3);
+          ctx.stroke();
+          if (tRand(i * 37) > 0.6) {
+            ctx.fillStyle = '#2a1a3a';
+            ctx.beginPath();
+            ctx.arc(tx, ty, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+
     // Collect all edges with positions
     const edges = [];
     for (const node of this.mapNodes) {
@@ -2069,6 +2224,10 @@ class GameUI {
         'stun', 'overrun', 'shoulderCharge', 'echoOnKill', 'warhorseKick',
         'smokeScreen', 'damageShield', 'resonance', 'pullToFront',
         'consumeAllBuffs', 'moraleHealAll', 'avengeDamage', 'deafenAll',
+        'fortifiedStrike', 'bonusDiceNext', 'cleanseAll', 'triageStrike',
+        'calculatedDosage', 'trickShot', 'wildernessInstinct', 'fortunesFavor',
+        'freeAction', 'harmonicFrequency', 'flankingStrike', 'scoutingManeuver',
+        'healSelf', 'skipNextTurn', 'imperialDecree', 'lastStand', 'blockScale',
       ]);
       for (const k of Object.keys(effects)) {
         if (typeof effects[k] === 'number' && !candidates.some(c => c.key === k) && !excludeFromUpgrade.has(k)) {
@@ -2421,6 +2580,7 @@ class GameUI {
       return;
     }
 
+    const diff = window.game ? window.game.difficulty : 1;
     const campActions = [
       {
         name: 'Tend Wounds',
@@ -2445,22 +2605,25 @@ class GameUI {
       },
       {
         name: 'Sharpen Weapons',
-        desc: 'All soldiers gain +1 damage for next 2 attacks in the next fight.',
+        desc: `All soldiers gain +${1 + Math.floor(diff / 3)} damage for next ${2 + Math.floor(diff / 4)} attacks.`,
         action: () => {
+          const bonusDmg = 1 + Math.floor(diff / 3);
+          const bonusAtk = 2 + Math.floor(diff / 4);
           this.engine.party.forEach(u => {
-            if (!u.downed) u.buffs.push({ damage: 1, attacksLeft: 2 });
+            if (!u.downed) u.buffs.push({ damage: bonusDmg, attacksLeft: bonusAtk });
           });
-          this.campLog.push('Blades sharpened to a fine edge. (+1 damage, 2 attacks)');
+          this.campLog.push(`Blades sharpened to a fine edge. (+${bonusDmg} damage, ${bonusAtk} attacks)`);
         }
       },
       {
         name: 'Fortify Position',
-        desc: 'All soldiers start the next fight with 4 Block.',
+        desc: `All soldiers start the next fight with ${4 + diff} Block.`,
         action: () => {
+          const blockAmt = 4 + diff;
           this.engine.party.forEach(u => {
-            if (!u.downed) u.block = (u.block || 0) + 4;
+            if (!u.downed) u.block = (u.block || 0) + blockAmt;
           });
-          this.campLog.push('Makeshift barricades built. (+4 Block each)');
+          this.campLog.push(`Makeshift barricades built. (+${blockAmt} Block each)`);
         }
       }
     ];

@@ -77,6 +77,18 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
         "description": "Deal 4 damage and knock target to back row. If already back row, deal 6 instead.",
         "effects": { "damage": 4, "shoulderCharge": true }
+      },
+      {
+        "id": "precision_drill", "name": "Precision Drill", "cooldown": 1,
+        "cost": { "type": "consecutive" }, "target": "single_enemy",
+        "description": "Requires consecutive dice. Deal damage equal to the sum of both dice, depending on dice used.",
+        "effects": { "damage": 0, "dieScaleDamage": true }
+      },
+      {
+        "id": "fortified_strike", "name": "Fortified Strike",
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "description": "Gain 2 Block. Deal damage equal to your current Block.",
+        "effects": { "damage": 0, "fortifiedStrike": true }
       }
     ]
   },
@@ -129,7 +141,7 @@ const RAW_CLASSES = {
         "id": "no_retreat", "name": "No Retreat",
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
         "description": "All allies gain 7 Block. -5 Morale.",
-        "effects": { "blockAll": 7, "morale": -5 }
+        "effects": { "blockAll": 7, "morale": -5, "blockScale": 1.3 }
       },
       {
         "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
@@ -154,6 +166,18 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 6+. Suppress target: deals 40% less damage for 2 turns.",
         "effects": { "suppress": 2 }
+      },
+      {
+        "id": "tactical_preparation", "name": "Tactical Preparation", "cooldown": 3,
+        "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
+        "description": "Prepare the cohort. Gain +2 bonus dice next turn. +5 Morale.",
+        "effects": { "bonusDiceNext": 2, "morale": 5 }
+      },
+      {
+        "id": "iron_discipline", "name": "Iron Discipline", "cooldown": 3,
+        "cost": { "type": "exact", "val": 4 }, "target": "all_allies",
+        "description": "All allies clear poison and stun. +5 Morale.",
+        "effects": { "cleanseAll": true, "morale": 5 }
       }
     ]
   },
@@ -229,8 +253,22 @@ const RAW_CLASSES = {
       {
         "id": "transfusion", "name": "Transfusion",
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Give 6 HP to an ally. Costs you 6 HP.",
-        "effects": { "transfusion": 6 }
+        "description": "Give 6 HP and 3 Block to an ally. Costs you 6 HP.",
+        "effects": { "transfusion": 6, "block": 3 }
+      },
+      {
+        "id": "triage_strike", "name": "Triage Strike", "cooldown": 1,
+        "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_enemies",
+        "ignoreRow": true,
+        "description": "Deal 5 damage to the weakest enemy. Heal the most wounded ally for 5 HP.",
+        "effects": { "triageStrike": 5 }
+      },
+      {
+        "id": "calculated_dosage", "name": "Calculated Dosage",
+        "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Apply poison equal to the number of different die values in your pool. If all dice are unique, also deal 4 damage.",
+        "effects": { "calculatedDosage": true }
       }
     ]
   },
@@ -312,6 +350,19 @@ const RAW_CLASSES = {
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Shoot and brace. Deal 2 damage to a front-row enemy and gain 4 Block.",
         "effects": { "damage": 2, "block": 4 }
+      },
+      {
+        "id": "trick_shot", "name": "Trick Shot",
+        "cost": { "type": "exact", "val": 1 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Ricochet arrow. Deal 2 damage, bouncing to a new target for each additional 1 in your dice pool.",
+        "effects": { "damage": 2, "trickShot": true, "bonusDmgScale": 0.35 }
+      },
+      {
+        "id": "wilderness_instinct", "name": "Wilderness Instinct", "cooldown": 3,
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
+        "description": "Take cover. Take 50% less damage this enemy turn. Next turn, heal 4 HP and gain 4 Block.",
+        "effects": { "wildernessInstinct": true }
       }
     ]
   },
@@ -389,6 +440,18 @@ const RAW_CLASSES = {
         "cost": { "type": "exact", "val": 1 }, "target": "all_allies",
         "description": "Sacrifice 5 HP. All allies gain +2 damage for 2 attacks and 4 Block.",
         "effects": { "selfDamage": 5, "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 4 }
+      },
+      {
+        "id": "fortunes_favor", "name": "Fortune's Favor", "cooldown": 3,
+        "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
+        "description": "Reroll all unused dice and gain +1 bonus die this turn. +8 Morale.",
+        "effects": { "fortunesFavor": true, "morale": 8 }
+      },
+      {
+        "id": "eagles_blessing", "name": "Eagle's Blessing", "cooldown": 2,
+        "cost": { "type": "exact", "val": 6 }, "target": "self",
+        "description": "Free action. Heal 3 HP, gain 3 Block, +1 damage for 2 attacks, +4 Morale. Act again this turn.",
+        "effects": { "heal": 3, "block": 3, "buffSelf": { "bonusDamage": 1, "attacks": 2 }, "morale": 4, "freeAction": true }
       }
     ]
   },
@@ -467,6 +530,12 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deal 3 damage. If target dies, deal 3 damage to a random other enemy.",
         "effects": { "damage": 3, "echoOnKill": 3 }
+      },
+      {
+        "id": "harmonic_frequency", "name": "Harmonic Frequency", "cooldown": 2,
+        "cost": { "type": "pair" }, "target": "single_enemy",
+        "description": "Requires a pair. Even pairs: heal all allies for the pair value. Odd pairs: apply pair value as poison to all enemies. Act again.",
+        "effects": { "harmonicFrequency": true, "freeAction": true }
       }
     ]
   },
@@ -488,7 +557,7 @@ const RAW_CLASSES = {
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "A quick lance jab at any target. Deals 2 damage (light strike).",
-        "effects": { "damage": 2, "halfBonusDmg": true }
+        "effects": { "damage": 2, "bonusDmgScale": 0.65 }
       },
       {
         "id": "charging_strike", "name": "Charging Strike", "starter": true, "cooldown": 1,
@@ -549,6 +618,19 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
         "description": "Kick target and a random other front-row enemy. Both are stunned next turn.",
         "effects": { "warhorseKick": true }
+      },
+      {
+        "id": "flanking_strike", "name": "Flanking Strike", "cooldown": 1,
+        "cost": { "type": "range", "min": 2, "max": 3 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Deal 5 damage. Double damage if target is in back row. Gain 5 Block if target is in front row.",
+        "effects": { "damage": 5, "flankingStrike": true }
+      },
+      {
+        "id": "scouting_maneuver", "name": "Scouting Maneuver", "cooldown": 2,
+        "cost": { "type": "exact", "val": 2 }, "target": "all_enemies",
+        "description": "Mark a random enemy. Gain +3 damage for next 2 attacks. Act again this turn.",
+        "effects": { "scoutingManeuver": true, "freeAction": true }
       }
     ]
   },
@@ -629,6 +711,20 @@ const RAW_CLASSES = {
         "ignoreRow": true,
         "description": "2 dice totaling 6+. All enemies have 40% chance to miss their next attack.",
         "effects": { "smokeScreen": 0.4 }
+      },
+      {
+        "id": "spotters_call", "name": "Spotter's Call", "cooldown": 1,
+        "cost": { "type": "exact", "val": 1 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Mark target. All allies deal +20% damage to it this turn. Heal self 3 HP.",
+        "effects": { "markTarget": true, "healSelf": 3 }
+      },
+      {
+        "id": "devastator_volley", "name": "Devastator Volley", "cooldown": 3,
+        "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "3 dice totaling 10+. Fire a massive bolt. Deals 10 damage to target and pierces to the enemy behind. Both take splash damage to adjacent enemies. Skip your next turn.",
+        "effects": { "damage": 10, "pierceRow": true, "splashAdjacentPct": 0.5, "skipNextTurn": true }
       }
     ]
   },
@@ -709,6 +805,19 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling 5+. Deal 4 damage. Target takes +30% damage from all sources for 2 turns.",
         "effects": { "damage": 4, "condemn": 2 }
+      },
+      {
+        "id": "imperial_decree", "name": "Imperial Decree", "cooldown": 3,
+        "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "all_allies",
+        "description": "3 dice totaling 10+. Command both allies to strike. Each ally immediately deals their basic attack at full damage.",
+        "effects": { "imperialDecree": true }
+      },
+      {
+        "id": "last_stand", "name": "Last Stand", "cooldown": 4,
+        "cost": { "type": "pairExact6" }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Requires two 6s. If HP is below 30%, deal 20 damage ignoring block. Heal for half dealt. (Below 9 HP to activate)",
+        "effects": { "damage": 20, "pierceBlock": 99, "lastStand": true }
       }
     ]
   }

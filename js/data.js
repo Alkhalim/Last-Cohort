@@ -17,6 +17,7 @@ const COST = {
   pairOdd: () => ({ type: 'pairOdd', dice: 2, label: 'Odd Pair' }),
   oddEven: () => ({ type: 'oddEven', dice: 2, label: 'Odd+Even' }),
   consecutive: () => ({ type: 'consecutive', dice: 2, label: 'Consecutive' }),
+  pairExact6: () => ({ type: 'pairExact6', dice: 2, label: 'Two 6s' }),
 };
 
 // --- Target types ---
@@ -75,6 +76,8 @@ function buildCost(costData) {
       return COST.oddEven();
     case 'consecutive':
       return COST.consecutive();
+    case 'pairExact6':
+      return COST.pairExact6();
     default:
       return COST.any();
   }
@@ -358,6 +361,25 @@ function buildSkillExecute(skillData) {
 
     // Consume all damage buffs after dealing damage
     if (effects.consumeAllBuffs) result.consumeAllBuffs = true;
+
+    // New mechanics
+    if (effects.fortifiedStrike) result.fortifiedStrike = true;
+    if (effects.bonusDiceNext) result.bonusDiceNext = effects.bonusDiceNext;
+    if (effects.cleanseAll) result.cleanseAll = true;
+    if (effects.triageStrike) result.triageStrike = effects.triageStrike;
+    if (effects.calculatedDosage) result.calculatedDosage = true;
+    if (effects.trickShot) result.trickShot = true;
+    if (effects.wildernessInstinct) result.wildernessInstinct = true;
+    if (effects.fortunesFavor) result.fortunesFavor = true;
+    if (effects.freeAction) result.freeAction = true;
+    if (effects.harmonicFrequency) result.harmonicFrequency = true;
+    if (effects.flankingStrike) result.flankingStrike = true;
+    if (effects.scoutingManeuver) result.scoutingManeuver = true;
+    if (effects.healSelf) result.healSelf = effects.healSelf;
+    if (effects.skipNextTurn) result.skipNextTurn = true;
+    if (effects.imperialDecree) result.imperialDecree = true;
+    if (effects.lastStand) result.lastStand = true;
+    if (effects.blockScale) result.blockScale = effects.blockScale;
 
     return result;
   };

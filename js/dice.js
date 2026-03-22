@@ -103,6 +103,8 @@ class DicePool {
         return selected.length === 2 && selected[0].value % 2 !== selected[1].value % 2;
       case 'consecutive':
         return selected.length === 2 && Math.abs(selected[0].value - selected[1].value) === 1;
+      case 'pairExact6':
+        return selected.length === 2 && selected[0].value === 6 && selected[1].value === 6;
       default:
         return false;
     }
