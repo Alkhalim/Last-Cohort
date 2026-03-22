@@ -369,6 +369,7 @@ class Game {
 
   addRunRenown(amount) {
     this.lifetimeRenown += amount;
+    this.currentRunRenown = (this.currentRunRenown || 0) + amount;
     this.saveLifetimeRenown();
   }
 
@@ -381,8 +382,8 @@ class Game {
   }
 
   returnHome() {
-    // Save to leaderboard when voluntarily ending a run after a boss victory
-    if (this.engine && this.engine.totalRenownEarned > 0) {
+    // Save to leaderboard when voluntarily ending a run
+    if (this.engine) {
       this.finalizeLeaderboard(true);
     }
     this.showHomeScreen();
@@ -732,7 +733,7 @@ class Game {
       victory: victory,
       marchesCleared: this.marchCount,
       difficulty: this.difficulty,
-      renownEarned: this.engine.totalRenownEarned,
+      renownEarned: this.currentRunRenown || this.engine.totalRenownEarned,
       encountersCompleted: this.engine.encountersCompleted,
       enemiesKilled: this.engine.totalEnemiesKilled,
       party: party,
@@ -1193,6 +1194,7 @@ class Game {
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
     this._leaderboardSaved = false;
+    this.currentRunRenown = 0;
     this.engine.morale = 50;
     this.engine.totalEnemiesKilled = 0;
     this.engine.encountersCompleted = 0;

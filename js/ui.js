@@ -1593,20 +1593,20 @@ class GameUI {
 
       if (bothVisited) {
         ctx.strokeStyle = 'rgba(220, 220, 220, 0.7)';
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 3.5;
+        ctx.setLineDash([7, 4]);
       } else if (isNextPath) {
         ctx.strokeStyle = 'rgba(201, 162, 39, 0.7)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 3;
+        ctx.setLineDash([7, 4]);
       } else if (futureReachable.has(nodeId) && futureReachable.has(childId)) {
         ctx.strokeStyle = 'rgba(42, 46, 58, 0.5)';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 5]);
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 5]);
       } else {
         ctx.strokeStyle = 'rgba(42, 46, 58, 0.2)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 5]);
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 5]);
       }
 
       const offset = edgeOffsets.get(edge) || 0;
