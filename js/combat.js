@@ -62,7 +62,8 @@ class CombatEngine {
           trinket: Array(data.equipSlots ? data.equipSlots.trinket : 3).fill(null),
         },
         equipDamage: 0, equipBlock: 0, equipHeal: 0, equipExtraDice: 0,
-        stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, moraleRestored: 0, damageTaken: 0 },
+        stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 },
+        runStats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 },
       };
     });
     this.party.forEach(u => this.initSkills(u));
@@ -95,6 +96,12 @@ class CombatEngine {
       u._mushroomRage = 0;
       u.skills.forEach(s => { s.cooldownLeft = 0; });
       u.actedThisTurn = false;
+      // Accumulate into run-wide stats before resetting
+      if (u.runStats) {
+        for (const key of Object.keys(u.stats)) {
+          u.runStats[key] = (u.runStats[key] || 0) + (u.stats[key] || 0);
+        }
+      }
       u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 };
       if (u.passive) u.passive.triggered = false;
       this.computeEquipmentStats(u);
@@ -2306,7 +2313,8 @@ class CombatEngine {
     }
 
     // Show enemy portrait before action
-    if (this.onVisual) this.onVisual('enemyCutIn', { enemyName: enemy.name, enemyId: enemy.id });
+    const intentAction = enemy._intent && enemy._intent.action ? enemy._intent.action.name : '';
+    if (this.onVisual) this.onVisual('enemyCutIn', { enemyName: enemy.name, enemyId: enemy.id, actionName: intentAction });
 
     // Delay action slightly so portrait is visible
     setTimeout(() => {

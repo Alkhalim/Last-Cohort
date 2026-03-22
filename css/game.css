@@ -370,7 +370,7 @@ html, body {
 
 #morale-label {
   font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.1em;
   min-width: 120px;
 }
@@ -455,6 +455,27 @@ html, body {
 @keyframes tooltip-in {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.enemy-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.enemy-tooltip-portrait {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.enemy-tooltip-header-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .enemy-tooltip-name {
@@ -831,12 +852,42 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(74, 138, 191, 0.12) 0%, rgba(74, 138, 191, 0.04) 50%, transparent 100%);
-  border: 1px solid rgba(74, 138, 191, 0.3);
+  background: linear-gradient(0deg, transparent 40%, rgba(74, 138, 191, 0.08) 70%, rgba(74, 138, 191, 0.18) 100%);
+  border-top: 2px solid rgba(74, 138, 191, 0.5);
+  border-left: 1px solid rgba(74, 138, 191, 0.15);
+  border-right: 1px solid rgba(74, 138, 191, 0.15);
+  border-bottom: none;
   border-radius: 4px;
   pointer-events: none;
   z-index: 1;
   animation: shield-shimmer 2s ease-in-out infinite alternate;
+}
+
+.unit-poison-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center bottom, rgba(100, 160, 30, 0.15) 0%, rgba(100, 160, 30, 0.05) 50%, transparent 80%);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1;
+  animation: poison-miasma 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes poison-miasma {
+  0% { opacity: 0.6; box-shadow: inset 0 0 8px rgba(100, 160, 30, 0.15); }
+  100% { opacity: 1; box-shadow: inset 0 0 15px rgba(100, 160, 30, 0.25); }
+}
+
+/* Enemy cards: shield faces downward (toward player) */
+.enemy-card.has-block {
+  border-bottom: 2px solid rgba(74, 138, 191, 0.5);
+}
+
+.enemy-card.has-poison {
+  box-shadow: inset 0 0 10px rgba(100, 160, 30, 0.2);
 }
 
 @keyframes shield-shimmer {
@@ -926,8 +977,9 @@ html, body {
 }
 
 .hp-text {
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   color: var(--text-dim);
+  font-weight: 600;
 }
 
 /* --- Dice Area --- */
@@ -1268,6 +1320,18 @@ html, body {
 .block-text {
   font-size: 0.6rem;
   color: var(--blue-bright);
+}
+
+.block-icon {
+  font-size: 0.7rem;
+  color: var(--blue-bright);
+  font-weight: 600;
+}
+
+.poison-icon {
+  font-size: 0.7rem;
+  color: #8a2;
+  font-weight: 600;
 }
 
 /* --- Class color coding --- */
@@ -3863,12 +3927,12 @@ html, body {
 
 .skill-cutin-portrait {
   position: absolute;
-  left: 50%;
+  left: 35%;
   bottom: 0;
-  height: 45%;
-  max-height: 240px;
+  height: 70%;
+  max-height: 360px;
   object-fit: contain;
-  filter: drop-shadow(2px 0 10px rgba(0, 0, 0, 0.8));
+  filter: drop-shadow(2px 0 12px rgba(0, 0, 0, 0.8));
   opacity: 0;
   transform: translateX(-50%) translateX(-60px);
   transition: none;
@@ -3876,16 +3940,18 @@ html, body {
 
 .skill-cutin-name {
   position: absolute;
-  bottom: 2%;
+  bottom: 3%;
   left: 0;
   right: 0;
   text-align: center;
   font-family: 'Cinzel', serif;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text-bright);
+  color: var(--gold);
   letter-spacing: 0.15em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(201, 162, 39, 0.4);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(201, 162, 39, 0.5);
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.6) 80%, transparent 100%);
+  padding: 6px 0;
   opacity: 0;
   transform: translateY(10px);
   transition: none;
@@ -3911,7 +3977,7 @@ html, body {
 
 @keyframes cutin-slide-in {
   0% {
-    transform: translateX(-50%) translateX(-60px);
+    transform: translateX(-50%) translateX(-80px);
     opacity: 0;
   }
   30% {
@@ -3929,7 +3995,7 @@ html, body {
     opacity: 0.85;
   }
   100% {
-    transform: translateX(-50%) translateX(40px);
+    transform: translateX(-50%) translateX(50px);
     opacity: 0;
   }
 }
@@ -3969,12 +4035,12 @@ html, body {
 
 .enemy-cutin-portrait {
   position: absolute;
-  left: 50%;
+  left: 65%;
   bottom: 0;
-  height: 45%;
-  max-height: 240px;
+  height: 70%;
+  max-height: 360px;
   object-fit: contain;
-  filter: drop-shadow(2px 0 10px rgba(0, 0, 0, 0.8)) saturate(0.7) brightness(0.85);
+  filter: drop-shadow(2px 0 12px rgba(0, 0, 0, 0.8)) saturate(0.7) brightness(0.85);
   transform: translateX(-50%) translateX(60px);
   opacity: 0;
 }
@@ -3989,17 +4055,42 @@ html, body {
 
 .enemy-cutin-name {
   position: absolute;
-  bottom: 2%;
+  bottom: 9%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+}
+
+.enemy-cutin-action {
+  position: absolute;
+  bottom: 3%;
   left: 0;
   right: 0;
   text-align: center;
   font-family: 'Cinzel', serif;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--red-bright);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8), 0 0 12px rgba(200, 50, 50, 0.4);
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.6) 80%, transparent 100%);
+  padding: 5px 0;
   opacity: 0;
+}
+
+.enemy-cutin.active .enemy-cutin-action {
+  animation: cutin-name-in 0.2s 0.15s ease-out forwards;
+}
+
+.enemy-cutin.exit .enemy-cutin-action {
+  animation: cutin-name-out 0.2s ease-in forwards;
 }
 
 .enemy-cutin.active .enemy-cutin-name {
@@ -4081,14 +4172,14 @@ html, body {
 }
 
 @keyframes enemy-portrait-in {
-  0% { transform: translateX(-50%) translateX(60px); opacity: 0; }
+  0% { transform: translateX(-50%) translateX(80px); opacity: 0; }
   30% { opacity: 0.8; }
   100% { transform: translateX(-50%) translateX(0); opacity: 0.8; }
 }
 
 @keyframes enemy-portrait-out {
   0% { transform: translateX(-50%) translateX(0); opacity: 0.8; }
-  100% { transform: translateX(-50%) translateX(-40px); opacity: 0; }
+  100% { transform: translateX(-50%) translateX(-50px); opacity: 0; }
 }
 
 @keyframes cutin-name-out {

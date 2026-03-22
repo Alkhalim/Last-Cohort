@@ -663,23 +663,32 @@ class Game {
 
   saveRunToHistory(victory) {
     const history = this.loadRunHistory();
-    const party = this.engine.party.map(u => ({
-      classId: u.classId,
-      name: u.name,
-      title: u.title,
-      hp: u.hp,
-      maxHp: u.maxHp,
-      downed: u.downed,
-      skills: u.skills.map(s => s.name),
-      equipment: Object.entries(u.equipment).reduce((acc, [slot, ids]) => {
-        acc[slot] = ids.filter(Boolean).map(id => {
-          const item = getItemData(id);
-          return item ? { name: item.name, rarity: item.rarity, level: item.level || 1 } : null;
-        }).filter(Boolean);
-        return acc;
-      }, {}),
-      stats: { ...u.stats },
-    }));
+    const party = this.engine.party.map(u => {
+      // Combine run-wide stats with current encounter stats
+      const combinedStats = {};
+      const rs = u.runStats || {};
+      const cs = u.stats || {};
+      for (const key of Object.keys(cs)) {
+        combinedStats[key] = (rs[key] || 0) + (cs[key] || 0);
+      }
+      return {
+        classId: u.classId,
+        name: u.name,
+        title: u.title,
+        hp: u.hp,
+        maxHp: u.maxHp,
+        downed: u.downed,
+        skills: u.skills.map(s => s.name),
+        equipment: Object.entries(u.equipment).reduce((acc, [slot, ids]) => {
+          acc[slot] = ids.filter(Boolean).map(id => {
+            const item = getItemData(id);
+            return item ? { name: item.name, rarity: item.rarity, level: item.level || 1 } : null;
+          }).filter(Boolean);
+          return acc;
+        }, {}),
+        stats: combinedStats,
+      };
+    });
 
     // Determine cause of death (last log entry mentioning "falls" or "downed")
     let causeOfDeath = '';

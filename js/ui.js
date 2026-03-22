@@ -95,7 +95,7 @@ class GameUI {
         this.showSkillCutIn(data.classTitle, data.skillName);
         break;
       case 'enemyCutIn':
-        this.showEnemyCutIn(data.enemyName, data.enemyId);
+        this.showEnemyCutIn(data.enemyName, data.enemyId, data.actionName);
         break;
       case 'dicePassive':
         if (data.triggers) {
@@ -161,16 +161,15 @@ class GameUI {
     // Remove after animation completes
     setTimeout(() => {
       cutin.classList.add('exit');
-      setTimeout(() => cutin.remove(), 500);
-    }, 1000);
+      setTimeout(() => cutin.remove(), 600);
+    }, 1400);
   }
 
-  // Enemy cut-in — portrait + name
-  showEnemyCutIn(enemyName, enemyId) {
+  // Enemy cut-in — portrait + name + action
+  showEnemyCutIn(enemyName, enemyId, actionName) {
     const existing = document.getElementById('enemy-cutin');
     if (existing) existing.remove();
 
-    // Use per-enemy portrait if available, fallback to generic
     const portraitSrc = `assets/enemy_${enemyId}.png`;
     const fallbackSrc = 'assets/enemy_portrait.png';
 
@@ -183,7 +182,11 @@ class GameUI {
     img.src = portraitSrc;
     img.onerror = () => { img.src = fallbackSrc; };
     cutin.appendChild(img);
-    cutin.insertAdjacentHTML('beforeend', `<span class="enemy-cutin-name">${enemyName}</span>`);
+    if (actionName) {
+      cutin.insertAdjacentHTML('beforeend', `<span class="enemy-cutin-name">${enemyName}</span><div class="enemy-cutin-action">${actionName}</div>`);
+    } else {
+      cutin.insertAdjacentHTML('beforeend', `<div class="enemy-cutin-action">${enemyName}</div>`);
+    }
     const combatScreen = document.getElementById('combat-screen');
     if (combatScreen) combatScreen.appendChild(cutin);
 
@@ -191,8 +194,8 @@ class GameUI {
 
     setTimeout(() => {
       cutin.classList.add('exit');
-      setTimeout(() => cutin.remove(), 400);
-    }, 800);
+      setTimeout(() => cutin.remove(), 500);
+    }, 1200);
   }
 
   showScreen(id) {
@@ -294,7 +297,7 @@ class GameUI {
 
     this.engine.enemies.forEach((enemy, i) => {
       const el = document.createElement('div');
-      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${this.isEnemyPreview(enemy) ? ' preview' : ''}${enemy.justSpawned ? ' spawning' : ''}${enemy.isBoss ? ' boss' : ''}`;
+      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${this.isEnemyPreview(enemy) ? ' preview' : ''}${enemy.justSpawned ? ' spawning' : ''}${enemy.isBoss ? ' boss' : ''}${enemy.block > 0 ? ' has-block' : ''}${enemy.poison > 0 ? ' has-poison' : ''}`;
       el.id = `enemy-${i}`;
 
       const hpPct = (enemy.hp / enemy.maxHp) * 100;
@@ -308,7 +311,7 @@ class GameUI {
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
-        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-text">B:${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-text">P:${enemy.poison}</span>` : ''}</div>
+        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">&#x1F6E1;${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon">&#x2620;${enemy.poison}</span>` : ''}</div>
       `;
 
       if (drainPct > hpPct) {
@@ -368,9 +371,17 @@ class GameUI {
     if (enemy.isElite) tags.push('<span class="enemy-tag tag-elite">ELITE</span>');
     tags.push(`<span class="enemy-tag">${enemy.row} row</span>`);
 
+    const portraitSrc = `assets/enemy_${enemy.id}.png`;
+    const fallbackSrc = 'assets/enemy_portrait.png';
+
     tooltip.innerHTML = `
-      <div class="enemy-tooltip-name">${enemy.name}</div>
-      <div class="enemy-tooltip-tags">${tags.join(' ')}</div>
+      <div class="enemy-tooltip-header">
+        <img class="enemy-tooltip-portrait" src="${portraitSrc}" onerror="this.src='${fallbackSrc}'" alt="${enemy.name}">
+        <div class="enemy-tooltip-header-text">
+          <div class="enemy-tooltip-name">${enemy.name}</div>
+          <div class="enemy-tooltip-tags">${tags.join(' ')}</div>
+        </div>
+      </div>
       <div class="enemy-tooltip-desc">${enemy.description || ''}</div>
       <div class="enemy-tooltip-actions-title">Attacks:</div>
       ${actions}
@@ -674,8 +685,12 @@ class GameUI {
 
       const hpDelta = unit.hp - prevHp;
 
+      if (unit.block > 0) el.classList.add('has-block');
+      if (unit.poison > 0) el.classList.add('has-poison');
+
       el.innerHTML = `
         ${unit.block > 0 ? '<div class="unit-shield-overlay"></div>' : ''}
+        ${unit.poison > 0 ? '<div class="unit-poison-overlay"></div>' : ''}
         <div class="unit-header">
           <span class="unit-title">${unit.title}</span>
           <span class="unit-name">${unit.name}</span>
@@ -689,8 +704,8 @@ class GameUI {
         </div>
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
-          ${unit.block > 0 ? `<span class="block-text">Block: ${unit.block}</span>` : ''}
-          ${unit.poison > 0 ? `<span class="poison-text">Poison: ${unit.poison}</span>` : ''}
+          ${unit.block > 0 ? `<span class="block-icon" title="Block">&#x1F6E1;${unit.block}</span>` : ''}
+          ${unit.poison > 0 ? `<span class="poison-icon" title="Poison">&#x2620;${unit.poison}</span>` : ''}
           ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg} dmg (${minAtk})</span>`; })() : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
           ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
