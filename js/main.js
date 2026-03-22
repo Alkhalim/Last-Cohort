@@ -955,7 +955,7 @@ class Game {
     const s = this.stats;
     const a = this.achievements;
 
-    // Boss kill achievements (3 kills each)
+    // Boss kill achievements (3 kills each for regular bosses)
     const bossIds = ['arminius_champion', 'grove_witch', 'silent_huntsman', 'mire_mother', 'bone_speaker', 'serpent_shaman', 'fog_weaver', 'blood_stag'];
     bossIds.forEach(bid => {
       const key = 'boss_' + bid + '_x3';
@@ -965,6 +965,25 @@ class Game {
         this.addNotification(`Achievement: Defeated ${data ? data.name : bid} 3 times!`);
       }
     });
+
+    // Story boss achievements (1 kill each)
+    const storyBosses = [
+      { id: 'corpse_of_arminius', key: 'boss_corpse_arminius' },
+      { id: 'corpse_of_varus', key: 'boss_corpse_varus' },
+      { id: 'spirit_of_arminius', key: 'boss_spirits_defeated' },
+    ];
+    storyBosses.forEach(sb => {
+      if (!a[sb.key] && (s.enemiesKilled[sb.id] || 0) >= 1) {
+        a[sb.key] = true;
+        const data = ENEMY_DATA[sb.id];
+        this.addNotification(`Achievement: ${data ? data.name : sb.id} defeated!`);
+      }
+    });
+    // Ariovistus event boss
+    if (!a.boss_ariovistus && (s.enemiesKilled['revenant_of_ariovistus'] || 0) >= 1) {
+      a.boss_ariovistus = true;
+      this.addNotification('Achievement: The dead king falls!');
+    }
 
     // Check party equipment for rare achievements (at run end)
     if (this.engine && this.engine.party) {
@@ -1029,11 +1048,21 @@ class Game {
     const s = this.stats;
 
     const ACHIEVEMENT_DEFS = [
+      // Regular bosses (3 kills)
       { key: 'boss_arminius_champion_x3', name: "Champion Slayer", desc: "Defeat Arminius's Champion 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion'] || 0) + '/3' },
       { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch'] || 0) + '/3' },
       { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman'] || 0) + '/3' },
+      { key: 'boss_serpent_shaman_x3', name: "Serpent Slayer", desc: "Defeat the Serpent Shaman 3 times.", progress: () => Math.min(3, s.enemiesKilled['serpent_shaman'] || 0) + '/3' },
       { key: 'boss_mire_mother_x3', name: "Beast Tamer", desc: "Defeat the Mire Mother 3 times.", progress: () => Math.min(3, s.enemiesKilled['mire_mother'] || 0) + '/3' },
       { key: 'boss_bone_speaker_x3', name: "Silence the Dead", desc: "Defeat the Bone Speaker 3 times.", progress: () => Math.min(3, s.enemiesKilled['bone_speaker'] || 0) + '/3' },
+      { key: 'boss_fog_weaver_x3', name: "Fog Cutter", desc: "Defeat the Fog Weaver 3 times.", progress: () => Math.min(3, s.enemiesKilled['fog_weaver'] || 0) + '/3' },
+      { key: 'boss_blood_stag_x3', name: "Stag Hunter", desc: "Defeat the Blood Stag 3 times.", progress: () => Math.min(3, s.enemiesKilled['blood_stag'] || 0) + '/3' },
+      // Story bosses (1 kill, hidden)
+      { key: 'boss_corpse_arminius', name: "The Betrayer Falls", desc: "Defeat the Corpse of Arminius.", hidden: true, progress: () => a.boss_corpse_arminius ? 'Done' : '0/1' },
+      { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
+      { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits of Arminius and Varus.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
+      { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat the Revenant of Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
+      // Equipment achievements
       { key: 'hero_three_rares', name: "Collector", desc: "Have one hero equipped with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
       { key: 'hero_only_rares', name: "Gilded Warrior", desc: "Have one hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },
       { key: 'party_all_rares', name: "Legion of Gold", desc: "Entire party equipped with only rare items.", progress: () => a.party_all_rares ? 'Done' : 'Not yet' },
@@ -1042,6 +1071,15 @@ class Game {
     let html = '';
     ACHIEVEMENT_DEFS.forEach(def => {
       const unlocked = !!a[def.key];
+      // Hidden achievements: don't show until unlocked
+      if (def.hidden && !unlocked) {
+        html += `<div class="achievement-slot locked hidden-achievement">
+          <div class="achievement-name">???</div>
+          <div class="achievement-desc">Hidden achievement</div>
+          <div class="achievement-progress">???</div>
+        </div>`;
+        return;
+      }
       html += `<div class="achievement-slot ${unlocked ? 'unlocked' : 'locked'}">
         <div class="achievement-name">${unlocked ? '&#9733; ' : ''}${def.name}</div>
         <div class="achievement-desc">${def.desc}</div>

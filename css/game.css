@@ -2885,6 +2885,12 @@ html, body {
   border-color: var(--gold-dim);
 }
 
+.achievement-slot.hidden-achievement {
+  opacity: 0.3;
+  font-style: italic;
+  border-style: dashed;
+}
+
 .achievement-name {
   font-size: 0.82rem;
   font-weight: 600;
