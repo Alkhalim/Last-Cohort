@@ -3114,6 +3114,9 @@ class CombatEngine {
         u.hp = Math.floor(u.maxHp * 0.5);
         this.addLog(`${u.name} recovers at ${u.hp} HP.`);
       }
+      u.block = 0;
+      u.poison = 0;
+      u.buffs = [];
     });
   }
 

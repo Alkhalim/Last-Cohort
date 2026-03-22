@@ -381,6 +381,10 @@ class Game {
   }
 
   returnHome() {
+    // Save to leaderboard when voluntarily ending a run after a boss victory
+    if (this.engine && this.engine.totalRenownEarned > 0) {
+      this.finalizeLeaderboard(true);
+    }
     this.showHomeScreen();
   }
 
@@ -647,6 +651,15 @@ class Game {
     this.saveStats();
     this.checkAchievements();
     this.sendAnalytics(victory);
+    // Leaderboard entry is saved when the run actually ends (defeat or return home), not here
+    if (!victory) {
+      this.finalizeLeaderboard(victory);
+    }
+  }
+
+  finalizeLeaderboard(victory) {
+    if (this._leaderboardSaved) return;
+    this._leaderboardSaved = true;
     const leaderboardPos = this.saveRunToHistory(victory);
     if (leaderboardPos >= 0 && leaderboardPos < 10) {
       this.showHighscorePopup(leaderboardPos + 1);
@@ -1040,6 +1053,62 @@ class Game {
         a.party_all_rares = true;
         this.addNotification('Achievement: Entire party equipped with only rare items!');
       }
+
+      // Epic equipment achievements
+      const hasEpic = this.engine.party.some(u => {
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          for (const id of u.equipment[slot]) {
+            if (id) { const item = getItemData(id); if (item && item.rarity === 'epic') return true; }
+          }
+        }
+        return false;
+      });
+      if (hasEpic && !a.hero_first_epic) {
+        a.hero_first_epic = true;
+        this.addNotification('Achievement: Found your first epic item!');
+      }
+
+      const hasThreeEpics = this.engine.party.some(u => {
+        let epicCount = 0;
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (id) { const item = getItemData(id); if (item && item.rarity === 'epic') epicCount++; }
+          });
+        }
+        return epicCount >= 3;
+      });
+      if (hasThreeEpics && !a.hero_three_epics) {
+        a.hero_three_epics = true;
+        this.addNotification('Achievement: A hero equipped 3 epic items!');
+      }
+
+      const hasOnlyEpics = this.engine.party.some(u => {
+        let total = 0, epics = 0;
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (id) { total++; const item = getItemData(id); if (item && item.rarity === 'epic') epics++; }
+          });
+        }
+        return total >= 5 && epics === total;
+      });
+      if (hasOnlyEpics && !a.hero_only_epics) {
+        a.hero_only_epics = true;
+        this.addNotification('Achievement: A hero equipped ONLY epic items!');
+      }
+
+      const allOnlyEpics = this.engine.party.every(u => {
+        let total = 0, epics = 0;
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (id) { total++; const item = getItemData(id); if (item && item.rarity === 'epic') epics++; }
+          });
+        }
+        return total >= 5 && epics === total;
+      });
+      if (allOnlyEpics && !a.party_all_epics) {
+        a.party_all_epics = true;
+        this.addNotification('Achievement: Entire party equipped with only epic items!');
+      }
     }
 
     this.saveAchievements();
@@ -1071,10 +1140,15 @@ class Game {
       { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
       { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits of Arminius and Varus.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
       { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat the Revenant of Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
-      // Equipment achievements
+      // Equipment achievements — Rare
       { key: 'hero_three_rares', name: "Collector", desc: "Have one hero equipped with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
       { key: 'hero_only_rares', name: "Gilded Warrior", desc: "Have one hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },
       { key: 'party_all_rares', name: "Legion of Gold", desc: "Entire party equipped with only rare items.", progress: () => a.party_all_rares ? 'Done' : 'Not yet' },
+      // Equipment achievements — Epic
+      { key: 'hero_first_epic', name: "Relic Hunter", desc: "Equip your first epic item.", progress: () => a.hero_first_epic ? 'Done' : 'Not yet' },
+      { key: 'hero_three_epics', name: "Relic Hoarder", desc: "Have one hero equipped with 3 epic items.", progress: () => a.hero_three_epics ? 'Done' : 'Not yet' },
+      { key: 'hero_only_epics', name: "Demigod", desc: "Have one hero with only epic equipment.", progress: () => a.hero_only_epics ? 'Done' : 'Not yet' },
+      { key: 'party_all_epics', name: "Pantheon", desc: "Entire party equipped with only epic items.", progress: () => a.party_all_epics ? 'Done' : 'Not yet' },
     ];
 
     let html = '';
@@ -1105,6 +1179,7 @@ class Game {
     this.marchCount = 0;
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
+    this._leaderboardSaved = false;
     this.engine.morale = 50;
     this.engine.totalEnemiesKilled = 0;
     this.engine.encountersCompleted = 0;

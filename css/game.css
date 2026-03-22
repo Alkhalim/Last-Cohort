@@ -2897,11 +2897,14 @@ html, body {
 
 /* --- Stats Screen --- */
 #stats-screen,
-#achievements-screen {
-  justify-content: center;
+#achievements-screen,
+#run-history-screen,
+#run-detail-screen {
+  justify-content: flex-start;
   align-items: center;
   background: linear-gradient(180deg, #0a0a0c 0%, #141820 50%, #1a1410 100%);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .stats-section {
@@ -3929,8 +3932,8 @@ html, body {
   position: absolute;
   left: 35%;
   bottom: 0;
-  height: 70%;
-  max-height: 360px;
+  height: 88%;
+  max-height: 450px;
   object-fit: contain;
   filter: drop-shadow(2px 0 12px rgba(0, 0, 0, 0.8));
   opacity: 0;
@@ -4037,8 +4040,8 @@ html, body {
   position: absolute;
   left: 65%;
   bottom: 0;
-  height: 70%;
-  max-height: 360px;
+  height: 88%;
+  max-height: 450px;
   object-fit: contain;
   filter: drop-shadow(2px 0 12px rgba(0, 0, 0, 0.8)) saturate(0.7) brightness(0.85);
   transform: translateX(-50%) translateX(60px);

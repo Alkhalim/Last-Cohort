@@ -120,10 +120,10 @@ const RAW_CLASSES = {
         "effects": { "healAll": 2, "buffAllies": { "bonusDamage": 1, "attacks": 3 } }
       },
       {
-        "id": "measured_advance", "name": "Measured Advance", "cooldown": 1,
+        "id": "measured_advance", "name": "Measured Advance", "cooldown": 2,
         "cost": { "type": "consecutive" }, "target": "single_enemy",
-        "description": "Requires two consecutive dice. Deals 8 damage and all allies gain 3 Block.",
-        "effects": { "damage": 8, "blockAll": 3 }
+        "description": "Requires two consecutive dice. Deals 8 damage and other allies gain 3 Block.",
+        "effects": { "damage": 8, "blockAll": 3, "blockOthersOnly": true }
       },
       {
         "id": "no_retreat", "name": "No Retreat",
@@ -379,10 +379,10 @@ const RAW_CLASSES = {
         "effects": { "revive": true, "morale": -15 }
       },
       {
-        "id": "sacrifice_standard", "name": "Sacrifice the Standard", "cooldown": 2,
+        "id": "sacrifice_standard", "name": "Sacrifice the Standard", "cooldown": 5,
         "cost": { "type": "any" }, "target": "all_enemies",
-        "description": "Spend 20 Morale to deal 8 damage to all enemies. Consumes all damage buffs.",
-        "effects": { "damageAll": 8, "moraleCost": 20, "consumeAllBuffs": true }
+        "description": "Spend 50 Morale to deal 8 damage to all enemies. Consumes all damage buffs.",
+        "effects": { "damageAll": 8, "moraleCost": 50, "consumeAllBuffs": true }
       },
       {
         "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 3,
