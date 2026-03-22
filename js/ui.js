@@ -586,14 +586,24 @@ class GameUI {
           const up = document.createElement('button');
           up.className = 'adjust-btn';
           up.textContent = '+';
-          up.addEventListener('click', (e) => { e.stopPropagation(); this.engine.adjustDie(die.id, 1); });
+          up.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (up.disabled) return;
+            up.disabled = true;
+            this.engine.adjustDie(die.id, 1);
+          });
           adjustContainer.appendChild(up);
         }
         if (die.value > 1) {
           const down = document.createElement('button');
           down.className = 'adjust-btn';
           down.textContent = '-';
-          down.addEventListener('click', (e) => { e.stopPropagation(); this.engine.adjustDie(die.id, -1); });
+          down.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (down.disabled) return;
+            down.disabled = true;
+            this.engine.adjustDie(die.id, -1);
+          });
           adjustContainer.appendChild(down);
         }
         el.appendChild(adjustContainer);
@@ -716,7 +726,7 @@ class GameUI {
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
           ${unit.block > 0 ? `<span class="block-icon" title="Block">&#x1F6E1;${unit.block}</span>` : ''}
           ${unit.poison > 0 ? `<span class="poison-icon" title="Poison">&#x2620;${unit.poison}</span>` : ''}
-          ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg} dmg (${minAtk})</span>`; })() : ''}
+          ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg}\u2694(${minAtk})</span>`; })() : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
           ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
         </div>
@@ -1546,8 +1556,9 @@ class GameUI {
       const isReachableNode = startReachable ? (node.depth === 0) : reachableIds.includes(node.id);
       const isCurrent = node.id === this.currentNodeId;
       const isUnreachable = !node.visited && !futureReachable.has(node.id);
+      const isFuture = !node.visited && !isReachableNode && !isCurrent && !isUnreachable;
 
-      el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''}${isUnreachable ? ' unreachable' : ''} type-${node.type}`;
+      el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''}${isUnreachable ? ' unreachable' : ''}${isFuture ? ' future' : ''} type-${node.type}`;
       el.style.left = (pos.x - 32) + 'px';
       el.style.top = (pos.y - 32) + 'px';
 
@@ -2105,17 +2116,17 @@ class GameUI {
     shuffled.forEach(({ unit, itemId, item }) => {
       // Determine which stat will be upgraded (same logic as createLeveledItem)
       const stats = item.stats;
-      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice');
+      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice' && stats[k] >= 0);
       const currentLevel = item.level || 1;
       const newLevel = currentLevel + 1;
 
-      // Pre-pick the stat that would be upgraded (random, consistent with leveling)
+      // Pre-pick the stat that would be upgraded (only positive stats)
       let statKey = '';
       let upgradeText = '';
       if (statKeys.length > 0) {
         statKey = statKeys[Math.floor(Math.random() * statKeys.length)];
         const current = stats[statKey];
-        const next = current < 0 ? current - 1 : current + 1;
+        const next = current + 1;
         const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
         upgradeText = `Lv${currentLevel} → ${newLevel}: ${statLabel} ${current} → ${next}`;
       } else {
@@ -2134,11 +2145,7 @@ class GameUI {
       } else {
         btn.addEventListener('click', () => {
           // Apply level-up: increment the chosen stat
-          if (stats[statKey] < 0) {
-            ITEM_DATA[itemId].stats[statKey]--;
-          } else {
-            ITEM_DATA[itemId].stats[statKey]++;
-          }
+          ITEM_DATA[itemId].stats[statKey]++;
           // Update level and name
           ITEM_DATA[itemId].level = newLevel;
           ITEM_DATA[itemId].name = baseName + ' +' + (newLevel - 1);
@@ -2270,7 +2277,7 @@ class GameUI {
         choicesEl.innerHTML = '';
         document.getElementById('event-outcome').classList.remove('hidden');
         const specialLine = replacement.special ? `<br><span style="font-size:0.75rem;color:var(--gold)">${formatItemSpecial(replacement)}</span>` : '';
-        document.getElementById('event-outcome-text').innerHTML = `Traded <strong>${item.name}</strong> for:<br><br><strong style="color:var(--text-bright)">${replacement.name}</strong> <span style="font-size:0.75rem;color:var(--text-dim)">(${replacement.rarity})</span><br><span style="font-size:0.85rem">${formatItemStats(replacement.stats)}</span>${specialLine}`;
+        document.getElementById('event-outcome-text').innerHTML = `Traded <strong>${item.name}</strong> for:<br><br><strong class="rarity-${replacement.rarity}">${replacement.name}</strong> <span style="font-size:0.75rem;color:var(--text-dim)">(${replacement.rarity})</span><br><span style="font-size:0.85rem">${formatItemStats(replacement.stats)}</span>${specialLine}`;
         document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
       });
 
@@ -3105,11 +3112,11 @@ class GameUI {
 
     selected.forEach(({ unit, itemId, item }) => {
       const stats = item.stats;
-      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice');
+      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice' && stats[k] >= 0);
       if (statKeys.length === 0) return;
       const statKey = statKeys[Math.floor(Math.random() * statKeys.length)];
       const current = stats[statKey];
-      const next = current < 0 ? current - 1 : current + 1;
+      const next = current + 1;
       const currentLevel = item.level || 1;
       const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
       const upgradeText = `Lv${currentLevel} → ${currentLevel + 1}: ${statLabel} ${current} → ${next}`;
@@ -3120,8 +3127,7 @@ class GameUI {
       btn.className = 'btn-event-choice';
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> <span style="font-size:0.65rem;color:var(--text-dim)">(${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
       btn.addEventListener('click', () => {
-        if (stats[statKey] < 0) ITEM_DATA[itemId].stats[statKey]--;
-        else ITEM_DATA[itemId].stats[statKey]++;
+        ITEM_DATA[itemId].stats[statKey]++;
         ITEM_DATA[itemId].level = currentLevel + 1;
         ITEM_DATA[itemId].name = baseName + ' +' + currentLevel;
         if (!ITEM_DATA[itemId].baseId) ITEM_DATA[itemId].baseId = itemId;

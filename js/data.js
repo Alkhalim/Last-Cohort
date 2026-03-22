@@ -608,7 +608,7 @@ function renderTagPips(classTags) {
   return tagsToShow.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
 }
 
-// Create a leveled copy of an item — each level adds +1 to a random stat (or -1 to negative stats)
+// Create a leveled copy of an item — each level adds +1 to a random positive stat
 function createLeveledItem(itemId, bonusLevels) {
   const base = ITEM_DATA[itemId];
   if (!base || bonusLevels <= 0) return itemId; // return plain ID if no scaling
@@ -622,16 +622,12 @@ function createLeveledItem(itemId, bonusLevels) {
   leveled.baseId = itemId;
   leveled.level = 1 + bonusLevels;
 
-  // Apply bonus levels — each level adds +1 to a random stat
-  const statKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice');
+  // Apply bonus levels — each level adds +1 to a random positive stat
+  const statKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] >= 0);
   for (let i = 0; i < bonusLevels; i++) {
     if (statKeys.length === 0) break;
     const key = statKeys[Math.floor(Math.random() * statKeys.length)];
-    if (leveled.stats[key] < 0) {
-      leveled.stats[key]--; // negative stats get more negative
-    } else {
-      leveled.stats[key]++;
-    }
+    leveled.stats[key]++;
   }
 
   // Update name to show level

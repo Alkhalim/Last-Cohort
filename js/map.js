@@ -167,6 +167,8 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
 
   // Generate encounters for combat nodes (filtered by difficulty)
   const usedEventIds = new Set();
+  let merchantCount = 0;
+  const MAX_MERCHANTS_PER_MARCH = 3;
   for (const node of nodes) {
     if (node.type === 'combat') {
       node.encounter = generateEncounterByThreat(node.threat, difficulty);
@@ -208,6 +210,7 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
         if (e.minDifficulty && e.minDifficulty > difficulty) return false;
         if (e.maxDifficulty && e.maxDifficulty < difficulty) return false;
         if (e.oncePerRun && usedRunEventIds.has(e.id)) return false;
+        if (e.type === 'item_trade' && merchantCount >= MAX_MERCHANTS_PER_MARCH) return false;
         return true;
       });
       // Remove already-used non-repeatable events
@@ -228,6 +231,7 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       node.encounter = chosen;
       if (chosen && !repeatable.includes(chosen.type)) usedEventIds.add(chosen.id);
       if (chosen && chosen.oncePerRun) usedRunEventIds.add(chosen.id);
+      if (chosen && chosen.type === 'item_trade') merchantCount++;
     }
   }
 

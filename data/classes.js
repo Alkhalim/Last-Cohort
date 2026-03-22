@@ -444,16 +444,17 @@ const RAW_CLASSES = {
         "effects": { "damageAll": 1, "poisonAll": 1 }
       },
       {
-        "id": "thunderous_blast", "name": "Thunderous Blast", "cooldown": 2,
-        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 7+. Deals 5 damage to target, half to all others. +7 Morale.",
-        "effects": { "damage": 5, "splashHalf": true, "morale": 7 }
+        "id": "dissonant_blast", "name": "Dissonant Blast", "cooldown": 2,
+        "cost": { "type": "exact", "val": 1 }, "target": "single_enemy",
+        "description": "A jarring horn note. Deals 2 damage and stuns the target.",
+        "effects": { "damage": 2, "stun": true }
       },
       {
-        "id": "deafening_blast", "name": "Deafening Blast", "cooldown": 2,
-        "cost": { "type": "exact", "val": 5 }, "target": "all_enemies",
-        "description": "Deal 2 damage to all enemies. Morale attacks have no effect for 2 turns.",
-        "effects": { "damageAll": 2, "deafenAll": 2, "bonusDmgScale": 0.35 }
+        "id": "deafening_blast", "name": "Deafening Blast", "cooldown": 3,
+        "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "A deafening blast at any target. Deals 4 damage, half to adjacent enemies. All enemies' morale attacks nullified for 2 turns.",
+        "effects": { "damage": 4, "splashAdjacentPct": 0.5, "deafenAll": 2 }
       },
       {
         "id": "resonance", "name": "Resonance", "cooldown": 1,
@@ -659,10 +660,10 @@ const RAW_CLASSES = {
         "effects": { "block": 6 }
       },
       {
-        "id": "imperial_thrust", "name": "Imperial Thrust", "starter": true,
+        "id": "shield_slam", "name": "Shield Slam", "starter": true, "cooldown": 3,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "A precise thrust to the throat. Deals 8 damage.",
-        "effects": { "damage": 8 }
+        "description": "Bash with the praetorian shield. Deals 4 damage and stuns the target.",
+        "effects": { "damage": 4, "stun": true }
       },
       {
         "id": "praetorian_guard", "name": "Praetorian Guard", "cooldown": 1,
