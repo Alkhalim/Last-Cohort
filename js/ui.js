@@ -501,7 +501,7 @@ class GameUI {
       return;
     }
     // Old engine targeting
-    if (this.engine.targetMode && this.engine.targetMode.targetType === 'enemy') {
+    if (this.engine.targetMode && (this.engine.targetMode.targetType === 'enemy' || this.engine.targetMode.targetType === 'dual_enemy')) {
       this.engine.selectTarget(enemy);
     }
   }

@@ -116,8 +116,8 @@ const RAW_CLASSES = {
       {
         "id": "commanding_shout", "name": "Commanding Shout", "starter": true, "cooldown": 3,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
-        "description": "All allies gain +2 damage on their next attack.",
-        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 1 } }
+        "description": "All allies gain +3 damage on their next attack.",
+        "effects": { "buffAllies": { "bonusDamage": 3, "attacks": 1 } }
       },
       {
         "id": "tighten_ranks", "name": "Tighten Ranks", "starter": true, "cooldown": 1,

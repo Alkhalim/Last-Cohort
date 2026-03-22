@@ -590,18 +590,31 @@ class CombatEngine {
       }
     }
 
-    // Fog Weaver: Hex — destroy a random die (set by previous turn's Hex action)
-    const fogWeaver = this.enemies.find(e => e.id === 'fog_weaver' && !e.dead && e._hexPending);
-    if (fogWeaver) {
-      fogWeaver._hexPending = false;
+    // Runecarver: Rune of Binding — lower all dice by 1 (min 1)
+    const runecarvers = this.enemies.filter(e => !e.dead && e._runeBindingPending);
+    runecarvers.forEach(rc => {
+      rc._runeBindingPending = false;
+      let affected = 0;
+      this.dicePool.dice.forEach(d => {
+        if (!d.used && d.value > 1) { d.value--; affected++; }
+      });
+      if (affected > 0) {
+        this.addLog(`Rune of Binding weakens ${affected} dice! (-1 each)`);
+      }
+    });
+
+    // Hex/Binding — destroy a random die (set by previous turn's action)
+    const hexEnemies = this.enemies.filter(e => !e.dead && e._hexPending);
+    hexEnemies.forEach(hexer => {
+      hexer._hexPending = false;
       const available = this.dicePool.dice.filter(d => !d.used);
       if (available.length > 0) {
         const victim = available[Math.floor(Math.random() * available.length)];
         this.dicePool.useDie(victim.id);
-        this.addLog(`The Fog Weaver's hex crumbles a die! (${victim.value} destroyed)`);
+        this.addLog(`${hexer.name}'s curse crumbles a die! (${victim.value} destroyed)`);
         if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
       }
-    }
+    });
 
     // Corpse of Varus: every 2 turns, corrupt one die to become a 1
     const corpseVarus = this.enemies.find(e => e.id === 'corpse_of_varus' && !e.dead);
@@ -2598,9 +2611,10 @@ class CombatEngine {
       }
       this.executeEnemyAction(enemy);
 
-      // Check for second strike (boss enrage or wounded frenzy)
+      // Check for second strike (specific boss enrage or wounded frenzy)
+      const enrageBosses = ['arminius_champion', 'blood_stag'];
       const needsSecondStrike =
-        (enemy.isBoss && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5) ||
+        (enemy.isBoss && enrageBosses.includes(enemy.id) && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5) ||
         (!enemy.isBoss && enemy.woundedDoubleAttack && enemy.hp > 0 && !enemy.dead && enemy.hp <= enemy.maxHp * 0.5);
 
       if (needsSecondStrike) {
@@ -3076,6 +3090,12 @@ class CombatEngine {
     if (enemy.id === 'fog_weaver' && action.name === 'Hex') {
       enemy._hexPending = true;
       this.addLog(`${enemy.name} curses your dice — one will crumble next turn!`);
+    }
+
+    // Runecarver: Rune of Binding — lower all dice by 1 next turn
+    if (action.runeBinding) {
+      enemy._runeBindingPending = true;
+      this.addLog(`${enemy.name} carves a binding rune — your dice will weaken next turn!`);
     }
 
     // Blood Stag: Retreat — move to back row and regenerate

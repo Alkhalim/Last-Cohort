@@ -92,11 +92,14 @@ const RAW_ENEMIES = {
   },
   "wicker_man": {
     "id": "wicker_man", "name": "Wicker Man",
-    "maxHp": 25, "row": "back", "damage": [2, 2], "speed": 0, "xpValue": 8,
-    "description": "A towering effigy of woven branches, set ablaze by Germanic priests. The smoke chokes the air and shields nearby warriors.", "ai": "passive",
-    "isStructure": true, "aura": { "damageReduction": 2 }, "turnDamageAll": 2, "deathDamageEnemy": 6,
+    "maxHp": 30, "row": "back", "damage": [2, 4], "speed": 0, "xpValue": 10,
+    "description": "A towering effigy of woven branches, set ablaze by Germanic priests. The smoke chokes the air and shields nearby warriors. Periodically erupts in a gout of flame.",
+    "ai": "aggressive", "isElite": true,
+    "aura": { "damageReduction": 2 }, "turnDamageAll": 2, "deathDamageEnemy": 6,
     "actions": [
-      { "name": "Burning Effigy", "damage": 0, "chance": 1.0, "text": "burns — all soldiers take 2 damage per turn, and nearby enemies take 2 less damage from attacks" }
+      { "name": "Burning Effigy", "damage": 0, "chance": 0.4, "text": "burns — smoke shields nearby warriors", "blockAllEnemies": 3 },
+      { "name": "Flame Gout", "damage": 4, "chance": 0.35, "text": "erupts in a gout of flame", "aoe": true, "cooldown": 2 },
+      { "name": "Ember Spit", "damage": 3, "poisonTarget": 2, "chance": 0.25, "text": "spits burning embers at a soldier", "ignoreRow": true }
     ]
   },
   "revenant_of_ariovistus": {
@@ -212,15 +215,16 @@ const RAW_ENEMIES = {
 
   "runecarver": {
     "id": "runecarver", "name": "Runecarver",
-    "maxHp": 13, "row": "back", "damage": [2, 4], "speed": 1, "xpValue": 5,
+    "maxHp": 16, "row": "back", "damage": [3, 6], "speed": 1, "xpValue": 6,
     "minDifficulty": 3,
-    "description": "A hunched Germanic craftsman who carves protective runes into shields before battle. His presence hardens the enemy line.",
+    "description": "A hunched Germanic seer who carves runes of power. Each turn his wards grow stronger — and his curses erode your dice. Kill him fast or his runes will overwhelm you.",
     "ai": "sniper",
     "startBlockAllEnemies": 3,
     "actions": [
-      { "name": "Rune Ward", "damage": 0, "chance": 0.5, "text": "carves a protective rune into a warrior's shield", "blockAllEnemies": 2 },
-      { "name": "Rune Shard", "damage": 4, "chance": 0.3, "text": "hurls a sharpened rune-stone", "ignoreRow": true },
-      { "name": "Curse Rune", "damage": 0, "morale": -6, "chance": 0.2, "text": "traces a curse rune in the air" }
+      { "name": "Rune Ward", "damage": 0, "chance": 0.35, "text": "carves a protective rune — all warriors brace", "blockAllEnemies": 3 },
+      { "name": "Rune Bolt", "damage": 5, "chance": 0.25, "text": "hurls a rune-charged bolt of energy", "ignoreRow": true },
+      { "name": "Curse Rune", "damage": 2, "morale": -8, "poisonTarget": 2, "chance": 0.2, "text": "traces a curse rune — dread and poison seep in", "ignoreRow": true },
+      { "name": "Rune of Binding", "damage": 0, "chance": 0.2, "text": "carves a binding rune — all dice weaken", "cooldown": 2, "runeBinding": true }
     ]
   },
 
@@ -256,10 +260,10 @@ const RAW_ENEMIES = {
     "isBoss": true, "ai": "boss",
     "description": "A monstrous sow, ancient and scarred, draped in mud and fury. Her boar brood swarms at her call. Kill her young and she grows deadlier.",
     "actions": [
-      { "name": "Gore Charge", "damage": 10, "chance": 0.3, "text": "charges with lowered tusks" },
-      { "name": "Thrashing Fury", "damage": 7, "chance": 0.25, "text": "thrashes wildly, striking everything", "aoe": true },
+      { "name": "Gore Charge", "damage": 7, "chance": 0.3, "text": "charges with lowered tusks" },
+      { "name": "Thrashing Fury", "damage": 5, "chance": 0.25, "text": "thrashes wildly, striking everything", "aoe": true },
       { "name": "Call the Brood", "damage": 0, "chance": 0.20, "text": "bellows into the swamp — her young answer", "spawn": "boar_youngling", "cooldown": 5 },
-      { "name": "Mother's Wrath", "damage": 12, "morale": -8, "chance": 0.2, "text": "rears up and brings crushing weight down", "cooldown": 1 }
+      { "name": "Mother's Wrath", "damage": 9, "morale": -8, "chance": 0.2, "text": "rears up and brings crushing weight down", "cooldown": 1 }
     ]
   },
 
