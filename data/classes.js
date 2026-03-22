@@ -128,8 +128,8 @@ const RAW_CLASSES = {
       {
         "id": "no_retreat", "name": "No Retreat",
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
-        "description": "All allies gain 5 Block. -5 Morale.",
-        "effects": { "blockAll": 5, "morale": -5 }
+        "description": "All allies gain 7 Block. -5 Morale.",
+        "effects": { "blockAll": 7, "morale": -5 }
       },
       {
         "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
@@ -451,10 +451,9 @@ const RAW_CLASSES = {
       },
       {
         "id": "deafening_blast", "name": "Deafening Blast", "cooldown": 2,
-        "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
-        "ignoreRow": true,
-        "description": "Deal 2 damage. Target's morale attacks have no effect for 2 turns.",
-        "effects": { "damage": 2, "deafen": 2 }
+        "cost": { "type": "exact", "val": 5 }, "target": "all_enemies",
+        "description": "Deal 2 damage to all enemies. Morale attacks have no effect for 2 turns.",
+        "effects": { "damageAll": 2, "deafenAll": 2, "bonusDmgScale": 0.35 }
       },
       {
         "id": "resonance", "name": "Resonance", "cooldown": 1,

@@ -524,6 +524,23 @@ html, body {
 .enemy-tooltip-action {
   font-size: 0.68rem;
   color: var(--text);
+  padding: 2px 0;
+}
+
+.enemy-tooltip-action-text {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: 1px;
+}
+
+.enemy-tooltip-passives {
+  margin-bottom: 4px;
+}
+
+.enemy-tooltip-passive {
+  font-size: 0.65rem;
+  color: var(--gold);
   padding: 1px 0;
 }
 

@@ -281,6 +281,9 @@ function buildSkillExecute(skillData) {
     // Deafen: nullify morale attacks
     if (effects.deafen) result.deafen = effects.deafen;
 
+    // Deafen All: all enemies' morale attacks nullified
+    if (effects.deafenAll) result.deafenAll = effects.deafenAll;
+
     // Resonance: double next heal
     if (effects.resonance) result.resonance = true;
 

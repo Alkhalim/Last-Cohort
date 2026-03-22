@@ -351,7 +351,7 @@ class GameUI {
     tooltip.className = 'enemy-tooltip';
 
     const actions = enemy.actions.map(a => {
-      let desc = a.name;
+      let desc = `<strong>${a.name}</strong>`;
       const details = [];
       if (a.damage > 0) details.push(`${a.damage} dmg`);
       if (a.poisonTarget) details.push(`${a.poisonTarget} poison`);
@@ -363,6 +363,10 @@ class GameUI {
       if (a.aoe) details.push('AOE');
       if (a.ignoreRow) details.push('any row');
       if (details.length > 0) desc += ` (${details.join(', ')})`;
+      // Show flavor text for passive/structure abilities or when no mechanical details
+      if (a.text && (details.length === 0 || enemy.isStructure)) {
+        desc += `<div class="enemy-tooltip-action-text">${a.text}</div>`;
+      }
       return `<div class="enemy-tooltip-action">${desc}</div>`;
     }).join('');
 
@@ -383,7 +387,13 @@ class GameUI {
         </div>
       </div>
       <div class="enemy-tooltip-desc">${enemy.description || ''}</div>
-      <div class="enemy-tooltip-actions-title">Attacks:</div>
+      ${enemy.isStructure && (enemy.aura || enemy.turnDamageAll || enemy.healBoss) ? `<div class="enemy-tooltip-passives">
+        ${enemy.aura && enemy.aura.damageReduction ? `<div class="enemy-tooltip-passive">Aura: nearby enemies take ${enemy.aura.damageReduction} less damage</div>` : ''}
+        ${enemy.turnDamageAll ? `<div class="enemy-tooltip-passive">Passive: deals ${enemy.turnDamageAll} damage to all soldiers each turn</div>` : ''}
+        ${enemy.healBoss ? `<div class="enemy-tooltip-passive">Passive: heals boss for ${enemy.healBoss} HP each turn</div>` : ''}
+        ${enemy.deathDamageEnemy ? `<div class="enemy-tooltip-passive">On death: deals ${enemy.deathDamageEnemy} damage to nearby enemies</div>` : ''}
+      </div>` : ''}
+      <div class="enemy-tooltip-actions-title">${enemy.isStructure ? 'Effects:' : 'Attacks:'}</div>
       ${actions}
     `;
 
@@ -1979,7 +1989,7 @@ class GameUI {
         'ignoreRow', 'taunt', 'cleanse', 'revive', 'stimulant', 'intercept',
         'stun', 'overrun', 'shoulderCharge', 'echoOnKill', 'warhorseKick',
         'smokeScreen', 'damageShield', 'resonance', 'pullToFront',
-        'consumeAllBuffs', 'moraleHealAll', 'avengeDamage',
+        'consumeAllBuffs', 'moraleHealAll', 'avengeDamage', 'deafenAll',
       ]);
       for (const k of Object.keys(effects)) {
         if (typeof effects[k] === 'number' && !candidates.some(c => c.key === k) && !excludeFromUpgrade.has(k)) {
@@ -2106,7 +2116,8 @@ class GameUI {
         statKey = statKeys[Math.floor(Math.random() * statKeys.length)];
         const current = stats[statKey];
         const next = current < 0 ? current - 1 : current + 1;
-        upgradeText = `Level ${currentLevel} → ${newLevel}: +1 ${statKey} (${current} → ${next})`;
+        const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
+        upgradeText = `Lv${currentLevel} → ${newLevel}: ${statLabel} ${current} → ${next}`;
       } else {
         upgradeText = 'Already at maximum power.';
       }
@@ -2115,7 +2126,7 @@ class GameUI {
       const baseName = item.baseId ? ITEM_DATA[item.baseId].name : item.name.replace(/ \+\d+$/, '');
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> <span style="font-size:0.65rem;color:var(--text-dim)">(${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
 
       if (!statKey) {
         btn.classList.add('disabled');
@@ -2170,6 +2181,7 @@ class GameUI {
     document.getElementById('event-title').textContent = event.name;
     document.getElementById('event-intro').textContent = event.intro;
     document.getElementById('event-outcome').classList.add('hidden');
+    document.getElementById('event-outcome-text').textContent = '';
     const choicesEl = document.getElementById('event-choices');
     choicesEl.innerHTML = '';
 
@@ -2209,7 +2221,8 @@ class GameUI {
 
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--gold)">Trade for a ${nextRarity} ${slot}</span>`;
+      const article = /^[aeiou]/i.test(nextRarity) ? 'an' : 'a';
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--gold)">Trade for ${article} ${nextRarity} ${slot}</span>`;
 
       btn.addEventListener('click', () => {
         // Find eligible replacement items: same slot, higher rarity, matching class tags
@@ -3098,13 +3111,14 @@ class GameUI {
       const current = stats[statKey];
       const next = current < 0 ? current - 1 : current + 1;
       const currentLevel = item.level || 1;
-      const upgradeText = `Level ${currentLevel} → ${currentLevel + 1}: +1 ${statKey} (${current} → ${next})`;
+      const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
+      const upgradeText = `Lv${currentLevel} → ${currentLevel + 1}: ${statLabel} ${current} → ${next}`;
       const tag = getPrimaryTag(unit.classId);
       const baseName = item.baseId ? (ITEM_DATA[item.baseId] ? ITEM_DATA[item.baseId].name : item.name) : item.name.replace(/ \+\d+$/, '');
 
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong><br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> <span style="font-size:0.65rem;color:var(--text-dim)">(${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
       btn.addEventListener('click', () => {
         if (stats[statKey] < 0) ITEM_DATA[itemId].stats[statKey]--;
         else ITEM_DATA[itemId].stats[statKey]++;

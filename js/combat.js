@@ -1903,11 +1903,16 @@ class CombatEngine {
       });
     }
 
-    // Stun: skip target's next action
+    // Stun: skip target's next action (with anti-stunlock protection)
     if (result.stun && result.target) {
-      result.target._skipNextAction = true;
-      parts.push(`${result.target.name} is stunned!`);
-      if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Stunned!', color: '#aa66aa' });
+      const alreadyStunned = this.enemies.filter(e => !e.dead && e._skipNextAction).length;
+      if (alreadyStunned >= 2) {
+        parts.push(`${result.target.name} resists the stun — too many enemies already stunned.`);
+      } else {
+        result.target._skipNextAction = true;
+        parts.push(`${result.target.name} is stunned!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Stunned!', color: '#aa66aa' });
+      }
     }
 
     // Revive: bring a downed ally back
@@ -1933,6 +1938,15 @@ class CombatEngine {
       result.target._deafened = result.deafen;
       parts.push(`${result.target.name} is deafened! Morale attacks nullified for ${result.deafen} turns.`);
       if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Deafened', color: '#aa66aa' });
+    }
+    // Deafen All: all enemies' morale attacks nullified
+    if (result.deafenAll) {
+      this.enemies.forEach(e => {
+        if (!e.dead) {
+          e._deafened = result.deafenAll;
+        }
+      });
+      parts.push(`All enemies deafened! Morale attacks nullified for ${result.deafenAll} turns.`);
     }
 
     // Resonance: mark ally, next heal doubled + grant block
@@ -2008,15 +2022,21 @@ class CombatEngine {
       }
     }
 
-    // Warhorse Kick: stun target + random other front-row enemy
+    // Warhorse Kick: stun target + random other front-row enemy (anti-stunlock)
     if (result.warhorseKick && result.target) {
-      result.target._skipNextAction = true;
-      parts.push(`${result.target.name} is stunned!`);
-      const otherFront = this.enemies.filter(e => !e.dead && e.row === 'front' && e !== result.target);
-      if (otherFront.length > 0) {
-        const secondTarget = otherFront[Math.floor(Math.random() * otherFront.length)];
-        secondTarget._skipNextAction = true;
-        parts.push(`${secondTarget.name} is also stunned!`);
+      const stunCount = this.enemies.filter(e => !e.dead && e._skipNextAction).length;
+      if (stunCount < 2) {
+        result.target._skipNextAction = true;
+        parts.push(`${result.target.name} is stunned!`);
+        const otherFront = this.enemies.filter(e => !e.dead && e.row === 'front' && e !== result.target && !e._skipNextAction);
+        const newStunCount = this.enemies.filter(e => !e.dead && e._skipNextAction).length;
+        if (otherFront.length > 0 && newStunCount < 2) {
+          const secondTarget = otherFront[Math.floor(Math.random() * otherFront.length)];
+          secondTarget._skipNextAction = true;
+          parts.push(`${secondTarget.name} is also stunned!`);
+        }
+      } else {
+        parts.push(`${result.target.name} resists — too many enemies already stunned.`);
       }
     }
 
@@ -2232,13 +2252,17 @@ class CombatEngine {
             }
           }
 
-          // Bone Totem: destroying it stuns the killer (skip next turn)
+          // Bone Totem: destroying it stuns the killer (skip next turn) — anti-stunlock
           if (e.stunOnDeath) {
-            // Find last unit that acted — that's likely the killer
-            const lastActor = this.party.find(u => u.actedThisTurn && !u.downed);
-            if (lastActor) {
-              lastActor._stunNextTurn = true;
-              this.addLog(`The bones shatter — ${lastActor.name} is stunned next turn!`);
+            const partyStunned = this.party.filter(u => !u.downed && u._stunNextTurn).length;
+            if (partyStunned < 2) {
+              const lastActor = this.party.find(u => u.actedThisTurn && !u.downed);
+              if (lastActor && !lastActor._stunNextTurn) {
+                lastActor._stunNextTurn = true;
+                this.addLog(`The bones shatter — ${lastActor.name} is stunned next turn!`);
+              }
+            } else {
+              this.addLog(`The bones shatter — but the curse dissipates, too many already stunned.`);
             }
           }
         }
