@@ -289,11 +289,11 @@ const RAW_CLASSES = {
         "effects": { "poison": 3, "markTarget": true }
       },
       {
-        "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 2,
+        "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 3,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "2 dice totaling 8+. Deals 7 damage and applies 3 Poison.",
-        "effects": { "damage": 7, "poison": 3 }
+        "description": "2 dice totaling 8+. Deals 7 damage and applies 3 Poison. Poison splashes to all other enemies.",
+        "effects": { "damage": 7, "poison": 3, "poisonSplash": 3 }
       },
       {
         "id": "caltrops", "name": "Caltrops", "cooldown": 2,

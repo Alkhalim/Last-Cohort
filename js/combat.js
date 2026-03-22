@@ -493,6 +493,7 @@ class CombatEngine {
       }
       u._wasHitThisTurn = false;
       u._bearskinRage = 0;
+      if (u._huntMarked && u._huntMarked > 0) u._huntMarked--;
       u._damageShield = 0;
       u._intercept = false;
       // Bone Totem stun: skip this turn
@@ -2525,7 +2526,19 @@ class CombatEngine {
         dmg = Math.max(1, Math.round(dmg * target._damageShield));
         target._damageShield = 0;
       }
-      if (target.block > 0) {
+      // Enemy pierceBlock: ignore target's block entirely
+      if (action.pierceBlock && target.block > 0) {
+        this.addLog(`The shot pierces through ${target.name}'s block!`);
+        // Don't absorb — skip block check below
+      }
+      // Hunt marked: bonus damage against marked targets
+      if (target._huntMarked && target._huntMarked > 0 && dmg > 0) {
+        const markBonus = Math.floor(dmg * 0.3);
+        dmg += markBonus;
+        this.addLog(`Marked target! +${markBonus} bonus damage!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Marked!', color: 'var(--red-bright)' });
+      }
+      if (target.block > 0 && !action.pierceBlock) {
         const absorbed = Math.min(target.block, dmg);
         // Legionary's Lorica: deal difficulty damage back when hit while having block
         if (absorbed > 0 && this.unitHasItem(target, 'legionary_lorica')) {
@@ -2686,6 +2699,32 @@ class CombatEngine {
       this.addLog(`${enemy.name}'s attack hits the whole line!`);
     }
 
+    // Multi-target: hit N random targets (not AoE, distinct targets)
+    if (action.multiTarget && action.damage > 0 && target) {
+      const others = this.party.filter(u => !u.downed && u !== target);
+      const extraTargets = [];
+      for (let i = 1; i < action.multiTarget && others.length > 0; i++) {
+        const pick = others.splice(Math.floor(Math.random() * others.length), 1)[0];
+        extraTargets.push(pick);
+      }
+      extraTargets.forEach(u => {
+        let mtDmg = action.damage;
+        if (u.block > 0) {
+          const absorbed = Math.min(u.block, mtDmg);
+          u.stats.blockAbsorbed += absorbed;
+          u.block -= absorbed;
+          mtDmg -= absorbed;
+        }
+        u.hp = Math.max(0, u.hp - mtDmg);
+        u.stats.damageTaken += mtDmg;
+        u._wasHitThisTurn = true;
+        if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: mtDmg });
+      });
+      if (extraTargets.length > 0) {
+        this.addLog(`${enemy.name} also hits ${extraTargets.map(u => u.name).join(' and ')}!`);
+      }
+    }
+
     // Boar Charge: move to front row and stun the target
     if (action.boarCharge && target) {
       if (enemy.row === 'back') {
@@ -2695,6 +2734,13 @@ class CombatEngine {
       target._stunNextTurn = true;
       this.addLog(`${target.name} is stunned by the charge!`);
       if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Stunned!', color: 'var(--red-bright)' });
+    }
+
+    // Enemy mark target: mark a player unit for bonus damage
+    if (action.markTarget && target && !target.downed) {
+      target._huntMarked = 2;
+      this.addLog(`${target.name} is marked for death!`);
+      if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Marked!', color: 'var(--red-bright)' });
     }
 
     // Shieldbearer: grant block to all other enemies
@@ -2833,6 +2879,18 @@ class CombatEngine {
       const offCD = availableActions.filter(a => !a.cooldown || !(e._actionCooldowns[a.name] > 0));
       if (offCD.length > 0) availableActions = offCD;
 
+      // Silent Huntsman AI: prefer Mark Prey when no target is marked, Marked Shot when one is
+      if (e.id === 'silent_huntsman') {
+        const hasMarked = alive.some(u => u._huntMarked && u._huntMarked > 0);
+        if (hasMarked) {
+          const markedShot = availableActions.find(a => a.name === 'Marked Shot');
+          if (markedShot) availableActions = [markedShot];
+        } else {
+          const markPrey = availableActions.find(a => a.name === 'Mark Prey');
+          if (markPrey && Math.random() < 0.6) availableActions = [markPrey];
+        }
+      }
+
       // Weighted random pick
       const totalChance = availableActions.reduce((s, a) => s + a.chance, 0);
       const roll = Math.random() * totalChance;
@@ -2845,6 +2903,10 @@ class CombatEngine {
       let target;
       if (taunting) {
         target = taunting;
+      } else if (e.id === 'silent_huntsman' && action.name === 'Marked Shot') {
+        // Prefer the marked target
+        const markedUnit = alive.find(u => u._huntMarked && u._huntMarked > 0);
+        target = markedUnit || alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
       } else if (e.ai === 'sniper') {
         target = alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
       } else {

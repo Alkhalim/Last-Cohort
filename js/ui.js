@@ -412,14 +412,25 @@ class GameUI {
       if (intent.type === 'stunned') {
         intentText = '<span style="color:var(--red-bright)">STUNNED — cannot act</span>';
       } else {
-        const actionName = intent.action ? intent.action.name : '?';
+        const action = intent.action || {};
+        const actionName = action.name || '?';
         // Validate target is still alive, re-pick if not
         let targetUnit = this.engine.party[intent.targetIndex];
         if (!targetUnit || targetUnit.downed) {
           targetUnit = alive[0]; // fallback
         }
 
-        if (intent.isAoe) {
+        // Check if action targets self/allies rather than player party
+        const isSelfBuff = !action.damage && !action.morale && (action.blockSelf || action.blockAllEnemies || action.blockFrontRow || action.spawn);
+        const isMoraleOnly = !action.damage && action.morale && action.morale < 0 && !action.aoe;
+
+        if (isSelfBuff) {
+          intentText = `<strong>${actionName}</strong> → <span style="color:var(--text-dim)">Self / Allies</span>`;
+        } else if (intent.isAoe) {
+          targetIndices = alive.map(u => u.index);
+          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">All soldiers</span>`;
+        } else if (action.morale && !action.damage && action.morale < 0) {
+          // Pure morale attack — affects whole party, not a single target
           targetIndices = alive.map(u => u.index);
           intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">All soldiers</span>`;
         } else if (intent.isTaunted) {
@@ -2285,7 +2296,7 @@ class GameUI {
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
       const article = /^[aeiou]/i.test(nextRarity) ? 'an' : 'a';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--gold)">Trade for ${article} ${nextRarity} ${slot}</span>`;
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--gold)">Trade for ${article} ${nextRarity} ${slot}</span>`;
 
       btn.addEventListener('click', () => {
         // Find eligible replacement items: same slot, higher rarity, matching class tags
@@ -2333,7 +2344,7 @@ class GameUI {
         choicesEl.innerHTML = '';
         document.getElementById('event-outcome').classList.remove('hidden');
         const specialLine = replacement.special ? `<br><span style="font-size:0.75rem;color:var(--gold)">${formatItemSpecial(replacement)}</span>` : '';
-        document.getElementById('event-outcome-text').innerHTML = `Traded <strong>${item.name}</strong> for:<br><br><strong class="rarity-${replacement.rarity}">${replacement.name}</strong> <span style="font-size:0.75rem;color:var(--text-dim)">(${replacement.rarity})</span><br><span style="font-size:0.85rem">${formatItemStats(replacement.stats)}</span>${specialLine}`;
+        document.getElementById('event-outcome-text').innerHTML = `Traded <strong class="rarity-${item.rarity}">${item.name}</strong> for:<br><br><strong class="rarity-${replacement.rarity}">${replacement.name}</strong> <span style="font-size:0.75rem;color:var(--text-dim)">(${replacement.rarity})</span><br><span style="font-size:0.85rem">${formatItemStats(replacement.stats)}</span>${specialLine}`;
         document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
       });
 

@@ -819,6 +819,8 @@ html, body {
   border-radius: 4px;
   padding: 6px 8px;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 .enemy-card.dead {
@@ -859,6 +861,9 @@ html, body {
   font-weight: 600;
   color: #f0e0d0;
   margin-bottom: 4px;
+  min-height: 2.2em;
+  display: flex;
+  align-items: flex-end;
   overflow: hidden;
   text-overflow: ellipsis;
 }
