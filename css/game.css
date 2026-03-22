@@ -2303,6 +2303,18 @@ html, body {
   overflow: hidden;
 }
 
+/* March theme backgrounds */
+#map-screen[data-theme="forest"]      { background: linear-gradient(180deg, #070a06 0%, #0c1208 30%, #101810 100%); }
+#map-screen[data-theme="forest-dark"] { background: linear-gradient(180deg, #06080a 0%, #0a0e08 30%, #0e1610 100%); }
+#map-screen[data-theme="warcamp"]     { background: linear-gradient(180deg, #0c0808 0%, #120e0a 30%, #181210 100%); }
+#map-screen[data-theme="bog"]         { background: linear-gradient(180deg, #060a08 0%, #081210 30%, #0a1812 100%); }
+#map-screen[data-theme="ancient"]     { background: linear-gradient(180deg, #0a0c06 0%, #101408 30%, #141a0e 100%); }
+#map-screen[data-theme="blood"]       { background: linear-gradient(180deg, #0e0606 0%, #140a08 30%, #1a0e0a 100%); }
+#map-screen[data-theme="haunted"]     { background: linear-gradient(180deg, #08080c 0%, #0c0c14 30%, #101018 100%); }
+#map-screen[data-theme="drowned"]     { background: linear-gradient(180deg, #060a0c 0%, #081014 30%, #0a141a 100%); }
+#map-screen[data-theme="heart"]       { background: linear-gradient(180deg, #0c0806 0%, #140e08 30%, #1a120a 100%); }
+#map-screen[data-theme="threshold"]   { background: linear-gradient(180deg, #0a060c 0%, #100a14 30%, #160e1a 100%); }
+
 #map-party-bar {
   display: flex;
   gap: 6px;
@@ -3990,6 +4002,66 @@ html, body {
 
 .enemy-cutin.exit .enemy-cutin-name {
   animation: cutin-name-out 0.2s ease-in forwards;
+}
+
+/* ================================================================
+   MARCH TITLE CARD
+   ================================================================ */
+
+.march-title-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 950;
+  animation: march-card-in 0.6s ease-out;
+}
+
+.march-title-card.fade-out {
+  opacity: 0;
+  transition: opacity 0.8s ease-in;
+}
+
+.march-title-content {
+  text-align: center;
+  padding: 20px 40px;
+}
+
+.march-title-march {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.3em;
+  margin-bottom: 8px;
+}
+
+.march-title-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+  margin-bottom: 10px;
+}
+
+.march-title-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+@keyframes march-card-in {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 1; }
 }
 
 @keyframes enemy-cutin-in {

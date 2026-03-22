@@ -24,6 +24,19 @@ const MUSIC_BOSS_OVERRIDE = {
   'serpent_shaman': 'assets/Venom Rite.mp3',
 };
 
+const MARCH_THEMES = {
+  1:  { name: 'The Ambush Trail',     subtitle: 'The forest closes behind you.',   theme: 'forest' },
+  2:  { name: 'The Hunting Grounds',  subtitle: 'They know these woods. You do not.', theme: 'forest-dark' },
+  3:  { name: 'The Warcamp',          subtitle: 'Iron discipline guards the deep trail.', theme: 'warcamp' },
+  4:  { name: 'The Poisoned Bog',     subtitle: 'The ground turns to black water.',  theme: 'bog' },
+  5:  { name: 'The Old Forest',       subtitle: 'Ancient things stir between the roots.', theme: 'ancient' },
+  6:  { name: 'The Blood Grove',      subtitle: 'Altars stained red. The druids watch.', theme: 'blood' },
+  7:  { name: 'The Haunted March',    subtitle: 'The dead walk in Roman formation.',  theme: 'haunted' },
+  8:  { name: 'The Drowned Kingdom',  subtitle: 'Ruins swallowed by the swamp.',     theme: 'drowned' },
+  9:  { name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.', theme: 'heart' },
+  10: { name: 'The Threshold',        subtitle: 'Between worlds. The spirits await.', theme: 'threshold' },
+};
+
 // --- Curse Definitions ---
 const CURSE_DEFS = [
   { id: 'champions_mark', name: "Champion's Mark", achievement: 'boss_arminius_champion_x3', description: "Bosses have +20% HP.", renown: 10 },
@@ -1064,7 +1077,7 @@ class Game {
     this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
-    this.ui.showMapScreen();
+    this.showMarchTitleCard();
   }
 
   continueRun() {
@@ -1077,7 +1090,35 @@ class Game {
     this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
+    this.showMarchTitleCard();
+  }
+
+  showMarchTitleCard() {
+    const theme = MARCH_THEMES[this.difficulty] || { name: `March ${this.difficulty}`, subtitle: 'Deeper into the forest.', theme: 'forest' };
+
+    // Apply theme to map screen
+    const mapScreen = document.getElementById('map-screen');
+    mapScreen.dataset.theme = theme.theme;
+
+    const splash = document.createElement('div');
+    splash.className = 'march-title-card';
+    splash.innerHTML = `
+      <div class="march-title-content">
+        <div class="march-title-march">MARCH ${this.difficulty}</div>
+        <div class="march-title-name">${theme.name}</div>
+        <div class="march-title-subtitle">${theme.subtitle}</div>
+      </div>
+    `;
+    document.getElementById('game').appendChild(splash);
+
+    // Show map behind the card
     this.ui.showMapScreen();
+
+    // Fade out after delay
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 800);
+    }, 2500);
   }
 }
 

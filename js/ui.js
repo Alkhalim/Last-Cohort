@@ -1342,8 +1342,9 @@ class GameUI {
   renderMapMorale() {
     const title = document.getElementById('map-title');
     const diff = this.difficulty || 1;
-    if (diff > 1) {
-      title.textContent = `TEUTOBURG FOREST — MARCH ${diff}`;
+    const theme = typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[diff];
+    if (theme) {
+      title.textContent = theme.name.toUpperCase();
     } else {
       title.textContent = 'TEUTOBURG FOREST';
     }
