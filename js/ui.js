@@ -95,7 +95,7 @@ class GameUI {
         this.showSkillCutIn(data.classTitle, data.skillName);
         break;
       case 'enemyCutIn':
-        this.showEnemyCutIn(data.enemyName);
+        this.showEnemyCutIn(data.enemyName, data.enemyId);
         break;
       case 'dicePassive':
         if (data.triggers) {
@@ -161,22 +161,29 @@ class GameUI {
     // Remove after animation completes
     setTimeout(() => {
       cutin.classList.add('exit');
-      setTimeout(() => cutin.remove(), 400);
-    }, 600);
+      setTimeout(() => cutin.remove(), 500);
+    }, 1000);
   }
 
   // Enemy cut-in — portrait + name
-  showEnemyCutIn(enemyName) {
+  showEnemyCutIn(enemyName, enemyId) {
     const existing = document.getElementById('enemy-cutin');
     if (existing) existing.remove();
+
+    // Use per-enemy portrait if available, fallback to generic
+    const portraitSrc = `assets/enemy_${enemyId}.png`;
+    const fallbackSrc = 'assets/enemy_portrait.png';
 
     const cutin = document.createElement('div');
     cutin.id = 'enemy-cutin';
     cutin.className = 'enemy-cutin';
-    cutin.innerHTML = `
-      <img class="enemy-cutin-portrait" src="assets/enemy_portrait.png" alt="${enemyName}">
-      <span class="enemy-cutin-name">${enemyName}</span>
-    `;
+    const img = document.createElement('img');
+    img.className = 'enemy-cutin-portrait';
+    img.alt = enemyName;
+    img.src = portraitSrc;
+    img.onerror = () => { img.src = fallbackSrc; };
+    cutin.appendChild(img);
+    cutin.insertAdjacentHTML('beforeend', `<span class="enemy-cutin-name">${enemyName}</span>`);
     const combatScreen = document.getElementById('combat-screen');
     if (combatScreen) combatScreen.appendChild(cutin);
 
@@ -184,8 +191,8 @@ class GameUI {
 
     setTimeout(() => {
       cutin.classList.add('exit');
-      setTimeout(() => cutin.remove(), 300);
-    }, 500);
+      setTimeout(() => cutin.remove(), 400);
+    }, 800);
   }
 
   showScreen(id) {
