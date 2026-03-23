@@ -532,6 +532,13 @@ class CombatEngine {
       }
       u._damageShield = 0;
       u._intercept = false;
+      // Deep Cover: grant block on the second stunned turn
+      if (u._deepCoverBlockNext) {
+        u.block = (u.block || 0) + u._deepCoverBlockNext;
+        u.stats.blockGenerated += u._deepCoverBlockNext;
+        this.addLog(`${u.name} stays in cover — +${u._deepCoverBlockNext} Block.`);
+        u._deepCoverBlockNext = 0;
+      }
       // Bone Totem stun: skip this turn
       if (u._stunNextTurn) {
         u.actedThisTurn = true;
@@ -1255,6 +1262,12 @@ class CombatEngine {
     const buffDmg = isDealingDamage ? this.consumeBuffDamage(unit) : 0;
     let bonusDmg = buffDmg + (unit.equipDamage || 0) + moraleMod;
 
+    // Wulfswestr passive: Forest-Born — rage bonus at low morale (scales to +5 at -100)
+    if (unit.classId === 'wulfswestr' && this.morale < 0 && isDealingDamage) {
+      const rageBonus = Math.min(5, Math.ceil(Math.abs(this.morale) / 20));
+      bonusDmg += rageBonus;
+    }
+
     // Equites passive: Cavalry Charge — first attack each encounter deals +50% damage
     let chargeBonus = 0;
     if (isDealingDamage && unit.classId === 'equites' && !unit.passiveTriggered) {
@@ -1808,6 +1821,15 @@ class CombatEngine {
       parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${totalPoison} Poison to all enemies.`);
     }
     // Damage all enemies (AoE)
+    // Cataphract's Doom: +3 damage per remaining 6 in pool
+    if (result.cataphractsDoom && result.damageAll) {
+      const sixCount = this.dicePool.dice.filter(d => !d.used && d.value === 6).length;
+      if (sixCount > 0) {
+        result.damageAll += sixCount * 3;
+        parts.push(`${sixCount} sixes fuel the charge! (+${sixCount * 3} damage)`);
+      }
+    }
+
     if (result.damageAll) {
       const aoeBonus = result.halfBonusDmg ? Math.floor(bonusDmg / 2) : bonusDmg;
       const aoeDmg = result.damageAll + aoeBonus;
@@ -2620,16 +2642,21 @@ class CombatEngine {
       parts.push(`Contingency active — no ally can be downed this turn.`);
     }
 
-    // Deep Cover: +3 dice this turn and next, stunned both
+    // Deep Cover: +3 dice this turn and next, +5 block each turn, stunned both
     if (result.deepCover) {
       // Add 3 dice immediately
       for (let d = 0; d < 3; d++) {
         this.dicePool.dice.push({ id: 'deep_' + Date.now() + d, value: Math.floor(Math.random() * 6) + 1, used: false });
       }
       this._bonusDiceNext = (this._bonusDiceNext || 0) + 3;
+      // Block this turn
+      unit.block = (unit.block || 0) + 5;
+      unit.stats.blockGenerated += 5;
+      // Block next turn too
+      unit._deepCoverBlockNext = 5;
       unit._stunNextTurn = true;
       unit.actedThisTurn = true;
-      parts.push(`Deep Cover! +3 dice now and next turn. ${unit.name} is stunned.`);
+      parts.push(`Deep Cover! +3 dice and +5 Block now and next turn. ${unit.name} is stunned.`);
     }
 
     // Mounted Sweep: gain 1 block per enemy hit
@@ -2677,7 +2704,7 @@ class CombatEngine {
       let totalBlockGained = 0;
       this.enemies.forEach(e => {
         if (!e.dead) {
-          const dmgDealt = Math.min(8 + bonusDmg, e.hp); // approximate damage dealt
+          const dmgDealt = Math.min(result.damageAll + bonusDmg, e.hp); // approximate damage dealt
           totalBlockGained += dmgDealt;
         }
       });

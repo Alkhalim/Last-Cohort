@@ -834,7 +834,7 @@ const RAW_CLASSES = {
     "description": "Germanic forest fighter. Heals and fights with equal ferocity. No Roman gear.",
     "passive": {
       "name": "Forest-Born",
-      "description": "+1 damage per march completed. Healing on self is doubled."
+      "description": "+1 damage per march completed. Healing on self is doubled. Gains up to +5 bonus damage at low morale."
     },
     "skills": [
       {
@@ -1088,7 +1088,7 @@ const RAW_CLASSES = {
       {
         "id": "deep_cover", "name": "Deep Cover", "cooldown": 4,
         "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "self",
-        "description": "2 dice totaling 9+. Gain 3 extra dice this turn and next turn. Stunned both turns.",
+        "description": "2 dice totaling 9+. Gain 3 extra dice this turn and next turn. Gain 5 Block each turn. Stunned both turns.",
         "effects": { "deepCover": true }
       }
     ]
@@ -1179,7 +1179,7 @@ const RAW_CLASSES = {
       {
         "id": "cataphracts_doom", "name": "Cataphract's Doom", "cooldown": 4,
         "cost": { "type": "combined", "min": 10, "dice": 2 }, "target": "all_enemies",
-        "description": "2 dice totaling 10+. Deal 8 damage to all enemies. All allies gain Block equal to damage dealt. +12 Morale.",
+        "description": "2 dice totaling 10+. Deal 8 + 3 per remaining 6 in pool damage to all enemies. All allies gain Block equal to damage dealt. +12 Morale.",
         "effects": { "damageAll": 8, "cataphractsDoom": true, "morale": 12 }
       }
     ]
