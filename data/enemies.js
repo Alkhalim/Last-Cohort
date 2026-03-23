@@ -428,10 +428,10 @@ const RAW_ENEMIES = {
     ]
   },
   "raven_caller": {
-    "id": "raven_caller", "name": "Raven Caller",
+    "id": "raven_caller", "name": "Curse Raven",
     "maxHp": 14, "row": "back", "damage": [3, 6], "speed": 2, "xpValue": 7,
     "minDifficulty": 5,
-    "description": "A gaunt seer who commands flocks of ravens. His crows peck at eyes and shred nerves.",
+    "description": "A monstrous raven gorged on battlefield dead. Intelligent and cruel, it pecks at eyes and shreds nerves with its screech.",
     "ai": "sniper",
     "actions": [
       { "name": "Raven Swarm", "damage": 4, "morale": -6, "chance": 0.4, "text": "sends a flock of ravens at a soldier's face", "ignoreRow": true },
@@ -465,10 +465,10 @@ const RAW_ENEMIES = {
     ]
   },
   "forest_wraith": {
-    "id": "forest_wraith", "name": "Forest Wraith",
+    "id": "forest_wraith", "name": "Waldgeist",
     "maxHp": 18, "row": "back", "damage": [5, 9], "speed": 2, "xpValue": 9,
     "minDifficulty": 7,
-    "description": "A spectral figure that drifts through the trees. Its touch drains will and warmth. Nearly impossible to pin down.",
+    "description": "A twisted forest spirit, half-tree, half-phantom. Its touch drains will and warmth. The deeper the forest, the more of them there are.",
     "ai": "sniper",
     "actions": [
       { "name": "Spectral Touch", "damage": 7, "morale": -8, "chance": 0.4, "text": "reaches through flesh with ghostly hands", "ignoreRow": true },
@@ -476,11 +476,23 @@ const RAW_ENEMIES = {
       { "name": "Life Drain", "damage": 9, "chance": 0.3, "text": "drains the warmth from a soldier", "ignoreRow": true }
     ]
   },
-  "death_champion": {
-    "id": "death_champion", "name": "Death Champion",
-    "maxHp": 32, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 10,
+  "dryad_huntress": {
+    "id": "dryad_huntress", "name": "Dryad Huntress",
+    "maxHp": 15, "row": "back", "damage": [4, 8], "speed": 2, "xpValue": 8,
     "minDifficulty": 7,
-    "description": "A fallen warrior raised by dark power. He fights with the skill of a veteran and the relentlessness of the dead.",
+    "description": "A twisted forest nymph with bark-like skin and thorn-tipped arrows. She strikes from the canopy, her shots laced with the forest's venom.",
+    "ai": "sniper",
+    "actions": [
+      { "name": "Thorn Arrow", "damage": 6, "poisonTarget": 2, "chance": 0.4, "text": "looses a thorn-tipped arrow", "ignoreRow": true },
+      { "name": "Briar Volley", "damage": 4, "chance": 0.3, "text": "sends a volley of barbed thorns", "aoe": true, "cooldown": 2 },
+      { "name": "Entangling Shot", "damage": 3, "morale": -6, "chance": 0.3, "text": "fires a root-wrapped arrow that binds and terrifies", "ignoreRow": true }
+    ]
+  },
+  "death_champion": {
+    "id": "death_champion", "name": "Wiedergangr",
+    "maxHp": 32, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 10,
+    "minDifficulty": 9,
+    "description": "An undead Germanic warrior risen from a shallow grave. It fights with the skill of a veteran and the relentlessness of the dead.",
     "ai": "aggressive",
     "woundedDoubleAttack": true,
     "actions": [

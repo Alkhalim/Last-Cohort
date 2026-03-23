@@ -73,8 +73,9 @@ const RAW_ENCOUNTERS = {
       { "name": "Raven Flock", "minDifficulty": 5, "enemies": ["raven_caller", "raven_caller", "shadow_stalker", "germanic_berserker"], "intro": "Two raven callers command the skies while assassins and berserkers close in." },
       { "name": "Blood Circle", "minDifficulty": 6, "enemies": ["blood_druid", "ironhide_boar", "cursed_warrior"], "intro": "A druid chants in a circle of blood. A monstrous boar guards the ritual." },
       { "name": "Iron Stampede", "minDifficulty": 6, "enemies": ["ironhide_boar", "ironhide_boar", "war_hound"], "intro": "The ground trembles. Two ironhide boars crash through the undergrowth." },
-      { "name": "The Haunted Trail", "minDifficulty": 7, "enemies": ["forest_wraith", "forest_wraith", "death_champion"], "intro": "The air turns cold. Wraiths drift between the trees. A dead champion stands among them." },
-      { "name": "Dead Legion", "minDifficulty": 7, "enemies": ["death_champion", "death_champion", "cursed_warrior", "cursed_warrior"], "intro": "Roman soldiers — dead for years — march in formation. They still remember how to fight." },
+      { "name": "The Haunted Trail", "minDifficulty": 7, "enemies": ["forest_wraith", "forest_wraith", "cursed_warrior"], "intro": "The air turns cold. Forest spirits drift between the trees. A cursed warrior shambles among them." },
+      { "name": "Dead Legion", "minDifficulty": 9, "enemies": ["death_champion", "death_champion", "cursed_warrior", "cursed_warrior"], "intro": "The dead walk in formation — ancient warriors risen from shallow graves. They still remember how to fight." },
+      { "name": "The Thorn Canopy", "minDifficulty": 7, "enemies": ["dryad_huntress", "dryad_huntress", "forest_wraith"], "intro": "Arrows rain from the canopy. Twisted nymphs lurk in the branches, thorns nocked and ready." },
       { "name": "The Elder's Court", "minDifficulty": 8, "enemies": ["elder_seer", "death_champion", "blood_druid", "shadow_stalker"], "intro": "An elder seer holds court among the dead. Her word is law, her curse is absolute." },
       { "name": "Warden's Stand", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "blood_druid"], "intro": "Two ancient wardens block the path, healed endlessly by a blood druid behind them." }
     ]
@@ -254,6 +255,10 @@ const RAW_ENCOUNTERS = {
       { "chance": 0.25, "items": ["iron_gladius", "cheruscan_torc", "wolf_fang_blade"] },
       { "chance": 0.20, "items": ["chiefs_spear", "blood_iron_gladius", "bloodstone_pendant"] },
       { "chance": 0.10, "items": ["champions_helm", "thorn_mantle"] }
+    ] },
+    "dryad_huntress": { "nothingChance": 0.15, "tiers": [
+      { "chance": 0.30, "items": ["huntsmans_arrow", "night_owl_pendant", "scouts_leather"] },
+      { "chance": 0.15, "items": ["windreaders_charm", "stormcaller_bow"] }
     ] },
     "elder_seer": { "nothingChance": 0.10, "tiers": [
       { "chance": 0.25, "items": ["seers_eye", "woad_charm", "marsh_fang"] },
