@@ -77,8 +77,34 @@ const RAW_ENCOUNTERS = {
       { "name": "Dead Legion", "minDifficulty": 9, "enemies": ["death_champion", "death_champion", "cursed_warrior", "cursed_warrior"], "intro": "The dead walk in formation — ancient warriors risen from shallow graves. They still remember how to fight." },
       { "name": "The Thorn Canopy", "minDifficulty": 7, "enemies": ["dryad_huntress", "dryad_huntress", "forest_wraith"], "intro": "Arrows rain from the canopy. Twisted nymphs lurk in the branches, thorns nocked and ready." },
       { "name": "The Elder's Court", "minDifficulty": 8, "enemies": ["elder_seer", "death_champion", "blood_druid", "shadow_stalker"], "intro": "An elder seer holds court among the dead. Her word is law, her curse is absolute." },
-      { "name": "Warden's Stand", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "blood_druid"], "intro": "Two ancient wardens block the path, healed endlessly by a blood druid behind them." }
+      { "name": "Warden's Stand", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "blood_druid"], "intro": "Two ancient wardens block the path, healed endlessly by a blood druid behind them." },
+      { "name": "Toxic Shallows", "minDifficulty": 4, "enemies": ["plague_bearer", "fen_viper", "fen_viper", "mire_leech"], "intro": "The bog water bubbles with poison. Vipers and leeches swarm from the shallows alongside a plague-ridden warrior." },
+      { "name": "Swamp Ambush", "minDifficulty": 4, "enemies": ["shadow_stalker", "plague_bearer", "bog_seer"], "intro": "A figure lunges from the murk. Behind it, a diseased warrior and a chanting seer." },
+      { "name": "Root Guardians", "minDifficulty": 5, "enemies": ["warden_of_the_deep", "raven_caller", "cheruscan_guardian"], "intro": "Ancient root guardians block the overgrown path. A curse raven circles overhead." },
+      { "name": "The Old Growth", "minDifficulty": 5, "enemies": ["warden_of_the_deep", "war_hound", "war_hound", "bog_seer"], "intro": "A massive bark-bound guardian stands among ancient trees. Hounds snarl at its feet." },
+      { "name": "Altar Guard", "minDifficulty": 6, "enemies": ["blood_druid", "blood_druid", "ironhide_boar"], "intro": "Two druids chant over a blood-stained altar. An ironhide boar guards the approach." },
+      { "name": "Ritual Warband", "minDifficulty": 6, "enemies": ["blood_druid", "cursed_warrior", "cursed_warrior", "shadow_stalker"], "intro": "Cursed warriors guard a druid performing a dark ritual. An assassin watches from the shadows." },
+      { "name": "Spectral Patrol", "minDifficulty": 7, "enemies": ["forest_wraith", "forest_wraith", "dryad_huntress", "cursed_warrior"], "intro": "Forest spirits drift alongside a huntress and a shambling corpse. The dead patrol these woods." },
+      { "name": "The Fallen Century", "minDifficulty": 7, "enemies": ["cursed_warrior", "cursed_warrior", "cursed_warrior", "elder_seer"], "intro": "A century of cursed Roman soldiers marches under the command of an ancient seer." },
+      { "name": "Sunken Court", "minDifficulty": 8, "enemies": ["elder_seer", "warden_of_the_deep", "shadow_stalker", "plague_bearer"], "intro": "In the ruins of a sunken hall, an elder seer holds court among wardens and assassins." },
+      { "name": "Drowned Wardens", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "plague_bearer", "plague_bearer", "bog_seer"], "intro": "Wardens draped in algae guard the flooded passages. Plague bearers shamble from the water." },
+      { "name": "Heart Guardians", "minDifficulty": 9, "enemies": ["death_champion", "forest_wraith", "dryad_huntress", "blood_druid"], "intro": "The forest's inner sanctum is defended by its most terrible servants — the dead, the spirits, and the druids who feed them." },
+      { "name": "The Living Wall", "minDifficulty": 9, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "dryad_huntress", "dryad_huntress"], "intro": "The trees themselves form a wall. Ancient wardens and huntresses defend the forest's beating heart." },
+      { "name": "Threshold Guardians", "minDifficulty": 10, "enemies": ["death_champion", "death_champion", "elder_seer", "forest_wraith"], "intro": "At the boundary between worlds, the most powerful dead stand guard. An elder seer commands them." },
+      { "name": "The Last Veil", "minDifficulty": 10, "enemies": ["elder_seer", "elder_seer", "blood_druid", "shadow_stalker"], "intro": "Two elder seers weave the final ward. A blood druid fuels the spell. An assassin watches for the unwary." }
     ]
+  },
+  "marchIntroEncounters": {
+    "1": { "name": "Forest Scouts", "enemies": ["cheruscan_raider", "sling_hunter"], "intro": "Scouts spot your column as you enter the forest. The first blood of the march." },
+    "2": { "name": "The Hunters' Welcome", "enemies": ["war_hound", "cheruscan_raider", "sling_hunter"], "intro": "Hounds bay in the undergrowth. The hunters have found you." },
+    "3": { "name": "Warcamp Vanguard", "enemies": ["ironbound_champion", "cheruscan_shieldbearer"], "intro": "An iron-clad warrior and his shieldbearer block the camp's entrance." },
+    "4": { "name": "Bog Crawlers", "enemies": ["mire_leech", "fen_viper", "fen_viper"], "intro": "The swamp greets you with fangs and slime. Vipers and leeches pour from the black water." },
+    "5": { "name": "Ancient Sentinels", "enemies": ["warden_of_the_deep", "raven_caller"], "intro": "A bark-bound guardian and a curse raven bar the way into the old forest." },
+    "6": { "name": "Blood Offering", "enemies": ["blood_druid", "cursed_warrior", "cursed_warrior"], "intro": "The grove reeks of iron. A druid and his cursed thralls guard a fresh altar." },
+    "7": { "name": "Ghosts of the March", "enemies": ["forest_wraith", "cursed_warrior", "cursed_warrior"], "intro": "The dead greet you first. Forest spirits and shambling corpses block the trail." },
+    "8": { "name": "The Flooded Gate", "enemies": ["warden_of_the_deep", "plague_bearer", "bog_seer"], "intro": "The entrance to the ruins is half-submerged. A warden rises from the water." },
+    "9": { "name": "The Pulsing Threshold", "enemies": ["death_champion", "dryad_huntress", "forest_wraith"], "intro": "The forest's heart beats beneath your feet. Its guardians rise to stop you." },
+    "10": { "name": "The Final Guard", "enemies": ["death_champion", "elder_seer", "forest_wraith", "shadow_stalker"], "intro": "At the threshold between worlds, the forest's most terrible servants make their last stand." }
   },
   "dropTables": {
     "cheruscan_raider": { "nothingChance": 0.25, "tiers": [

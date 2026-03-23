@@ -171,8 +171,14 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   const MAX_MERCHANTS_PER_MARCH = 3;
   for (const node of nodes) {
     if (node.type === 'combat') {
-      node.encounter = generateEncounterByThreat(node.threat, difficulty);
-      // Ambush: at difficulty 3+, 30% chance for combat nodes to become ambushes
+      // First combat node (depth 0): use region-specific intro encounter
+      const introEncounters = typeof RAW_ENCOUNTERS !== 'undefined' && RAW_ENCOUNTERS.marchIntroEncounters;
+      if (node.depth === 0 && introEncounters && introEncounters[String(difficulty)]) {
+        node.encounter = introEncounters[String(difficulty)];
+      } else {
+        node.encounter = generateEncounterByThreat(node.threat, difficulty);
+      }
+      // Ambush: at difficulty 3+, 30% chance for combat nodes to become ambushes (not on intro)
       if (difficulty >= 3 && node.depth > 0 && Math.random() < 0.3) {
         node.encounter = { ...node.encounter, isAmbush: true };
       }
