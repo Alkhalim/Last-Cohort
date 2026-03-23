@@ -382,6 +382,31 @@ function buildSkillExecute(skillData) {
     if (effects.lastStand) result.lastStand = true;
     if (effects.blockScale) result.blockScale = effects.blockScale;
 
+    // New class mechanics
+    if (effects.herbPoulticePoison) result.herbPoulticePoison = true;
+    if (effects.wolfbite) result.wolfbite = true;
+    if (effects.shieldWallDance) result.shieldWallDance = true;
+    if (effects.predatorsPounce) result.predatorsPounce = true;
+    if (effects.bonusHealScale) result.bonusHealScale = effects.bonusHealScale;
+    if (effects.flameTouch) result.flameTouch = true;
+    if (effects.vestasJudgment) result.vestasJudgment = true;
+    if (effects.divineIntercession) result.divineIntercession = effects.divineIntercession;
+    if (effects.litanyOfCourage) result.litanyOfCourage = true;
+    if (effects.flameShield) result.flameShield = true;
+    if (effects.wrathOfVesta) result.wrathOfVesta = true;
+    if (effects.resurrectionPrayer) result.resurrectionPrayer = true;
+    if (effects.lacedBlade) result.lacedBlade = true;
+    if (effects.misdirection) result.misdirection = true;
+    if (effects.deadDrop) result.deadDrop = true;
+    if (effects.shadowNetwork) result.shadowNetwork = true;
+    if (effects.assassination) result.assassination = true;
+    if (effects.contingencyPlan) result.contingencyPlan = true;
+    if (effects.deepCover) result.deepCover = true;
+    if (effects.mountedSweep) result.mountedSweep = true;
+    if (effects.armoredAdvance) result.armoredAdvance = true;
+    if (effects.destriersFury) result.destriersFury = true;
+    if (effects.cataphractsDoom) result.cataphractsDoom = true;
+
     return result;
   };
 }
@@ -502,9 +527,13 @@ function getMoraleBand(morale) {
 
 // --- canEquipItem helper ---
 function canEquipItem(unit, item) {
-  // All units implicitly have the "roman" tag as a base
+  // All units implicitly have the "roman" tag — except Germanic units (e.g. Wulfswestr)
   const unitTags = CLASS_DATA[unit.classId].tags;
-  return item.classTags.some(tag => tag === 'roman' || unitTags.includes(tag));
+  const isGermanic = unitTags.includes('germanic');
+  return item.classTags.some(tag => {
+    if (tag === 'roman') return !isGermanic;
+    return unitTags.includes(tag);
+  });
 }
 
 // --- Get all item base IDs currently owned by the party ---

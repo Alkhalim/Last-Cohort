@@ -2404,6 +2404,12 @@ class GameUI {
         'calculatedDosage', 'trickShot', 'wildernessInstinct', 'fortunesFavor',
         'freeAction', 'harmonicFrequency', 'flankingStrike', 'scoutingManeuver',
         'healSelf', 'skipNextTurn', 'imperialDecree', 'lastStand', 'blockScale',
+        'herbPoulticePoison', 'wolfbite', 'shieldWallDance', 'predatorsPounce',
+        'bonusHealScale', 'flameTouch', 'vestasJudgment', 'divineIntercession',
+        'litanyOfCourage', 'flameShield', 'wrathOfVesta', 'resurrectionPrayer',
+        'lacedBlade', 'misdirection', 'deadDrop', 'shadowNetwork', 'assassination',
+        'contingencyPlan', 'deepCover', 'mountedSweep', 'armoredAdvance',
+        'destriersFury', 'cataphractsDoom',
       ]);
       for (const k of Object.keys(effects)) {
         if (typeof effects[k] === 'number' && !candidates.some(c => c.key === k) && !excludeFromUpgrade.has(k)) {

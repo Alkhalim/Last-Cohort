@@ -469,6 +469,7 @@ class Game {
       // Hidden classes require unlock conditions
       if (data.hidden) {
         if (classId === 'praetorian' && (this.stats.highestDifficulty || 1) < 5) continue;
+        if (classId === 'cataphract' && !(this.stats.enemiesKilled && this.stats.enemiesKilled['corpse_of_arminius'])) continue;
       }
       const selected = this.selectedPartyClasses.includes(classId);
       const primaryTag = data.tags.find(t => t !== 'roman') || 'roman';

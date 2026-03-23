@@ -36,6 +36,7 @@
   --class-roman: #8a8a7a;
   --class-ranged: #4a8abf;
   --class-elite: #7a4a8a;
+  --class-germanic: #5a7a3a;
 }
 
 * {
@@ -1433,6 +1434,7 @@ html, body {
 .tag-pip.tag-roman { background: var(--class-roman); }
 .tag-pip.tag-ranged { background: var(--class-ranged); }
 .tag-pip.tag-elite { background: var(--class-elite); }
+.tag-pip.tag-germanic { background: var(--class-germanic); }
 
 .loot-item-tags {
   display: inline-flex;

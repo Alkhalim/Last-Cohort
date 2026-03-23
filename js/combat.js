@@ -94,6 +94,12 @@ class CombatEngine {
       u.passiveTriggered = false;
       u._wolfPeltUsed = false;
       u._mushroomRage = 0;
+      u._ironVanguardUsed = false;
+      u._intNetUsed = false;
+      u._poisonOnAttack = null;
+      u._untargetable = false;
+      u._contingency = false;
+      u._divineRetribution = 0;
       u.skills.forEach(s => { s.cooldownLeft = 0; });
       u.actedThisTurn = false;
       // Accumulate into run-wide stats before resetting
@@ -149,6 +155,7 @@ class CombatEngine {
       this.morale = Math.max(-100, this.morale - 10);
       this.addLog("Death's whisper chills the air. (-10 Morale)");
     }
+    this.clampMorale();
 
     this.addLog(encounterDef.intro);
   }
@@ -299,6 +306,12 @@ class CombatEngine {
     this.turnCount++;
     this.phase = PHASE.ROLLING;
 
+    // Clear per-turn flags
+    this.party.forEach(u => {
+      u._untargetable = false;
+      u._contingency = false;
+    });
+
     // Poison tick on enemies
     this.enemies.forEach(e => {
       if (!e.dead && e.poison > 0) {
@@ -383,6 +396,7 @@ class CombatEngine {
     const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
     const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
     this.morale = Math.max(-100, this.morale - moraleDecay);
+    this.clampMorale();
     if (moraleDecay > 0) {
       this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
       if (this.onVisual) this.onVisual('morale', { amount: -moraleDecay });
@@ -398,6 +412,20 @@ class CombatEngine {
       });
       this.addLog(`Wicker ash burns — all enemies take ${wickerAshCount} damage.`);
       this.checkEnemyDeaths();
+    }
+
+    // Vestalis passive: Sacred Flame — heal lowest HP ally for 2 at start of turn
+    const vestalis = this.party.find(u => u.classId === 'vestalis' && !u.downed);
+    if (vestalis) {
+      const lowestHp = this.party.filter(u => !u.downed && u.hp < u.maxHp).sort((a, b) => a.hp - b.hp)[0];
+      if (lowestHp) {
+        const heal = Math.min(2, lowestHp.maxHp - lowestHp.hp);
+        lowestHp.hp += heal;
+        if (heal > 0) {
+          this.addLog(`Sacred Flame heals ${lowestHp.name} for ${heal} HP.`);
+          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: lowestHp.index, amount: heal });
+        }
+      }
     }
 
     // Herb Pouch: heal wielder each turn (scales with level)
@@ -1086,6 +1114,18 @@ class CombatEngine {
     const unit = this.party[unitIndex];
     const skill = unit.skills.find(s => s.id === skillId);
 
+    // Cataphract passive: Iron Vanguard — first action gives all allies +3 Block
+    if (unit.classId === 'cataphract' && !unit._ironVanguardUsed) {
+      unit._ironVanguardUsed = true;
+      this.party.forEach(u => {
+        if (!u.downed) {
+          u.block = (u.block || 0) + 3;
+          u.stats.blockGenerated += 3;
+        }
+      });
+      this.addLog('Iron Vanguard! All allies gain 3 Block.');
+    }
+
     // Track skill usage for analytics
     if (!this.skillUsageStats) this.skillUsageStats = {};
     const key = `${unit.classId}:${skillId}`;
@@ -1132,8 +1172,22 @@ class CombatEngine {
       skill.cooldownLeft = skill.cooldown + 1;
     }
 
+    // Track block before for Cataphract passive
+    const cataphracts = this.party.filter(u => u.classId === 'cataphract' && !u.downed);
+    const blockBefore = {};
+    cataphracts.forEach(u => { blockBefore[u.index] = u.block || 0; });
+
     const logText = this.applySkillResult(unit, skill, result);
     this.addLog(logText);
+
+    // Cataphract passive: Iron Vanguard — block gain → +1 damage next attack
+    cataphracts.forEach(u => {
+      const gained = (u.block || 0) - (blockBefore[u.index] || 0);
+      if (gained > 0) {
+        if (!u.buffs) u.buffs = [];
+        u.buffs.push({ damage: 1, attacksLeft: 1 });
+      }
+    });
 
     // Gladiator's Wraps: gain block after using a 2+ dice skill (scales with level)
     if (diceIds.length >= 2 && this.unitHasItem(unit, 'gladiators_wraps')) {
@@ -1212,7 +1266,9 @@ class CombatEngine {
     }
 
     const bonusBlock = unit.equipBlock || 0;
-    const bonusHeal = (unit.equipHeal || 0) + moraleMod;
+    // bonusHealScale: reduce equipment heal scaling for certain abilities (e.g. Wulfswestr)
+    const healScale = result.bonusHealScale != null ? result.bonusHealScale : 1;
+    const bonusHeal = Math.floor(((unit.equipHeal || 0) + moraleMod) * healScale);
 
     if (result.damage && result.target && result.target.hp !== undefined) {
       // Morale Scaling: damage scales from 1x at -100 morale to 2.5x at 100 morale
@@ -1309,6 +1365,16 @@ class CombatEngine {
       // Ballistarius passive: Pinning Fire — target deals 15% less damage next action
       if (unit.classId === 'ballistarius' && total > 0 && result.target.hp > 0) {
         result.target._pinned = true;
+      }
+
+      // Shadow Network: _poisonOnAttack — apply poison on dealing damage
+      if (unit._poisonOnAttack && total > 0 && result.target.hp > 0) {
+        const poa = unit._poisonOnAttack;
+        result.target.poison = (result.target.poison || 0) + poa.amount;
+        unit.stats.poisonInflicted += poa.amount;
+        parts.push(`Poisoned contact! (+${poa.amount} Poison)`);
+        poa.attacks--;
+        if (poa.attacks <= 0) unit._poisonOnAttack = null;
       }
 
       // Special: Legion Composite Bow — attacks apply Poison (scales with level)
@@ -1516,6 +1582,10 @@ class CombatEngine {
     }
     if (result.heal && result.target) {
       let totalHeal = result.heal + bonusHeal;
+      // Wulfswestr passive: Forest-Born — healing on self is doubled
+      if (result.target.classId === 'wulfswestr' && result.target === unit) {
+        totalHeal *= 2;
+      }
       // Resonance: double the heal
       if (result.target._resonance) {
         totalHeal *= 2;
@@ -1993,6 +2063,7 @@ class CombatEngine {
     // Morale Cost: spend morale to use the skill
     if (result.moraleCost) {
       this.morale = Math.max(-100, this.morale - result.moraleCost);
+      this.clampMorale();
       parts.push(`(-${result.moraleCost} Morale)`);
       if (this.onVisual) this.onVisual('morale', { amount: -result.moraleCost });
     }
@@ -2028,10 +2099,17 @@ class CombatEngine {
     }
 
     // Damage Shield: all allies take X% less damage next enemy turn
-    if (result.damageShield) {
+    if (result.damageShield && !result.divineIntercession) {
       this.party.forEach(u => { if (!u.downed) u._damageShield = result.damageShield; });
       const pct = Math.round((1 - result.damageShield) * 100);
       parts.push(`All allies take ${pct}% less damage next enemy turn.`);
+    }
+
+    // Divine Intercession: single target takes 50% less damage, attackers take retribution damage
+    if (result.divineIntercession && result.target) {
+      result.target._damageShield = result.damageShield || 0.5;
+      result.target._divineRetribution = result.divineIntercession;
+      parts.push(`${result.target.name} is shielded by Vesta — 50% less damage, attackers take ${result.divineIntercession} retribution damage.`);
     }
 
     // Smoke Screen: all enemies have X% chance to miss
@@ -2363,6 +2441,254 @@ class CombatEngine {
         this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + extraBlock; });
         parts.push(`Block bonus scaled! +${extraBlock} extra Block each.`);
       }
+    }
+
+    // === NEW CLASS MECHANICS ===
+
+    // Herb Poultice: poison a random enemy when healing
+    if (result.herbPoulticePoison) {
+      const aliveEnemies = this.enemies.filter(e => !e.dead);
+      if (aliveEnemies.length > 0) {
+        const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+        const poisonAmt = 1 + (unit.equipPoison || 0);
+        victim.poison = (victim.poison || 0) + poisonAmt;
+        unit.stats.poisonInflicted += poisonAmt;
+        parts.push(`Herb poisons ${victim.name}. (+${poisonAmt} Poison)`);
+      }
+    }
+
+    // Wolfbite: if target has block, apply 5 poison instead of dealing bonus damage
+    if (result.wolfbite && result.target) {
+      if ((result.target.block || 0) > 0) {
+        const poisonAmt = 5 + (unit.equipPoison || 0);
+        result.target.poison = (result.target.poison || 0) + poisonAmt;
+        unit.stats.poisonInflicted += poisonAmt;
+        parts.push(`Target has Block — Wolfbite applies ${poisonAmt} Poison!`);
+      }
+    }
+
+    // Shield Wall Dance: gain block = pair value x2
+    if (result.shieldWallDance) {
+      const usedDice = this.dicePool.dice.filter(d => d.used);
+      const pairVal = usedDice.length >= 2 ? usedDice[usedDice.length - 1].value : 3;
+      const blk = pairVal * 2 + (unit.equipBlock || 0);
+      unit.block = (unit.block || 0) + blk;
+      unit.stats.blockGenerated += blk;
+      parts.push(`${unit.name} gains ${blk} Block (pair of ${pairVal}s).`);
+    }
+
+    // Predator's Pounce: bonus damage = 50% of current block
+    if (result.predatorsPounce && result.target) {
+      const blockBonus = Math.floor((unit.block || 0) * 0.5);
+      if (blockBonus > 0 && result.target.hp > 0) {
+        result.target.hp = Math.max(0, result.target.hp - blockBonus);
+        unit.stats.damageDealt += blockBonus;
+        parts.push(`Predator's Pounce! +${blockBonus} bonus damage from Block!`);
+      }
+    }
+
+    // Flame Touch: heal a random damaged ally for 1
+    if (result.flameTouch) {
+      const damaged = this.party.filter(u => !u.downed && u.hp < u.maxHp);
+      if (damaged.length > 0) {
+        const target = damaged[Math.floor(Math.random() * damaged.length)];
+        const heal = Math.min(1, target.maxHp - target.hp);
+        target.hp += heal;
+        unit.stats.healingDone += heal;
+      }
+    }
+
+    // Vesta's Judgment: +66% at 50+ morale, +66% at 75+
+    if (result.vestasJudgment && result.target) {
+      let extraDmg = 0;
+      if (this.morale >= 50) extraDmg += Math.floor(result.damage * 0.66);
+      if (this.morale >= 75) extraDmg += Math.floor(result.damage * 0.66);
+      if (extraDmg > 0) {
+        result.target.hp = Math.max(0, result.target.hp - extraDmg);
+        unit.stats.damageDealt += extraDmg;
+        parts.push(`Vesta's fire burns! +${extraDmg} divine damage!`);
+      }
+    }
+
+    // Litany of Courage: morale = die x2, grant ally extra action
+    if (result.litanyOfCourage) {
+      const usedDice = this.dicePool.dice.filter(d => d.used);
+      const dieVal = usedDice.length > 0 ? usedDice[usedDice.length - 1].value : 3;
+      const moraleGain = dieVal * 2;
+      this.morale = Math.min(100, this.morale + moraleGain);
+      parts.push(`+${moraleGain} Morale.`);
+      if (this.onVisual) this.onVisual('morale', { amount: moraleGain });
+      // Grant a random other ally an extra action
+      const others = this.party.filter(u => !u.downed && u !== unit && u.actedThisTurn);
+      if (others.length > 0) {
+        const target = others[Math.floor(Math.random() * others.length)];
+        target.actedThisTurn = false;
+        parts.push(`${target.name} is inspired to act again!`);
+      }
+    }
+
+    // Flame Shield: block and morale = pair value
+    if (result.flameShield) {
+      const usedDice = this.dicePool.dice.filter(d => d.used);
+      const pairVal = usedDice.length >= 2 ? usedDice[usedDice.length - 1].value : 3;
+      this.party.forEach(u => {
+        if (!u.downed) {
+          u.block = (u.block || 0) + pairVal;
+          u.stats.blockGenerated += pairVal;
+        }
+      });
+      this.morale = Math.min(100, this.morale + pairVal);
+      parts.push(`Flame Shield! +${pairVal} Block all, +${pairVal} Morale.`);
+    }
+
+    // Wrath of Vesta: 2 poison to 2 random enemies, scaled by morale
+    if (result.wrathOfVesta) {
+      let poisonAmt = 2 + (unit.equipPoison || 0);
+      if (this.morale >= 50) poisonAmt = Math.floor(poisonAmt * 1.5);
+      if (this.morale >= 75) poisonAmt = Math.floor(poisonAmt * 1.5);
+      const alive = this.enemies.filter(e => !e.dead);
+      const shuffled = alive.sort(() => Math.random() - 0.5).slice(0, 2);
+      shuffled.forEach(e => {
+        e.poison = (e.poison || 0) + poisonAmt;
+        unit.stats.poisonInflicted += poisonAmt;
+      });
+      parts.push(`Wrath of Vesta! ${poisonAmt} Poison to ${shuffled.map(e => e.name).join(' and ')}.`);
+    }
+
+    // Resurrection Prayer: Vestalis loses HP = revived HP, gains that as Block
+    if (result.resurrectionPrayer && result.target && !result.target.downed) {
+      // Target was just revived by the revive effect above
+      const reviveHp = result.target.hp;
+      const cost = Math.min(reviveHp, unit.hp - 1);
+      unit.hp -= cost;
+      unit.block = (unit.block || 0) + cost;
+      parts.push(`Vestalis sacrifices ${cost} HP, gains ${cost} Block.`);
+    }
+
+    // Laced Blade: poison = die value
+    if (result.lacedBlade && result.target) {
+      const usedDice = this.dicePool.dice.filter(d => d.used);
+      const dieVal = usedDice.length > 0 ? usedDice[usedDice.length - 1].value : 3;
+      const poisonAmt = dieVal + (unit.equipPoison || 0);
+      result.target.poison = (result.target.poison || 0) + poisonAmt;
+      unit.stats.poisonInflicted += poisonAmt;
+      parts.push(`Laced Blade! ${poisonAmt} Poison (die ${dieVal}).`);
+    }
+
+    // Misdirection: give ally taunt + 3 block per living enemy
+    if (result.misdirection && result.target) {
+      result.target.taunt = true;
+      const livingEnemies = this.enemies.filter(e => !e.dead).length;
+      const blk = Math.floor(livingEnemies * (3 + (unit.equipBlock || 0) * 0.65));
+      result.target.block = (result.target.block || 0) + blk;
+      result.target.stats.blockGenerated += blk;
+      parts.push(`${result.target.name} taunts! +${blk} Block (${livingEnemies} enemies).`);
+    }
+
+    // Dead Drop: become untargetable this turn
+    if (result.deadDrop) {
+      unit._untargetable = true;
+      parts.push(`${unit.name} vanishes into shadow.`);
+    }
+
+    // Shadow Network: allies apply 2 poison on attack for 2 attacks, mark all
+    if (result.shadowNetwork) {
+      this.party.forEach(u => {
+        if (!u.downed && u !== unit) {
+          u._poisonOnAttack = { amount: 2, attacks: 2 };
+        }
+      });
+      this.enemies.forEach(e => { if (!e.dead) e._marked = 2; });
+      parts.push(`All enemies marked! Allies apply 2 Poison on attack for 2 attacks.`);
+    }
+
+    // Assassination: triple damage vs marked/condemned
+    if (result.assassination && result.target) {
+      const isMarkedOrCondemned = (result.target._marked && result.target._marked > 0) || (result.target._condemned && result.target._condemned > 0);
+      if (isMarkedOrCondemned) {
+        // Already dealt base damage — deal 2x more for triple total
+        const extraDmg = (result.damage + Math.floor(bonusDmg * 0.5)) * 2;
+        result.target.hp = Math.max(0, result.target.hp - extraDmg);
+        unit.stats.damageDealt += extraDmg;
+        parts.push(`ASSASSINATION! Triple damage on marked target!`);
+      }
+    }
+
+    // Contingency Plan: prevent downing for 1 turn
+    if (result.contingencyPlan) {
+      this.party.forEach(u => { if (!u.downed) u._contingency = true; });
+      parts.push(`Contingency active — no ally can be downed this turn.`);
+    }
+
+    // Deep Cover: +3 dice this turn and next, stunned both
+    if (result.deepCover) {
+      // Add 3 dice immediately
+      for (let d = 0; d < 3; d++) {
+        this.dicePool.dice.push({ id: 'deep_' + Date.now() + d, value: Math.floor(Math.random() * 6) + 1, used: false });
+      }
+      this._bonusDiceNext = (this._bonusDiceNext || 0) + 3;
+      unit._stunNextTurn = true;
+      unit.actedThisTurn = true;
+      parts.push(`Deep Cover! +3 dice now and next turn. ${unit.name} is stunned.`);
+    }
+
+    // Mounted Sweep: gain 1 block per enemy hit
+    if (result.mountedSweep) {
+      const frontHit = this.enemies.filter(e => !e.dead && e.row === 'front').length;
+      if (frontHit > 0) {
+        unit.block = (unit.block || 0) + frontHit;
+        unit.stats.blockGenerated += frontHit;
+        parts.push(`+${frontHit} Block from sweep.`);
+      }
+    }
+
+    // Armored Advance: block = pair value (double for self), roll extra die
+    if (result.armoredAdvance) {
+      const usedDice = this.dicePool.dice.filter(d => d.used);
+      const pairVal = usedDice.length >= 2 ? usedDice[usedDice.length - 1].value : 3;
+      this.party.forEach(u => {
+        if (!u.downed) {
+          const blk = u === unit ? pairVal * 2 : pairVal;
+          u.block = (u.block || 0) + blk;
+          u.stats.blockGenerated += blk;
+        }
+      });
+      // Roll an extra die immediately
+      this.dicePool.dice.push({ id: 'advance_' + Date.now(), value: Math.floor(Math.random() * 6) + 1, used: false });
+      parts.push(`Armored Advance! +${pairVal} Block all (${pairVal * 2} self). Extra die rolled!`);
+    }
+
+    // Destrier's Fury: strip enemy block, deal that as damage
+    if (result.destriersFury && result.target) {
+      const stripped = result.target.block || 0;
+      result.target.block = 0;
+      if (stripped > 0) {
+        result.target.hp = Math.max(0, result.target.hp - stripped);
+        unit.stats.damageDealt += stripped;
+        parts.push(`Destrier's Fury strips ${stripped} Block and deals ${stripped} damage!`);
+        if (this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: stripped });
+      } else {
+        parts.push(`Target has no Block to strip.`);
+      }
+    }
+
+    // Cataphract's Doom: allies gain block = damage dealt to each enemy
+    if (result.cataphractsDoom) {
+      let totalBlockGained = 0;
+      this.enemies.forEach(e => {
+        if (!e.dead) {
+          const dmgDealt = Math.min(8 + bonusDmg, e.hp); // approximate damage dealt
+          totalBlockGained += dmgDealt;
+        }
+      });
+      const perAlly = Math.floor(totalBlockGained / Math.max(1, this.party.filter(u => !u.downed).length));
+      this.party.forEach(u => {
+        if (!u.downed) {
+          u.block = (u.block || 0) + perAlly;
+          u.stats.blockGenerated += perAlly;
+        }
+      });
+      parts.push(`Doom! All allies gain ${perAlly} Block from the devastation.`);
     }
 
     if (parts.length === 0) parts.push(`${unit.name} uses ${skill.name}.`);
@@ -2773,7 +3099,17 @@ class CombatEngine {
     }
 
     if (action.damage > 0 || action.damageFromBlock) {
-      // Ironbound Champion: damage = base + current block (consumes block)
+      // Arcania passive: Intelligence Network — reduce strongest attack by 40% once
+      const arcania = this.party.find(u => u.classId === 'arcania' && !u.downed && !u._intNetUsed);
+      if (arcania && action.damage > 0) {
+        const maxDmg = Math.max(...enemy.actions.map(a => a.damage || 0));
+        if (action.damage >= maxDmg && maxDmg > 0) {
+          arcania._intNetUsed = true;
+          const reduction = Math.floor(action.damage * 0.4);
+          action = { ...action, damage: action.damage - reduction };
+          this.addLog(`Intelligence Network! ${arcania.name} predicted this — damage reduced by ${reduction}!`);
+        }
+      }
       let actionDamage = action.damage || 0;
       if (action.damageFromBlock && enemy.block > 0) {
         actionDamage += enemy.block;
@@ -2915,8 +3251,18 @@ class CombatEngine {
       // Corpse of Arminius: Undying Rage — attacks also drain 10 morale
       if (enemy._undyingRage && dmg > 0) {
         this.morale = Math.max(-100, this.morale - 10);
+        this.clampMorale();
         this.addLog(`Undying Rage! ${enemy.name}'s attack drains 10 Morale!`);
         if (this.onVisual) this.onVisual('morale', { amount: -10 });
+      }
+
+      // Divine Intercession: retribution damage to attacker
+      if (target._divineRetribution && dmg >= 0) {
+        const retDmg = target._divineRetribution;
+        enemy.hp = Math.max(0, enemy.hp - retDmg);
+        target._divineRetribution = 0;
+        this.addLog(`Vesta's flame strikes back — ${enemy.name} takes ${retDmg} retribution damage!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Retribution!', color: '#ff6600' });
       }
 
       // Counter Stance: retaliate damage
@@ -2978,6 +3324,7 @@ class CombatEngine {
       }
       if (moraleDelta !== 0) {
         this.morale = Math.max(-100, Math.min(100, this.morale + moraleDelta));
+        this.clampMorale();
         this.addLog(`${enemy.name} ${action.text}! Morale ${moraleDelta > 0 ? '+' : ''}${moraleDelta}.`);
         if (this.onVisual) {
           this.onVisual('morale', { amount: moraleDelta });
@@ -3232,7 +3579,10 @@ class CombatEngine {
   }
 
   pickEnemyTarget(enemy, action) {
-    const alive = this.party.filter(u => !u.downed);
+    let alive = this.party.filter(u => !u.downed);
+    // Dead Drop: untargetable units can't be targeted (fall back to all alive if everyone is untargetable)
+    const targetable = alive.filter(u => !u._untargetable);
+    if (targetable.length > 0) alive = targetable;
     if (alive.length === 0) return null;
     const taunting = alive.find(u => u.taunt);
     if (taunting) return taunting;
@@ -3269,6 +3619,13 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Unyielding!', color: 'var(--gold)' });
           return;
         }
+        // Contingency Plan: prevent downing this turn
+        if (u._contingency) {
+          u.hp = 1;
+          this.addLog(`Contingency Plan saves ${u.name}!`);
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Contingency!', color: 'var(--gold)' });
+          return;
+        }
         // Lupa's Fang: first downing prevented (once per combat)
         if (!this._lupaFangUsed && this.partyHasItem('lupas_fang')) {
           this._lupaFangUsed = true;
@@ -3281,6 +3638,7 @@ class CombatEngine {
         u.hp = 0;
         this.addLog(`${u.name} is downed!`);
         this.morale = Math.max(-100, this.morale - 20);
+        this.clampMorale();
         if (this.onVisual) this.onVisual('morale', { amount: -20 });
       }
     });
@@ -3406,6 +3764,17 @@ class CombatEngine {
         if (item.stats.extraDice) unit.equipExtraDice += item.stats.extraDice;
       }
     }
+    // Wulfswestr passive: Forest-Born — +1 damage per march
+    if (unit.classId === 'wulfswestr') {
+      unit.equipDamage += (this.difficulty || 1);
+    }
+  }
+
+  // Clamp morale — Vestalis passive prevents dropping below -50
+  clampMorale() {
+    const hasVestalis = this.party.some(u => u.classId === 'vestalis' && !u.downed);
+    const floor = hasVestalis ? -50 : -100;
+    this.morale = Math.max(floor, Math.min(100, this.morale));
   }
 
   getExtraDiceCount() {

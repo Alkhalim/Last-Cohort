@@ -820,5 +820,368 @@ const RAW_CLASSES = {
         "effects": { "damage": 20, "pierceBlock": 99, "lastStand": true }
       }
     ]
+  },
+
+  // === NEW CLASSES ===
+
+  "wulfswestr": {
+    "name": "Wulfswestr",
+    "title": "WLF",
+    "maxHp": 25,
+    "tags": ["melee", "support", "germanic"],
+    "complexity": 2,
+    "equipSlots": { "weapon": 2, "armor": 2, "trinket": 3 },
+    "description": "Germanic forest fighter. Heals and fights with equal ferocity. No Roman gear.",
+    "passive": {
+      "name": "Forest-Born",
+      "description": "+1 damage per march completed. Healing on self is doubled."
+    },
+    "skills": [
+      {
+        "id": "axe_strike", "name": "Axe Strike", "starter": true,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "description": "Basic axe strike. Deals 3 damage.",
+        "effects": { "damage": 3 }
+      },
+      {
+        "id": "herb_poultice", "name": "Herb Poultice", "starter": true,
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
+        "description": "Heal ally for 4 HP. Poison a random enemy.",
+        "effects": { "heal": 4, "herbPoulticePoison": true, "bonusHealScale": 0.65 }
+      },
+      {
+        "id": "shield_bash_wlf", "name": "Shield Bash", "starter": true,
+        "cost": { "type": "odd" }, "target": "single_enemy",
+        "description": "Deal 2 + die value damage. Gain 2 Block, depending on die used.",
+        "effects": { "damage": 2, "dieScaleDamage": true, "block": 2 }
+      },
+      {
+        "id": "wild_roots", "name": "Wild Roots",
+        "cost": { "type": "exact", "val": 2 }, "target": "single_ally", "cooldown": 1,
+        "description": "Heal ally for HP equal to die value. Grant Block equal to die value.",
+        "effects": { "heal": 0, "dieScaleHeal": true, "block": 0, "dieScaleBlock": true, "bonusHealScale": 0.65 }
+      },
+      {
+        "id": "wolfbite", "name": "Wolfbite", "cooldown": 1,
+        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "description": "Deal 5 damage. If target has Block, apply 5 Poison instead of bonus damage.",
+        "effects": { "damage": 5, "wolfbite": true }
+      },
+      {
+        "id": "forest_shroud", "name": "Forest Shroud", "cooldown": 2,
+        "cost": { "type": "exact", "val": 4 }, "target": "all_allies",
+        "description": "All allies take 40% less damage this enemy turn. +5 Morale.",
+        "effects": { "damageShield": 0.4, "morale": 5 }
+      },
+      {
+        "id": "axe_throw", "name": "Axe Throw", "cooldown": 1,
+        "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Throw axe at any target. Deals 5 damage.",
+        "effects": { "damage": 5 }
+      },
+      {
+        "id": "twinned_herbs", "name": "Twinned Herbs", "cooldown": 2,
+        "cost": { "type": "even" }, "target": "all_allies",
+        "description": "Heal all allies for 3 HP. Cleanse all poison.",
+        "effects": { "healAll": 3, "cleanseAll": true, "bonusHealScale": 0.45 }
+      },
+      {
+        "id": "berserkers_howl", "name": "Berserker's Howl", "cooldown": 3,
+        "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
+        "description": "Others gain +2 damage for 2 attacks. Wulfswestr gains +4 damage for 2 attacks. -8 Morale.",
+        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "buffSelf": { "bonusDamage": 4, "attacks": 2 }, "morale": -8, "bonusDmgScale": 0.45 }
+      },
+      {
+        "id": "shield_wall_dance", "name": "Shield Wall Dance", "cooldown": 2,
+        "cost": { "type": "pair" }, "target": "self",
+        "description": "Gain Block equal to pair value x2. Taunt.",
+        "effects": { "shieldWallDance": true, "taunt": true }
+      },
+      {
+        "id": "heart_of_forest", "name": "Heart of the Forest", "cooldown": 3,
+        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_ally",
+        "description": "2 dice totaling 7+. Heal target for 10 HP. Grant 5 Block. Revive downed ally at 20% HP.",
+        "effects": { "heal": 10, "block": 5, "revive": true, "bonusHealScale": 0.45 }
+      },
+      {
+        "id": "predators_pounce", "name": "Predator's Pounce", "cooldown": 2,
+        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 8+. Deal 11 damage. Bonus damage equal to 50% of your Block.",
+        "effects": { "damage": 11, "predatorsPounce": true }
+      }
+    ]
+  },
+
+  "vestalis": {
+    "name": "Vestalis",
+    "title": "VES",
+    "maxHp": 22,
+    "tags": ["command", "support", "roman"],
+    "complexity": 3,
+    "equipSlots": { "weapon": 1, "armor": 2, "trinket": 4 },
+    "description": "Vestal priestess. Morale engine, healer, and divine protector.",
+    "passive": {
+      "name": "Sacred Flame",
+      "description": "Start of each turn, heal the lowest HP ally for 2 HP. Morale cannot drop below -50."
+    },
+    "skills": [
+      {
+        "id": "flame_touch", "name": "Flame Touch", "starter": true,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "description": "Deal 1 damage. Heal a random damaged ally for 1 HP. +3 Morale.",
+        "effects": { "damage": 1, "flameTouch": true, "morale": 3, "bonusDmgScale": 0.2 }
+      },
+      {
+        "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true,
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
+        "description": "Heal ally for 3 HP. +3 Morale.",
+        "effects": { "heal": 3, "morale": 3 }
+      },
+      {
+        "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 1,
+        "cost": { "type": "even" }, "target": "all_allies",
+        "description": "Requires even die. All allies gain 3 Block. +4 Morale.",
+        "effects": { "blockAll": 3, "morale": 4 }
+      },
+      {
+        "id": "vestas_judgment", "name": "Vesta's Judgment", "cooldown": 1,
+        "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Deal 4 damage. +66% at 50+ Morale. Another +66% at 75+ Morale.",
+        "effects": { "damage": 4, "vestasJudgment": true }
+      },
+      {
+        "id": "purifying_flame", "name": "Purifying Flame", "cooldown": 1,
+        "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
+        "description": "Cleanse all poison and stun. Apply 2 Poison to all enemies. +5 Morale.",
+        "effects": { "cleanseAll": true, "poisonAll": 2, "morale": 5 }
+      },
+      {
+        "id": "divine_intercession", "name": "Divine Intercession", "cooldown": 2,
+        "cost": { "type": "exact", "val": 4 }, "target": "single_ally",
+        "description": "Target takes 50% less damage this turn. If hit, attacker takes 4 damage.",
+        "effects": { "damageShield": 0.5, "divineIntercession": 4 }
+      },
+      {
+        "id": "litany_of_courage", "name": "Litany of Courage",
+        "cost": { "type": "odd" }, "target": "all_allies",
+        "description": "Requires odd die. +Morale equal to die value x2. Grant an ally an extra action, depending on die used.",
+        "effects": { "litanyOfCourage": true }
+      },
+      {
+        "id": "rite_of_consecration", "name": "Rite of Consecration", "cooldown": 3,
+        "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "all_allies",
+        "description": "3 dice totaling 10+. All allies +2 damage for 3 attacks. +12 Morale. Heal all 3 HP.",
+        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 3 }, "morale": 12, "healAll": 3 }
+      },
+      {
+        "id": "flame_shield", "name": "Flame Shield", "cooldown": 3,
+        "cost": { "type": "pair" }, "target": "all_allies",
+        "description": "All allies gain Block equal to pair value. +Morale equal to pair value. +1 die next turn.",
+        "effects": { "flameShield": true, "bonusDiceNext": 1 }
+      },
+      {
+        "id": "wrath_of_vesta", "name": "Wrath of Vesta", "cooldown": 2,
+        "cost": { "type": "exact", "val": 6 }, "target": "all_enemies",
+        "description": "2 random enemies take 2 Poison. +50% at 50+ Morale, +50% at 75+ Morale.",
+        "effects": { "wrathOfVesta": true }
+      },
+      {
+        "id": "resurrection_prayer", "name": "Resurrection Prayer", "cooldown": 5,
+        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_ally",
+        "description": "2 dice totaling 8+. Revive downed ally at 30% HP with Block. +10 Morale. Vestalis loses HP equal to ally's revived HP, gains that as Block.",
+        "effects": { "revive": true, "morale": 10, "resurrectionPrayer": true }
+      },
+      {
+        "id": "eternal_flame", "name": "Eternal Flame", "cooldown": 4,
+        "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "all_allies",
+        "description": "2 dice totaling 9+. Free action. Heal all 6 HP, gain 4 Block, +15 Morale. Act again.",
+        "effects": { "healAll": 6, "blockAll": 4, "morale": 15, "freeAction": true }
+      }
+    ]
+  },
+
+  "arcania": {
+    "name": "Arcania",
+    "title": "ARC",
+    "maxHp": 19,
+    "tags": ["ranged", "roman"],
+    "complexity": 3,
+    "equipSlots": { "weapon": 2, "armor": 1, "trinket": 4 },
+    "description": "Roman frontier scout. Intelligence, poison, and battlefield control.",
+    "passive": {
+      "name": "Intelligence Network",
+      "description": "Once per encounter, when an enemy uses its strongest attack, reduce damage by 40%."
+    },
+    "skills": [
+      {
+        "id": "throwing_knife", "name": "Throwing Knife", "starter": true,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Deal 2 damage. Apply 1 Poison.",
+        "effects": { "damage": 2, "poison": 1 }
+      },
+      {
+        "id": "reconnaissance", "name": "Reconnaissance", "starter": true, "cooldown": 1,
+        "cost": { "type": "exact", "val": 1 }, "target": "all_enemies",
+        "description": "Mark a random enemy (+20% damage from all). Gain 2 Block. +1 die next turn.",
+        "effects": { "scoutingManeuver": true, "block": 2, "bonusDiceNext": 1 }
+      },
+      {
+        "id": "nerve_strike", "name": "Nerve Strike", "starter": true, "cooldown": 1,
+        "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
+        "description": "Deal 4 damage. Target deals 30% less damage for 1 turn. Front row only.",
+        "effects": { "damage": 4, "cripple": 1, "bonusDmgScale": 0.5 }
+      },
+      {
+        "id": "misdirection", "name": "Misdirection", "cooldown": 2,
+        "cost": { "type": "exact", "val": 2 }, "target": "single_ally",
+        "description": "Give ally Taunt. They gain 3 Block per living enemy.",
+        "effects": { "misdirection": true }
+      },
+      {
+        "id": "laced_blade", "name": "Laced Blade", "cooldown": 1,
+        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "description": "Deal 3 damage. Apply Poison equal to die value used, depending on die used.",
+        "effects": { "damage": 3, "lacedBlade": true }
+      },
+      {
+        "id": "dead_drop", "name": "Dead Drop", "cooldown": 2,
+        "cost": { "type": "exact", "val": 1 }, "target": "self",
+        "description": "Free action. Heal 4 HP. Become untargetable this enemy turn. Act again.",
+        "effects": { "healSelf": 4, "freeAction": true, "deadDrop": true }
+      },
+      {
+        "id": "smoke_bomb", "name": "Smoke Bomb", "cooldown": 3,
+        "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
+        "description": "All allies gain 3 Block. All enemies have 30% chance to miss.",
+        "effects": { "blockAll": 3, "smokeScreen": 0.3 }
+      },
+      {
+        "id": "expose_weakness", "name": "Expose Weakness", "cooldown": 2,
+        "cost": { "type": "consecutive" }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "Requires consecutive dice. Deal 3 damage. Condemn target (+30% from all, 2 turns).",
+        "effects": { "damage": 3, "condemn": 2 }
+      },
+      {
+        "id": "shadow_network", "name": "Shadow Network", "cooldown": 3,
+        "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "all_allies",
+        "description": "2 dice totaling 5+. Allies apply 2 Poison on attack for 2 attacks. Mark all enemies. +1 die next turn.",
+        "effects": { "shadowNetwork": true, "bonusDiceNext": 1 }
+      },
+      {
+        "id": "assassination", "name": "Assassination", "cooldown": 2,
+        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 7+. Deal 4 damage, ignoring block. Triple damage to marked or condemned targets.",
+        "effects": { "damage": 4, "pierceBlock": 99, "assassination": true, "halfBonusDmg": true }
+      },
+      {
+        "id": "contingency_plan", "name": "Contingency Plan", "cooldown": 3,
+        "cost": { "type": "exact", "val": 4 }, "target": "all_allies",
+        "description": "If any ally would be downed this enemy turn, prevent it (1 HP). Lasts 1 turn.",
+        "effects": { "contingencyPlan": true }
+      },
+      {
+        "id": "deep_cover", "name": "Deep Cover", "cooldown": 4,
+        "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "self",
+        "description": "2 dice totaling 9+. Gain 3 extra dice this turn and next turn. Stunned both turns.",
+        "effects": { "deepCover": true }
+      }
+    ]
+  },
+
+  "cataphract": {
+    "name": "Cataphract",
+    "title": "CAT",
+    "maxHp": 28,
+    "tags": ["command", "elite", "roman"],
+    "complexity": 3,
+    "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
+    "hidden": true,
+    "unlockCondition": "Defeat the Corpse of Arminius",
+    "description": "Heavy cavalry officer. Mobile fortress that commands from the saddle.",
+    "passive": {
+      "name": "Iron Vanguard",
+      "description": "First action each combat gives all allies +3 Block. Whenever this unit gains Block, gain +1 damage for next attack."
+    },
+    "skills": [
+      {
+        "id": "kontos_strike", "name": "Kontos Strike", "starter": true,
+        "cost": { "type": "any" }, "target": "single_enemy",
+        "description": "Deal 4 damage. Gain 2 Block.",
+        "effects": { "damage": 4, "block": 2, "halfBonusDmg": true }
+      },
+      {
+        "id": "formation_command", "name": "Formation Command", "starter": true, "cooldown": 1,
+        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
+        "description": "Other allies gain 3 Block. +4 Morale.",
+        "effects": { "blockAll": 3, "blockOthersOnly": true, "morale": 4 }
+      },
+      {
+        "id": "heavy_charge", "name": "Heavy Charge", "starter": true, "cooldown": 1,
+        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "description": "Deal 7 damage. Knock target to back row.",
+        "effects": { "damage": 7, "knockback": true }
+      },
+      {
+        "id": "iron_curtain", "name": "Iron Curtain",
+        "cost": { "type": "even" }, "target": "self",
+        "description": "Requires even die. Gain 3 + die value Block. +1 die next turn, depending on die used.",
+        "effects": { "block": 3, "dieScaleBlock": true, "bonusDiceNext": 1, "blockScale": 0.65 }
+      },
+      {
+        "id": "rally_the_line", "name": "Rally the Line", "cooldown": 2,
+        "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
+        "description": "Other allies gain +2 damage for 2 attacks. Others gain 2 Block.",
+        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 2, "blockOthersOnly": true }
+      },
+      {
+        "id": "mounted_sweep", "name": "Mounted Sweep", "cooldown": 1,
+        "cost": { "type": "range", "min": 3, "max": 4 }, "target": "all_enemies",
+        "description": "Deal 3 damage to all front row enemies. Gain 1 Block per enemy hit.",
+        "effects": { "damageAll": 3, "mountedSweep": true, "halfBonusDmg": true }
+      },
+      {
+        "id": "armored_advance", "name": "Armored Advance", "cooldown": 3,
+        "cost": { "type": "pair" }, "target": "all_allies",
+        "description": "All allies gain Block equal to pair value. Cataphract gains double. +5 Morale. Roll an extra die.",
+        "effects": { "armoredAdvance": true, "morale": 5 }
+      },
+      {
+        "id": "destriers_fury", "name": "Destrier's Fury", "cooldown": 2,
+        "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
+        "description": "Strip all Block from target. Deal damage equal to the Block removed.",
+        "effects": { "destriersFury": true }
+      },
+      {
+        "id": "officers_shield", "name": "Officer's Shield", "cooldown": 1,
+        "cost": { "type": "exact", "val": 4 }, "target": "single_ally",
+        "description": "Grant ally 6 Block. Intercept next attack on them. Take half damage.",
+        "effects": { "block": 6, "intercept": true }
+      },
+      {
+        "id": "thundering_charge", "name": "Thundering Charge", "cooldown": 3,
+        "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
+        "ignoreRow": true,
+        "description": "2 dice totaling 8+. Deal 10 damage. 30% splash to adjacent. +8 Morale. Gain 4 Block.",
+        "effects": { "damage": 10, "splashAdjacentPct": 0.3, "morale": 8, "block": 4 }
+      },
+      {
+        "id": "unbreakable_line", "name": "Unbreakable Line", "cooldown": 4,
+        "cost": { "type": "combined", "min": 3, "dice": 3 }, "target": "all_allies",
+        "description": "3 any dice. All allies gain 6 Block. Cleanse poison and stun. +10 Morale.",
+        "effects": { "blockAll": 6, "cleanseAll": true, "morale": 10 }
+      },
+      {
+        "id": "cataphracts_doom", "name": "Cataphract's Doom", "cooldown": 4,
+        "cost": { "type": "combined", "min": 10, "dice": 2 }, "target": "all_enemies",
+        "description": "2 dice totaling 10+. Deal 8 damage to all enemies. All allies gain Block equal to damage dealt. +12 Morale.",
+        "effects": { "damageAll": 8, "cataphractsDoom": true, "morale": 12 }
+      }
+    ]
   }
 };
