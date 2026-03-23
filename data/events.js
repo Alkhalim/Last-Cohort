@@ -416,6 +416,97 @@ const RAW_EVENTS = [
       ]}
     ]
   },
+  // === MARCH 1 — THE AMBUSH TRAIL ===
+  {
+    "id": "the_broken_cart",
+    "name": "The Broken Cart",
+    "maxDifficulty": 1,
+    "weight": 2,
+    "intro": "A Roman supply cart lies overturned on the trail, its oxen long gone. Crates are scattered. Some are smashed, but others look intact. Claw marks score the wood — something dragged the driver away.",
+    "choices": [
+      { "text": "Salvage what you can.", "outcomes": [
+        { "weight": 0.5, "text": "Medical supplies and dried rations. Your men eat well for the first time in days.", "effects": { "healAll": 6, "morale": 8 } },
+        { "weight": 0.3, "text": "A sealed weapon crate. Roman steel, sharp and ready.", "effects": { "grantItem": "iron_gladius", "morale": 5 } },
+        { "weight": 0.2, "text": "Most of it is ruined. But at the bottom, something valuable.", "effects": { "grantItem": "herb_pouch", "morale": 3 } }
+      ]},
+      { "text": "Your fighters set up a defensive perimeter.", "requiresTag": "melee", "outcomes": [
+        { "weight": 0.6, "text": "Smart move. Wolves were circling. Your fighters drive them off and claim the supplies unmolested.", "effects": { "healAll": 5, "grantDamage": { "amount": 1, "tag": "melee", "count": 1 }, "morale": 10 } },
+        { "weight": 0.4, "text": "The perimeter holds. In the wreckage, your fighters find a fine shield — battered but serviceable.", "effects": { "grantItem": "raider_shield", "grantBlock": { "amount": 1, "tag": "melee", "count": 1 }, "morale": 8 } }
+      ]},
+      { "text": "It's bait. Move on.", "outcomes": [
+        { "weight": 1.0, "text": "Your caution is rewarded. You spot wolf tracks converging on the cart. Better to march hungry than not march at all.", "effects": { "morale": 5 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 2 — THE HUNTING GROUNDS ===
+  {
+    "id": "the_hunters_blind",
+    "name": "The Hunter's Blind",
+    "minDifficulty": 2, "maxDifficulty": 2,
+    "weight": 2,
+    "intro": "High in the canopy, a hunter's platform. Rope ladders dangle from the branches. Someone watched this trail from above — recently, judging by the fresh-cut wood. They left in a hurry.",
+    "choices": [
+      { "text": "Climb up and use the vantage point.", "outcomes": [
+        { "weight": 0.5, "text": "From above, you see the trail ahead clearly. Ambush positions marked with stones. Forewarned is forearmed.", "effects": { "morale": 12, "extraDiceNext": 1 } },
+        { "weight": 0.5, "text": "The hunter left supplies — arrows, a waterskin, and a carved map of the area.", "effects": { "grantItem": "spotters_lens", "morale": 8 } }
+      ]},
+      { "text": "Your marksman studies the kill marks on the platform.", "requiresTag": "ranged", "outcomes": [
+        { "weight": 0.6, "text": "Hundreds of tallies. This hunter was prolific. Your marksman learns from the positioning — better angles, better timing.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 }, "grantMaxHp": { "amount": 1, "tag": "ranged", "count": 1 }, "morale": 8 } },
+        { "weight": 0.4, "text": "Hidden beneath a loose plank — a quiver of specially crafted arrows. Your marksman's eyes light up.", "effects": { "grantItem": "huntsmans_arrow", "morale": 10 } }
+      ]},
+      { "text": "Cut the ropes. Deny it to the enemy.", "outcomes": [
+        { "weight": 1.0, "text": "The platform crashes down. No one will watch this trail again. Your men feel a small victory.", "effects": { "morale": 8 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 3 — THE WARCAMP ===
+  {
+    "id": "the_abandoned_armory",
+    "name": "The Abandoned Armory",
+    "minDifficulty": 3, "maxDifficulty": 3,
+    "weight": 2,
+    "intro": "You find a Germanic armory — racks of weapons, stacks of shields, a still-warm forge. The warriors fled when they heard your column. Everything here is crude but effective.",
+    "choices": [
+      { "text": "Arm up. Take everything.", "outcomes": [
+        { "weight": 0.5, "text": "Your soldiers grab weapons, shields, and armor scraps. Not Roman quality, but the extra iron helps.", "effects": { "grantDamage": { "amount": 1, "count": 2 }, "grantBlock": { "amount": 1, "count": 2 }, "morale": 8 } },
+        { "weight": 0.5, "text": "Among the crude weapons, one stands out — clearly taken from a Roman officer.", "effects": { "grantItem": "chiefs_spear", "morale": 10 } }
+      ]},
+      { "text": "Your officer organizes a proper inventory.", "requiresTag": "command", "outcomes": [
+        { "weight": 0.6, "text": "Roman efficiency at its finest. Everything useful is catalogued and distributed. Nothing wasted.", "effects": { "grantDamage": { "amount": 1, "count": 3 }, "grantBlock": { "amount": 1, "count": 3 }, "morale": 12 } },
+        { "weight": 0.4, "text": "Your officer finds a hidden compartment — Germanic war plans and a fine blade. Knowledge and steel.", "effects": { "grantItem": "wolf_fang_blade", "extraDiceNext": 2, "morale": 10 } }
+      ]},
+      { "text": "Burn it. Deny them resupply.", "outcomes": [
+        { "weight": 0.7, "text": "The armory goes up in flames. Smoke rises. The enemy will feel this loss.", "effects": { "morale": 15 } },
+        { "weight": 0.3, "text": "As it burns, the heat cracks a hidden cache in the wall. You pull out a Roman helmet — stolen, now reclaimed.", "effects": { "grantItem": "fortified_helm", "morale": 12 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 4 — THE POISONED BOG ===
+  {
+    "id": "the_drowned_legionary",
+    "name": "The Drowned Legionary",
+    "minDifficulty": 4, "maxDifficulty": 4,
+    "weight": 2,
+    "intro": "Half-submerged in the black water, a Roman legionary. Not dead — not alive either. His eyes flutter open as you approach. 'Kill me,' he whispers through cracked lips. 'Or save me. But don't leave me here.'",
+    "choices": [
+      { "text": "Pull him out and tend to him.", "outcomes": [
+        { "weight": 0.4, "text": "Your men drag him from the muck. He's delirious but alive. As he recovers, he whispers about the bog — where to step, where not to. The knowledge saves lives.", "effects": { "healAll": 4, "morale": 12, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.3, "text": "He clutches a sealed pouch to his chest. 'Take it,' he gasps. 'I carried it from the massacre.' Inside — a vial of potent antivenom and a legionary's charm.", "effects": { "grantItem": "woad_charm", "morale": 10, "healAll": 5 } },
+        { "weight": 0.3, "text": "He doesn't make it. But his last words are coordinates — a cache he buried before the bog took him.", "effects": { "morale": -5, "grantItem": "venomous_blade" } }
+      ]},
+      { "text": "Your healer tries to purge the bog-poison.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.6, "text": "Against all odds, your healer stabilizes him. He weeps with gratitude and tells you everything — poison paths, safe water, where the plague bearers nest. Your healer learns from the bog-toxins.", "effects": { "morale": 15, "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "grantPoison": { "amount": 1, "tag": "support", "count": 1 }, "healAll": 3 } },
+        { "weight": 0.4, "text": "The poison is like nothing your healer has seen. She extracts a sample — it will coat blades beautifully. The legionary passes peacefully.", "effects": { "grantPoison": { "amount": 1, "count": 2 }, "grantItem": "bitter_remedy", "morale": 8 } }
+      ]},
+      { "text": "Grant him a soldier's mercy.", "outcomes": [
+        { "weight": 1.0, "text": "A quick thrust. His eyes clear for one moment — gratitude — then nothing. You take his equipment. It's still good.", "effects": { "morale": 5, "grantDamage": { "amount": 1, "count": 1 }, "grantBlock": { "amount": 1, "count": 1 } } }
+      ]}
+    ]
+  },
+
   {
     "id": "grave_of_ariovistus",
     "name": "The Barrow of Ariovistus",
@@ -515,6 +606,182 @@ const RAW_EVENTS = [
       { "text": "Read the dog tags aloud. Honor the fallen.", "outcomes": [
         { "weight": 0.6, "text": "Names spoken, memories honored. Every soldier stands a little taller.", "effects": { "morale": 20, "grantMaxHp": { "amount": 1, "count": 3 } } },
         { "weight": 0.4, "text": "Among the tags, a centurion's shield-drill manual. Your front line drills until dawn.", "effects": { "morale": 15, "grantBlock": { "amount": 1, "count": 3 } } }
+      ]}
+    ]
+  },
+
+  // === MARCH 5 — THE OLD FOREST ===
+  {
+    "id": "the_speaking_tree",
+    "name": "The Speaking Tree",
+    "minDifficulty": 5, "maxDifficulty": 5,
+    "weight": 2,
+    "intro": "A gnarled tree older than Rome stands alone in a clearing. Its bark is carved with faces. As you approach, the wind carries what sounds like whispered Latin — impossible, yet unmistakable.",
+    "choices": [
+      { "text": "Listen to the whispers.", "outcomes": [
+        { "weight": 0.5, "text": "The tree speaks of paths ahead — hidden dangers and forgotten treasures. Your men memorize every word.", "effects": { "morale": 10, "grantMaxHp": { "amount": 2, "count": 3 }, "extraDiceNext": 2 } },
+        { "weight": 0.3, "text": "The whispers grow louder. One of your soldiers reaches into a hollow and pulls out an ancient weapon, wrapped in roots.", "effects": { "grantItem": "oak_splinter", "morale": 8 } },
+        { "weight": 0.2, "text": "The tree screams. Your men stagger. But when silence returns, they feel... hardened.", "effects": { "damageAll": 3, "grantDamage": { "amount": 1, "count": 3 }, "morale": -5 } }
+      ]},
+      { "text": "Offer blood to the tree.", "outcomes": [
+        { "weight": 0.6, "text": "You cut your palm and press it to the bark. The tree shudders — and the forest parts ahead, revealing a safer path.", "effects": { "damageAll": 2, "healAll": 6, "morale": 15 } },
+        { "weight": 0.4, "text": "The blood is accepted. Roots shift, revealing a cache of old power.", "effects": { "damageAll": 2, "grantItem": "wicker_ash" } }
+      ]},
+      { "text": "Your marksman reads the carvings — they're a map.", "requiresTag": "ranged", "outcomes": [
+        { "weight": 0.6, "text": "The carvings reveal hidden paths. Your marksman plots a route that avoids every ambush ahead.", "effects": { "morale": 12, "extraDiceNext": 1, "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 } } },
+        { "weight": 0.4, "text": "One carving points to a hunter's cache buried nearby. Arrows, traps, and a fine bow.", "effects": { "grantItem": "stormcaller_bow", "morale": 8 } }
+      ]},
+      { "text": "Burn it. This is sorcery.", "outcomes": [
+        { "weight": 1.0, "text": "The tree burns fast and hot. Your men cheer, but the forest remembers.", "effects": { "morale": 8, "grantDamage": { "amount": 1, "tag": "melee", "count": 2 } } }
+      ]}
+    ]
+  },
+
+  // === MARCH 6 — THE BLOOD GROVE ===
+  {
+    "id": "the_blood_altar",
+    "name": "The Blood Altar",
+    "minDifficulty": 6, "maxDifficulty": 6,
+    "weight": 2,
+    "intro": "You find an altar of dark stone, still wet with fresh blood. Ritual daggers and herb bundles surround it. The power here is palpable — dangerous, but potentially useful.",
+    "choices": [
+      { "text": "Your healer examines the ritual herbs.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.6, "text": "The herbs are potent. Your healer brews a draught that strengthens everyone's resistance to poison and blade alike.", "effects": { "grantHeal": { "amount": 2, "tag": "support", "count": 1 }, "grantMaxHp": { "amount": 2, "count": 3 } } },
+        { "weight": 0.4, "text": "A vial of concentrated blood-poison. Terrible, but effective.", "effects": { "grantPoison": { "amount": 2, "count": 1 }, "grantDamage": { "amount": 1, "count": 1 } } }
+      ]},
+      { "text": "Desecrate the altar.", "outcomes": [
+        { "weight": 0.5, "text": "You shatter the stone. Beneath it, Roman coins and a weapon — tribute from previous victims.", "effects": { "grantItem": "blood_iron_gladius", "morale": 10 } },
+        { "weight": 0.5, "text": "The altar cracks. Dark energy lashes out, but your front line absorbs it. They feel tougher.", "effects": { "damageAll": 4, "grantBlock": { "amount": 2, "tag": "melee", "count": 2 }, "morale": 5 } }
+      ]},
+      { "text": "Leave it. You're soldiers, not priests.", "outcomes": [
+        { "weight": 1.0, "text": "Your men respect the decision. Rome does not kneel to barbarian gods.", "effects": { "morale": 12 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 7 — THE HAUNTED MARCH (Undead Romans) ===
+  {
+    "id": "the_hollow_centurion",
+    "name": "The Hollow Centurion",
+    "minDifficulty": 7, "maxDifficulty": 7,
+    "weight": 2,
+    "intro": "A Roman centurion stands at a crossroads, motionless. His armor is rusted, his eyes are empty, but he salutes as you approach. He is dead — but something in him remembers duty.",
+    "choices": [
+      { "text": "Return the salute. Speak the legion's oath.", "outcomes": [
+        { "weight": 0.5, "text": "The centurion's lips move. No sound, but you understand: he shows you the safe path. Then he crumbles to dust. Your men stand taller.", "effects": { "morale": 20, "grantBlock": { "amount": 1, "count": 3 }, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.5, "text": "He offers his vine staff — the centurion's symbol of command. His duty is done. He falls to pieces with something like peace.", "effects": { "grantItem": "vine_staff", "morale": 15, "grantDamage": { "amount": 1, "tag": "command", "count": 1 } } }
+      ]},
+      { "text": "Put him to rest. He deserves it.", "outcomes": [
+        { "weight": 0.6, "text": "You speak the funeral rites. The hollow centurion kneels, then dissolves. The other dead in the area grow still — fewer will rise against you.", "effects": { "morale": 18, "healAll": 5, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.4, "text": "As you finish the rites, the ground opens. Buried beneath the centurion — his personal effects, preserved by the forest's magic.", "effects": { "grantItem": "commanders_signet", "morale": 12, "grantDamage": { "amount": 1, "count": 2 } } }
+      ]},
+      { "text": "Your officer takes command of him.", "requiresTag": "command", "outcomes": [
+        { "weight": 0.6, "text": "Your officer speaks the centurion's oath. The dead officer straightens, nods, and points the way forward. Then he fades — but the path he showed is clear and safe.", "effects": { "morale": 18, "grantDamage": { "amount": 1, "tag": "command", "count": 1 }, "grantBlock": { "amount": 2, "tag": "command", "count": 1 }, "healAll": 4 } },
+        { "weight": 0.4, "text": "The centurion recognizes the authority. He surrenders his command token — a bronze disc etched with the legion's number.", "effects": { "grantItem": "battle_standard_cord", "morale": 15 } }
+      ]},
+      { "text": "Destroy him. The dead should stay dead.", "outcomes": [
+        { "weight": 0.7, "text": "He doesn't resist. Your blade passes through him like mist. But the other dead nearby stir with anger.", "effects": { "morale": -10, "grantDamage": { "amount": 2, "tag": "melee", "count": 1 } } },
+        { "weight": 0.3, "text": "He crumbles, but his armor remains — still serviceable after all these years.", "effects": { "grantItem": "champions_helm", "morale": -5 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 7 — Second event ===
+  {
+    "id": "the_roman_graves",
+    "name": "The Roman Graves",
+    "minDifficulty": 7, "maxDifficulty": 7,
+    "weight": 1,
+    "intro": "You find rows of Roman graves — hastily dug, poorly marked. Three legions died here. Some graves are open, the occupants already walking. But a few remain sealed.",
+    "choices": [
+      { "text": "Seal the open graves with Roman burial rites.", "outcomes": [
+        { "weight": 1.0, "text": "Your officer leads the rites. Grave by grave, the dead settle. The forest feels lighter here. Your men fight with renewed purpose.", "effects": { "morale": 20, "grantBlock": { "amount": 1, "count": 3 }, "healAll": 4 } }
+      ]},
+      { "text": "Search the sealed graves for equipment.", "outcomes": [
+        { "weight": 0.6, "text": "Roman weapons, still sharp. Roman armor, still strong. The dead have no use for them anymore.", "effects": { "grantDamage": { "amount": 1, "count": 2 }, "grantBlock": { "amount": 1, "tag": "melee", "count": 2 } } },
+        { "weight": 0.4, "text": "Beneath a centurion's grave, a sealed chest. Inside — the legion's pay chest, and a fine blade.", "effects": { "grantItem": "chiefs_spear", "morale": 8 } }
+      ]},
+      { "text": "March on. You can't help the dead.", "outcomes": [
+        { "weight": 1.0, "text": "Some things are best left alone. Your men avert their eyes.", "effects": { "morale": 5 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 8 — THE DROWNED KINGDOM ===
+  {
+    "id": "the_sunken_shrine",
+    "name": "The Sunken Shrine",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "weight": 2,
+    "intro": "Half-submerged in the swamp, a stone shrine older than any tribe. Water flows from a carved face, crystal clear despite the murk around it. Runes you cannot read line the walls.",
+    "choices": [
+      { "text": "Drink from the shrine.", "outcomes": [
+        { "weight": 0.4, "text": "The water burns, then heals. Ancient power floods through you. Your soldiers gasp — then laugh. They feel invincible.", "effects": { "healAll": 10, "grantMaxHp": { "amount": 3, "count": 2 }, "morale": 10 } },
+        { "weight": 0.3, "text": "Visions of the past. You see the kingdom that was, and the weapons they forged. Knowledge becomes power.", "effects": { "grantDamage": { "amount": 1, "count": 3 }, "morale": 8 } },
+        { "weight": 0.3, "text": "The water turns black in your hands. Poison seeps in — but also strength.", "effects": { "poisonParty": 3, "grantPoison": { "amount": 2, "count": 2 }, "grantDamage": { "amount": 1, "count": 1 } } }
+      ]},
+      { "text": "Take the shrine stones. They're valuable.", "outcomes": [
+        { "weight": 0.6, "text": "The rune-stones pulse with captured power. Your equipment drinks it in.", "effects": { "grantBlock": { "amount": 2, "count": 2 }, "grantDamage": { "amount": 1, "count": 2 } } },
+        { "weight": 0.4, "text": "One stone is different — warm to the touch, humming with old magic.", "effects": { "grantItem": "runic_stone" } }
+      ]},
+      { "text": "Your fighters dive to explore the sunken chambers.", "requiresTag": "melee", "outcomes": [
+        { "weight": 0.5, "text": "Beneath the waterline, sealed vaults. Your fighters pry them open and find ancient arms — heavy, brutal, and perfectly preserved.", "effects": { "grantDamage": { "amount": 2, "tag": "melee", "count": 2 }, "grantBlock": { "amount": 1, "tag": "melee", "count": 2 } } },
+        { "weight": 0.5, "text": "A sealed sarcophagus contains a weapon of dark metal. It hums with old power.", "effects": { "grantItem": "mire_mothers_tusk", "morale": 5 } }
+      ]},
+      { "text": "Pray to whatever god this belongs to.", "outcomes": [
+        { "weight": 1.0, "text": "No god answers, but the water rises and cleanses. Poison, pain, and fear wash away.", "effects": { "healAll": 8, "morale": 15 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 9 — THE HEART OF THE FOREST ===
+  {
+    "id": "the_dryad_mother",
+    "name": "The Dryad Mother",
+    "minDifficulty": 9, "maxDifficulty": 9,
+    "weight": 2,
+    "intro": "A figure steps from a tree — not an enemy, but a dryad, ancient and vast. Her bark-skin is covered in flowers. She studies you with amber eyes and speaks in broken Latin: 'You are not the forest's enemy. Not yet.'",
+    "choices": [
+      { "text": "Ask her for passage.", "outcomes": [
+        { "weight": 0.5, "text": "'Passage is earned, not given.' She touches each soldier's forehead. Pain, then clarity. Your bodies harden like heartwood.", "effects": { "grantMaxHp": { "amount": 3, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 }, "morale": 10 } },
+        { "weight": 0.5, "text": "'The forest will test you. But I will ease the way.' Roots shift. The path ahead clears. Healing sap drips from the canopy.", "effects": { "healAll": 12, "morale": 15, "grantHeal": { "amount": 2, "tag": "support", "count": 1 } } }
+      ]},
+      { "text": "Ask her about the spirits ahead.", "outcomes": [
+        { "weight": 0.6, "text": "'They are bound. Arminius and Varus — hate holds them. You must break the bond.' She gives you a charm woven from living wood.", "effects": { "grantItem": "heartwood_charm", "morale": 12 } },
+        { "weight": 0.4, "text": "'Strike them both at once. The bond heals what you damage apart.' She marks your weapons with sap. They glow faintly.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "morale": 10 } }
+      ]},
+      { "text": "Your healer offers to trade knowledge.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.6, "text": "The dryad is fascinated by Roman medicine. She trades forest remedies — salves that knit bone, sap that purges poison. Your healer is transformed.", "effects": { "grantHeal": { "amount": 3, "tag": "support", "count": 1 }, "grantMaxHp": { "amount": 2, "tag": "support", "count": 1 }, "morale": 10 } },
+        { "weight": 0.4, "text": "She gives your healer a living seed. 'Plant this in a wound,' she says. 'It will grow into healing.' The seed pulses with green light.", "effects": { "grantItem": "marsh_fang", "grantHeal": { "amount": 1, "count": 2 }, "morale": 8 } }
+      ]},
+      { "text": "Attack her. She's part of the forest.", "outcomes": [
+        { "weight": 0.7, "text": "She vanishes into the wood before your blade connects. Thorns erupt from every surface. The forest will show no mercy now.", "effects": { "damageAll": 6, "morale": -15 } },
+        { "weight": 0.3, "text": "Your blade bites bark. She bleeds golden sap and screams. The sap hardens on your weapons — laced with power and fury.", "effects": { "damageAll": 4, "grantDamage": { "amount": 3, "count": 1 }, "grantPoison": { "amount": 2, "count": 1 }, "morale": -20 } }
+      ]}
+    ]
+  },
+
+  // === MARCH 10 — THE THRESHOLD ===
+  {
+    "id": "the_last_campfire",
+    "name": "The Last Campfire",
+    "minDifficulty": 10,
+    "weight": 2,
+    "intro": "You find a campfire still burning — impossible, since no one lives here. Around it, ghostly impressions of Roman soldiers. Not hostile. Waiting. One gestures for you to sit.",
+    "choices": [
+      { "text": "Sit and share your fire.", "outcomes": [
+        { "weight": 0.5, "text": "The ghosts smile. They share memories of home — wives, children, Rome. When dawn comes, your men are rested and resolute. The final march begins.", "effects": { "healAll": 15, "morale": 25, "grantMaxHp": { "amount": 2, "count": 3 } } },
+        { "weight": 0.5, "text": "One ghost offers you his gladius. 'Finish what we couldn't,' he whispers. Then they fade, one by one.", "effects": { "healAll": 10, "morale": 20, "grantDamage": { "amount": 2, "count": 2 } } }
+      ]},
+      { "text": "Stand watch while your men rest.", "outcomes": [
+        { "weight": 1.0, "text": "You guard through the night. The ghosts guard with you. When dawn breaks, every soldier is healed, armored, and ready for the end.", "effects": { "healAll": 12, "morale": 20, "grantBlock": { "amount": 2, "count": 3 }, "grantDamage": { "amount": 1, "count": 3 } } }
+      ]},
+      { "text": "Your officer rallies them for one last drill.", "requiresTag": "command", "outcomes": [
+        { "weight": 0.6, "text": "Living and dead drill together through the night. The ghosts remember their training. When dawn comes, your cohort has absorbed centuries of experience.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 }, "morale": 15 } },
+        { "weight": 0.4, "text": "The ghost centurion steps forward and salutes your officer. 'You are worthy.' He offers the legion's eagle — broken, but still powerful.", "effects": { "grantItem": "eagle_lost_ninth", "morale": 20 } }
+      ]},
+      { "text": "This is a trap. Move on.", "outcomes": [
+        { "weight": 1.0, "text": "The ghosts watch you go with sad eyes. Maybe it was real. Maybe it wasn't. Your men march on, wary but unbroken.", "effects": { "morale": 10, "grantBlock": { "amount": 1, "count": 3 } } }
       ]}
     ]
   }

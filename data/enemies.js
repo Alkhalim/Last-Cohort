@@ -517,6 +517,110 @@ const RAW_ENEMIES = {
     ]
   },
 
+  // === MARCH 7 ENEMIES — UNDEAD ROMANS ===
+
+  "hollow_legionary": {
+    "id": "hollow_legionary", "name": "Hollow Legionary",
+    "maxHp": 22, "row": "front", "damage": [5, 9], "speed": 1, "xpValue": 7,
+    "minDifficulty": 7,
+    "description": "A Roman legionary from the massacre, still in formation. His shield is splintered, his gladius rusted, but his discipline is eternal.",
+    "ai": "aggressive",
+    "startWithSelfBlock": true,
+    "actions": [
+      { "name": "Gladius Strike", "damage": 6, "chance": 0.4, "text": "thrusts with a rusted gladius" },
+      { "name": "Shield Brace", "damage": 0, "chance": 0.3, "text": "raises a shattered shield — old discipline holds", "blockSelf": 5 },
+      { "name": "Pilum Throw", "damage": 5, "chance": 0.3, "text": "hurls a bent pilum from beyond the grave", "ignoreRow": true }
+    ]
+  },
+  "hollow_centurion": {
+    "id": "hollow_centurion", "name": "Hollow Centurion",
+    "maxHp": 30, "row": "front", "damage": [6, 11], "speed": 1, "xpValue": 10,
+    "minDifficulty": 7,
+    "isElite": true,
+    "description": "A dead centurion, still commanding. His voice carries no sound but the hollow legionaries obey. He buffs his undead soldiers and punishes the living.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Officer's Strike", "damage": 8, "chance": 0.3, "text": "strikes with a centurion's vine staff" },
+      { "name": "Dead Command", "damage": 0, "chance": 0.3, "text": "silently commands — the dead tighten ranks", "blockAllEnemies": 4, "blockSelf": 3 },
+      { "name": "Shame of Rome", "damage": 4, "morale": -10, "chance": 0.25, "text": "stares with hollow eyes — you see your own fate", "ignoreRow": true },
+      { "name": "Rally the Fallen", "damage": 0, "chance": 0.15, "text": "raises a fist — the dead fight harder", "spawn": "hollow_legionary" }
+    ]
+  },
+  "hollow_equites": {
+    "id": "hollow_equites", "name": "Hollow Equites",
+    "maxHp": 18, "row": "back", "damage": [5, 9], "speed": 3, "xpValue": 8,
+    "minDifficulty": 7,
+    "description": "A spectral Roman cavalryman. He charges from the back line, striking any target, then retreats. The ghost of a horse carries him through the mist.",
+    "ai": "aggressive",
+    "phaseShift": { "afterTurns": 2, "toRow": "front" },
+    "actions": [
+      { "name": "Spectral Lance", "damage": 5, "chance": 0.4, "text": "charges with a ghostly lance", "ignoreRow": true, "phase": "ranged" },
+      { "name": "Phantom Trample", "damage": 4, "chance": 0.3, "text": "rides through the line", "aoe": true, "cooldown": 2, "phase": "ranged" },
+      { "name": "Ghost Charge", "damage": 8, "chance": 0.4, "text": "charges with devastating force", "phase": "melee" },
+      { "name": "Haunted Kick", "damage": 5, "morale": -6, "chance": 0.3, "text": "the ghostly horse kicks and screams", "phase": "melee" }
+    ]
+  },
+
+  // === MARCH 9 ENEMIES ===
+
+  "rot_spawn": {
+    "id": "rot_spawn", "name": "Rot Spawn",
+    "maxHp": 20, "row": "front", "damage": [5, 9], "speed": 1, "xpValue": 8,
+    "minDifficulty": 9,
+    "description": "A mass of fungal growth shaped into a shambling form. It explodes on death, spreading poison to all soldiers.",
+    "ai": "aggressive",
+    "deathPoison": 3,
+    "actions": [
+      { "name": "Fungal Slam", "damage": 7, "chance": 0.4, "text": "slams with a fungus-encrusted fist" },
+      { "name": "Spore Burst", "damage": 4, "poisonTarget": 3, "chance": 0.35, "text": "erupts in a cloud of toxic spores", "aoe": true, "cooldown": 2 },
+      { "name": "Root Lash", "damage": 6, "morale": -5, "chance": 0.25, "text": "whips with tendrils of rotting root" }
+    ]
+  },
+  "heartwood_sentinel": {
+    "id": "heartwood_sentinel", "name": "Heartwood Sentinel",
+    "maxHp": 35, "row": "front", "damage": [6, 11], "speed": 1, "xpValue": 10,
+    "minDifficulty": 9,
+    "description": "A massive tree guardian, ancient beyond reckoning. Its bark is iron, its roots are chains. It shields the forest's heart with its own body.",
+    "ai": "defensive",
+    "aura": { "damageReduction": 3 },
+    "startWithSelfBlock": true,
+    "actions": [
+      { "name": "Ironbark Slam", "damage": 9, "chance": 0.35, "text": "slams with an arm of living wood" },
+      { "name": "Root Cage", "damage": 0, "chance": 0.3, "text": "roots erupt — all warriors brace behind bark", "blockAllEnemies": 5, "blockSelf": 8 },
+      { "name": "Ancient Wrath", "damage": 6, "chance": 0.2, "text": "the ground splits with fury", "aoe": true, "cooldown": 2 },
+      { "name": "Entombing Roots", "damage": 5, "morale": -8, "chance": 0.15, "text": "roots wrap around a soldier, crushing and terrifying", "ignoreRow": true }
+    ]
+  },
+
+  // === MARCH 10 ENEMIES ===
+
+  "fate_weaver": {
+    "id": "fate_weaver", "name": "Fate Weaver",
+    "maxHp": 18, "row": "back", "damage": [4, 7], "speed": 1, "xpValue": 10,
+    "minDifficulty": 10,
+    "description": "A spectral seer who unravels the threads of fate. Her presence corrupts dice and twists probability against you.",
+    "ai": "sniper",
+    "actions": [
+      { "name": "Fate Twist", "damage": 5, "morale": -8, "chance": 0.3, "text": "twists the threads of fate — a soldier staggers", "ignoreRow": true },
+      { "name": "Unweave", "damage": 0, "chance": 0.3, "text": "unweaves a soldier's fortune — a die weakens", "runeBinding": true, "cooldown": 2 },
+      { "name": "Doom Thread", "damage": 8, "chance": 0.25, "text": "pulls the doom thread taut", "ignoreRow": true, "cooldown": 1 },
+      { "name": "Fate Shield", "damage": 0, "chance": 0.15, "text": "weaves protective threads around allies", "blockAllEnemies": 4 }
+    ]
+  },
+  "spirit_wolf": {
+    "id": "spirit_wolf", "name": "Spirit Wolf",
+    "maxHp": 14, "row": "front", "damage": [5, 9], "speed": 4, "xpValue": 7,
+    "minDifficulty": 10,
+    "description": "A ghostly wolf that hunts between worlds. Impossibly fast, it strikes at the weakest and vanishes. Its howl drains the will to fight.",
+    "ai": "sniper",
+    "woundedDoubleAttack": true,
+    "actions": [
+      { "name": "Spectral Bite", "damage": 6, "chance": 0.4, "text": "lunges with ghostly fangs" },
+      { "name": "Spirit Howl", "damage": 0, "morale": -10, "chance": 0.3, "text": "howls from between worlds — your men's blood freezes" },
+      { "name": "Phase Strike", "damage": 8, "chance": 0.3, "text": "strikes through flesh and armor", "ignoreRow": true, "cooldown": 1 }
+    ]
+  },
+
   // === STORY BOSSES ===
 
   "corpse_of_arminius": {
