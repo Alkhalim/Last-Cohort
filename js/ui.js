@@ -1514,9 +1514,41 @@ class GameUI {
     const marchTheme = (typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) ? MARCH_THEMES[this.difficulty].theme : 'forest';
     const terrainSeed = this._mapTerrainSeed || ((this.difficulty || 1) * 7919);
     const tRand = (i) => { let x = Math.sin(terrainSeed + i * 127.1) * 43758.5453; return x - Math.floor(x); };
-    const margin = 20; // keep elements away from edges
+    const margin = 20;
     const tX = (i) => margin + tRand(i) * (wrapperWidth - margin * 2);
     const tY = (i) => margin + tRand(i) * (totalHeight - margin * 2);
+
+    // Collect path segments and node positions for collision avoidance
+    const pathSegments = [];
+    for (const node of this.mapNodes) {
+      if (!isVisible(node)) continue;
+      const from = nodePositions[node.id];
+      for (const childId of node.children) {
+        const childNode = this.mapNodes.find(n => n.id === childId);
+        if (!childNode || !isVisible(childNode)) continue;
+        const to = nodePositions[childId];
+        if (to) pathSegments.push({ x1: from.x, y1: from.y, x2: to.x, y2: to.y });
+      }
+    }
+    const nodePoints = Object.values(nodePositions);
+
+    // Check if a point is too close to any path or node
+    const nearPath = (px, py, minDist) => {
+      for (const seg of pathSegments) {
+        const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1;
+        const len2 = dx * dx + dy * dy;
+        if (len2 === 0) continue;
+        const t = Math.max(0, Math.min(1, ((px - seg.x1) * dx + (py - seg.y1) * dy) / len2));
+        const cx = seg.x1 + t * dx, cy = seg.y1 + t * dy;
+        const dist = Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+        if (dist < minDist) return true;
+      }
+      for (const np of nodePoints) {
+        const dist = Math.sqrt((px - np.x) * (px - np.x) + (py - np.y) * (py - np.y));
+        if (dist < minDist + 20) return true;
+      }
+      return false;
+    };
 
     // Layer 1: Ground patches (large, very subtle, blended)
     const patchCount = 6 + Math.floor(tRand(800) * 4);
@@ -1561,12 +1593,16 @@ class GameUI {
       }
     }
 
-    // Layer 3: Detail decorations (smaller, sparser, more varied)
-    const decoCount = 15 + Math.floor(tRand(999) * 8);
+    // Layer 3: Detail decorations — higher density, avoid paths
+    const decoCount = 35 + Math.floor(tRand(999) * 15);
     for (let i = 0; i < decoCount; i++) {
       const tx = tX(i * 3);
       const ty = tY(i * 3 + 1);
       const size = 5 + tRand(i * 3 + 2) * 10;
+
+      // Skip decorations that would overlap paths or nodes
+      if (nearPath(tx, ty, size + 12)) continue;
+
       ctx.globalAlpha = 0.12 + tRand(i * 5) * 0.10;
 
       switch (marchTheme) {

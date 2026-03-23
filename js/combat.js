@@ -2285,9 +2285,9 @@ class CombatEngine {
         unit.stats.damageDealt += extraDmg;
         parts.push(`Flanking strike! Double damage to back row!`);
       } else {
-        unit.block = (unit.block || 0) + 5;
-        unit.stats.blockGenerated += 5;
-        parts.push(`${unit.name} gains 5 Block from flanking.`);
+        unit.block = (unit.block || 0) + 3;
+        unit.stats.blockGenerated += 3;
+        parts.push(`${unit.name} gains 3 Block from flanking.`);
       }
     }
 

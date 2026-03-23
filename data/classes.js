@@ -620,11 +620,11 @@ const RAW_CLASSES = {
         "effects": { "warhorseKick": true }
       },
       {
-        "id": "flanking_strike", "name": "Flanking Strike", "cooldown": 1,
+        "id": "flanking_strike", "name": "Flanking Strike", "cooldown": 2,
         "cost": { "type": "range", "min": 2, "max": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Deal 5 damage. Double damage if target is in back row. Gain 5 Block if target is in front row.",
-        "effects": { "damage": 5, "flankingStrike": true }
+        "description": "Deal 3 damage. Double damage if target is in back row. Gain 3 Block if target is in front row.",
+        "effects": { "damage": 3, "flankingStrike": true, "bonusDmgScale": 0.65 }
       },
       {
         "id": "scouting_maneuver", "name": "Scouting Maneuver", "cooldown": 2,
