@@ -169,7 +169,7 @@ const RAW_CLASSES = {
       },
       {
         "id": "tactical_preparation", "name": "Tactical Preparation", "cooldown": 3,
-        "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
+        "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_allies",
         "description": "Prepare the cohort. Gain +2 bonus dice next turn. +5 Morale.",
         "effects": { "bonusDiceNext": 2, "morale": 5 }
       },
