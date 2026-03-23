@@ -2357,7 +2357,7 @@ class GameUI {
         'stun', 'overrun', 'shoulderCharge', 'echoOnKill', 'warhorseKick',
         'smokeScreen', 'damageShield', 'resonance', 'pullToFront',
         'consumeAllBuffs', 'moraleHealAll', 'avengeDamage', 'deafenAll',
-        'fortifiedStrike', 'bonusDiceNext', 'cleanseAll', 'triageStrike',
+        'fortifiedStrike', 'precisionDrill', 'bonusDiceNext', 'cleanseAll', 'triageStrike',
         'calculatedDosage', 'trickShot', 'wildernessInstinct', 'fortunesFavor',
         'freeAction', 'harmonicFrequency', 'flankingStrike', 'scoutingManeuver',
         'healSelf', 'skipNextTurn', 'imperialDecree', 'lastStand', 'blockScale',

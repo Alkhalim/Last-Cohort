@@ -81,8 +81,8 @@ const RAW_CLASSES = {
       {
         "id": "precision_drill", "name": "Precision Drill", "cooldown": 1,
         "cost": { "type": "consecutive" }, "target": "single_enemy",
-        "description": "Requires consecutive dice. Deal damage equal to the sum of both dice, depending on dice used.",
-        "effects": { "damage": 0, "dieScaleDamage": true }
+        "description": "Requires consecutive dice. Deal damage equal to the higher die. Gain Block equal to the lower die.",
+        "effects": { "precisionDrill": true }
       },
       {
         "id": "fortified_strike", "name": "Fortified Strike",

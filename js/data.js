@@ -364,6 +364,7 @@ function buildSkillExecute(skillData) {
 
     // New mechanics
     if (effects.fortifiedStrike) result.fortifiedStrike = true;
+    if (effects.precisionDrill) result.precisionDrill = true;
     if (effects.bonusDiceNext) result.bonusDiceNext = effects.bonusDiceNext;
     if (effects.cleanseAll) result.cleanseAll = true;
     if (effects.triageStrike) result.triageStrike = effects.triageStrike;
@@ -464,6 +465,8 @@ function loadGameData() {
 }
 
 // --- Encounter generation by threat level ---
+let _lastEncounterName = null;
+
 function generateEncounterByThreat(threat, difficulty) {
   const diff = difficulty || 1;
   const filterByDiff = (list) => list.filter(e => {
@@ -471,19 +474,21 @@ function generateEncounterByThreat(threat, difficulty) {
     if (e.maxDifficulty && e.maxDifficulty < diff) return false;
     return true;
   });
+  const pickAvoidRepeat = (pool) => {
+    if (pool.length === 0) return null;
+    const filtered = pool.filter(e => e.name !== _lastEncounterName);
+    const chosen = (filtered.length > 0 ? filtered : pool)[Math.floor(Math.random() * (filtered.length > 0 ? filtered : pool).length)];
+    _lastEncounterName = chosen.name;
+    return chosen;
+  };
   if (threat <= 1 && diff <= 3) {
-    const pool = filterByDiff(_encounterThreatData.easy);
-    return pool[Math.floor(Math.random() * pool.length)];
+    return pickAvoidRepeat(filterByDiff(_encounterThreatData.easy));
   } else if (threat <= 1 && diff > 3) {
-    // No easy encounters after difficulty 3 — promote to mid
-    const pool = filterByDiff(_encounterThreatData.mid);
-    return pool[Math.floor(Math.random() * pool.length)];
+    return pickAvoidRepeat(filterByDiff(_encounterThreatData.mid));
   } else if (threat === 2) {
-    const pool = filterByDiff(_encounterThreatData.mid);
-    return pool[Math.floor(Math.random() * pool.length)];
+    return pickAvoidRepeat(filterByDiff(_encounterThreatData.mid));
   } else {
-    const pool = filterByDiff(_encounterThreatData.hard);
-    return pool[Math.floor(Math.random() * pool.length)];
+    return pickAvoidRepeat(filterByDiff(_encounterThreatData.hard));
   }
 }
 

@@ -1754,6 +1754,25 @@ class CombatEngine {
           unit.stats.damageDealt += dmg;
           // Ballistarius pinning on AoE
           if (unit.classId === 'ballistarius' && dmg > 0 && e.hp > 0) e._pinned = true;
+          // "Whenever deals damage" triggers per target on AoE
+          if (dmg > 0 && e.hp > 0) {
+            if (this.unitHasItem(unit, 'venomous_blade')) {
+              const vbLv = this.getItemLevel(unit, 'venomous_blade');
+              e.poison = (e.poison || 0) + vbLv;
+              unit.stats.poisonInflicted += vbLv;
+            }
+            if (this.unitHasItem(unit, 'legion_composite_bow')) {
+              const lcbLv = this.getItemLevel(unit, 'legion_composite_bow');
+              e.poison = (e.poison || 0) + lcbLv;
+              unit.stats.poisonInflicted += lcbLv;
+            }
+          }
+          if (dmg > 0 && this.unitHasItem(unit, 'blood_iron_gladius') && unit.hp < unit.maxHp) {
+            const bigLv = this.getItemLevel(unit, 'blood_iron_gladius');
+            const bigHeal = 1 * bigLv;
+            unit.hp = Math.min(unit.maxHp, unit.hp + bigHeal);
+            unit.stats.healingDone += bigHeal;
+          }
         }
       });
       parts.push(`${unit.name} uses ${skill.name} \u2014 deals ${aoeDmg} damage to all enemies.`);
@@ -1795,6 +1814,10 @@ class CombatEngine {
           u.hp = Math.min(u.maxHp, u.hp + totalHeal);
           const actual = u.hp - before;
           unit.stats.healingDone += actual;
+          // Bone Saw of Asclepius: healing grants target +2 damage per healed ally
+          if (this.unitHasItem(unit, 'bone_saw_of_asclepius') && actual > 0) {
+            u.buffs.push({ damage: 2, attacksLeft: 1 });
+          }
           // Crown of Thorns: when healed, deal damage to all enemies (scales with level)
           if (this.unitHasItem(u, 'crown_of_thorns') && actual > 0) {
             const cotLv = this.getItemLevel(u, 'crown_of_thorns');
@@ -1815,16 +1838,18 @@ class CombatEngine {
           }
         }
       });
-      // Herbalist's Satchel: healing applies poison to random enemy (scales with level)
+      // Herbalist's Satchel: healing applies poison per healed ally (scales with level)
       if (this.unitHasItem(unit, 'herbalists_satchel')) {
         const hsLv = this.getItemLevel(unit, 'herbalists_satchel');
         const hsPoison = 1 * hsLv;
+        const healedCount = this.party.filter(u => !u.downed).length;
         const aliveEnemies = this.enemies.filter(e => !e.dead);
-        if (aliveEnemies.length > 0) {
+        for (let h = 0; h < healedCount && aliveEnemies.length > 0; h++) {
           const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
           victim.poison = (victim.poison || 0) + hsPoison;
-          parts.push(`Herbalist's Satchel poisons ${victim.name}. (+${hsPoison} Poison)`);
+          unit.stats.poisonInflicted += hsPoison;
         }
+        if (healedCount > 0) parts.push(`Herbalist's Satchel spreads ${hsPoison} Poison (${healedCount} triggers).`);
       }
       // Marsh Root Brew: healing grants block to all healed allies (scales with level)
       if (this.unitHasItem(unit, 'marsh_root_brew')) {
@@ -2097,6 +2122,23 @@ class CombatEngine {
     }
 
     // --- NEW MECHANICS ---
+
+    // Precision Drill: damage = higher die, block = lower die
+    if (result.precisionDrill && result.target) {
+      const usedDice = this.dicePool.dice.filter(d => d.used).slice(-2);
+      const vals = usedDice.map(d => d.value).sort((a, b) => a - b);
+      const loDie = vals[0] || 1;
+      const hiDie = vals[1] || vals[0] || 1;
+      const dmg = hiDie + bonusDmg;
+      const blk = loDie + bonusBlock;
+      unit.block = (unit.block || 0) + blk;
+      unit.stats.blockGenerated += blk;
+      let totalDmg = dmg;
+      if (result.target.block > 0) { const ab = Math.min(result.target.block, totalDmg); result.target.block -= ab; totalDmg -= ab; }
+      result.target.hp = Math.max(0, result.target.hp - totalDmg);
+      unit.stats.damageDealt += totalDmg;
+      parts.push(`${unit.name} uses ${skill.name} — ${totalDmg} damage (die ${hiDie}), +${blk} Block (die ${loDie}).`);
+    }
 
     // Fortified Strike: gain 2 block, deal damage = current block
     if (result.fortifiedStrike) {
