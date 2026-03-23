@@ -1346,6 +1346,7 @@ class Game {
     this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
+    this.ui._mapTerrainSeed = Math.floor(Math.random() * 100000);
     this.showMarchTitleCard();
   }
 
@@ -1359,6 +1360,7 @@ class Game {
     this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
+    this.ui._mapTerrainSeed = Math.floor(Math.random() * 100000);
     this.showMarchTitleCard();
   }
 

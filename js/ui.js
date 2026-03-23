@@ -1506,143 +1506,248 @@ class GameUI {
 
     // Draw terrain decorations based on march theme
     const marchTheme = (typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) ? MARCH_THEMES[this.difficulty].theme : 'forest';
-    const terrainSeed = (this.difficulty || 1) * 7919;
+    const terrainSeed = this._mapTerrainSeed || ((this.difficulty || 1) * 7919);
     const tRand = (i) => { let x = Math.sin(terrainSeed + i * 127.1) * 43758.5453; return x - Math.floor(x); };
-    const terrainCount = 30 + Math.floor(tRand(999) * 15);
+    const margin = 20; // keep elements away from edges
+    const tX = (i) => margin + tRand(i) * (wrapperWidth - margin * 2);
+    const tY = (i) => margin + tRand(i) * (totalHeight - margin * 2);
 
-    for (let i = 0; i < terrainCount; i++) {
-      const tx = tRand(i * 3) * wrapperWidth;
-      const ty = tRand(i * 3 + 1) * totalHeight;
-      const size = 6 + tRand(i * 3 + 2) * 14;
-      ctx.globalAlpha = 0.15 + tRand(i * 5) * 0.15;
+    // Layer 1: Ground patches (large, very subtle, blended)
+    const patchCount = 6 + Math.floor(tRand(800) * 4);
+    for (let i = 0; i < patchCount; i++) {
+      const px = tX(i * 7 + 100);
+      const py = tY(i * 7 + 101);
+      const pr = 30 + tRand(i * 7 + 102) * 50;
+      ctx.globalAlpha = 0.06 + tRand(i * 7 + 103) * 0.06;
+      const patchColors = {
+        'forest': '#2a5a20', 'forest-dark': '#1a4a18', 'warcamp': '#4a3820',
+        'bog': '#1a4a3a', 'ancient': '#3a5a18', 'blood': '#4a1818',
+        'haunted': '#2a2a40', 'drowned': '#1a3a4a', 'heart': '#5a2a10', 'threshold': '#3a1a4a',
+      };
+      const grad = ctx.createRadialGradient(px, py, 0, px, py, pr);
+      grad.addColorStop(0, patchColors[marchTheme] || '#2a3a20');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(px - pr, py - pr, pr * 2, pr * 2);
+    }
+
+    // Layer 2: Rivers/streams (for bog, drowned, ancient, heart)
+    const hasWater = ['bog', 'drowned', 'ancient', 'heart'].includes(marchTheme);
+    if (hasWater) {
+      const riverCount = marchTheme === 'drowned' ? 2 : 1;
+      for (let r = 0; r < riverCount; r++) {
+        ctx.globalAlpha = marchTheme === 'drowned' ? 0.12 : 0.08;
+        ctx.strokeStyle = marchTheme === 'heart' ? '#6a3020' : '#3a7a8a';
+        ctx.lineWidth = 4 + tRand(r * 50 + 200) * 6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        let rx = margin + tRand(r * 50 + 201) * (wrapperWidth - margin * 2);
+        let ry = margin;
+        ctx.moveTo(rx, ry);
+        for (let s = 0; s < 8; s++) {
+          const nx = rx + (tRand(r * 50 + s * 11 + 210) - 0.5) * 80;
+          ry += totalHeight / 8;
+          const cpx = rx + (tRand(r * 50 + s * 11 + 215) - 0.5) * 60;
+          ctx.quadraticCurveTo(Math.max(margin, Math.min(wrapperWidth - margin, cpx)), ry - totalHeight / 16, Math.max(margin, Math.min(wrapperWidth - margin, nx)), Math.min(totalHeight - margin, ry));
+          rx = Math.max(margin, Math.min(wrapperWidth - margin, nx));
+        }
+        ctx.stroke();
+      }
+    }
+
+    // Layer 3: Detail decorations (smaller, sparser, more varied)
+    const decoCount = 15 + Math.floor(tRand(999) * 8);
+    for (let i = 0; i < decoCount; i++) {
+      const tx = tX(i * 3);
+      const ty = tY(i * 3 + 1);
+      const size = 5 + tRand(i * 3 + 2) * 10;
+      ctx.globalAlpha = 0.12 + tRand(i * 5) * 0.10;
 
       switch (marchTheme) {
         case 'forest':
         case 'forest-dark': {
-          ctx.fillStyle = marchTheme === 'forest-dark' ? '#3a7a3a' : '#4a9a4a';
-          ctx.beginPath();
-          ctx.moveTo(tx, ty - size * 2);
-          ctx.lineTo(tx - size, ty + size * 0.5);
-          ctx.lineTo(tx + size, ty + size * 0.5);
-          ctx.closePath();
-          ctx.fill();
+          // Multi-layered pine tree
+          const dark = marchTheme === 'forest-dark';
+          ctx.fillStyle = dark ? '#2a6a2a' : '#3a8a3a';
+          for (let layer = 0; layer < 3; layer++) {
+            const lw = size * (1 - layer * 0.25);
+            const ly = ty - size * (0.6 + layer * 0.6);
+            ctx.beginPath();
+            ctx.moveTo(tx, ly - lw * 0.8);
+            ctx.lineTo(tx - lw, ly + lw * 0.3);
+            ctx.lineTo(tx + lw, ly + lw * 0.3);
+            ctx.closePath();
+            ctx.fill();
+          }
           ctx.fillStyle = '#5a3a20';
-          ctx.fillRect(tx - size * 0.15, ty + size * 0.5, size * 0.3, size * 0.6);
+          ctx.fillRect(tx - size * 0.12, ty - size * 0.3, size * 0.24, size * 0.5);
           break;
         }
         case 'warcamp': {
           if (tRand(i * 7) > 0.5) {
-            ctx.fillStyle = '#8a6040';
+            // Tent with detail
+            ctx.fillStyle = '#7a5535';
             ctx.beginPath();
             ctx.moveTo(tx, ty - size * 1.5);
-            ctx.lineTo(tx - size * 1.2, ty + size * 0.5);
-            ctx.lineTo(tx + size * 1.2, ty + size * 0.5);
+            ctx.lineTo(tx - size, ty + size * 0.3);
+            ctx.lineTo(tx + size, ty + size * 0.3);
             ctx.closePath();
             ctx.fill();
+            ctx.strokeStyle = '#5a3a20';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(tx, ty - size * 1.5); ctx.lineTo(tx, ty + size * 0.3); ctx.stroke();
           } else {
-            ctx.strokeStyle = '#9a7050';
-            ctx.lineWidth = 2;
+            // Campfire embers
+            ctx.fillStyle = '#aa6030';
             ctx.beginPath();
-            ctx.moveTo(tx, ty - size);
-            ctx.lineTo(tx, ty + size);
-            ctx.stroke();
+            ctx.arc(tx, ty, size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#cc8840';
+            ctx.globalAlpha *= 0.6;
             ctx.beginPath();
-            ctx.moveTo(tx - size * 0.4, ty - size * 0.3);
-            ctx.lineTo(tx + size * 0.4, ty - size * 0.3);
-            ctx.stroke();
+            ctx.arc(tx, ty, size * 0.15, 0, Math.PI * 2);
+            ctx.fill();
           }
           break;
         }
         case 'bog': {
-          ctx.fillStyle = '#2a6858';
-          ctx.beginPath();
-          ctx.ellipse(tx, ty, size * 1.5, size * 0.6, tRand(i * 11) * Math.PI, 0, Math.PI * 2);
-          ctx.fill();
-          if (tRand(i * 9) > 0.6) {
-            ctx.strokeStyle = '#4a8a4a';
-            ctx.lineWidth = 1.5;
-            for (let r = 0; r < 3; r++) {
-              const rx = tx + (tRand(i * 13 + r) - 0.5) * size * 2;
-              ctx.beginPath();
-              ctx.moveTo(rx, ty);
-              ctx.lineTo(rx + (tRand(i * 17 + r) - 0.5) * 3, ty - size * 1.5);
-              ctx.stroke();
-            }
+          // Reed clusters
+          ctx.strokeStyle = '#4a8a4a';
+          ctx.lineWidth = 1.5;
+          for (let r = 0; r < 4; r++) {
+            const rx = tx + (tRand(i * 13 + r) - 0.5) * size * 1.5;
+            const lean = (tRand(i * 17 + r) - 0.5) * 4;
+            ctx.beginPath();
+            ctx.moveTo(rx, ty + size * 0.2);
+            ctx.quadraticCurveTo(rx + lean, ty - size * 0.5, rx + lean * 1.5, ty - size * 1.2);
+            ctx.stroke();
           }
           break;
         }
         case 'ancient': {
-          ctx.fillStyle = '#5a7a30';
-          ctx.beginPath();
-          ctx.arc(tx, ty - size, size * 1.2, 0, Math.PI * 2);
-          ctx.fill();
+          // Gnarled tree with roots
           ctx.fillStyle = '#4a3a18';
-          ctx.fillRect(tx - size * 0.3, ty - size * 0.5, size * 0.6, size * 1.5);
+          ctx.fillRect(tx - size * 0.2, ty - size * 0.8, size * 0.4, size * 1.2);
+          ctx.fillStyle = '#4a7a28';
+          ctx.beginPath();
+          ctx.arc(tx, ty - size, size * 0.9, 0, Math.PI * 2);
+          ctx.fill();
+          // Roots
+          ctx.strokeStyle = '#3a2a10';
+          ctx.lineWidth = 1.5;
+          for (let r = 0; r < 3; r++) {
+            ctx.beginPath();
+            ctx.moveTo(tx + (r - 1) * size * 0.2, ty + size * 0.4);
+            ctx.quadraticCurveTo(tx + (tRand(i * 23 + r) - 0.5) * size * 2, ty + size * 0.8, tx + (tRand(i * 29 + r) - 0.5) * size * 3, ty + size);
+            ctx.stroke();
+          }
           break;
         }
         case 'blood': {
-          ctx.fillStyle = '#5a2020';
-          ctx.fillRect(tx - size * 0.5, ty - size, size, size * 2);
-          if (tRand(i * 19) > 0.6) {
-            ctx.fillStyle = '#8a2020';
-            ctx.beginPath();
-            ctx.arc(tx, ty - size * 1.3, size * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-          }
+          // Standing stone with rune marks
+          ctx.fillStyle = '#4a2828';
+          const stoneW = size * 0.5, stoneH = size * 1.6;
+          ctx.beginPath();
+          ctx.moveTo(tx - stoneW, ty + stoneH * 0.3);
+          ctx.lineTo(tx - stoneW * 0.8, ty - stoneH * 0.5);
+          ctx.quadraticCurveTo(tx, ty - stoneH * 0.7, tx + stoneW * 0.8, ty - stoneH * 0.5);
+          ctx.lineTo(tx + stoneW, ty + stoneH * 0.3);
+          ctx.closePath();
+          ctx.fill();
+          // Rune scratch
+          ctx.strokeStyle = '#8a3030';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(tx - size * 0.15, ty - size * 0.4);
+          ctx.lineTo(tx + size * 0.15, ty + size * 0.1);
+          ctx.moveTo(tx + size * 0.15, ty - size * 0.4);
+          ctx.lineTo(tx - size * 0.15, ty + size * 0.1);
+          ctx.stroke();
           break;
         }
         case 'haunted': {
           if (tRand(i * 7) > 0.4) {
-            ctx.fillStyle = '#505068';
-            ctx.fillRect(tx - size * 0.4, ty - size, size * 0.8, size * 1.3);
+            // Gravestone with cross
+            ctx.fillStyle = '#454560';
+            ctx.fillRect(tx - size * 0.3, ty - size * 0.8, size * 0.6, size * 1.1);
             ctx.beginPath();
-            ctx.arc(tx, ty - size, size * 0.4, Math.PI, 0);
+            ctx.arc(tx, ty - size * 0.8, size * 0.3, Math.PI, 0);
             ctx.fill();
           } else {
-            ctx.fillStyle = '#6060cc';
-            ctx.globalAlpha *= 0.7;
+            // Wisp with trail
+            ctx.fillStyle = '#5050bb';
+            ctx.globalAlpha *= 0.5;
             ctx.beginPath();
-            ctx.arc(tx, ty, size * 0.5, 0, Math.PI * 2);
+            ctx.arc(tx, ty, size * 0.3, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = '#4040aa';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(tx, ty);
+            ctx.quadraticCurveTo(tx + size * 0.5, ty + size * 0.3, tx + size, ty - size * 0.2);
+            ctx.stroke();
           }
           break;
         }
         case 'drowned': {
-          ctx.fillStyle = '#2a5a6a';
-          ctx.beginPath();
-          ctx.ellipse(tx, ty, size * 2, size * 0.5, 0, 0, Math.PI * 2);
-          ctx.fill();
           if (tRand(i * 23) > 0.5) {
-            ctx.fillStyle = '#4a6a78';
-            ctx.fillRect(tx - size * 0.3, ty - size * 2, size * 0.6, size * 2);
-            ctx.fillRect(tx - size * 0.5, ty - size * 2.2, size, size * 0.3);
-          }
-          break;
-        }
-        case 'heart': {
-          ctx.fillStyle = '#8a4020';
-          ctx.beginPath();
-          ctx.arc(tx, ty, size * 0.8, 0, Math.PI * 2);
-          ctx.fill();
-          if (tRand(i * 29) > 0.5) {
-            ctx.fillStyle = '#9a5a28';
+            // Broken column
+            ctx.fillStyle = '#3a5a68';
+            ctx.fillRect(tx - size * 0.25, ty - size * 1.5, size * 0.5, size * 1.5);
+            // Capital
+            ctx.fillRect(tx - size * 0.4, ty - size * 1.7, size * 0.8, size * 0.25);
+            // Cracks
+            ctx.strokeStyle = '#2a4a58';
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.ellipse(tx + size, ty - size * 0.5, size * 0.5, size * 1, tRand(i * 31) * Math.PI, 0, Math.PI * 2);
+            ctx.moveTo(tx - size * 0.1, ty - size * 0.3);
+            ctx.lineTo(tx + size * 0.05, ty - size * 0.8);
+            ctx.stroke();
+          } else {
+            // Algae patch
+            ctx.fillStyle = '#2a6a5a';
+            ctx.globalAlpha *= 0.6;
+            ctx.beginPath();
+            ctx.ellipse(tx, ty, size * 1.2, size * 0.4, tRand(i * 31) * 0.5, 0, Math.PI * 2);
             ctx.fill();
           }
           break;
         }
+        case 'heart': {
+          // Fungal cluster
+          ctx.fillStyle = '#8a4020';
+          for (let f = 0; f < 3; f++) {
+            const fx = tx + (tRand(i * 29 + f) - 0.5) * size;
+            const fy = ty + (tRand(i * 31 + f) - 0.5) * size * 0.5;
+            const fs = size * (0.3 + tRand(i * 37 + f) * 0.4);
+            ctx.beginPath();
+            ctx.ellipse(fx, fy, fs, fs * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          // Tendrils
+          ctx.strokeStyle = '#6a3018';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(tx, ty + size * 0.4);
+          ctx.quadraticCurveTo(tx + size, ty + size, tx + size * 1.5, ty + size * 0.3);
+          ctx.stroke();
+          break;
+        }
         case 'threshold': {
-          ctx.strokeStyle = '#7a4a9a';
+          // Spectral rift
+          ctx.strokeStyle = '#6a3a8a';
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(tx - size, ty - size * 0.5);
-          ctx.quadraticCurveTo(tx, ty + size, tx + size, ty - size * 0.3);
+          ctx.moveTo(tx - size * 0.8, ty);
+          ctx.bezierCurveTo(tx - size * 0.3, ty - size, tx + size * 0.3, ty + size, tx + size * 0.8, ty);
           ctx.stroke();
-          if (tRand(i * 37) > 0.6) {
-            ctx.fillStyle = '#5a3a7a';
+          // Void particles
+          ctx.fillStyle = '#5a2a7a';
+          for (let p = 0; p < 3; p++) {
+            const px2 = tx + (tRand(i * 41 + p) - 0.5) * size * 1.5;
+            const py2 = ty + (tRand(i * 43 + p) - 0.5) * size;
             ctx.beginPath();
-            ctx.arc(tx, ty, size * 0.4, 0, Math.PI * 2);
+            ctx.arc(px2, py2, size * 0.12, 0, Math.PI * 2);
             ctx.fill();
           }
           break;
