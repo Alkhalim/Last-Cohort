@@ -1508,32 +1508,31 @@ class GameUI {
     const marchTheme = (typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) ? MARCH_THEMES[this.difficulty].theme : 'forest';
     const terrainSeed = (this.difficulty || 1) * 7919;
     const tRand = (i) => { let x = Math.sin(terrainSeed + i * 127.1) * 43758.5453; return x - Math.floor(x); };
-    const terrainCount = 25 + Math.floor(tRand(999) * 10);
+    const terrainCount = 30 + Math.floor(tRand(999) * 15);
 
     for (let i = 0; i < terrainCount; i++) {
       const tx = tRand(i * 3) * wrapperWidth;
       const ty = tRand(i * 3 + 1) * totalHeight;
-      const size = 3 + tRand(i * 3 + 2) * 8;
-      ctx.globalAlpha = 0.06 + tRand(i * 5) * 0.08;
+      const size = 6 + tRand(i * 3 + 2) * 14;
+      ctx.globalAlpha = 0.15 + tRand(i * 5) * 0.15;
 
       switch (marchTheme) {
         case 'forest':
         case 'forest-dark': {
-          // Pine trees
-          ctx.fillStyle = marchTheme === 'forest-dark' ? '#1a3a1a' : '#1e4a1e';
+          ctx.fillStyle = marchTheme === 'forest-dark' ? '#3a7a3a' : '#4a9a4a';
           ctx.beginPath();
           ctx.moveTo(tx, ty - size * 2);
           ctx.lineTo(tx - size, ty + size * 0.5);
           ctx.lineTo(tx + size, ty + size * 0.5);
           ctx.closePath();
           ctx.fill();
+          ctx.fillStyle = '#5a3a20';
           ctx.fillRect(tx - size * 0.15, ty + size * 0.5, size * 0.3, size * 0.6);
           break;
         }
         case 'warcamp': {
-          // Tents and stakes
           if (tRand(i * 7) > 0.5) {
-            ctx.fillStyle = '#3a2a1a';
+            ctx.fillStyle = '#8a6040';
             ctx.beginPath();
             ctx.moveTo(tx, ty - size * 1.5);
             ctx.lineTo(tx - size * 1.2, ty + size * 0.5);
@@ -1541,8 +1540,8 @@ class GameUI {
             ctx.closePath();
             ctx.fill();
           } else {
-            ctx.strokeStyle = '#4a3020';
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = '#9a7050';
+            ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(tx, ty - size);
             ctx.lineTo(tx, ty + size);
@@ -1555,14 +1554,13 @@ class GameUI {
           break;
         }
         case 'bog': {
-          // Puddles and reeds
-          ctx.fillStyle = '#1a3030';
+          ctx.fillStyle = '#2a6858';
           ctx.beginPath();
           ctx.ellipse(tx, ty, size * 1.5, size * 0.6, tRand(i * 11) * Math.PI, 0, Math.PI * 2);
           ctx.fill();
           if (tRand(i * 9) > 0.6) {
-            ctx.strokeStyle = '#2a4a2a';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#4a8a4a';
+            ctx.lineWidth = 1.5;
             for (let r = 0; r < 3; r++) {
               const rx = tx + (tRand(i * 13 + r) - 0.5) * size * 2;
               ctx.beginPath();
@@ -1574,21 +1572,19 @@ class GameUI {
           break;
         }
         case 'ancient': {
-          // Gnarled old trees and moss
-          ctx.fillStyle = '#2a3a18';
+          ctx.fillStyle = '#5a7a30';
           ctx.beginPath();
           ctx.arc(tx, ty - size, size * 1.2, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = '#1a2a10';
+          ctx.fillStyle = '#4a3a18';
           ctx.fillRect(tx - size * 0.3, ty - size * 0.5, size * 0.6, size * 1.5);
           break;
         }
         case 'blood': {
-          // Ritual stones and dark marks
-          ctx.fillStyle = '#2a1010';
+          ctx.fillStyle = '#5a2020';
           ctx.fillRect(tx - size * 0.5, ty - size, size, size * 2);
           if (tRand(i * 19) > 0.6) {
-            ctx.fillStyle = '#4a1515';
+            ctx.fillStyle = '#8a2020';
             ctx.beginPath();
             ctx.arc(tx, ty - size * 1.3, size * 0.4, 0, Math.PI * 2);
             ctx.fill();
@@ -1596,16 +1592,15 @@ class GameUI {
           break;
         }
         case 'haunted': {
-          // Gravestones and wisps
           if (tRand(i * 7) > 0.4) {
-            ctx.fillStyle = '#252530';
+            ctx.fillStyle = '#505068';
             ctx.fillRect(tx - size * 0.4, ty - size, size * 0.8, size * 1.3);
             ctx.beginPath();
             ctx.arc(tx, ty - size, size * 0.4, Math.PI, 0);
             ctx.fill();
           } else {
-            ctx.fillStyle = '#3535aa';
-            ctx.globalAlpha *= 0.6;
+            ctx.fillStyle = '#6060cc';
+            ctx.globalAlpha *= 0.7;
             ctx.beginPath();
             ctx.arc(tx, ty, size * 0.5, 0, Math.PI * 2);
             ctx.fill();
@@ -1613,26 +1608,24 @@ class GameUI {
           break;
         }
         case 'drowned': {
-          // Ruined columns and water
-          ctx.fillStyle = '#15252a';
+          ctx.fillStyle = '#2a5a6a';
           ctx.beginPath();
           ctx.ellipse(tx, ty, size * 2, size * 0.5, 0, 0, Math.PI * 2);
           ctx.fill();
           if (tRand(i * 23) > 0.5) {
-            ctx.fillStyle = '#253035';
+            ctx.fillStyle = '#4a6a78';
             ctx.fillRect(tx - size * 0.3, ty - size * 2, size * 0.6, size * 2);
             ctx.fillRect(tx - size * 0.5, ty - size * 2.2, size, size * 0.3);
           }
           break;
         }
         case 'heart': {
-          // Organic pulsing shapes, fungus
-          ctx.fillStyle = '#3a2010';
+          ctx.fillStyle = '#8a4020';
           ctx.beginPath();
           ctx.arc(tx, ty, size * 0.8, 0, Math.PI * 2);
           ctx.fill();
           if (tRand(i * 29) > 0.5) {
-            ctx.fillStyle = '#4a2a15';
+            ctx.fillStyle = '#9a5a28';
             ctx.beginPath();
             ctx.ellipse(tx + size, ty - size * 0.5, size * 0.5, size * 1, tRand(i * 31) * Math.PI, 0, Math.PI * 2);
             ctx.fill();
@@ -1640,15 +1633,14 @@ class GameUI {
           break;
         }
         case 'threshold': {
-          // Spectral tears and void fragments
-          ctx.strokeStyle = '#3a2a4a';
-          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#7a4a9a';
+          ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(tx - size, ty - size * 0.5);
           ctx.quadraticCurveTo(tx, ty + size, tx + size, ty - size * 0.3);
           ctx.stroke();
           if (tRand(i * 37) > 0.6) {
-            ctx.fillStyle = '#2a1a3a';
+            ctx.fillStyle = '#5a3a7a';
             ctx.beginPath();
             ctx.arc(tx, ty, size * 0.4, 0, Math.PI * 2);
             ctx.fill();
@@ -2108,6 +2100,42 @@ class GameUI {
     if (effects.poisonParty) outcomeText += ` (${effects.poisonParty} Poison to all)`;
     if (effects.extraDiceNext) outcomeText += ` (+${effects.extraDiceNext} bonus dice next combat)`;
     if (effects.maxHpAll) outcomeText += ` (+${effects.maxHpAll} max HP to all)`;
+    // Permanent stat boosts to specific units by tag
+    if (effects.grantMaxHp) {
+      const { amount, tag, count } = effects.grantMaxHp;
+      const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
+      targets.forEach(u => { u.maxHp += amount; u.baseMaxHp += amount; u.hp += amount; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} max HP)`;
+    }
+    if (effects.grantDamage) {
+      const { amount, tag, count } = effects.grantDamage;
+      const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
+      targets.forEach(u => { u.equipDamage = (u.equipDamage || 0) + amount; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent damage)`;
+    }
+    if (effects.grantPoison) {
+      const { amount, tag, count } = effects.grantPoison;
+      const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
+      targets.forEach(u => { u.equipPoison = (u.equipPoison || 0) + amount; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent poison)`;
+    }
+    if (effects.grantHeal) {
+      const { amount, tag, count } = effects.grantHeal;
+      const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
+      targets.forEach(u => { u.equipHeal = (u.equipHeal || 0) + amount; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent healing)`;
+    }
+    if (effects.grantBlock && typeof effects.grantBlock === 'object') {
+      const { amount, tag, count } = effects.grantBlock;
+      const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
+      targets.forEach(u => { u.equipBlock = (u.equipBlock || 0) + amount; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent block)`;
+    }
     if (effects.grantItem) {
       if (this.pendingEventItem) {
         const foundItem = getItemData(this.pendingEventItem);

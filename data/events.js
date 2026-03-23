@@ -435,5 +435,87 @@ const RAW_EVENTS = [
         { "weight": 1.0, "text": "Your men breathe easier as you back away. Some things are better left buried. The forest seems to approve.", "effects": { "morale": 15 } }
       ]}
     ]
+  },
+  {
+    "id": "hermits_spring",
+    "name": "The Hermit's Spring",
+    "minDifficulty": 2,
+    "weight": 1,
+    "intro": "A natural spring bubbles from the rocks, surrounded by carved stones. An old hermit watches from a cave, neither hostile nor friendly. He gestures to the water.",
+    "choices": [
+      { "text": "Drink deep and rest.", "outcomes": [
+        { "weight": 0.5, "text": "The water is impossibly pure. Whoever drinks it feels stronger than before.", "effects": { "healAll": 6, "grantMaxHp": { "amount": 2, "count": 2 } } },
+        { "weight": 0.5, "text": "The spring revitalizes the entire cohort. The hermit nods approvingly.", "effects": { "healAll": 8, "morale": 10 } }
+      ]},
+      { "text": "Ask the hermit for wisdom.", "outcomes": [
+        { "weight": 0.5, "text": "He speaks in riddles, but your scouts learn from his gestures. The forest makes more sense now.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 }, "morale": 5 } },
+        { "weight": 0.5, "text": "He shows your healer herbs growing near the spring. Potent medicine.", "effects": { "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "morale": 5 } }
+      ]},
+      { "text": "Move on. You don't trust it.", "outcomes": [
+        { "weight": 1.0, "text": "The hermit watches you go. Maybe you'll regret it. Maybe not.", "effects": { "morale": 3 } }
+      ]}
+    ]
+  },
+  {
+    "id": "abandoned_forge",
+    "name": "The Abandoned Forge",
+    "minDifficulty": 3,
+    "weight": 1,
+    "intro": "Smoke still rises from a forge abandoned by fleeing villagers. Tools, ingots, and half-finished weapons lie scattered. Your men could put this to use.",
+    "choices": [
+      { "text": "Reforge weapons.", "outcomes": [
+        { "weight": 0.6, "text": "Your strongest fighters hammer new edges onto their blades. The iron sings.", "effects": { "grantDamage": { "amount": 1, "tag": "melee", "count": 2 }, "morale": 5 } },
+        { "weight": 0.4, "text": "The forge produces a fine blade before the coals die.", "effects": { "grantItem": "iron_gladius", "grantDamage": { "amount": 1, "count": 1 } } }
+      ]},
+      { "text": "Forge arrowheads and bolts.", "outcomes": [
+        { "weight": 0.6, "text": "Your ranged fighters tip their projectiles with fresh iron. Sharper, heavier, deadlier.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 2 } } },
+        { "weight": 0.4, "text": "Enough iron for poison-tipped arrowheads. Nasty work, but effective.", "effects": { "grantPoison": { "amount": 1, "tag": "ranged", "count": 1 }, "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 } } }
+      ]},
+      { "text": "Mend armor instead.", "outcomes": [
+        { "weight": 0.6, "text": "Dents hammered out, straps replaced. Your front line feels hardened.", "effects": { "grantBlock": { "amount": 1, "tag": "melee", "count": 2 }, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.4, "text": "New rivets, reinforced plate. Your officers' armor gleams.", "effects": { "grantBlock": { "amount": 1, "tag": "command", "count": 2 }, "grantMaxHp": { "amount": 1, "count": 3 } } }
+      ]}
+    ]
+  },
+  {
+    "id": "poison_grove",
+    "name": "The Poison Grove",
+    "minDifficulty": 3,
+    "weight": 1,
+    "intro": "A grove of dark-barked trees drips with a sticky, foul-smelling sap. Your healer recognizes it — deadly nightshade, distilled by the forest itself.",
+    "choices": [
+      { "text": "Have your healer harvest the sap.", "requiresTag": "support", "outcomes": [
+        { "weight": 0.6, "text": "Your healer carefully extracts the toxin. Blades are coated, needles dipped. The poison will serve you well.", "effects": { "grantPoison": { "amount": 1, "count": 2 } } },
+        { "weight": 0.4, "text": "The healer brews an antidote and a toxin from the same source. Clever work.", "effects": { "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "grantPoison": { "amount": 1, "count": 1 } } }
+      ]},
+      { "text": "Coat everyone's weapons.", "outcomes": [
+        { "weight": 0.7, "text": "A thin sheen of poison on every blade. The next fight will be uglier — for them.", "effects": { "grantPoison": { "amount": 1, "count": 2 } } },
+        { "weight": 0.3, "text": "Someone gets careless. Poison on the blade, and on the hand.", "effects": { "grantPoison": { "amount": 1, "count": 2 }, "damageAll": 3 } }
+      ]},
+      { "text": "Avoid it. Poison is a barbarian's tool.", "outcomes": [
+        { "weight": 1.0, "text": "Your men respect the decision. Rome fights with iron, not venom.", "effects": { "morale": 8 } }
+      ]}
+    ]
+  },
+  {
+    "id": "veterans_cache",
+    "name": "Veteran's Cache",
+    "minDifficulty": 4,
+    "weight": 1,
+    "intro": "Hidden beneath a fallen tree, you find a Roman cache — left by legionaries who marched this forest before you. Dog tags, a sealed scroll of tactics, and preserved supplies.",
+    "choices": [
+      { "text": "Study the tactical scroll.", "outcomes": [
+        { "weight": 0.5, "text": "The scroll details fighting formations for forest combat. Your officers learn new tricks.", "effects": { "grantDamage": { "amount": 1, "tag": "command", "count": 2 }, "morale": 8 } },
+        { "weight": 0.5, "text": "Detailed maps of the area. Your whole cohort benefits from the foreknowledge.", "effects": { "grantMaxHp": { "amount": 1, "count": 3 }, "morale": 10 } }
+      ]},
+      { "text": "Distribute the supplies.", "outcomes": [
+        { "weight": 0.6, "text": "Medical supplies, field rations, whetstone. Everyone gets something useful.", "effects": { "healAll": 6, "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "grantDamage": { "amount": 1, "tag": "melee", "count": 1 } } },
+        { "weight": 0.4, "text": "Among the supplies, a sealed vial of concentrated venom. Precious cargo.", "effects": { "healAll": 4, "grantPoison": { "amount": 2, "count": 1 } } }
+      ]},
+      { "text": "Read the dog tags aloud. Honor the fallen.", "outcomes": [
+        { "weight": 0.6, "text": "Names spoken, memories honored. Every soldier stands a little taller.", "effects": { "morale": 20, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.4, "text": "Among the tags, a centurion's shield-drill manual. Your front line drills until dawn.", "effects": { "morale": 15, "grantBlock": { "amount": 1, "count": 3 } } }
+      ]}
+    ]
   }
 ];

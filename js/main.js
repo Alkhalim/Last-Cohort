@@ -18,21 +18,28 @@ const MUSIC_GAMEPLAY = [
   'assets/Legion in the Leaves.mp3',
   'assets/Frontier of the Unquiet Crown.mp3',
   'assets/Teutoburgs Black Earth.mp3',
+  'assets/Eyes in the Undergrowth.mp3',
 ];
 const MUSIC_BOSS = 'assets/Shadow of Arminius.mp3';
 const MUSIC_BOSS_OVERRIDE = {
   'grove_witch': 'assets/Swamp Fury Unleashed.mp3',
   'serpent_shaman': 'assets/Venom Rite.mp3',
+  'silent_huntsman': 'assets/Black Water March.mp3',
+  'mire_mother': 'assets/Ironhide Rite.mp3',
+  'fog_weaver': 'assets/Fog Remembers.mp3',
+  'corpse_of_varus': 'assets/Stahlwall.mp3',
+  'spirit_of_varus': 'assets/Stahlwall.mp3',
+  'spirit_of_arminius': 'assets/Legion of the Hollow Standard.mp3',
 };
 
 const MARCH_THEMES = {
-  1:  { name: 'The Ambush Trail',     subtitle: 'The forest closes behind you.',   theme: 'forest' },
-  2:  { name: 'The Hunting Grounds',  subtitle: 'They know these woods. You do not.', theme: 'forest-dark' },
-  3:  { name: 'The Warcamp',          subtitle: 'Iron discipline guards the deep trail.', theme: 'warcamp' },
-  4:  { name: 'The Poisoned Bog',     subtitle: 'The ground turns to black water.',  theme: 'bog' },
-  5:  { name: 'The Old Forest',       subtitle: 'Ancient things stir between the roots.', theme: 'ancient' },
-  6:  { name: 'The Blood Grove',      subtitle: 'Altars stained red. The druids watch.', theme: 'blood' },
-  7:  { name: 'The Haunted March',    subtitle: 'The dead walk in Roman formation.',  theme: 'haunted' },
+  1:  { name: 'The Ambush Trail',     subtitle: 'The forest closes behind you.',   theme: 'forest', music: 'assets/Cohort Defiant.mp3' },
+  2:  { name: 'The Hunting Grounds',  subtitle: 'They know these woods. You do not.', theme: 'forest-dark', music: 'assets/Hunters in the Canopy.mp3' },
+  3:  { name: 'The Warcamp',          subtitle: 'Iron discipline guards the deep trail.', theme: 'warcamp', music: 'assets/Eisenmarsch.mp3' },
+  4:  { name: 'The Poisoned Bog',     subtitle: 'The ground turns to black water.',  theme: 'bog', music: 'assets/Black Mire Pulse.mp3' },
+  5:  { name: 'The Old Forest',       subtitle: 'Ancient things stir between the roots.', theme: 'ancient', music: 'assets/Roots Remember Blood.mp3' },
+  6:  { name: 'The Blood Grove',      subtitle: 'Altars stained red. The druids watch.', theme: 'blood', music: 'assets/Crimson Ritual.mp3' },
+  7:  { name: 'The Haunted March',    subtitle: 'The dead walk in Roman formation.',  theme: 'haunted', music: 'assets/Eagle of the Unremembered.mp3' },
   8:  { name: 'The Drowned Kingdom',  subtitle: 'Ruins swallowed by the swamp.',     theme: 'drowned' },
   9:  { name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.', theme: 'heart' },
   10: { name: 'The Threshold',        subtitle: 'Between worlds. The spirits await.', theme: 'threshold' },
@@ -1367,6 +1374,17 @@ class Game {
       </div>
     `;
     document.getElementById('game').appendChild(splash);
+
+    // Play march theme music if available (then fall back to random rotation)
+    if (this.settings.fullSoundtrack && theme.music) {
+      if (this.currentTrack) this.stopTrack(this.currentTrack, 800);
+      this.currentTrack = null;
+      setTimeout(() => {
+        this.currentTrack = this.playTrack(theme.music, false);
+        this.musicMode = 'gameplay';
+        this.musicStarted = true;
+      }, 900);
+    }
 
     // Preload enemy portraits for this march's encounters during the splash
     if (this.settings.reducedArt) {
