@@ -3185,7 +3185,7 @@ html, body {
   transition: box-shadow 1.2s ease, background 1.2s ease;
 }
 
-/* --- Mood: Inspired (morale 75+) --- */
+/* --- Mood: Inspired (morale 85+) --- */
 #game.mood-inspired {
   --mood-filter: saturate(1.1) brightness(1.05);
 }
@@ -3199,7 +3199,7 @@ html, body {
   text-shadow: 0 0 12px rgba(201, 162, 39, 0.4);
 }
 
-/* --- Mood: Steady (morale 25-74) --- */
+/* --- Mood: Steady (morale 55-84) --- */
 #game.mood-steady {
   --mood-filter: none;
 }
@@ -3209,7 +3209,7 @@ html, body {
   background: none;
 }
 
-/* --- Mood: Shaken (morale -24 to 24) --- */
+/* --- Mood: Shaken (morale 30-54) --- */
 #game.mood-shaken {
   --mood-filter: saturate(0.85);
 }
@@ -3219,7 +3219,7 @@ html, body {
   background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.15) 100%);
 }
 
-/* --- Mood: Distressed (morale -25 to -74) --- */
+/* --- Mood: Distressed (morale 15-29) --- */
 #game.mood-distressed {
   --mood-filter: saturate(0.75);
 }
@@ -3238,7 +3238,7 @@ html, body {
   text-shadow: 0 0 4px rgba(160, 48, 48, 0.3);
 }
 
-/* --- Mood: Broken (morale -75 to -100) --- */
+/* --- Mood: Broken (morale 0-14) --- */
 #game.mood-broken {
   --mood-filter: saturate(0.55) contrast(1.05);
 }

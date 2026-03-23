@@ -32,17 +32,17 @@ class GameUI {
     const show = () => {
       const band = getMoraleBand(this.engine.morale);
       let effects = '';
-      if (this.engine.morale >= 75) {
+      if (this.engine.morale >= 85) {
         effects = 'Inspired: +2 damage and +2 healing to all actions.';
-      } else if (this.engine.morale >= 50) {
+      } else if (this.engine.morale >= 70) {
         effects = 'Confident: +1 damage and +1 healing to all actions.';
-      } else if (this.engine.morale >= 25) {
+      } else if (this.engine.morale >= 55) {
         effects = 'Steady: Baseline performance. No modifiers.';
-      } else if (this.engine.morale >= -24) {
-        effects = 'Shaken: No major modifiers. Neutral state.';
-      } else if (this.engine.morale >= -49) {
-        effects = 'Distressed: Higher vulnerability to fear and curses.';
-      } else if (this.engine.morale >= -74) {
+      } else if (this.engine.morale >= 40) {
+        effects = 'Shaken: No major modifiers.';
+      } else if (this.engine.morale >= 30) {
+        effects = 'Distressed: -1 damage and -1 healing to all actions.';
+      } else if (this.engine.morale >= 15) {
         effects = 'Wavering: -1 damage and -1 healing to all actions.';
       } else {
         effects = 'Broken: -2 damage and -2 healing to all actions.';
@@ -287,7 +287,7 @@ class GameUI {
     const fill = document.getElementById('morale-fill');
     label.textContent = `${band.label} (${this.engine.morale})`;
     label.style.color = band.color;
-    const pct = (this.engine.morale + 100) / 200 * 100;
+    const pct = this.engine.morale;
     fill.style.width = pct + '%';
 
     this.updateMoodClass();
@@ -886,10 +886,10 @@ class GameUI {
     const equipPoison = unit.equipPoison || 0;
     const buffDmg = (unit.buffs || []).reduce((s, b) => s + (b.damage || 0), 0);
     let moraleMod = 0;
-    if (this.engine.morale >= 75) moraleMod = 2;
-    else if (this.engine.morale >= 50) moraleMod = 1;
-    else if (this.engine.morale <= -75) moraleMod = -2;
-    else if (this.engine.morale <= -50) moraleMod = -1;
+    if (this.engine.morale >= 85) moraleMod = 2;
+    else if (this.engine.morale >= 70) moraleMod = 1;
+    else if (this.engine.morale <= 15) moraleMod = -2;
+    else if (this.engine.morale <= 30) moraleMod = -1;
     const totalBonusDmg = equipDmg + buffDmg + moraleMod;
     const totalBonusHeal = equipHeal + moraleMod;
 
@@ -1430,10 +1430,10 @@ class GameUI {
     if (!gameEl) return;
     const morale = this.engine.morale;
     gameEl.classList.remove('mood-inspired', 'mood-steady', 'mood-shaken', 'mood-distressed', 'mood-broken');
-    if (morale >= 75) gameEl.classList.add('mood-inspired');
-    else if (morale >= 25) gameEl.classList.add('mood-steady');
-    else if (morale >= -24) gameEl.classList.add('mood-shaken');
-    else if (morale >= -74) gameEl.classList.add('mood-distressed');
+    if (morale >= 85) gameEl.classList.add('mood-inspired');
+    else if (morale >= 55) gameEl.classList.add('mood-steady');
+    else if (morale >= 30) gameEl.classList.add('mood-shaken');
+    else if (morale >= 15) gameEl.classList.add('mood-distressed');
     else gameEl.classList.add('mood-broken');
 
     if (window.game) window.game.updateMoraleLowpass(morale);
@@ -2163,7 +2163,7 @@ class GameUI {
       const scaledMorale = effects.morale > 0
         ? Math.round(effects.morale * diffScale)
         : Math.round(effects.morale * diffScale); // negative scales too (harsher)
-      this.engine.morale = Math.max(-100, Math.min(100, this.engine.morale + scaledMorale));
+      this.engine.morale = Math.max(0, Math.min(100, this.engine.morale + scaledMorale));
     }
     // Event buffs: grant damage/block buffs to all allies for next combat
     if (effects.buffDamage) {
@@ -2385,7 +2385,7 @@ class GameUI {
       if (effects.blockAll) candidates.push({ key: 'blockAll', text: `+1 block to all (${effects.blockAll} → ${effects.blockAll + 1})`, apply: () => baseDef.effects.blockAll++ });
       if (effects.poison) candidates.push({ key: 'poison', text: `+1 poison (${effects.poison} → ${effects.poison + 1})`, apply: () => baseDef.effects.poison++ });
       if (effects.poisonAll) candidates.push({ key: 'poisonAll', text: `+1 poison to all (${effects.poisonAll} → ${effects.poisonAll + 1})`, apply: () => baseDef.effects.poisonAll++ });
-      if (effects.morale) candidates.push({ key: 'morale', text: `+5 morale (${effects.morale} → ${effects.morale + 5})`, apply: () => baseDef.effects.morale += 5 });
+      if (effects.morale) candidates.push({ key: 'morale', text: `+3 morale (${effects.morale} → ${effects.morale + 3})`, apply: () => baseDef.effects.morale += 3 });
       if (effects.damageAll) candidates.push({ key: 'damageAll', text: `+1 damage to all (${effects.damageAll} → ${effects.damageAll + 1})`, apply: () => baseDef.effects.damageAll++ });
       if (effects.selfDamage) candidates.push({ key: 'selfDamage', text: `-1 self damage (${effects.selfDamage} → ${effects.selfDamage - 1})`, apply: () => baseDef.effects.selfDamage-- });
       if (effects.buffAllies) candidates.push({ key: 'buffAllies', text: `+1 buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + 1})`, apply: () => baseDef.effects.buffAllies.bonusDamage++ });
@@ -2460,7 +2460,7 @@ class GameUI {
             const numGroupIdx = groups.findIndex(g => typeof g === 'string' && /^[+-]?\d+$/.test(g));
             if (numGroupIdx >= 0) {
               const oldVal = parseInt(groups[numGroupIdx]);
-              const newVal = chosen.key === 'selfDamage' ? oldVal - 1 : (chosen.key === 'morale' ? oldVal + 5 : oldVal + 1);
+              const newVal = chosen.key === 'selfDamage' ? oldVal - 1 : (chosen.key === 'morale' ? oldVal + 3 : oldVal + 1);
               groups[numGroupIdx] = String(newVal);
               return groups.slice(0, -2).join(''); // exclude offset and full string
             }
@@ -2779,10 +2779,10 @@ class GameUI {
       },
       {
         name: 'Rally the Men',
-        desc: 'Restore 15 Morale.',
+        desc: 'Restore 8 Morale.',
         action: () => {
-          this.engine.morale = Math.min(100, this.engine.morale + 15);
-          this.campLog.push('Words of courage by the fire. (+15 Morale)');
+          this.engine.morale = Math.min(100, this.engine.morale + 8);
+          this.campLog.push('Words of courage by the fire. (+8 Morale)');
         }
       },
       {
@@ -3612,7 +3612,7 @@ class GameUI {
       else if (eff.blockAll) upgradeText = `+1 block to all (${eff.blockAll} → ${eff.blockAll + 1})`;
       else if (eff.poison) upgradeText = `+1 poison (${eff.poison} → ${eff.poison + 1})`;
       else if (eff.poisonAll) upgradeText = `+1 poison to all (${eff.poisonAll} → ${eff.poisonAll + 1})`;
-      else if (eff.morale) upgradeText = `+5 morale (${eff.morale} → ${eff.morale + 5})`;
+      else if (eff.morale) upgradeText = `+3 morale (${eff.morale} → ${eff.morale + 3})`;
       else if (eff.damageAll) upgradeText = `+1 damage to all (${eff.damageAll} → ${eff.damageAll + 1})`;
       else if (eff.buffAllies) upgradeText = `+1 buff damage (${eff.buffAllies.bonusDamage} → ${eff.buffAllies.bonusDamage + 1})`;
       else { const key = Object.keys(eff).find(k => typeof eff[k] === 'number'); if (key) upgradeText = `+1 ${key} (${eff[key]} → ${eff[key] + 1})`; }
@@ -3629,7 +3629,7 @@ class GameUI {
         else if (eff.blockAll) baseDef.effects.blockAll++;
         else if (eff.poison) baseDef.effects.poison++;
         else if (eff.poisonAll) baseDef.effects.poisonAll++;
-        else if (eff.morale) baseDef.effects.morale += 5;
+        else if (eff.morale) baseDef.effects.morale += 3;
         else if (eff.damageAll) baseDef.effects.damageAll++;
         else if (eff.buffAllies) baseDef.effects.buffAllies.bonusDamage++;
 

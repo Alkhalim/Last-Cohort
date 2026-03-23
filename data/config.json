@@ -1,10 +1,10 @@
 {
   "moraleBands": [
-    { "min": 75, "label": "INSPIRED", "color": "#c9a227" },
-    { "min": 25, "label": "STEADY", "color": "#6b8f4a" },
-    { "min": -24, "label": "SHAKEN", "color": "#8a8a7a" },
-    { "min": -74, "label": "DISTRESSED", "color": "#a0522d" },
-    { "min": -100, "label": "BROKEN", "color": "#6b1a1a" }
+    { "min": 85, "label": "INSPIRED", "color": "#c9a227" },
+    { "min": 55, "label": "STEADY", "color": "#6b8f4a" },
+    { "min": 30, "label": "SHAKEN", "color": "#8a8a7a" },
+    { "min": 15, "label": "DISTRESSED", "color": "#a0522d" },
+    { "min": 0, "label": "BROKEN", "color": "#6b1a1a" }
   ],
   "equipSlots": {
     "weapon": 2,

@@ -102,9 +102,9 @@ const RAW_CLASSES = {
     "description": "Officer. Buffs allies and controls the battlefield.",
     "passive": {
       "name": "Discipline of Office",
-      "description": "Once per turn, adjust one die by +1 or -1. Only active below 50 morale.",
+      "description": "Once per turn, adjust one die by +1 or -1. Only active below 70 morale.",
       "usedThisTurn": false,
-      "moraleMax": 50
+      "moraleMax": 70
     },
     "skills": [
       {
@@ -141,19 +141,19 @@ const RAW_CLASSES = {
         "id": "no_retreat", "name": "No Retreat",
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
         "description": "All allies gain 7 Block. -5 Morale.",
-        "effects": { "blockAll": 7, "morale": -5, "blockScale": 1.3 }
+        "effects": { "blockAll": 7, "morale": -3, "blockScale": 1.3 }
       },
       {
         "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
         "cost": { "type": "oddEven" }, "target": "all_allies",
         "description": "Requires one odd and one even die. +10 Morale and +1 damage for next 2 attacks.",
-        "effects": { "morale": 10, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
+        "effects": { "morale": 5, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
       },
       {
         "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 2,
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
         "description": "2 dice totaling exactly 7. Deals 17 damage. -5 Morale.",
-        "effects": { "damage": 17, "morale": -5, "bonusDmgScale": 1.5 }
+        "effects": { "damage": 17, "morale": -3, "bonusDmgScale": 1.5 }
       },
       {
         "id": "overwatch", "name": "Overwatch", "cooldown": 1,
@@ -171,13 +171,13 @@ const RAW_CLASSES = {
         "id": "tactical_preparation", "name": "Tactical Preparation", "cooldown": 3,
         "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_allies",
         "description": "Prepare the cohort. Gain +2 bonus dice next turn. +5 Morale.",
-        "effects": { "bonusDiceNext": 2, "morale": 5 }
+        "effects": { "bonusDiceNext": 2, "morale": 3 }
       },
       {
         "id": "iron_discipline", "name": "Iron Discipline", "cooldown": 3,
         "cost": { "type": "exact", "val": 4 }, "target": "all_allies",
         "description": "All allies clear poison and stun. +5 Morale.",
-        "effects": { "cleanseAll": true, "morale": 5 }
+        "effects": { "cleanseAll": true, "morale": 3 }
       }
     ]
   },
@@ -191,7 +191,7 @@ const RAW_CLASSES = {
     "description": "Field surgeon. Heals, poisons, and manages attrition.",
     "passive": {
       "name": "Healer's Instinct",
-      "description": "Whenever a 1 is rolled, heal a random damaged ally for 1 HP."
+      "description": "Whenever a 1 is rolled, heal a random wounded ally for 1 HP."
     },
     "skills": [
       {
@@ -260,14 +260,14 @@ const RAW_CLASSES = {
         "id": "triage_strike", "name": "Triage Strike", "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_enemies",
         "ignoreRow": true,
-        "description": "Deal 5 damage to the weakest enemy. Heal the most wounded ally for 5 HP.",
+        "description": "Ranged. Deal 5 damage to the weakest enemy. Heal the most wounded ally for 5 HP.",
         "effects": { "triageStrike": 5 }
       },
       {
         "id": "calculated_dosage", "name": "Calculated Dosage",
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Apply poison equal to the number of different die values in your pool. If all dice are unique, also deal 4 damage.",
+        "description": "Ranged. Apply poison equal to the number of different die values in your pool. If all dice are unique, also deal 4 damage.",
         "effects": { "calculatedDosage": true }
       }
     ]
@@ -296,21 +296,21 @@ const RAW_CLASSES = {
         "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 1, "starter": true,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Carefully aimed shot. Deals 6 damage. Ignores block.",
+        "description": "Ranged. Carefully aimed shot. Deals 6 damage. Ignores block.",
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
         "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A treated arrowhead. Deals 3 damage and applies 2 Poison. Doubles poison if target is already poisoned.",
+        "description": "Ranged. A treated arrowhead. Deals 3 damage and applies 2 Poison. Doubles poison if target is already poisoned.",
         "effects": { "damage": 3, "poison": 2, "doublePoison": true }
       },
       {
         "id": "kill_shot", "name": "Kill Shot", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A lethal shot. Deals 5 damage, ignores block. Double damage to marked or poisoned targets.",
+        "description": "Ranged. A lethal shot. Deals 5 damage, ignores block. Double damage to marked or poisoned targets.",
         "effects": { "damage": 5, "pierceBlock": 99, "killShot": true }
       },
       {
@@ -323,14 +323,14 @@ const RAW_CLASSES = {
         "id": "mark_target", "name": "Mark Target",
         "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Mark and poison a target. Applies 3 Poison and marks for +20% damage next turn.",
+        "description": "Ranged. Mark and poison a target. Applies 3 Poison and marks for +20% damage next turn.",
         "effects": { "poison": 3, "markTarget": true }
       },
       {
         "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 3,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "2 dice totaling 8+. Deals 7 damage and applies 3 Poison. Poison splashes to all other enemies.",
+        "description": "Ranged. 2 dice totaling 8+. Deals 7 damage and applies 3 Poison. Poison splashes to all other enemies.",
         "effects": { "damage": 7, "poison": 3, "poisonSplash": 3 }
       },
       {
@@ -348,14 +348,14 @@ const RAW_CLASSES = {
       {
         "id": "disengage", "name": "Disengage", "cooldown": 1,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Shoot and brace. Deal 2 damage to a front-row enemy and gain 4 Block.",
+        "description": "Shoot and brace. Deal 2 damage and gain 4 Block.",
         "effects": { "damage": 2, "block": 4 }
       },
       {
         "id": "trick_shot", "name": "Trick Shot",
         "cost": { "type": "exact", "val": 1 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ricochet arrow. Deal 2 damage, bouncing to a new target for each additional 1 in your dice pool.",
+        "description": "Ranged. Ricochet arrow. Deal 2 damage, bouncing to a new target for each additional 1 in your dice pool.",
         "effects": { "damage": 2, "trickShot": true, "bonusDmgScale": 0.35 }
       },
       {
@@ -376,22 +376,22 @@ const RAW_CLASSES = {
     "description": "Standard Bearer. Rallies the cohort with morale and buffs.",
     "passive": {
       "name": "Standard of the Legion",
-      "description": "+1 extra die per turn while morale is 25+.",
+      "description": "+1 extra die per turn while morale is 60+.",
       "extraDice": true,
-      "moraleThreshold": 25
+      "moraleThreshold": 60
     },
     "skills": [
       {
         "id": "standard_strike", "name": "Standard Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Strike with the standard. Deals 2 damage. +2 Morale.",
-        "effects": { "damage": 2, "morale": 2 }
+        "effects": { "damage": 2, "morale": 1 }
       },
       {
         "id": "raise_the_eagle", "name": "Raise the Eagle", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
         "description": "Raise the eagle standard. +11 Morale. Gain 3 Block.",
-        "effects": { "morale": 11, "block": 3 }
+        "effects": { "morale": 6, "block": 3 }
       },
       {
         "id": "inspire", "name": "Inspire", "starter": true, "cooldown": 5,
@@ -403,13 +403,13 @@ const RAW_CLASSES = {
         "id": "shield_the_standard", "name": "Shield the Standard",
         "cost": { "type": "threshold", "min": 4 }, "target": "all_allies",
         "description": "Other allies gain 3 Block. +5 Morale.",
-        "effects": { "blockAll": 3, "blockOthersOnly": true, "morale": 5 }
+        "effects": { "blockAll": 3, "blockOthersOnly": true, "morale": 3 }
       },
       {
         "id": "battle_hymn", "name": "Battle Hymn", "cooldown": 5,
         "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 7+. +15 Morale, all allies gain +3 damage for next 3 attacks.",
-        "effects": { "morale": 15, "buffAllies": { "bonusDamage": 3, "attacks": 3 } }
+        "effects": { "morale": 8, "buffAllies": { "bonusDamage": 3, "attacks": 3 } }
       },
       {
         "id": "defiant_stand", "name": "Defiant Stand", "cooldown": 2,
@@ -427,13 +427,13 @@ const RAW_CLASSES = {
         "id": "rally_fallen", "name": "Rally the Fallen", "cooldown": 5,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_ally",
         "description": "2 dice totaling 8+. Revive a downed ally at 25% HP with equal Block. -15 Morale.",
-        "effects": { "revive": true, "morale": -15 }
+        "effects": { "revive": true, "morale": -8 }
       },
       {
         "id": "sacrifice_standard", "name": "Sacrifice the Standard", "cooldown": 5,
         "cost": { "type": "any" }, "target": "all_enemies",
         "description": "Spend 50 Morale to deal 8 damage to all enemies. Consumes all damage buffs.",
-        "effects": { "damageAll": 8, "moraleCost": 50, "consumeAllBuffs": true }
+        "effects": { "damageAll": 8, "moraleCost": 25, "consumeAllBuffs": true }
       },
       {
         "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 3,
@@ -445,13 +445,13 @@ const RAW_CLASSES = {
         "id": "fortunes_favor", "name": "Fortune's Favor", "cooldown": 3,
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
         "description": "Reroll all unused dice and gain +1 bonus die this turn. +8 Morale.",
-        "effects": { "fortunesFavor": true, "morale": 8 }
+        "effects": { "fortunesFavor": true, "morale": 4 }
       },
       {
         "id": "eagles_blessing", "name": "Eagle's Blessing", "cooldown": 2,
         "cost": { "type": "exact", "val": 6 }, "target": "self",
         "description": "Free action. Heal 3 HP, gain 3 Block, +1 damage for 2 attacks, +4 Morale. Act again this turn.",
-        "effects": { "heal": 3, "block": 3, "buffSelf": { "bonusDamage": 1, "attacks": 2 }, "morale": 4, "freeAction": true }
+        "effects": { "heal": 3, "block": 3, "buffSelf": { "bonusDamage": 1, "attacks": 2 }, "morale": 2, "freeAction": true }
       }
     ]
   },
@@ -491,14 +491,14 @@ const RAW_CLASSES = {
         "id": "shrieking_note", "name": "Shrieking Note",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A piercing shriek. Deals 4 damage to target. Applies 1 Poison to all other enemies.",
+        "description": "Ranged. A piercing shriek. Deals 4 damage to target. Applies 1 Poison to all other enemies.",
         "effects": { "damage": 4, "poisonSplash": 1 }
       },
       {
         "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. Heal all allies for 6 HP. +11 Morale.",
-        "effects": { "healAll": 6, "morale": 11 }
+        "effects": { "healAll": 6, "morale": 6 }
       },
       {
         "id": "cacophony", "name": "Cacophony", "cooldown": 1,
@@ -598,7 +598,7 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "2 dice totaling 8+. Deals 8 damage. +10 Morale.",
-        "effects": { "damage": 8, "morale": 10 }
+        "effects": { "damage": 8, "morale": 5 }
       },
       {
         "id": "drag_down", "name": "Drag Down", "cooldown": 1,
@@ -658,13 +658,13 @@ const RAW_CLASSES = {
         "id": "pinning_shot", "name": "Pinning Shot", "starter": true, "cooldown": 3,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A heavy bolt that pins the target. Deals 5 damage. Target deals 30% less damage for next 2 actions.",
+        "description": "Ranged. A heavy bolt that pins the target. Deals 5 damage. Target deals 30% less damage for next 2 actions.",
         "effects": { "damage": 5, "cripple": 2 }
       },
       {
         "id": "suppressive_volley", "name": "Suppressive Volley", "starter": true,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Rain bolts on the front row. Deals 2 damage to target and all enemies in the same row.",
+        "description": "Rain of bolts. Deals 2 damage to target and all enemies in the same row.",
         "effects": { "damage": 2, "splashRow": true }
       },
       {
@@ -696,7 +696,7 @@ const RAW_CLASSES = {
         "id": "siege_shot", "name": "Siege Shot", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "2 dice totaling 8+. A devastating siege bolt. Deals 12 damage.",
+        "description": "Ranged. 2 dice totaling 8+. A devastating siege bolt. Deals 12 damage.",
         "effects": { "damage": 12 }
       },
       {
@@ -716,14 +716,14 @@ const RAW_CLASSES = {
         "id": "spotters_call", "name": "Spotter's Call", "cooldown": 1,
         "cost": { "type": "exact", "val": 1 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Mark target. All allies deal +20% damage to it this turn. Heal self 3 HP.",
+        "description": "Ranged. Mark target. All allies deal +20% damage to it this turn. Heal self 3 HP.",
         "effects": { "markTarget": true, "healSelf": 3 }
       },
       {
         "id": "devastator_volley", "name": "Devastator Volley", "cooldown": 3,
         "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "3 dice totaling 10+. Fire a massive bolt. Deals 10 damage to target and pierces to the enemy behind. Both take splash damage to adjacent enemies. Skip your next turn.",
+        "description": "Ranged. 3 dice totaling 10+. Fire a massive bolt. Deals 10 damage to target and pierces to the enemy behind. Both take splash damage to adjacent enemies. Skip your next turn.",
         "effects": { "damage": 10, "pierceRow": true, "splashAdjacentPct": 0.5, "skipNextTurn": true }
       }
     ]
@@ -778,7 +778,7 @@ const RAW_CLASSES = {
         "id": "roman_discipline", "name": "Roman Discipline", "cooldown": 4,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. All allies gain 3 Block, +5 damage for next attack, +8 Morale.",
-        "effects": { "blockAll": 3, "buffAllies": { "bonusDamage": 5, "attacks": 1 }, "morale": 8 }
+        "effects": { "blockAll": 3, "buffAllies": { "bonusDamage": 5, "attacks": 1 }, "morale": 4 }
       },
       {
         "id": "wrath_of_rome", "name": "Wrath of Rome", "cooldown": 2,
@@ -871,7 +871,7 @@ const RAW_CLASSES = {
         "id": "forest_shroud", "name": "Forest Shroud", "cooldown": 2,
         "cost": { "type": "exact", "val": 4 }, "target": "all_allies",
         "description": "All allies take 40% less damage this enemy turn. +5 Morale.",
-        "effects": { "damageShield": 0.4, "morale": 5 }
+        "effects": { "damageShield": 0.4, "morale": 3 }
       },
       {
         "id": "axe_throw", "name": "Axe Throw", "cooldown": 1,
@@ -890,7 +890,7 @@ const RAW_CLASSES = {
         "id": "berserkers_howl", "name": "Berserker's Howl", "cooldown": 3,
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
         "description": "Others gain +2 damage for 2 attacks. Wulfswestr gains +4 damage for 2 attacks. -8 Morale.",
-        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "buffSelf": { "bonusDamage": 4, "attacks": 2 }, "morale": -8, "bonusDmgScale": 0.45 }
+        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "buffSelf": { "bonusDamage": 4, "attacks": 2 }, "morale": -4, "bonusDmgScale": 0.45 }
       },
       {
         "id": "shield_wall_dance", "name": "Shield Wall Dance", "cooldown": 2,
@@ -924,39 +924,39 @@ const RAW_CLASSES = {
     "description": "Vestal priestess. Morale engine, healer, and divine protector.",
     "passive": {
       "name": "Sacred Flame",
-      "description": "Start of each turn, heal the lowest HP ally for 2 HP. Morale cannot drop below -50."
+      "description": "Start of each turn, heal the lowest HP ally for 2 HP. Morale cannot drop below 25."
     },
     "skills": [
       {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Deal 1 damage. Heal a random damaged ally for 1 HP. +3 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 3, "bonusDmgScale": 0.2 }
+        "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +3 Morale.",
+        "effects": { "damage": 1, "flameTouch": true, "morale": 2, "bonusDmgScale": 0.2 }
       },
       {
         "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
         "description": "Heal ally for 3 HP. +3 Morale.",
-        "effects": { "heal": 3, "morale": 3 }
+        "effects": { "heal": 3, "morale": 2 }
       },
       {
         "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 1,
         "cost": { "type": "even" }, "target": "all_allies",
         "description": "Requires even die. All allies gain 3 Block. +4 Morale.",
-        "effects": { "blockAll": 3, "morale": 4 }
+        "effects": { "blockAll": 3, "morale": 2 }
       },
       {
         "id": "vestas_judgment", "name": "Vesta's Judgment", "cooldown": 1,
         "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Deal 4 damage. +66% at 50+ Morale. Another +66% at 75+ Morale.",
+        "description": "Ranged. Deal 4 damage. +66% at 70+ Morale. Another +66% at 85+ Morale.",
         "effects": { "damage": 4, "vestasJudgment": true }
       },
       {
         "id": "purifying_flame", "name": "Purifying Flame", "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
         "description": "Cleanse all poison and stun. Apply 2 Poison to all enemies. +5 Morale.",
-        "effects": { "cleanseAll": true, "poisonAll": 2, "morale": 5 }
+        "effects": { "cleanseAll": true, "poisonAll": 2, "morale": 3 }
       },
       {
         "id": "divine_intercession", "name": "Divine Intercession", "cooldown": 2,
@@ -974,7 +974,7 @@ const RAW_CLASSES = {
         "id": "rite_of_consecration", "name": "Rite of Consecration", "cooldown": 3,
         "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "all_allies",
         "description": "3 dice totaling 10+. All allies +2 damage for 3 attacks. +12 Morale. Heal all 3 HP.",
-        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 3 }, "morale": 12, "healAll": 3 }
+        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 3 }, "morale": 6, "healAll": 3 }
       },
       {
         "id": "flame_shield", "name": "Flame Shield", "cooldown": 3,
@@ -992,13 +992,13 @@ const RAW_CLASSES = {
         "id": "resurrection_prayer", "name": "Resurrection Prayer", "cooldown": 5,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_ally",
         "description": "2 dice totaling 8+. Revive downed ally at 30% HP with Block. +10 Morale. Vestalis loses HP equal to ally's revived HP, gains that as Block.",
-        "effects": { "revive": true, "morale": 10, "resurrectionPrayer": true }
+        "effects": { "revive": true, "morale": 5, "resurrectionPrayer": true }
       },
       {
         "id": "eternal_flame", "name": "Eternal Flame", "cooldown": 4,
         "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 9+. Free action. Heal all 6 HP, gain 4 Block, +15 Morale. Act again.",
-        "effects": { "healAll": 6, "blockAll": 4, "morale": 15, "freeAction": true }
+        "effects": { "healAll": 6, "blockAll": 4, "morale": 8, "freeAction": true }
       }
     ]
   },
@@ -1020,7 +1020,7 @@ const RAW_CLASSES = {
         "id": "throwing_knife", "name": "Throwing Knife", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Deal 2 damage. Apply 1 Poison.",
+        "description": "Ranged. Deal 2 damage. Apply 1 Poison.",
         "effects": { "damage": 2, "poison": 1 }
       },
       {
@@ -1032,7 +1032,7 @@ const RAW_CLASSES = {
       {
         "id": "nerve_strike", "name": "Nerve Strike", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
-        "description": "Deal 4 damage. Target deals 30% less damage for 1 turn. Front row only.",
+        "description": "Deal 4 damage. Target deals 30% less damage for 1 turn.",
         "effects": { "damage": 4, "cripple": 1, "bonusDmgScale": 0.5 }
       },
       {
@@ -1063,7 +1063,7 @@ const RAW_CLASSES = {
         "id": "expose_weakness", "name": "Expose Weakness", "cooldown": 2,
         "cost": { "type": "consecutive" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Requires consecutive dice. Deal 3 damage. Condemn target (+30% from all, 2 turns).",
+        "description": "Ranged. Requires consecutive dice. Deal 3 damage. Condemn target (+30% from all, 2 turns).",
         "effects": { "damage": 3, "condemn": 2 }
       },
       {
@@ -1119,7 +1119,7 @@ const RAW_CLASSES = {
         "id": "formation_command", "name": "Formation Command", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
         "description": "Other allies gain 3 Block. +4 Morale.",
-        "effects": { "blockAll": 3, "blockOthersOnly": true, "morale": 4 }
+        "effects": { "blockAll": 3, "blockOthersOnly": true, "morale": 2 }
       },
       {
         "id": "heavy_charge", "name": "Heavy Charge", "starter": true, "cooldown": 1,
@@ -1149,7 +1149,7 @@ const RAW_CLASSES = {
         "id": "armored_advance", "name": "Armored Advance", "cooldown": 3,
         "cost": { "type": "pair" }, "target": "all_allies",
         "description": "All allies gain Block equal to pair value. Cataphract gains double. +5 Morale. Roll an extra die.",
-        "effects": { "armoredAdvance": true, "morale": 5 }
+        "effects": { "armoredAdvance": true, "morale": 3 }
       },
       {
         "id": "destriers_fury", "name": "Destrier's Fury", "cooldown": 2,
@@ -1168,19 +1168,19 @@ const RAW_CLASSES = {
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "2 dice totaling 8+. Deal 10 damage. 30% splash to adjacent. +8 Morale. Gain 4 Block.",
-        "effects": { "damage": 10, "splashAdjacentPct": 0.3, "morale": 8, "block": 4 }
+        "effects": { "damage": 10, "splashAdjacentPct": 0.3, "morale": 4, "block": 4 }
       },
       {
         "id": "unbreakable_line", "name": "Unbreakable Line", "cooldown": 4,
         "cost": { "type": "combined", "min": 3, "dice": 3 }, "target": "all_allies",
         "description": "3 any dice. All allies gain 6 Block. Cleanse poison and stun. +10 Morale.",
-        "effects": { "blockAll": 6, "cleanseAll": true, "morale": 10 }
+        "effects": { "blockAll": 6, "cleanseAll": true, "morale": 5 }
       },
       {
         "id": "cataphracts_doom", "name": "Cataphract's Doom", "cooldown": 4,
         "cost": { "type": "combined", "min": 10, "dice": 2 }, "target": "all_enemies",
         "description": "2 dice totaling 10+. Deal 8 + 3 per remaining 6 in pool damage to all enemies. All allies gain Block equal to damage dealt. +12 Morale.",
-        "effects": { "damageAll": 8, "cataphractsDoom": true, "morale": 12 }
+        "effects": { "damageAll": 8, "cataphractsDoom": true, "morale": 6 }
       }
     ]
   }

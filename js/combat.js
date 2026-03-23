@@ -138,22 +138,22 @@ class CombatEngine {
       this._houndCollarPending = true;
     }
 
-    // Special: Arm Ring of Arminius — +10 morale at encounter start
+    // Special: Arm Ring of Arminius — +5 morale at encounter start
     if (this.partyHasItem('arm_ring_of_arminius')) {
-      this.morale = Math.min(100, this.morale + 10);
-      this.addLog('The Arm Ring of Arminius fills the men with defiance. (+10 Morale)');
-    }
-
-    // Special: Centurion's Whistle — +5 morale at combat start
-    if (this.partyHasItem('centurions_whistle')) {
       this.morale = Math.min(100, this.morale + 5);
-      this.addLog("The Centurion's Whistle steadies the men. (+5 Morale)");
+      this.addLog('The Arm Ring of Arminius fills the men with defiance. (+5 Morale)');
     }
 
-    // Curse: Death's Whisper — start each encounter at -10 morale
+    // Special: Centurion's Whistle — +3 morale at combat start
+    if (this.partyHasItem('centurions_whistle')) {
+      this.morale = Math.min(100, this.morale + 3);
+      this.addLog("The Centurion's Whistle steadies the men. (+3 Morale)");
+    }
+
+    // Curse: Death's Whisper — start each encounter at -5 morale
     if (this.getActiveCurses().includes('deaths_whisper')) {
-      this.morale = Math.max(-100, this.morale - 10);
-      this.addLog("Death's whisper chills the air. (-10 Morale)");
+      this.morale = Math.max(0, this.morale - 5);
+      this.addLog("Death's whisper chills the air. (-5 Morale)");
     }
     this.clampMorale();
 
@@ -395,7 +395,7 @@ class CombatEngine {
     const diffDecay = Math.max(0, (this.difficulty || 1) - 1);
     const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
     const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
-    this.morale = Math.max(-100, this.morale - moraleDecay);
+    this.morale = Math.max(0, this.morale - moraleDecay);
     this.clampMorale();
     if (moraleDecay > 0) {
       this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
@@ -577,8 +577,8 @@ class CombatEngine {
       extraDice++;
       this.addLog('The Pact of Wolves grants an extra die!');
     }
-    // Moonstone Ring: +1 die if morale > 50
-    if (this.partyHasItem('moonstone_ring') && this.morale > 50) {
+    // Moonstone Ring: +1 die if morale > 70
+    if (this.partyHasItem('moonstone_ring') && this.morale > 70) {
       extraDice++;
       this.addLog('Moonstone Ring shines — morale grants an extra die!');
     }
@@ -784,7 +784,7 @@ class CombatEngine {
 
   // --- Centurion passive / Seer's Knucklebone ---
   canAdjustDie() {
-    if (!this.dicePool.adjustUsed && this.morale < 50 && this.party.some(u => u.classId === 'centurion' && !u.downed)) return true;
+    if (!this.dicePool.adjustUsed && this.morale < 70 && this.party.some(u => u.classId === 'centurion' && !u.downed)) return true;
     if (!this.dicePool.itemAdjustUsed && this.partyHasItem('seers_knucklebone')) return true;
     return false;
   }
@@ -799,7 +799,7 @@ class CombatEngine {
     die.value = newVal;
 
     // Use class passive first, then item
-    const hasCenturion = !this.dicePool.adjustUsed && this.morale < 50 && this.party.some(u => u.classId === 'centurion' && !u.downed);
+    const hasCenturion = !this.dicePool.adjustUsed && this.morale < 70 && this.party.some(u => u.classId === 'centurion' && !u.downed);
     if (hasCenturion) {
       this.dicePool.adjustUsed = true;
       this.addLog(`Centurion adjusts die: ${oldVal} \u2192 ${die.value}`);
@@ -1253,18 +1253,18 @@ class CombatEngine {
     const parts = [];
     // Morale modifier: +1/+2 damage at high morale, -1/-2 at low (also affects healing)
     let moraleMod = 0;
-    if (this.morale >= 75) moraleMod = 2;
-    else if (this.morale >= 50) moraleMod = 1;
-    else if (this.morale <= -75) moraleMod = -2;
-    else if (this.morale <= -50) moraleMod = -1;
+    if (this.morale >= 85) moraleMod = 2;
+    else if (this.morale >= 70) moraleMod = 1;
+    else if (this.morale <= 15) moraleMod = -2;
+    else if (this.morale <= 30) moraleMod = -1;
     // Consume buff damage only when actually dealing damage
     const isDealingDamage = (result.damage && result.target) || result.damageAll;
     const buffDmg = isDealingDamage ? this.consumeBuffDamage(unit) : 0;
     let bonusDmg = buffDmg + (unit.equipDamage || 0) + moraleMod;
 
-    // Wulfswestr passive: Forest-Born — rage bonus at low morale (scales to +5 at -100)
-    if (unit.classId === 'wulfswestr' && this.morale < 0 && isDealingDamage) {
-      const rageBonus = Math.min(5, Math.ceil(Math.abs(this.morale) / 20));
+    // Wulfswestr passive: Forest-Born — rage bonus at low morale (scales to +5 at 0)
+    if (unit.classId === 'wulfswestr' && this.morale < 50 && isDealingDamage) {
+      const rageBonus = Math.min(5, Math.ceil((50 - this.morale) / 10));
       bonusDmg += rageBonus;
     }
 
@@ -1284,11 +1284,11 @@ class CombatEngine {
     const bonusHeal = Math.floor(((unit.equipHeal || 0) + moraleMod) * healScale);
 
     if (result.damage && result.target && result.target.hp !== undefined) {
-      // Morale Scaling: damage scales from 1x at -100 morale to 2.5x at 100 morale
+      // Morale Scaling: damage scales from 0.5x at 0 morale to 2.5x at 100 morale
       let scaledDamage = result.damage;
       if (result.moraleScaling) {
-        // Linear scale: morale -100 = 0.5x, 0 = 1.0x, 100 = 2.5x
-        const moraleNorm = (this.morale + 100) / 200; // 0 to 1
+        // Linear scale: morale 0 = 0.5x, 50 = 1.5x, 100 = 2.5x
+        const moraleNorm = this.morale / 100; // 0 to 1
         const scale = 0.5 + moraleNorm * 2.0; // 0.5 to 2.5
         scaledDamage = Math.round(result.damage * scale);
         if (scale > 1.05) parts.push(`Morale fuels the charge! (x${scale.toFixed(1)})`);
@@ -1738,8 +1738,8 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${result.blockOthersOnly ? 'other allies' : 'all'} gain ${totalBlock}${bonusStr} Block.`);
       }
     }
-    // Morale Heal All: heal all allies if morale is 50+
-    if (result.moraleHealAll && this.morale >= 50) {
+    // Morale Heal All: heal all allies if morale is 70+
+    if (result.moraleHealAll && this.morale >= 70) {
       const healAmt = result.moraleHealAll + bonusHeal;
       this.party.forEach(u => {
         if (!u.downed) {
@@ -1966,7 +1966,7 @@ class CombatEngine {
     }
     if (result.morale) {
       const oldMorale = this.morale;
-      this.morale = Math.max(-100, Math.min(100, this.morale + result.morale));
+      this.morale = Math.max(0, Math.min(100, this.morale + result.morale));
       if (result.morale > 0) unit.stats.moraleRestored += this.morale - oldMorale;
       parts.push(`+${result.morale} Morale.`);
       if (this.onVisual) this.onVisual('morale', { amount: result.morale });
@@ -2084,7 +2084,7 @@ class CombatEngine {
 
     // Morale Cost: spend morale to use the skill
     if (result.moraleCost) {
-      this.morale = Math.max(-100, this.morale - result.moraleCost);
+      this.morale = Math.max(0, this.morale - result.moraleCost);
       this.clampMorale();
       parts.push(`(-${result.moraleCost} Morale)`);
       if (this.onVisual) this.onVisual('morale', { amount: -result.moraleCost });
@@ -2520,11 +2520,11 @@ class CombatEngine {
       }
     }
 
-    // Vesta's Judgment: +66% at 50+ morale, +66% at 75+
+    // Vesta's Judgment: +66% at 70+ morale, +66% at 85+
     if (result.vestasJudgment && result.target) {
       let extraDmg = 0;
-      if (this.morale >= 50) extraDmg += Math.floor(result.damage * 0.66);
-      if (this.morale >= 75) extraDmg += Math.floor(result.damage * 0.66);
+      if (this.morale >= 70) extraDmg += Math.floor(result.damage * 0.66);
+      if (this.morale >= 85) extraDmg += Math.floor(result.damage * 0.66);
       if (extraDmg > 0) {
         result.target.hp = Math.max(0, result.target.hp - extraDmg);
         unit.stats.damageDealt += extraDmg;
@@ -2566,8 +2566,8 @@ class CombatEngine {
     // Wrath of Vesta: 2 poison to 2 random enemies, scaled by morale
     if (result.wrathOfVesta) {
       let poisonAmt = 2 + (unit.equipPoison || 0);
-      if (this.morale >= 50) poisonAmt = Math.floor(poisonAmt * 1.5);
-      if (this.morale >= 75) poisonAmt = Math.floor(poisonAmt * 1.5);
+      if (this.morale >= 70) poisonAmt = Math.floor(poisonAmt * 1.5);
+      if (this.morale >= 85) poisonAmt = Math.floor(poisonAmt * 1.5);
       const alive = this.enemies.filter(e => !e.dead);
       const shuffled = alive.sort(() => Math.random() - 0.5).slice(0, 2);
       shuffled.forEach(e => {
@@ -2724,9 +2724,9 @@ class CombatEngine {
 
   triggerVictory() {
     this.phase = PHASE.VICTORY;
-    this.morale = Math.min(100, this.morale + 7);
-    this.addLog('All enemies defeated! (+7 Morale)');
-    if (this.onVisual) this.onVisual('morale', { amount: 7 });
+    this.morale = Math.min(100, this.morale + 4);
+    this.addLog('All enemies defeated! (+4 Morale)');
+    if (this.onVisual) this.onVisual('morale', { amount: 4 });
 
     // Boss encounter bonus: if a boss was killed but minions survived after it,
     // grant an additional morale boost at victory
@@ -2734,7 +2734,7 @@ class CombatEngine {
     if (killedBoss) {
       const nonBossKills = this.enemies.filter(e => !e.isBoss && e.dead && !e.isStructure);
       if (nonBossKills.length > 0) {
-        const bossBonus = 15;
+        const bossBonus = 8;
         this.morale = Math.min(100, this.morale + bossBonus);
         this.addLog(`The champion is slain! Your men roar in triumph! (+${bossBonus} Morale)`);
         if (this.onVisual) this.onVisual('morale', { amount: bossBonus });
@@ -2763,20 +2763,20 @@ class CombatEngine {
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
           let moraleRestore;
           if (e.isBoss) {
-            // Boss: restore to 50, or +25 if already 26+
-            if (this.morale >= 26) {
-              moraleRestore = 25;
+            // Boss: restore to 60, or +12 if already above 60
+            if (this.morale >= 60) {
+              moraleRestore = 12;
             } else {
-              moraleRestore = 50 - this.morale;
+              moraleRestore = 60 - this.morale;
             }
           } else {
-            moraleRestore = baseHp > 10 ? 6 : 4;
+            moraleRestore = baseHp > 10 ? 3 : 2;
           }
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
-          if (this.partyHasItem('chiefs_spear')) moraleRestore += 3;
-          // Sword of Germanicus: kills grant +5 morale and heal 2 HP
+          if (this.partyHasItem('chiefs_spear')) moraleRestore += 2;
+          // Sword of Germanicus: kills grant +3 morale and heal 2 HP
           if (this.partyHasItem('sword_of_germanicus')) {
-            moraleRestore += 5;
+            moraleRestore += 3;
             this.party.forEach(u => {
               if (!u.downed && this.unitHasItem(u, 'sword_of_germanicus') && u.hp < u.maxHp) {
                 const healAmt = Math.min(2, u.maxHp - u.hp);
@@ -3042,6 +3042,22 @@ class CombatEngine {
   }
 
   executeEnemySingleAction(enemy) {
+    // Pending spawn: boss uses their turn to summon instead of attacking
+    if (enemy._pendingSpawn && enemy._pendingSpawn.length > 0) {
+      const spawns = enemy._pendingSpawn;
+      enemy._pendingSpawn = null;
+      for (const s of spawns) {
+        if (s.type === 'healingTotem') {
+          this.spawnHealingTotem(enemy);
+        } else {
+          this.spawnBossMinion(s.id);
+        }
+      }
+      this.addLog(`${enemy.name} summons reinforcements!`);
+      if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: enemy.index });
+      return;
+    }
+
     // Stunned enemy: skip action
     if (enemy._skipNextAction) {
       enemy._skipNextAction = false;
@@ -3275,12 +3291,12 @@ class CombatEngine {
         this.onVisual('unitHit', { unitIndex: target.index, damage: dmg });
       }
 
-      // Corpse of Arminius: Undying Rage — attacks also drain 10 morale
+      // Corpse of Arminius: Undying Rage — attacks also drain 5 morale
       if (enemy._undyingRage && dmg > 0) {
-        this.morale = Math.max(-100, this.morale - 10);
+        this.morale = Math.max(0, this.morale - 5);
         this.clampMorale();
-        this.addLog(`Undying Rage! ${enemy.name}'s attack drains 10 Morale!`);
-        if (this.onVisual) this.onVisual('morale', { amount: -10 });
+        this.addLog(`Undying Rage! ${enemy.name}'s attack drains 5 Morale!`);
+        if (this.onVisual) this.onVisual('morale', { amount: -5 });
       }
 
       // Divine Intercession: retribution damage to attacker
@@ -3350,7 +3366,7 @@ class CombatEngine {
         moraleDelta = Math.min(0, moraleDelta + 3);
       }
       if (moraleDelta !== 0) {
-        this.morale = Math.max(-100, Math.min(100, this.morale + moraleDelta));
+        this.morale = Math.max(0, Math.min(100, this.morale + moraleDelta));
         this.clampMorale();
         this.addLog(`${enemy.name} ${action.text}! Morale ${moraleDelta > 0 ? '+' : ''}${moraleDelta}.`);
         if (this.onVisual) {
@@ -3586,9 +3602,9 @@ class CombatEngine {
       } else if (e.id === 'silent_huntsman' && action.name === 'Marked Shot') {
         // Prefer the marked target
         const markedUnit = alive.find(u => u._huntMarked && u._huntMarked > 0);
-        target = markedUnit || alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
-      } else if (e.ai === 'sniper') {
-        target = alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
+        target = markedUnit || alive[Math.floor(Math.random() * alive.length)];
+      } else if (e.ai === 'bully') {
+        target = alive.reduce((max, u) => u.hp > max.hp ? u : max, alive[0]);
       } else {
         target = alive[Math.floor(Math.random() * alive.length)];
       }
@@ -3613,8 +3629,9 @@ class CombatEngine {
     if (alive.length === 0) return null;
     const taunting = alive.find(u => u.taunt);
     if (taunting) return taunting;
-    if (enemy.ai === 'sniper') {
-      return alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
+    // Slingers: target highest HP
+    if (enemy.ai === 'bully') {
+      return alive.reduce((max, u) => u.hp > max.hp ? u : max, alive[0]);
     }
 
     // Ambush spread: avoid targeting the same unit if others haven't been hit
@@ -3664,9 +3681,9 @@ class CombatEngine {
         u.downed = true;
         u.hp = 0;
         this.addLog(`${u.name} is downed!`);
-        this.morale = Math.max(-100, this.morale - 20);
+        this.morale = Math.max(0, this.morale - 10);
         this.clampMorale();
-        if (this.onVisual) this.onVisual('morale', { amount: -20 });
+        if (this.onVisual) this.onVisual('morale', { amount: -10 });
       }
     });
     if (this.party.every(u => u.downed)) {
@@ -3797,10 +3814,10 @@ class CombatEngine {
     }
   }
 
-  // Clamp morale — Vestalis passive prevents dropping below -50
+  // Clamp morale — Vestalis passive prevents dropping below 25
   clampMorale() {
     const hasVestalis = this.party.some(u => u.classId === 'vestalis' && !u.downed);
-    const floor = hasVestalis ? -50 : -100;
+    const floor = hasVestalis ? 25 : 0;
     this.morale = Math.max(floor, Math.min(100, this.morale));
   }
 
@@ -3810,7 +3827,7 @@ class CombatEngine {
       if (!u.downed) {
         extra += (u.equipExtraDice || 0);
         // Signifer passive: +1 extra die while morale is 25+
-        if (u.classId === 'signifer' && this.morale >= 25) extra += 1;
+        if (u.classId === 'signifer' && this.morale >= 60) extra += 1;
       }
     });
     return extra;
@@ -3916,83 +3933,78 @@ class CombatEngine {
     for (const boss of this.enemies) {
       if (!boss.isBoss || boss.dead) continue;
 
-      // Arminius's Champion: spawns 2 raiders at 50% HP
+      // Arminius's Champion: queues 2 raiders at 50% HP
       if (boss.id === 'arminius_champion' && !boss._phase50 && boss.hp <= boss.maxHp * 0.5) {
         boss._phase50 = true;
         boss.row = 'front';
-        this.addLog(`${boss.name} roars and summons reinforcements!`);
-        this.spawnBossMinion('cheruscan_raider');
-        this.spawnBossMinion('cheruscan_raider');
+        boss._pendingSpawn = [{ id: 'cheruscan_raider' }, { id: 'cheruscan_raider' }];
+        this.addLog(`${boss.name} roars — reinforcements are coming!`);
       }
 
-      // Grove Witch: summons healing totem at 66% and 33%, swaps to front
+      // Grove Witch: queues healing totem at 66% and 33%, moves to back row
       if (boss.id === 'grove_witch') {
         if (!boss._phase66 && boss.hp <= boss.maxHp * 0.66) {
           boss._phase66 = true;
-          if (boss.row !== 'front') { boss.row = 'front'; this.addLog(`${boss.name} surges forward!`); }
-          this.spawnHealingTotem(boss);
+          boss._pendingSpawn = [{ type: 'healingTotem' }];
+          if (boss.row !== 'back') { boss.row = 'back'; this.addLog(`${boss.name} retreats to summon!`); }
+          this.addLog(`${boss.name} begins channeling — a totem grows!`);
         }
         if (!boss._phase33 && boss.hp <= boss.maxHp * 0.33) {
           boss._phase33 = true;
-          if (boss.row !== 'front') { boss.row = 'front'; this.addLog(`${boss.name} surges forward!`); }
-          this.spawnHealingTotem(boss);
+          boss._pendingSpawn = [{ type: 'healingTotem' }];
+          if (boss.row !== 'back') { boss.row = 'back'; this.addLog(`${boss.name} retreats to summon!`); }
+          this.addLog(`${boss.name} begins channeling — another totem sprouts!`);
         }
       }
 
-      // Mire Mother: spawns wolves at 70% and 40% HP
+      // Mire Mother: queues brood at 70% and 40% HP
       if (boss.id === 'mire_mother') {
         if (!boss._phase70 && boss.hp <= boss.maxHp * 0.7) {
           boss._phase70 = true;
-          this.addLog(`${boss.name} bellows! Her brood answers!`);
-          this.spawnBossMinion('boar_youngling');
-          this.spawnBossMinion('boar_youngling');
+          boss._pendingSpawn = [{ id: 'boar_youngling' }, { id: 'boar_youngling' }];
+          this.addLog(`${boss.name} bellows! Her brood is coming!`);
         }
         if (!boss._phase40 && boss.hp <= boss.maxHp * 0.4) {
           boss._phase40 = true;
+          boss._pendingSpawn = [{ id: 'war_boar' }, { id: 'boar_youngling' }];
           this.addLog(`${boss.name} screams in fury! War boars crash through the undergrowth!`);
-          this.spawnBossMinion('war_boar');
-          this.spawnBossMinion('boar_youngling');
         }
       }
 
-      // Serpent Shaman: spawns serpent shades at 60% and 30%
+      // Serpent Shaman: queues serpents at 60% and 30%
       if (boss.id === 'serpent_shaman') {
         if (!boss._phase60 && boss.hp <= boss.maxHp * 0.6) {
           boss._phase60 = true;
+          boss._pendingSpawn = [{ id: 'serpent_shade' }, { id: 'fen_viper' }];
           this.addLog(`${boss.name} hisses — spectral serpents slither from the shadows!`);
-          this.spawnBossMinion('serpent_shade');
-          this.spawnBossMinion('fen_viper');
         }
         if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
           boss._phase30 = true;
-          this.addLog(`${boss.name}'s eyes blaze! The venom thickens!`);
-          this.spawnBossMinion('serpent_shade');
-          this.spawnBossMinion('serpent_shade');
+          boss._pendingSpawn = [{ id: 'serpent_shade' }, { id: 'serpent_shade' }];
           // Apply 1 poison to all party members
           this.party.forEach(u => { if (!u.downed) u.poison = (u.poison || 0) + 1; });
-          this.addLog('Venom fills the air — all soldiers take 1 Poison!');
+          this.addLog(`${boss.name}'s eyes blaze! Venom fills the air — all soldiers take 1 Poison!`);
         }
       }
 
-      // Fog Weaver: spawns illusions at 60%, destroys a die at 30%
+      // Fog Weaver: queues illusions at 60%, buffs at 30%
       if (boss.id === 'fog_weaver') {
         if (!boss._phase60 && boss.hp <= boss.maxHp * 0.6) {
           boss._phase60 = true;
+          boss._pendingSpawn = [{ id: 'fog_illusion' }, { id: 'fog_illusion' }];
           this.addLog(`The fog thickens! Shapes multiply in the mist!`);
-          this.spawnBossMinion('fog_illusion');
-          this.spawnBossMinion('fog_illusion');
         }
         if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
           boss._phase30 = true;
-          this.addLog(`${boss.name} shrieks! The fog becomes impenetrable!`);
-          // Give all illusions +5 HP
+          // Give all illusions +5 HP immediately
           this.enemies.forEach(e => {
             if (!e.dead && e.id === 'fog_illusion') {
               e.hp = Math.min(e.maxHp + 5, e.hp + 5);
               e.maxHp += 5;
             }
           });
-          this.spawnBossMinion('fog_illusion');
+          boss._pendingSpawn = [{ id: 'fog_illusion' }];
+          this.addLog(`${boss.name} shrieks! The fog becomes impenetrable!`);
         }
       }
 
@@ -4003,8 +4015,8 @@ class CombatEngine {
           boss.row = 'back';
           const regen = Math.min(8, boss.maxHp - boss.hp);
           boss.hp += regen;
+          boss._pendingSpawn = [{ id: 'marsh_wolf' }];
           this.addLog(`${boss.name} leaps back and regenerates ${regen} HP!`);
-          this.spawnBossMinion('marsh_wolf');
         }
         if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
           boss._phase30 = true;
@@ -4091,7 +4103,7 @@ class CombatEngine {
       name: 'Healing Totem',
       maxHp: 12,
       hp: 12,
-      row: 'back',
+      row: 'front',
       damage: [0, 0],
       speed: 0,
       xpValue: 3,

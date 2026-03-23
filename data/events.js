@@ -11,18 +11,18 @@ const RAW_EVENTS = [
     "intro": "A Roman milestone stands at a crossroads, half-buried in moss. The inscription reads 'LEGIO XVII — 3 miles to forward camp.' The forward camp is long gone, but the road is still Roman stone beneath the mud. Your men take comfort in it.",
     "choices": [
       { "text": "Follow the old Roman road.", "outcomes": [
-        { "weight": 0.5, "text": "The road holds. Solid footing and clear sightlines. Your men march with purpose.", "effects": { "morale": 12, "healAll": 3 } },
-        { "weight": 0.3, "text": "The road leads to an abandoned supply cache, still sealed.", "effects": { "morale": 8, "grantItem": "raider_shield" } },
-        { "weight": 0.2, "text": "The road ends abruptly at a collapsed bridge. You lose time backtracking.", "effects": { "morale": -5 } }
+        { "weight": 0.5, "text": "The road holds. Solid footing and clear sightlines. Your men march with purpose.", "effects": { "morale": 6, "healAll": 3 } },
+        { "weight": 0.3, "text": "The road leads to an abandoned supply cache, still sealed.", "effects": { "morale": 4, "grantItem": "raider_shield" } },
+        { "weight": 0.2, "text": "The road ends abruptly at a collapsed bridge. You lose time backtracking.", "effects": { "morale": -3 } }
       ]},
       { "text": "Search around the milestone for anything useful.", "outcomes": [
-        { "weight": 0.5, "text": "Buried at the base, a legionary's kit — still wrapped in oilcloth.", "effects": { "grantItem": "herb_pouch", "morale": 5 } },
-        { "weight": 0.3, "text": "Nothing but old bones and rust. The men grow quiet.", "effects": { "morale": -3 } },
-        { "weight": 0.2, "text": "You find a charm tucked into a crack in the stone. Someone left it for the next Roman to pass.", "effects": { "grantItem": "woad_charm", "morale": 8 } }
+        { "weight": 0.5, "text": "Buried at the base, a legionary's kit — still wrapped in oilcloth.", "effects": { "grantItem": "herb_pouch", "morale": 3 } },
+        { "weight": 0.3, "text": "Nothing but old bones and rust. The men grow quiet.", "effects": { "morale": -2 } },
+        { "weight": 0.2, "text": "You find a charm tucked into a crack in the stone. Someone left it for the next Roman to pass.", "effects": { "grantItem": "woad_charm", "morale": 4 } }
       ]},
       { "text": "Take a moment to rest by the marker.", "outcomes": [
-        { "weight": 0.7, "text": "A brief rest in the shadow of Rome. The men eat, drink, and breathe.", "effects": { "healAll": 8, "morale": 5 } },
-        { "weight": 0.3, "text": "The rest does everyone good. For a moment, the forest doesn't feel so hostile.", "effects": { "healAll": 6, "morale": 10 } }
+        { "weight": 0.7, "text": "A brief rest in the shadow of Rome. The men eat, drink, and breathe.", "effects": { "healAll": 8, "morale": 3 } },
+        { "weight": 0.3, "text": "The rest does everyone good. For a moment, the forest doesn't feel so hostile.", "effects": { "healAll": 6, "morale": 5 } }
       ]}
     ]
   },
@@ -34,21 +34,21 @@ const RAW_EVENTS = [
     "intro": "One of your forward scouts returns at a sprint, white-faced. 'Ambush ahead,' he gasps. 'A full war band, dug in across the trail. They haven't seen us yet.' You have moments to decide.",
     "choices": [
       { "text": "Prepare your men for a head-on fight.", "outcomes": [
-        { "weight": 0.5, "text": "Your men brace shields and ready weapons. The preparation steadies their nerves.", "effects": { "morale": 8, "grantBlock": 6, "buffDamage": 1, "buffAttacks": 2 } },
-        { "weight": 0.5, "text": "Forewarned is forearmed. Your men dig in and fortify.", "effects": { "morale": 6, "grantBlock": 8 } }
+        { "weight": 0.5, "text": "Your men brace shields and ready weapons. The preparation steadies their nerves.", "effects": { "morale": 4, "grantBlock": 6, "buffDamage": 1, "buffAttacks": 2 } },
+        { "weight": 0.5, "text": "Forewarned is forearmed. Your men dig in and fortify.", "effects": { "morale": 3, "grantBlock": 8 } }
       ]},
       { "text": "Your scout leads you on a hidden path around them.", "requiresTag": "ranged", "outcomes": [
-        { "weight": 0.6, "text": "The scout's keen eyes find a deer trail through the thicket. You bypass the ambush entirely.", "effects": { "morale": 15 } },
-        { "weight": 0.4, "text": "The detour reveals an abandoned hunter's camp with useful supplies.", "effects": { "morale": 10, "grantItem": "fang_necklace" } }
+        { "weight": 0.6, "text": "The scout's keen eyes find a deer trail through the thicket. You bypass the ambush entirely.", "effects": { "morale": 8 } },
+        { "weight": 0.4, "text": "The detour reveals an abandoned hunter's camp with useful supplies.", "effects": { "morale": 5, "grantItem": "fang_necklace" } }
       ]},
       { "text": "Set your own ambush — turn the tables.", "outcomes": [
-        { "weight": 0.4, "text": "The element of surprise works both ways. You strike first and scatter them before they can organize. Spoils litter the trail.", "effects": { "morale": 18, "grantItem": "iron_gladius" } },
-        { "weight": 0.3, "text": "Your counter-ambush succeeds, but not without cost. A few scrapes and bruises.", "effects": { "morale": 12, "damageAll": 3 } },
-        { "weight": 0.3, "text": "They spot you setting up. The ambush becomes a chaotic brawl.", "effects": { "damageAll": 6, "morale": -5 } }
+        { "weight": 0.4, "text": "The element of surprise works both ways. You strike first and scatter them before they can organize. Spoils litter the trail.", "effects": { "morale": 9, "grantItem": "iron_gladius" } },
+        { "weight": 0.3, "text": "Your counter-ambush succeeds, but not without cost. A few scrapes and bruises.", "effects": { "morale": 6, "damageAll": 3 } },
+        { "weight": 0.3, "text": "They spot you setting up. The ambush becomes a chaotic brawl.", "effects": { "damageAll": 6, "morale": -3 } }
       ]},
       { "text": "Fall back and find another route.", "outcomes": [
-        { "weight": 0.6, "text": "Discretion wins. You lose time but keep everyone safe.", "effects": { "morale": -3 } },
-        { "weight": 0.4, "text": "The long way around saps your energy, but you find a stream to rest by.", "effects": { "healAll": 5, "morale": -5 } }
+        { "weight": 0.6, "text": "Discretion wins. You lose time but keep everyone safe.", "effects": { "morale": -2 } },
+        { "weight": 0.4, "text": "The long way around saps your energy, but you find a stream to rest by.", "effects": { "healAll": 5, "morale": -3 } }
       ]}
     ]
   },
@@ -57,14 +57,14 @@ const RAW_EVENTS = [
     "intro": "You come upon a weathered shrine to some forgotten god. Offerings of fruit and bone litter the base. The men look to you for guidance.",
     "choices": [
       { "text": "Leave an offering and pray.", "outcomes": [
-        { "weight": 0.5, "text": "A warm light fills the glade. The men feel blessed — their weapons gleam.", "effects": { "healAll": 5, "morale": 8, "buffDamage": 2, "buffAttacks": 3 } },
+        { "weight": 0.5, "text": "A warm light fills the glade. The men feel blessed — their weapons gleam.", "effects": { "healAll": 5, "morale": 4, "buffDamage": 2, "buffAttacks": 3 } },
         { "weight": 0.3, "text": "Nothing happens. The gods are silent.", "effects": {} },
-        { "weight": 0.2, "text": "A cold wind sweeps through. Poisoned thorns lash from the crumbling shrine.", "effects": { "morale": -8, "poisonParty": 2 } }
+        { "weight": 0.2, "text": "A cold wind sweeps through. Poisoned thorns lash from the crumbling shrine.", "effects": { "morale": -4, "poisonParty": 2 } }
       ]},
       { "text": "Smash the shrine and take the offerings.", "outcomes": [
         { "weight": 0.4, "text": "You find a charm hidden among the bones.", "effects": { "grantItem": "woad_charm" } },
-        { "weight": 0.3, "text": "The men cheer at the defiance, but the forest seems to darken.", "effects": { "morale": 5 } },
-        { "weight": 0.3, "text": "A trap! Poisoned thorns cut your hands.", "effects": { "damageAll": 5, "morale": -5 } }
+        { "weight": 0.3, "text": "The men cheer at the defiance, but the forest seems to darken.", "effects": { "morale": 3 } },
+        { "weight": 0.3, "text": "A trap! Poisoned thorns cut your hands.", "effects": { "damageAll": 5, "morale": -3 } }
       ]},
       { "text": "Pass by without stopping.", "outcomes": [
         { "weight": 1.0, "text": "You march on. The shrine watches in silence.", "effects": {} }
@@ -76,12 +76,12 @@ const RAW_EVENTS = [
     "intro": "A Roman soldier lies against a tree, barely alive. His armor is shattered and his eyes are dim. He clutches a leather satchel.",
     "choices": [
       { "text": "Have your healer tend to his wounds.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.6, "text": "Your healer works quickly. He dies in your arms, but the satchel holds useful supplies.", "effects": { "grantItem": "herb_pouch", "morale": -5 } },
-        { "weight": 0.4, "text": "Your healer stabilizes him. He whispers a warning about the path ahead. The satchel holds medicine.", "effects": { "healAll": 8, "morale": 8 } }
+        { "weight": 0.6, "text": "Your healer works quickly. He dies in your arms, but the satchel holds useful supplies.", "effects": { "grantItem": "herb_pouch", "morale": -3 } },
+        { "weight": 0.4, "text": "Your healer stabilizes him. He whispers a warning about the path ahead. The satchel holds medicine.", "effects": { "healAll": 8, "morale": 4 } }
       ]},
       { "text": "Take his equipment and move on.", "outcomes": [
         { "weight": 0.5, "text": "His gladius is still sharp.", "effects": { "grantItem": "iron_gladius" } },
-        { "weight": 0.5, "text": "Nothing of value remains. The men grow quiet.", "effects": { "morale": -8 } }
+        { "weight": 0.5, "text": "Nothing of value remains. The men grow quiet.", "effects": { "morale": -4 } }
       ]}
     ]
   },
@@ -90,18 +90,18 @@ const RAW_EVENTS = [
     "intro": "A swollen river blocks your path. The current is fast and the water dark. Upstream, a narrow fallen log offers a precarious bridge.",
     "choices": [
       { "text": "Ford the river directly.", "outcomes": [
-        { "weight": 0.4, "text": "You push through the freezing water. Everyone makes it, barely.", "effects": { "damageAll": 4, "morale": -5 } },
+        { "weight": 0.4, "text": "You push through the freezing water. Everyone makes it, barely.", "effects": { "damageAll": 4, "morale": -3 } },
         { "weight": 0.3, "text": "The crossing goes smoothly. The cold water numbs old wounds.", "effects": { "healAll": 3 } },
-        { "weight": 0.3, "text": "The current is stronger than expected. Equipment is lost.", "effects": { "damageAll": 6, "morale": -10 } }
+        { "weight": 0.3, "text": "The current is stronger than expected. Equipment is lost.", "effects": { "damageAll": 6, "morale": -5 } }
       ]},
       { "text": "Your scout finds a safe crossing upstream.", "requiresTag": "ranged", "outcomes": [
-        { "weight": 0.6, "text": "Sharp eyes spot a shallow ford hidden by reeds. Everyone crosses dry.", "effects": { "morale": 10 } },
-        { "weight": 0.4, "text": "The scout finds the ford and a forgotten supply pack on the far bank.", "effects": { "morale": 8, "grantItem": "scouts_sling" } }
+        { "weight": 0.6, "text": "Sharp eyes spot a shallow ford hidden by reeds. Everyone crosses dry.", "effects": { "morale": 5 } },
+        { "weight": 0.4, "text": "The scout finds the ford and a forgotten supply pack on the far bank.", "effects": { "morale": 4, "grantItem": "scouts_sling" } }
       ]},
       { "text": "Cross on the fallen log.", "outcomes": [
-        { "weight": 0.5, "text": "Careful footing gets everyone across safely.", "effects": { "morale": 5 } },
+        { "weight": 0.5, "text": "Careful footing gets everyone across safely.", "effects": { "morale": 3 } },
         { "weight": 0.3, "text": "The log holds. You find a cache on the far bank.", "effects": { "grantItem": "fang_necklace" } },
-        { "weight": 0.2, "text": "The log snaps! Several soldiers tumble into the rapids.", "effects": { "damageAll": 8, "morale": -8 } }
+        { "weight": 0.2, "text": "The log snaps! Several soldiers tumble into the rapids.", "effects": { "damageAll": 8, "morale": -4 } }
       ]}
     ]
   },
@@ -110,17 +110,17 @@ const RAW_EVENTS = [
     "intro": "Your men drag a struggling Germanic scout from the bushes. He spits and snarls but is clearly terrified.",
     "choices": [
       { "text": "Interrogate him for information.", "outcomes": [
-        { "weight": 0.5, "text": "He reveals a hidden supply cache before escaping.", "effects": { "grantItem": "herb_pouch", "morale": 5 } },
+        { "weight": 0.5, "text": "He reveals a hidden supply cache before escaping.", "effects": { "grantItem": "herb_pouch", "morale": 3 } },
         { "weight": 0.3, "text": "He tells you nothing useful and manages to bite a soldier.", "effects": { "damageAll": 2 } },
-        { "weight": 0.2, "text": "He breaks free and screams an alarm. You must move quickly.", "effects": { "morale": -12 } }
+        { "weight": 0.2, "text": "He breaks free and screams an alarm. You must move quickly.", "effects": { "morale": -6 } }
       ]},
       { "text": "Your officer takes command of the interrogation.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.6, "text": "Under firm questioning, the scout reveals enemy positions. Your men prepare accordingly.", "effects": { "morale": 12, "grantBlock": 5, "extraDiceNext": 1 } },
-        { "weight": 0.4, "text": "The officer's authority breaks him. He begs for mercy and offers his blade.", "effects": { "grantItem": "wolf_fang_blade", "morale": 5 } }
+        { "weight": 0.6, "text": "Under firm questioning, the scout reveals enemy positions. Your men prepare accordingly.", "effects": { "morale": 6, "grantBlock": 5, "extraDiceNext": 1 } },
+        { "weight": 0.4, "text": "The officer's authority breaks him. He begs for mercy and offers his blade.", "effects": { "grantItem": "wolf_fang_blade", "morale": 3 } }
       ]},
       { "text": "Release him as a show of mercy.", "outcomes": [
-        { "weight": 0.6, "text": "The men question your judgment, but the gesture feels right.", "effects": { "morale": 8 } },
-        { "weight": 0.4, "text": "He returns later with friends. You were foolish.", "effects": { "morale": -15 } }
+        { "weight": 0.6, "text": "The men question your judgment, but the gesture feels right.", "effects": { "morale": 4 } },
+        { "weight": 0.4, "text": "He returns later with friends. You were foolish.", "effects": { "morale": -8 } }
       ]}
     ]
   },
@@ -129,7 +129,7 @@ const RAW_EVENTS = [
     "intro": "Behind a fallen oak, you discover a hidden cache of supplies \u2014 likely left by a Germanic foraging party. Dried meat, herbs, and a few weapons.",
     "choices": [
       { "text": "Take everything.", "outcomes": [
-        { "weight": 0.6, "text": "A good haul. The men eat well tonight.", "effects": { "healAll": 6, "morale": 10 } },
+        { "weight": 0.6, "text": "A good haul. The men eat well tonight.", "effects": { "healAll": 6, "morale": 5 } },
         { "weight": 0.4, "text": "You find excellent supplies and a fine weapon among the cache.", "effects": { "healAll": 4, "grantItem": "iron_gladius" } }
       ]},
       { "text": "Take only the medicine and leave the rest.", "outcomes": [
@@ -137,8 +137,8 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "Among the herbs you find something special.", "effects": { "healAll": 12, "grantItem": "herb_pouch" } }
       ]},
       { "text": "Leave it \u2014 it could be a trap.", "outcomes": [
-        { "weight": 0.5, "text": "Prudent. The men grumble but respect your caution.", "effects": { "morale": -3 } },
-        { "weight": 0.5, "text": "As you leave, you hear a tripwire snap behind you. Good instincts.", "effects": { "morale": 10 } }
+        { "weight": 0.5, "text": "Prudent. The men grumble but respect your caution.", "effects": { "morale": -2 } },
+        { "weight": 0.5, "text": "As you leave, you hear a tripwire snap behind you. Good instincts.", "effects": { "morale": 5 } }
       ]}
     ]
   },
@@ -147,16 +147,16 @@ const RAW_EVENTS = [
     "intro": "You stumble upon a makeshift camp. Roman equipment is scattered about, but the soldiers here have abandoned their colors. They eye you warily, hands on weapons.",
     "choices": [
       { "text": "Demand they rejoin the column.", "outcomes": [
-        { "weight": 0.4, "text": "They fall in line, ashamed. Your men stand a little taller.", "effects": { "morale": 15 } },
+        { "weight": 0.4, "text": "They fall in line, ashamed. Your men stand a little taller.", "effects": { "morale": 8 } },
         { "weight": 0.3, "text": "They refuse and flee into the forest, but leave useful supplies behind.", "effects": { "healAll": 6, "grantItem": "iron_gladius" } },
-        { "weight": 0.3, "text": "They attack in desperation. You put them down, but the fight costs you.", "effects": { "damageAll": 5, "morale": -10 } }
+        { "weight": 0.3, "text": "They attack in desperation. You put them down, but the fight costs you.", "effects": { "damageAll": 5, "morale": -5 } }
       ]},
       { "text": "Your officer rallies them with authority.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.7, "text": "Your officer's voice carries the weight of Rome. Every man falls in line without a word. Morale soars.", "effects": { "morale": 22 } },
-        { "weight": 0.3, "text": "They recognize the rank and share their fortified position. Your men rest and sharpen blades.", "effects": { "morale": 12, "healAll": 6, "buffDamage": 1, "buffAttacks": 4, "grantBlock": 3 } }
+        { "weight": 0.7, "text": "Your officer's voice carries the weight of Rome. Every man falls in line without a word. Morale soars.", "effects": { "morale": 11 } },
+        { "weight": 0.3, "text": "They recognize the rank and share their fortified position. Your men rest and sharpen blades.", "effects": { "morale": 6, "healAll": 6, "buffDamage": 1, "buffAttacks": 4, "grantBlock": 3 } }
       ]},
       { "text": "Trade supplies with them.", "outcomes": [
-        { "weight": 0.6, "text": "They share medicine and a warm meal. A brief taste of civilization.", "effects": { "healAll": 10, "morale": 5 } },
+        { "weight": 0.6, "text": "They share medicine and a warm meal. A brief taste of civilization.", "effects": { "healAll": 10, "morale": 3 } },
         { "weight": 0.4, "text": "They trade you a curious trinket for your last rations.", "effects": { "grantItem": "woad_charm", "damageAll": 3 } }
       ]},
       { "text": "Leave them. You have enough problems.", "outcomes": [
@@ -169,19 +169,19 @@ const RAW_EVENTS = [
     "intro": "A colossal oak tree dominates a clearing, its trunk carved with faces that seem to shift in the firelight. Offerings hang from its branches \u2014 weapons, bones, and Roman standards.",
     "choices": [
       { "text": "Take back the Roman standards.", "outcomes": [
-        { "weight": 0.5, "text": "Your men cheer. The standards still carry weight, even here.", "effects": { "morale": 20 } },
-        { "weight": 0.3, "text": "As you pull the last standard free, the tree groans. Something watches.", "effects": { "morale": 10, "damageAll": 3 } },
-        { "weight": 0.2, "text": "The offerings were trapped. Poison thorns slice your hands.", "effects": { "damageAll": 6, "morale": -5 } }
+        { "weight": 0.5, "text": "Your men cheer. The standards still carry weight, even here.", "effects": { "morale": 10 } },
+        { "weight": 0.3, "text": "As you pull the last standard free, the tree groans. Something watches.", "effects": { "morale": 5, "damageAll": 3 } },
+        { "weight": 0.2, "text": "The offerings were trapped. Poison thorns slice your hands.", "effects": { "damageAll": 6, "morale": -3 } }
       ]},
       { "text": "Search the offerings for useful equipment.", "outcomes": [
         { "weight": 0.5, "text": "Among the bones you find a weapon, still sharp.", "effects": { "grantItem": "chiefs_spear" } },
         { "weight": 0.3, "text": "You find herbs wrapped in leather. Good medicine.", "effects": { "healAll": 8, "grantItem": "herb_pouch" } },
-        { "weight": 0.2, "text": "Nothing but rot and bone. The men grow uneasy.", "effects": { "morale": -8 } }
+        { "weight": 0.2, "text": "Nothing but rot and bone. The men grow uneasy.", "effects": { "morale": -4 } }
       ]},
       { "text": "Burn the tree.", "outcomes": [
-        { "weight": 0.4, "text": "The fire catches fast. The power of the tree seeps into your men as it burns. They feel tougher.", "effects": { "morale": 5, "maxHpAll": 1 } },
-        { "weight": 0.3, "text": "The fire reveals a hidden cache at the roots.", "effects": { "grantItem": "runic_stone", "morale": 5 } },
-        { "weight": 0.3, "text": "The smoke draws attention. Poison lingers in the air.", "effects": { "morale": -12, "poisonParty": 3 } }
+        { "weight": 0.4, "text": "The fire catches fast. The power of the tree seeps into your men as it burns. They feel tougher.", "effects": { "morale": 3, "maxHpAll": 1 } },
+        { "weight": 0.3, "text": "The fire reveals a hidden cache at the roots.", "effects": { "grantItem": "runic_stone", "morale": 3 } },
+        { "weight": 0.3, "text": "The smoke draws attention. Poison lingers in the air.", "effects": { "morale": -6, "poisonParty": 3 } }
       ]}
     ]
   },
@@ -216,12 +216,12 @@ const RAW_EVENTS = [
     "intro": "Freshly dug graves line the trail, marked with Roman shields. Your men recognize the insignia. Some kneel. Others look away.",
     "choices": [
       { "text": "Pay respects and offer a prayer.", "outcomes": [
-        { "weight": 0.6, "text": "The men take heart from honoring their fallen brothers.", "effects": { "morale": 12 } },
-        { "weight": 0.4, "text": "The weight of the dead settles on your shoulders.", "effects": { "morale": -5 } }
+        { "weight": 0.6, "text": "The men take heart from honoring their fallen brothers.", "effects": { "morale": 6 } },
+        { "weight": 0.4, "text": "The weight of the dead settles on your shoulders.", "effects": { "morale": -3 } }
       ]},
       { "text": "Search the graves for useful equipment.", "outcomes": [
-        { "weight": 0.5, "text": "You find a serviceable weapon among the dead.", "effects": { "grantItem": "iron_gladius", "morale": -8 } },
-        { "weight": 0.3, "text": "The graves hold nothing. Your men are disgusted.", "effects": { "morale": -15 } },
+        { "weight": 0.5, "text": "You find a serviceable weapon among the dead.", "effects": { "grantItem": "iron_gladius", "morale": -4 } },
+        { "weight": 0.3, "text": "The graves hold nothing. Your men are disgusted.", "effects": { "morale": -8 } },
         { "weight": 0.2, "text": "You find a pouch of herbs and a finely crafted charm.", "effects": { "grantItem": "woad_charm", "healAll": 4 } }
       ]},
       { "text": "March on. The dead cannot help us.", "outcomes": [
@@ -235,15 +235,15 @@ const RAW_EVENTS = [
     "intro": "A massive wild boar blocks the narrow trail, snorting and pawing the ground. It looks wounded and angry. Your men grip their weapons.",
     "choices": [
       { "text": "Kill the boar for meat.", "outcomes": [
-        { "weight": 0.6, "text": "The boar falls. Fresh meat lifts the men's spirits.", "effects": { "healAll": 8, "morale": 8 } },
-        { "weight": 0.4, "text": "The boar gores a soldier before going down. Meat is meat.", "effects": { "damageAll": 4, "healAll": 6, "morale": 3 } }
+        { "weight": 0.6, "text": "The boar falls. Fresh meat lifts the men's spirits.", "effects": { "healAll": 8, "morale": 4 } },
+        { "weight": 0.4, "text": "The boar gores a soldier before going down. Meat is meat.", "effects": { "damageAll": 4, "healAll": 6, "morale": 2 } }
       ]},
       { "text": "Your fighters bring it down cleanly.", "requiresTag": "melee", "outcomes": [
-        { "weight": 0.7, "text": "A single precise thrust. The boar never stood a chance. Fresh meat and a trophy tusk.", "effects": { "healAll": 10, "morale": 10 } },
+        { "weight": 0.7, "text": "A single precise thrust. The boar never stood a chance. Fresh meat and a trophy tusk.", "effects": { "healAll": 10, "morale": 5 } },
         { "weight": 0.3, "text": "The legionary pins it expertly. The tusk makes a fine blade.", "effects": { "healAll": 8, "grantItem": "fang_necklace" } }
       ]},
       { "text": "Wait for it to move.", "outcomes": [
-        { "weight": 0.5, "text": "It eventually wanders off. Time lost, but no blood spilled.", "effects": { "morale": -3 } },
+        { "weight": 0.5, "text": "It eventually wanders off. Time lost, but no blood spilled.", "effects": { "morale": -2 } },
         { "weight": 0.5, "text": "It charges! Your men scatter but regroup quickly.", "effects": { "damageAll": 3 } }
       ]}
     ]
@@ -255,17 +255,17 @@ const RAW_EVENTS = [
     "intro": "A crumbling Roman watchtower rises from the canopy. It was overrun long ago, but the stonework still stands. Your men could use it.",
     "choices": [
       { "text": "Climb and scout the area ahead.", "outcomes": [
-        { "weight": 0.5, "text": "From the top, you see the path ahead clearly. Your confidence grows.", "effects": { "morale": 15 } },
-        { "weight": 0.3, "text": "You spot an enemy patrol and avoid them. The men feel relieved.", "effects": { "morale": 10, "healAll": 3 } },
-        { "weight": 0.2, "text": "The stairs collapse. A soldier is injured in the fall.", "effects": { "damageAll": 5, "morale": -5 } }
+        { "weight": 0.5, "text": "From the top, you see the path ahead clearly. Your confidence grows.", "effects": { "morale": 8 } },
+        { "weight": 0.3, "text": "You spot an enemy patrol and avoid them. The men feel relieved.", "effects": { "morale": 5, "healAll": 3 } },
+        { "weight": 0.2, "text": "The stairs collapse. A soldier is injured in the fall.", "effects": { "damageAll": 5, "morale": -3 } }
       ]},
       { "text": "Your officer organizes a defensive rest.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.6, "text": "The watchtower provides cover. Your men rest and fortify their defenses.", "effects": { "healAll": 8, "morale": 10, "grantBlock": 6 } },
-        { "weight": 0.4, "text": "A well-organized camp. The officer finds a Roman cache bricked into the wall.", "effects": { "healAll": 8, "morale": 8, "grantItem": "shieldbearers_grip" } }
+        { "weight": 0.6, "text": "The watchtower provides cover. Your men rest and fortify their defenses.", "effects": { "healAll": 8, "morale": 5, "grantBlock": 6 } },
+        { "weight": 0.4, "text": "A well-organized camp. The officer finds a Roman cache bricked into the wall.", "effects": { "healAll": 8, "morale": 4, "grantItem": "shieldbearers_grip" } }
       ]},
       { "text": "Search the ruins for supplies.", "outcomes": [
         { "weight": 0.5, "text": "You find a cache of Roman equipment hidden in the walls.", "effects": { "grantItem": "raider_shield" } },
-        { "weight": 0.3, "text": "Nothing but dust and bones.", "effects": { "morale": -3 } },
+        { "weight": 0.3, "text": "Nothing but dust and bones.", "effects": { "morale": -2 } },
         { "weight": 0.2, "text": "A runic stone is embedded in the foundation. It hums with power.", "effects": { "grantItem": "runic_stone" } }
       ]}
     ]
@@ -277,23 +277,23 @@ const RAW_EVENTS = [
     "intro": "You stumble upon a clearing where Germanic priests have recently performed a ritual. The ground is soaked in blood. Strange symbols are carved into the trees. Power lingers here.",
     "choices": [
       { "text": "Desecrate the ritual site.", "outcomes": [
-        { "weight": 0.4, "text": "The symbols crack and fade. Whatever was bound here dissipates. Your men feel lighter.", "effects": { "morale": 18, "healAll": 5 } },
-        { "weight": 0.3, "text": "The blood ignites as you approach. A curse lashes out.", "effects": { "damageAll": 6, "morale": -12 } },
+        { "weight": 0.4, "text": "The symbols crack and fade. Whatever was bound here dissipates. Your men feel lighter.", "effects": { "morale": 9, "healAll": 5 } },
+        { "weight": 0.3, "text": "The blood ignites as you approach. A curse lashes out.", "effects": { "damageAll": 6, "morale": -6 } },
         { "weight": 0.3, "text": "You destroy the site but find a powerful artifact beneath the altar.", "effects": { "grantItem": "arm_ring_of_arminius", "damageAll": 4 } }
       ]},
       { "text": "Your healer studies the herbs and symbols.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.5, "text": "Your healer recognizes the herbs and brews a powerful stimulant. Your men feel sharper.", "effects": { "healAll": 8, "morale": 5, "extraDiceNext": 2 } },
-        { "weight": 0.3, "text": "The healer deciphers a ward against poison and applies it to your weapons.", "effects": { "morale": 8, "grantItem": "viper_venom_vial" } },
+        { "weight": 0.5, "text": "Your healer recognizes the herbs and brews a powerful stimulant. Your men feel sharper.", "effects": { "healAll": 8, "morale": 3, "extraDiceNext": 2 } },
+        { "weight": 0.3, "text": "The healer deciphers a ward against poison and applies it to your weapons.", "effects": { "morale": 4, "grantItem": "viper_venom_vial" } },
         { "weight": 0.2, "text": "Deep study reveals the ritual's purpose — a protection charm, repurposed.", "effects": { "healAll": 6, "grantItem": "woad_charm" } }
       ]},
       { "text": "Study the symbols carefully.", "outcomes": [
         { "weight": 0.5, "text": "The symbols are hard to read. You glean a little knowledge.", "effects": { "healAll": 5 } },
-        { "weight": 0.3, "text": "The symbols make no sense, but staring at them too long brings headaches.", "effects": { "morale": -8 } },
-        { "weight": 0.2, "text": "You decipher a ward against poison. Useful.", "effects": { "morale": 5, "healAll": 3 } }
+        { "weight": 0.3, "text": "The symbols make no sense, but staring at them too long brings headaches.", "effects": { "morale": -4 } },
+        { "weight": 0.2, "text": "You decipher a ward against poison. Useful.", "effects": { "morale": 3, "healAll": 3 } }
       ]},
       { "text": "Leave immediately. This place is cursed.", "outcomes": [
-        { "weight": 0.7, "text": "Wise. The forest seems to exhale as you leave.", "effects": { "morale": 5 } },
-        { "weight": 0.3, "text": "As you turn to leave, something follows. The air grows cold.", "effects": { "morale": -10 } }
+        { "weight": 0.7, "text": "Wise. The forest seems to exhale as you leave.", "effects": { "morale": 3 } },
+        { "weight": 0.3, "text": "As you turn to leave, something follows. The air grows cold.", "effects": { "morale": -5 } }
       ]}
     ]
   },
@@ -304,13 +304,13 @@ const RAW_EVENTS = [
     "intro": "A massive wolf lies by the trail, a Germanic spear through its flank. It whimpers, eyes wild with pain. It could be a threat or... something else.",
     "choices": [
       { "text": "Put it out of its misery.", "outcomes": [
-        { "weight": 0.5, "text": "The wolf dies quietly. Its pelt is thick and warm.", "effects": { "grantItem": "wolf_pelt", "morale": 3 } },
-        { "weight": 0.5, "text": "As it dies, others howl in the distance. Its pack remembers.", "effects": { "morale": -8 } }
+        { "weight": 0.5, "text": "The wolf dies quietly. Its pelt is thick and warm.", "effects": { "grantItem": "wolf_pelt", "morale": 2 } },
+        { "weight": 0.5, "text": "As it dies, others howl in the distance. Its pack remembers.", "effects": { "morale": -4 } }
       ]},
       { "text": "Have your healer tend to it.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.4, "text": "Against all odds, the wolf accepts treatment. It limps away, turning back once. Your men feel... something.", "effects": { "morale": 20 } },
-        { "weight": 0.3, "text": "It snaps and bites before fleeing. Worth the try.", "effects": { "damageAll": 3, "morale": 5 } },
-        { "weight": 0.3, "text": "The wolf calms. Around its neck is a collar with a strange charm.", "effects": { "grantItem": "fang_necklace", "morale": 10 } }
+        { "weight": 0.4, "text": "Against all odds, the wolf accepts treatment. It limps away, turning back once. Your men feel... something.", "effects": { "morale": 10 } },
+        { "weight": 0.3, "text": "It snaps and bites before fleeing. Worth the try.", "effects": { "damageAll": 3, "morale": 3 } },
+        { "weight": 0.3, "text": "The wolf calms. Around its neck is a collar with a strange charm.", "effects": { "grantItem": "fang_necklace", "morale": 5 } }
       ]},
       { "text": "Walk past. It's not your problem.", "outcomes": [
         { "weight": 1.0, "text": "The wolf watches you go. The forest is full of suffering.", "effects": {} }
@@ -325,20 +325,20 @@ const RAW_EVENTS = [
     "choices": [
       { "text": "Search the camp for supplies.", "outcomes": [
         { "weight": 0.4, "text": "Among the wreckage you find intact supplies. Someone packed in a hurry and left these behind.", "effects": { "healAll": 6, "grantItem": "herb_pouch" } },
-        { "weight": 0.3, "text": "A weapon rack still stands. One blade is worth taking.", "effects": { "grantItem": "iron_gladius", "morale": -5 } },
-        { "weight": 0.3, "text": "The camp is picked clean. Only blood and silence remain.", "effects": { "morale": -10 } }
+        { "weight": 0.3, "text": "A weapon rack still stands. One blade is worth taking.", "effects": { "grantItem": "iron_gladius", "morale": -3 } },
+        { "weight": 0.3, "text": "The camp is picked clean. Only blood and silence remain.", "effects": { "morale": -5 } }
       ]},
       { "text": "Your officer rallies the men and secures the perimeter.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.6, "text": "Discipline holds. The officer turns fear into focus. The camp yields useful supplies.", "effects": { "morale": 10, "healAll": 6, "grantItem": "raider_shield" } },
-        { "weight": 0.4, "text": "The perimeter holds. Your men take what they can and move on with purpose.", "effects": { "morale": 12, "healAll": 4 } }
+        { "weight": 0.6, "text": "Discipline holds. The officer turns fear into focus. The camp yields useful supplies.", "effects": { "morale": 5, "healAll": 6, "grantItem": "raider_shield" } },
+        { "weight": 0.4, "text": "The perimeter holds. Your men take what they can and move on with purpose.", "effects": { "morale": 6, "healAll": 4 } }
       ]},
       { "text": "Follow the drag marks.", "outcomes": [
-        { "weight": 0.4, "text": "The trail leads to a shallow grave. Among the dead, a fine weapon.", "effects": { "grantItem": "chiefs_spear", "morale": -8 } },
-        { "weight": 0.3, "text": "You find nothing but torn earth and claw marks. Poisonous fungi line the drag trail.", "effects": { "morale": -10, "poisonParty": 2 } },
-        { "weight": 0.3, "text": "The trail ends at a ravine. Below, supplies that tumbled during the retreat.", "effects": { "healAll": 8, "morale": -3 } }
+        { "weight": 0.4, "text": "The trail leads to a shallow grave. Among the dead, a fine weapon.", "effects": { "grantItem": "chiefs_spear", "morale": -4 } },
+        { "weight": 0.3, "text": "You find nothing but torn earth and claw marks. Poisonous fungi line the drag trail.", "effects": { "morale": -5, "poisonParty": 2 } },
+        { "weight": 0.3, "text": "The trail ends at a ravine. Below, supplies that tumbled during the retreat.", "effects": { "healAll": 8, "morale": -2 } }
       ]},
       { "text": "Leave. This place is death.", "outcomes": [
-        { "weight": 1.0, "text": "You march past. No one looks back.", "effects": { "morale": -5 } }
+        { "weight": 1.0, "text": "You march past. No one looks back.", "effects": { "morale": -3 } }
       ]}
     ]
   },
@@ -349,22 +349,22 @@ const RAW_EVENTS = [
     "intro": "The trail narrows between trees hung with bone totems \u2014 femurs lashed into symbols, skulls on stakes facing your path. Dark runes are smeared in blood on every surface. Someone knows you're coming.",
     "choices": [
       { "text": "Tear them down and push through.", "outcomes": [
-        { "weight": 0.5, "text": "Your men smash the totems with grim satisfaction. The oppressive air lifts.", "effects": { "morale": 12 } },
-        { "weight": 0.3, "text": "As the last totem falls, a curse lashes out. Pain sears through the column.", "effects": { "damageAll": 5, "morale": -8 } },
-        { "weight": 0.2, "text": "Among the shattered bones, a charm pulses with stolen power.", "effects": { "grantItem": "woad_charm", "morale": 5 } }
+        { "weight": 0.5, "text": "Your men smash the totems with grim satisfaction. The oppressive air lifts.", "effects": { "morale": 6 } },
+        { "weight": 0.3, "text": "As the last totem falls, a curse lashes out. Pain sears through the column.", "effects": { "damageAll": 5, "morale": -4 } },
+        { "weight": 0.2, "text": "Among the shattered bones, a charm pulses with stolen power.", "effects": { "grantItem": "woad_charm", "morale": 3 } }
       ]},
       { "text": "Your healer examines the runes and bones.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.5, "text": "Your healer identifies the poison on the bone tips and prepares a counter-agent. Knowledge is armor.", "effects": { "healAll": 6, "morale": 8 } },
-        { "weight": 0.3, "text": "Careful study reveals a ward pattern. Your healer repurposes it as protection.", "effects": { "morale": 10, "grantItem": "seers_eye" } },
+        { "weight": 0.5, "text": "Your healer identifies the poison on the bone tips and prepares a counter-agent. Knowledge is armor.", "effects": { "healAll": 6, "morale": 4 } },
+        { "weight": 0.3, "text": "Careful study reveals a ward pattern. Your healer repurposes it as protection.", "effects": { "morale": 5, "grantItem": "seers_eye" } },
         { "weight": 0.2, "text": "The runes resist understanding, but your healer brews a tonic from the ritual herbs. Everyone feels tougher.", "effects": { "maxHpAll": 1, "healAll": 3 } }
       ]},
       { "text": "Your fighters carve a new path around them.", "requiresTag": "melee", "outcomes": [
-        { "weight": 0.6, "text": "Brute force wins. Your soldiers hack through the undergrowth, avoiding the markers entirely.", "effects": { "morale": 8, "damageAll": 2 } },
-        { "weight": 0.4, "text": "The detour takes time but keeps the men away from the markers. They find a stream to refill waterskins.", "effects": { "healAll": 5, "morale": 5 } }
+        { "weight": 0.6, "text": "Brute force wins. Your soldiers hack through the undergrowth, avoiding the markers entirely.", "effects": { "morale": 4, "damageAll": 2 } },
+        { "weight": 0.4, "text": "The detour takes time but keeps the men away from the markers. They find a stream to refill waterskins.", "effects": { "healAll": 5, "morale": 3 } }
       ]},
       { "text": "Walk through without touching anything.", "outcomes": [
-        { "weight": 0.5, "text": "The skulls watch you pass. The men hold their breath the entire way.", "effects": { "morale": -10 } },
-        { "weight": 0.5, "text": "You pass through unharmed, but the feeling of being watched doesn't fade.", "effects": { "morale": -6 } }
+        { "weight": 0.5, "text": "The skulls watch you pass. The men hold their breath the entire way.", "effects": { "morale": -5 } },
+        { "weight": 0.5, "text": "You pass through unharmed, but the feeling of being watched doesn't fade.", "effects": { "morale": -3 } }
       ]}
     ]
   },
@@ -374,21 +374,21 @@ const RAW_EVENTS = [
     "intro": "A wall of fog rolls through the trees, thick as wool and cold as the grave. Shapes move in the murk \u2014 or maybe they don't. Your men freeze. Visibility drops to nothing.",
     "choices": [
       { "text": "Push through quickly.", "outcomes": [
-        { "weight": 0.4, "text": "You burst through the far side, gasping but intact. The sun breaks through.", "effects": { "healAll": 4, "morale": 5 } },
-        { "weight": 0.3, "text": "Branches and bogs batter the column. Men stumble and curse in the dark.", "effects": { "damageAll": 6, "morale": -8 } },
+        { "weight": 0.4, "text": "You burst through the far side, gasping but intact. The sun breaks through.", "effects": { "healAll": 4, "morale": 3 } },
+        { "weight": 0.3, "text": "Branches and bogs batter the column. Men stumble and curse in the dark.", "effects": { "damageAll": 6, "morale": -4 } },
         { "weight": 0.3, "text": "Minor scrapes, but you made it through.", "effects": { "damageAll": 4 } }
       ]},
       { "text": "Your scout guides the way through.", "requiresTag": "ranged", "outcomes": [
-        { "weight": 0.6, "text": "Sharp eyes find the path through the murk. Everyone crosses safely.", "effects": { "morale": 12 } },
-        { "weight": 0.4, "text": "The scout finds the path \u2014 and something glinting in the mud.", "effects": { "morale": 8, "grantItem": "fang_necklace" } }
+        { "weight": 0.6, "text": "Sharp eyes find the path through the murk. Everyone crosses safely.", "effects": { "morale": 6 } },
+        { "weight": 0.4, "text": "The scout finds the path \u2014 and something glinting in the mud.", "effects": { "morale": 4, "grantItem": "fang_necklace" } }
       ]},
       { "text": "Your medicus prepares torches and salves.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.6, "text": "The torches cut through the fog. Your medicus treats the chill before it sets in.", "effects": { "healAll": 8, "morale": 5 } },
-        { "weight": 0.4, "text": "The warmth steadies nerves. Your men march through with purpose.", "effects": { "healAll": 6, "morale": 8 } }
+        { "weight": 0.6, "text": "The torches cut through the fog. Your medicus treats the chill before it sets in.", "effects": { "healAll": 8, "morale": 3 } },
+        { "weight": 0.4, "text": "The warmth steadies nerves. Your men march through with purpose.", "effects": { "healAll": 6, "morale": 4 } }
       ]},
       { "text": "Wait for it to pass.", "outcomes": [
-        { "weight": 0.5, "text": "Hours crawl by. The men grow restless, but the fog lifts.", "effects": { "morale": -3 } },
-        { "weight": 0.5, "text": "Something finds you in the fog. Claws and teeth in the dark.", "effects": { "damageAll": 3, "morale": -8 } }
+        { "weight": 0.5, "text": "Hours crawl by. The men grow restless, but the fog lifts.", "effects": { "morale": -2 } },
+        { "weight": 0.5, "text": "Something finds you in the fog. Claws and teeth in the dark.", "effects": { "damageAll": 3, "morale": -4 } }
       ]}
     ]
   },
@@ -399,20 +399,20 @@ const RAW_EVENTS = [
     "intro": "The trees ahead are heavy with a grim harvest. Roman soldiers \u2014 your countrymen \u2014 hang from ropes, stripped of armor. A warning from Arminius. Some of your men turn away. Others stare.",
     "choices": [
       { "text": "Cut them down and bury them.", "outcomes": [
-        { "weight": 0.6, "text": "Your men work in silence. When it's done, they stand a little taller. Dignity in death.", "effects": { "morale": 18 } },
-        { "weight": 0.4, "text": "The ropes were trapped. Poisoned thorns slash your hands as you cut.", "effects": { "damageAll": 3, "morale": -10 } }
+        { "weight": 0.6, "text": "Your men work in silence. When it's done, they stand a little taller. Dignity in death.", "effects": { "morale": 9 } },
+        { "weight": 0.4, "text": "The ropes were trapped. Poisoned thorns slash your hands as you cut.", "effects": { "damageAll": 3, "morale": -5 } }
       ]},
       { "text": "Search the bodies for equipment.", "outcomes": [
-        { "weight": 0.5, "text": "A gladius, still sharp. The dead have no need of it.", "effects": { "grantItem": "iron_gladius", "morale": -12 } },
-        { "weight": 0.3, "text": "A wolf pelt cloak, stiff with frost. It'll keep someone warm.", "effects": { "grantItem": "wolf_pelt", "morale": -8 } },
-        { "weight": 0.2, "text": "Nothing but rot. The men stare at you with hollow eyes.", "effects": { "morale": -20 } }
+        { "weight": 0.5, "text": "A gladius, still sharp. The dead have no need of it.", "effects": { "grantItem": "iron_gladius", "morale": -6 } },
+        { "weight": 0.3, "text": "A wolf pelt cloak, stiff with frost. It'll keep someone warm.", "effects": { "grantItem": "wolf_pelt", "morale": -4 } },
+        { "weight": 0.2, "text": "Nothing but rot. The men stare at you with hollow eyes.", "effects": { "morale": -10 } }
       ]},
       { "text": "Your officer leads funeral rites.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.7, "text": "Your officer speaks the words of Rome. Every man stands at attention. For a moment, the forest is silent.", "effects": { "morale": 22, "healAll": 5 } },
-        { "weight": 0.3, "text": "The rites bring cold fury. Your men swear vengeance. Blades are sharpened.", "effects": { "morale": 15, "buffDamage": 3, "buffAttacks": 2 } }
+        { "weight": 0.7, "text": "Your officer speaks the words of Rome. Every man stands at attention. For a moment, the forest is silent.", "effects": { "morale": 11, "healAll": 5 } },
+        { "weight": 0.3, "text": "The rites bring cold fury. Your men swear vengeance. Blades are sharpened.", "effects": { "morale": 8, "buffDamage": 3, "buffAttacks": 2 } }
       ]},
       { "text": "March past in silence.", "outcomes": [
-        { "weight": 1.0, "text": "No one speaks. The forest swallows the dead behind you.", "effects": { "morale": -5 } }
+        { "weight": 1.0, "text": "No one speaks. The forest swallows the dead behind you.", "effects": { "morale": -3 } }
       ]}
     ]
   },
@@ -425,16 +425,16 @@ const RAW_EVENTS = [
     "intro": "A Roman supply cart lies overturned on the trail, its oxen long gone. Crates are scattered. Some are smashed, but others look intact. Claw marks score the wood — something dragged the driver away.",
     "choices": [
       { "text": "Salvage what you can.", "outcomes": [
-        { "weight": 0.5, "text": "Medical supplies and dried rations. Your men eat well for the first time in days.", "effects": { "healAll": 6, "morale": 8 } },
-        { "weight": 0.3, "text": "A sealed weapon crate. Roman steel, sharp and ready.", "effects": { "grantItem": "iron_gladius", "morale": 5 } },
-        { "weight": 0.2, "text": "Most of it is ruined. But at the bottom, something valuable.", "effects": { "grantItem": "herb_pouch", "morale": 3 } }
+        { "weight": 0.5, "text": "Medical supplies and dried rations. Your men eat well for the first time in days.", "effects": { "healAll": 6, "morale": 4 } },
+        { "weight": 0.3, "text": "A sealed weapon crate. Roman steel, sharp and ready.", "effects": { "grantItem": "iron_gladius", "morale": 3 } },
+        { "weight": 0.2, "text": "Most of it is ruined. But at the bottom, something valuable.", "effects": { "grantItem": "herb_pouch", "morale": 2 } }
       ]},
       { "text": "Your fighters set up a defensive perimeter.", "requiresTag": "melee", "outcomes": [
-        { "weight": 0.6, "text": "Smart move. Wolves were circling. Your fighters drive them off and claim the supplies unmolested.", "effects": { "healAll": 5, "grantDamage": { "amount": 1, "tag": "melee", "count": 1 }, "morale": 10 } },
-        { "weight": 0.4, "text": "The perimeter holds. In the wreckage, your fighters find a fine shield — battered but serviceable.", "effects": { "grantItem": "raider_shield", "grantBlock": { "amount": 1, "tag": "melee", "count": 1 }, "morale": 8 } }
+        { "weight": 0.6, "text": "Smart move. Wolves were circling. Your fighters drive them off and claim the supplies unmolested.", "effects": { "healAll": 5, "grantDamage": { "amount": 1, "tag": "melee", "count": 1 }, "morale": 5 } },
+        { "weight": 0.4, "text": "The perimeter holds. In the wreckage, your fighters find a fine shield — battered but serviceable.", "effects": { "grantItem": "raider_shield", "grantBlock": { "amount": 1, "tag": "melee", "count": 1 }, "morale": 4 } }
       ]},
       { "text": "It's bait. Move on.", "outcomes": [
-        { "weight": 1.0, "text": "Your caution is rewarded. You spot wolf tracks converging on the cart. Better to march hungry than not march at all.", "effects": { "morale": 5 } }
+        { "weight": 1.0, "text": "Your caution is rewarded. You spot wolf tracks converging on the cart. Better to march hungry than not march at all.", "effects": { "morale": 3 } }
       ]}
     ]
   },
@@ -448,15 +448,15 @@ const RAW_EVENTS = [
     "intro": "High in the canopy, a hunter's platform. Rope ladders dangle from the branches. Someone watched this trail from above — recently, judging by the fresh-cut wood. They left in a hurry.",
     "choices": [
       { "text": "Climb up and use the vantage point.", "outcomes": [
-        { "weight": 0.5, "text": "From above, you see the trail ahead clearly. Ambush positions marked with stones. Forewarned is forearmed.", "effects": { "morale": 12, "extraDiceNext": 1 } },
-        { "weight": 0.5, "text": "The hunter left supplies — arrows, a waterskin, and a carved map of the area.", "effects": { "grantItem": "spotters_lens", "morale": 8 } }
+        { "weight": 0.5, "text": "From above, you see the trail ahead clearly. Ambush positions marked with stones. Forewarned is forearmed.", "effects": { "morale": 6, "extraDiceNext": 1 } },
+        { "weight": 0.5, "text": "The hunter left supplies — arrows, a waterskin, and a carved map of the area.", "effects": { "grantItem": "spotters_lens", "morale": 4 } }
       ]},
       { "text": "Your marksman studies the kill marks on the platform.", "requiresTag": "ranged", "outcomes": [
-        { "weight": 0.6, "text": "Hundreds of tallies. This hunter was prolific. Your marksman learns from the positioning — better angles, better timing.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 }, "grantMaxHp": { "amount": 1, "tag": "ranged", "count": 1 }, "morale": 8 } },
-        { "weight": 0.4, "text": "Hidden beneath a loose plank — a quiver of specially crafted arrows. Your marksman's eyes light up.", "effects": { "grantItem": "huntsmans_arrow", "morale": 10 } }
+        { "weight": 0.6, "text": "Hundreds of tallies. This hunter was prolific. Your marksman learns from the positioning — better angles, better timing.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 }, "grantMaxHp": { "amount": 1, "tag": "ranged", "count": 1 }, "morale": 4 } },
+        { "weight": 0.4, "text": "Hidden beneath a loose plank — a quiver of specially crafted arrows. Your marksman's eyes light up.", "effects": { "grantItem": "huntsmans_arrow", "morale": 5 } }
       ]},
       { "text": "Cut the ropes. Deny it to the enemy.", "outcomes": [
-        { "weight": 1.0, "text": "The platform crashes down. No one will watch this trail again. Your men feel a small victory.", "effects": { "morale": 8 } }
+        { "weight": 1.0, "text": "The platform crashes down. No one will watch this trail again. Your men feel a small victory.", "effects": { "morale": 4 } }
       ]}
     ]
   },
@@ -470,16 +470,16 @@ const RAW_EVENTS = [
     "intro": "You find a Germanic armory — racks of weapons, stacks of shields, a still-warm forge. The warriors fled when they heard your column. Everything here is crude but effective.",
     "choices": [
       { "text": "Arm up. Take everything.", "outcomes": [
-        { "weight": 0.5, "text": "Your soldiers grab weapons, shields, and armor scraps. Not Roman quality, but the extra iron helps.", "effects": { "grantDamage": { "amount": 1, "count": 2 }, "grantBlock": { "amount": 1, "count": 2 }, "morale": 8 } },
-        { "weight": 0.5, "text": "Among the crude weapons, one stands out — clearly taken from a Roman officer.", "effects": { "grantItem": "chiefs_spear", "morale": 10 } }
+        { "weight": 0.5, "text": "Your soldiers grab weapons, shields, and armor scraps. Not Roman quality, but the extra iron helps.", "effects": { "grantDamage": { "amount": 1, "count": 2 }, "grantBlock": { "amount": 1, "count": 2 }, "morale": 4 } },
+        { "weight": 0.5, "text": "Among the crude weapons, one stands out — clearly taken from a Roman officer.", "effects": { "grantItem": "chiefs_spear", "morale": 5 } }
       ]},
       { "text": "Your officer organizes a proper inventory.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.6, "text": "Roman efficiency at its finest. Everything useful is catalogued and distributed. Nothing wasted.", "effects": { "grantDamage": { "amount": 1, "count": 3 }, "grantBlock": { "amount": 1, "count": 3 }, "morale": 12 } },
-        { "weight": 0.4, "text": "Your officer finds a hidden compartment — Germanic war plans and a fine blade. Knowledge and steel.", "effects": { "grantItem": "wolf_fang_blade", "extraDiceNext": 2, "morale": 10 } }
+        { "weight": 0.6, "text": "Roman efficiency at its finest. Everything useful is catalogued and distributed. Nothing wasted.", "effects": { "grantDamage": { "amount": 1, "count": 3 }, "grantBlock": { "amount": 1, "count": 3 }, "morale": 6 } },
+        { "weight": 0.4, "text": "Your officer finds a hidden compartment — Germanic war plans and a fine blade. Knowledge and steel.", "effects": { "grantItem": "wolf_fang_blade", "extraDiceNext": 2, "morale": 5 } }
       ]},
       { "text": "Burn it. Deny them resupply.", "outcomes": [
-        { "weight": 0.7, "text": "The armory goes up in flames. Smoke rises. The enemy will feel this loss.", "effects": { "morale": 15 } },
-        { "weight": 0.3, "text": "As it burns, the heat cracks a hidden cache in the wall. You pull out a Roman helmet — stolen, now reclaimed.", "effects": { "grantItem": "fortified_helm", "morale": 12 } }
+        { "weight": 0.7, "text": "The armory goes up in flames. Smoke rises. The enemy will feel this loss.", "effects": { "morale": 8 } },
+        { "weight": 0.3, "text": "As it burns, the heat cracks a hidden cache in the wall. You pull out a Roman helmet — stolen, now reclaimed.", "effects": { "grantItem": "fortified_helm", "morale": 6 } }
       ]}
     ]
   },
@@ -493,16 +493,16 @@ const RAW_EVENTS = [
     "intro": "Half-submerged in the black water, a Roman legionary. Not dead — not alive either. His eyes flutter open as you approach. 'Kill me,' he whispers through cracked lips. 'Or save me. But don't leave me here.'",
     "choices": [
       { "text": "Pull him out and tend to him.", "outcomes": [
-        { "weight": 0.4, "text": "Your men drag him from the muck. He's delirious but alive. As he recovers, he whispers about the bog — where to step, where not to. The knowledge saves lives.", "effects": { "healAll": 4, "morale": 12, "grantMaxHp": { "amount": 1, "count": 3 } } },
-        { "weight": 0.3, "text": "He clutches a sealed pouch to his chest. 'Take it,' he gasps. 'I carried it from the massacre.' Inside — a vial of potent antivenom and a legionary's charm.", "effects": { "grantItem": "woad_charm", "morale": 10, "healAll": 5 } },
-        { "weight": 0.3, "text": "He doesn't make it. But his last words are coordinates — a cache he buried before the bog took him.", "effects": { "morale": -5, "grantItem": "venomous_blade" } }
+        { "weight": 0.4, "text": "Your men drag him from the muck. He's delirious but alive. As he recovers, he whispers about the bog — where to step, where not to. The knowledge saves lives.", "effects": { "healAll": 4, "morale": 6, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.3, "text": "He clutches a sealed pouch to his chest. 'Take it,' he gasps. 'I carried it from the massacre.' Inside — a vial of potent antivenom and a legionary's charm.", "effects": { "grantItem": "woad_charm", "morale": 5, "healAll": 5 } },
+        { "weight": 0.3, "text": "He doesn't make it. But his last words are coordinates — a cache he buried before the bog took him.", "effects": { "morale": -3, "grantItem": "venomous_blade" } }
       ]},
       { "text": "Your healer tries to purge the bog-poison.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.6, "text": "Against all odds, your healer stabilizes him. He weeps with gratitude and tells you everything — poison paths, safe water, where the plague bearers nest. Your healer learns from the bog-toxins.", "effects": { "morale": 15, "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "grantPoison": { "amount": 1, "tag": "support", "count": 1 }, "healAll": 3 } },
-        { "weight": 0.4, "text": "The poison is like nothing your healer has seen. She extracts a sample — it will coat blades beautifully. The legionary passes peacefully.", "effects": { "grantPoison": { "amount": 1, "count": 2 }, "grantItem": "bitter_remedy", "morale": 8 } }
+        { "weight": 0.6, "text": "Against all odds, your healer stabilizes him. He weeps with gratitude and tells you everything — poison paths, safe water, where the plague bearers nest. Your healer learns from the bog-toxins.", "effects": { "morale": 8, "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "grantPoison": { "amount": 1, "tag": "support", "count": 1 }, "healAll": 3 } },
+        { "weight": 0.4, "text": "The poison is like nothing your healer has seen. She extracts a sample — it will coat blades beautifully. The legionary passes peacefully.", "effects": { "grantPoison": { "amount": 1, "count": 2 }, "grantItem": "bitter_remedy", "morale": 4 } }
       ]},
       { "text": "Grant him a soldier's mercy.", "outcomes": [
-        { "weight": 1.0, "text": "A quick thrust. His eyes clear for one moment — gratitude — then nothing. You take his equipment. It's still good.", "effects": { "morale": 5, "grantDamage": { "amount": 1, "count": 1 }, "grantBlock": { "amount": 1, "count": 1 } } }
+        { "weight": 1.0, "text": "A quick thrust. His eyes clear for one moment — gratitude — then nothing. You take his equipment. It's still good.", "effects": { "morale": 3, "grantDamage": { "amount": 1, "count": 1 }, "grantBlock": { "amount": 1, "count": 1 } } }
       ]}
     ]
   },
@@ -519,11 +519,11 @@ const RAW_EVENTS = [
         { "weight": 1.0, "text": "The stones groan as the seal shatters. From the darkness, something stirs. The dead king does not rest easy.", "effects": { "triggerCombat": { "enemies": ["revenant_of_ariovistus", "barrow_guardian", "barrow_guardian", "barrow_guardian"], "name": "The Barrow of Ariovistus", "intro": "The Revenant of Ariovistus rises from his throne of bones. His court rises with him.", "loot": ["crown_of_ariovistus", "blade_of_ariovistus"] } } }
       ]},
       { "text": "Pay your respects and take what the grave offers.", "outcomes": [
-        { "weight": 0.5, "text": "You kneel at the entrance. The cold wind carries a whisper — and something rolls from the darkness into the light. The dead king's crown.", "effects": { "grantItem": "crown_of_ariovistus", "morale": 10 } },
-        { "weight": 0.5, "text": "You kneel at the entrance. A rusted blade slides from the earth at your feet, as if offered. The dead king's weapon.", "effects": { "grantItem": "blade_of_ariovistus", "morale": 10 } }
+        { "weight": 0.5, "text": "You kneel at the entrance. The cold wind carries a whisper — and something rolls from the darkness into the light. The dead king's crown.", "effects": { "grantItem": "crown_of_ariovistus", "morale": 5 } },
+        { "weight": 0.5, "text": "You kneel at the entrance. A rusted blade slides from the earth at your feet, as if offered. The dead king's weapon.", "effects": { "grantItem": "blade_of_ariovistus", "morale": 5 } }
       ]},
       { "text": "This place is cursed. Leave it undisturbed.", "outcomes": [
-        { "weight": 1.0, "text": "Your men breathe easier as you back away. Some things are better left buried. The forest seems to approve.", "effects": { "morale": 15 } }
+        { "weight": 1.0, "text": "Your men breathe easier as you back away. Some things are better left buried. The forest seems to approve.", "effects": { "morale": 8 } }
       ]}
     ]
   },
@@ -536,14 +536,14 @@ const RAW_EVENTS = [
     "choices": [
       { "text": "Drink deep and rest.", "outcomes": [
         { "weight": 0.5, "text": "The water is impossibly pure. Whoever drinks it feels stronger than before.", "effects": { "healAll": 6, "grantMaxHp": { "amount": 2, "count": 2 } } },
-        { "weight": 0.5, "text": "The spring revitalizes the entire cohort. The hermit nods approvingly.", "effects": { "healAll": 8, "morale": 10 } }
+        { "weight": 0.5, "text": "The spring revitalizes the entire cohort. The hermit nods approvingly.", "effects": { "healAll": 8, "morale": 5 } }
       ]},
       { "text": "Ask the hermit for wisdom.", "outcomes": [
-        { "weight": 0.5, "text": "He speaks in riddles, but your scouts learn from his gestures. The forest makes more sense now.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 }, "morale": 5 } },
-        { "weight": 0.5, "text": "He shows your healer herbs growing near the spring. Potent medicine.", "effects": { "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "morale": 5 } }
+        { "weight": 0.5, "text": "He speaks in riddles, but your scouts learn from his gestures. The forest makes more sense now.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 }, "morale": 3 } },
+        { "weight": 0.5, "text": "He shows your healer herbs growing near the spring. Potent medicine.", "effects": { "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "morale": 3 } }
       ]},
       { "text": "Move on. You don't trust it.", "outcomes": [
-        { "weight": 1.0, "text": "The hermit watches you go. Maybe you'll regret it. Maybe not.", "effects": { "morale": 3 } }
+        { "weight": 1.0, "text": "The hermit watches you go. Maybe you'll regret it. Maybe not.", "effects": { "morale": 2 } }
       ]}
     ]
   },
@@ -555,7 +555,7 @@ const RAW_EVENTS = [
     "intro": "Smoke still rises from a forge abandoned by fleeing villagers. Tools, ingots, and half-finished weapons lie scattered. Your men could put this to use.",
     "choices": [
       { "text": "Reforge weapons.", "outcomes": [
-        { "weight": 0.6, "text": "Your strongest fighters hammer new edges onto their blades. The iron sings.", "effects": { "grantDamage": { "amount": 1, "tag": "melee", "count": 2 }, "morale": 5 } },
+        { "weight": 0.6, "text": "Your strongest fighters hammer new edges onto their blades. The iron sings.", "effects": { "grantDamage": { "amount": 1, "tag": "melee", "count": 2 }, "morale": 3 } },
         { "weight": 0.4, "text": "The forge produces a fine blade before the coals die.", "effects": { "grantItem": "iron_gladius", "grantDamage": { "amount": 1, "count": 1 } } }
       ]},
       { "text": "Forge arrowheads and bolts.", "outcomes": [
@@ -584,7 +584,7 @@ const RAW_EVENTS = [
         { "weight": 0.3, "text": "Someone gets careless. Poison on the blade, and on the hand.", "effects": { "grantPoison": { "amount": 1, "count": 2 }, "damageAll": 3 } }
       ]},
       { "text": "Avoid it. Poison is a barbarian's tool.", "outcomes": [
-        { "weight": 1.0, "text": "Your men respect the decision. Rome fights with iron, not venom.", "effects": { "morale": 8 } }
+        { "weight": 1.0, "text": "Your men respect the decision. Rome fights with iron, not venom.", "effects": { "morale": 4 } }
       ]}
     ]
   },
@@ -596,16 +596,16 @@ const RAW_EVENTS = [
     "intro": "Hidden beneath a fallen tree, you find a Roman cache — left by legionaries who marched this forest before you. Dog tags, a sealed scroll of tactics, and preserved supplies.",
     "choices": [
       { "text": "Study the tactical scroll.", "outcomes": [
-        { "weight": 0.5, "text": "The scroll details fighting formations for forest combat. Your officers learn new tricks.", "effects": { "grantDamage": { "amount": 1, "tag": "command", "count": 2 }, "morale": 8 } },
-        { "weight": 0.5, "text": "Detailed maps of the area. Your whole cohort benefits from the foreknowledge.", "effects": { "grantMaxHp": { "amount": 1, "count": 3 }, "morale": 10 } }
+        { "weight": 0.5, "text": "The scroll details fighting formations for forest combat. Your officers learn new tricks.", "effects": { "grantDamage": { "amount": 1, "tag": "command", "count": 2 }, "morale": 4 } },
+        { "weight": 0.5, "text": "Detailed maps of the area. Your whole cohort benefits from the foreknowledge.", "effects": { "grantMaxHp": { "amount": 1, "count": 3 }, "morale": 5 } }
       ]},
       { "text": "Distribute the supplies.", "outcomes": [
         { "weight": 0.6, "text": "Medical supplies, field rations, whetstone. Everyone gets something useful.", "effects": { "healAll": 6, "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "grantDamage": { "amount": 1, "tag": "melee", "count": 1 } } },
         { "weight": 0.4, "text": "Among the supplies, a sealed vial of concentrated venom. Precious cargo.", "effects": { "healAll": 4, "grantPoison": { "amount": 2, "count": 1 } } }
       ]},
       { "text": "Read the dog tags aloud. Honor the fallen.", "outcomes": [
-        { "weight": 0.6, "text": "Names spoken, memories honored. Every soldier stands a little taller.", "effects": { "morale": 20, "grantMaxHp": { "amount": 1, "count": 3 } } },
-        { "weight": 0.4, "text": "Among the tags, a centurion's shield-drill manual. Your front line drills until dawn.", "effects": { "morale": 15, "grantBlock": { "amount": 1, "count": 3 } } }
+        { "weight": 0.6, "text": "Names spoken, memories honored. Every soldier stands a little taller.", "effects": { "morale": 10, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.4, "text": "Among the tags, a centurion's shield-drill manual. Your front line drills until dawn.", "effects": { "morale": 8, "grantBlock": { "amount": 1, "count": 3 } } }
       ]}
     ]
   },
@@ -619,20 +619,20 @@ const RAW_EVENTS = [
     "intro": "A gnarled tree older than Rome stands alone in a clearing. Its bark is carved with faces. As you approach, the wind carries what sounds like whispered Latin — impossible, yet unmistakable.",
     "choices": [
       { "text": "Listen to the whispers.", "outcomes": [
-        { "weight": 0.5, "text": "The tree speaks of paths ahead — hidden dangers and forgotten treasures. Your men memorize every word.", "effects": { "morale": 10, "grantMaxHp": { "amount": 2, "count": 3 }, "extraDiceNext": 2 } },
-        { "weight": 0.3, "text": "The whispers grow louder. One of your soldiers reaches into a hollow and pulls out an ancient weapon, wrapped in roots.", "effects": { "grantItem": "oak_splinter", "morale": 8 } },
-        { "weight": 0.2, "text": "The tree screams. Your men stagger. But when silence returns, they feel... hardened.", "effects": { "damageAll": 3, "grantDamage": { "amount": 1, "count": 3 }, "morale": -5 } }
+        { "weight": 0.5, "text": "The tree speaks of paths ahead — hidden dangers and forgotten treasures. Your men memorize every word.", "effects": { "morale": 5, "grantMaxHp": { "amount": 2, "count": 3 }, "extraDiceNext": 2 } },
+        { "weight": 0.3, "text": "The whispers grow louder. One of your soldiers reaches into a hollow and pulls out an ancient weapon, wrapped in roots.", "effects": { "grantItem": "oak_splinter", "morale": 4 } },
+        { "weight": 0.2, "text": "The tree screams. Your men stagger. But when silence returns, they feel... hardened.", "effects": { "damageAll": 3, "grantDamage": { "amount": 1, "count": 3 }, "morale": -3 } }
       ]},
       { "text": "Offer blood to the tree.", "outcomes": [
-        { "weight": 0.6, "text": "You cut your palm and press it to the bark. The tree shudders — and the forest parts ahead, revealing a safer path.", "effects": { "damageAll": 2, "healAll": 6, "morale": 15 } },
+        { "weight": 0.6, "text": "You cut your palm and press it to the bark. The tree shudders — and the forest parts ahead, revealing a safer path.", "effects": { "damageAll": 2, "healAll": 6, "morale": 8 } },
         { "weight": 0.4, "text": "The blood is accepted. Roots shift, revealing a cache of old power.", "effects": { "damageAll": 2, "grantItem": "wicker_ash" } }
       ]},
       { "text": "Your marksman reads the carvings — they're a map.", "requiresTag": "ranged", "outcomes": [
-        { "weight": 0.6, "text": "The carvings reveal hidden paths. Your marksman plots a route that avoids every ambush ahead.", "effects": { "morale": 12, "extraDiceNext": 1, "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 } } },
-        { "weight": 0.4, "text": "One carving points to a hunter's cache buried nearby. Arrows, traps, and a fine bow.", "effects": { "grantItem": "stormcaller_bow", "morale": 8 } }
+        { "weight": 0.6, "text": "The carvings reveal hidden paths. Your marksman plots a route that avoids every ambush ahead.", "effects": { "morale": 6, "extraDiceNext": 1, "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 } } },
+        { "weight": 0.4, "text": "One carving points to a hunter's cache buried nearby. Arrows, traps, and a fine bow.", "effects": { "grantItem": "stormcaller_bow", "morale": 4 } }
       ]},
       { "text": "Burn it. This is sorcery.", "outcomes": [
-        { "weight": 1.0, "text": "The tree burns fast and hot. Your men cheer, but the forest remembers.", "effects": { "morale": 8, "grantDamage": { "amount": 1, "tag": "melee", "count": 2 } } }
+        { "weight": 1.0, "text": "The tree burns fast and hot. Your men cheer, but the forest remembers.", "effects": { "morale": 4, "grantDamage": { "amount": 1, "tag": "melee", "count": 2 } } }
       ]}
     ]
   },
@@ -650,11 +650,11 @@ const RAW_EVENTS = [
         { "weight": 0.4, "text": "A vial of concentrated blood-poison. Terrible, but effective.", "effects": { "grantPoison": { "amount": 2, "count": 1 }, "grantDamage": { "amount": 1, "count": 1 } } }
       ]},
       { "text": "Desecrate the altar.", "outcomes": [
-        { "weight": 0.5, "text": "You shatter the stone. Beneath it, Roman coins and a weapon — tribute from previous victims.", "effects": { "grantItem": "blood_iron_gladius", "morale": 10 } },
-        { "weight": 0.5, "text": "The altar cracks. Dark energy lashes out, but your front line absorbs it. They feel tougher.", "effects": { "damageAll": 4, "grantBlock": { "amount": 2, "tag": "melee", "count": 2 }, "morale": 5 } }
+        { "weight": 0.5, "text": "You shatter the stone. Beneath it, Roman coins and a weapon — tribute from previous victims.", "effects": { "grantItem": "blood_iron_gladius", "morale": 5 } },
+        { "weight": 0.5, "text": "The altar cracks. Dark energy lashes out, but your front line absorbs it. They feel tougher.", "effects": { "damageAll": 4, "grantBlock": { "amount": 2, "tag": "melee", "count": 2 }, "morale": 3 } }
       ]},
       { "text": "Leave it. You're soldiers, not priests.", "outcomes": [
-        { "weight": 1.0, "text": "Your men respect the decision. Rome does not kneel to barbarian gods.", "effects": { "morale": 12 } }
+        { "weight": 1.0, "text": "Your men respect the decision. Rome does not kneel to barbarian gods.", "effects": { "morale": 6 } }
       ]}
     ]
   },
@@ -668,20 +668,20 @@ const RAW_EVENTS = [
     "intro": "A Roman centurion stands at a crossroads, motionless. His armor is rusted, his eyes are empty, but he salutes as you approach. He is dead — but something in him remembers duty.",
     "choices": [
       { "text": "Return the salute. Speak the legion's oath.", "outcomes": [
-        { "weight": 0.5, "text": "The centurion's lips move. No sound, but you understand: he shows you the safe path. Then he crumbles to dust. Your men stand taller.", "effects": { "morale": 20, "grantBlock": { "amount": 1, "count": 3 }, "grantMaxHp": { "amount": 1, "count": 3 } } },
-        { "weight": 0.5, "text": "He offers his vine staff — the centurion's symbol of command. His duty is done. He falls to pieces with something like peace.", "effects": { "grantItem": "vine_staff", "morale": 15, "grantDamage": { "amount": 1, "tag": "command", "count": 1 } } }
+        { "weight": 0.5, "text": "The centurion's lips move. No sound, but you understand: he shows you the safe path. Then he crumbles to dust. Your men stand taller.", "effects": { "morale": 10, "grantBlock": { "amount": 1, "count": 3 }, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.5, "text": "He offers his vine staff — the centurion's symbol of command. His duty is done. He falls to pieces with something like peace.", "effects": { "grantItem": "vine_staff", "morale": 8, "grantDamage": { "amount": 1, "tag": "command", "count": 1 } } }
       ]},
       { "text": "Put him to rest. He deserves it.", "outcomes": [
-        { "weight": 0.6, "text": "You speak the funeral rites. The hollow centurion kneels, then dissolves. The other dead in the area grow still — fewer will rise against you.", "effects": { "morale": 18, "healAll": 5, "grantMaxHp": { "amount": 1, "count": 3 } } },
-        { "weight": 0.4, "text": "As you finish the rites, the ground opens. Buried beneath the centurion — his personal effects, preserved by the forest's magic.", "effects": { "grantItem": "commanders_signet", "morale": 12, "grantDamage": { "amount": 1, "count": 2 } } }
+        { "weight": 0.6, "text": "You speak the funeral rites. The hollow centurion kneels, then dissolves. The other dead in the area grow still — fewer will rise against you.", "effects": { "morale": 9, "healAll": 5, "grantMaxHp": { "amount": 1, "count": 3 } } },
+        { "weight": 0.4, "text": "As you finish the rites, the ground opens. Buried beneath the centurion — his personal effects, preserved by the forest's magic.", "effects": { "grantItem": "commanders_signet", "morale": 6, "grantDamage": { "amount": 1, "count": 2 } } }
       ]},
       { "text": "Your officer takes command of him.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.6, "text": "Your officer speaks the centurion's oath. The dead officer straightens, nods, and points the way forward. Then he fades — but the path he showed is clear and safe.", "effects": { "morale": 18, "grantDamage": { "amount": 1, "tag": "command", "count": 1 }, "grantBlock": { "amount": 2, "tag": "command", "count": 1 }, "healAll": 4 } },
-        { "weight": 0.4, "text": "The centurion recognizes the authority. He surrenders his command token — a bronze disc etched with the legion's number.", "effects": { "grantItem": "battle_standard_cord", "morale": 15 } }
+        { "weight": 0.6, "text": "Your officer speaks the centurion's oath. The dead officer straightens, nods, and points the way forward. Then he fades — but the path he showed is clear and safe.", "effects": { "morale": 9, "grantDamage": { "amount": 1, "tag": "command", "count": 1 }, "grantBlock": { "amount": 2, "tag": "command", "count": 1 }, "healAll": 4 } },
+        { "weight": 0.4, "text": "The centurion recognizes the authority. He surrenders his command token — a bronze disc etched with the legion's number.", "effects": { "grantItem": "battle_standard_cord", "morale": 8 } }
       ]},
       { "text": "Destroy him. The dead should stay dead.", "outcomes": [
-        { "weight": 0.7, "text": "He doesn't resist. Your blade passes through him like mist. But the other dead nearby stir with anger.", "effects": { "morale": -10, "grantDamage": { "amount": 2, "tag": "melee", "count": 1 } } },
-        { "weight": 0.3, "text": "He crumbles, but his armor remains — still serviceable after all these years.", "effects": { "grantItem": "champions_helm", "morale": -5 } }
+        { "weight": 0.7, "text": "He doesn't resist. Your blade passes through him like mist. But the other dead nearby stir with anger.", "effects": { "morale": -5, "grantDamage": { "amount": 2, "tag": "melee", "count": 1 } } },
+        { "weight": 0.3, "text": "He crumbles, but his armor remains — still serviceable after all these years.", "effects": { "grantItem": "champions_helm", "morale": -3 } }
       ]}
     ]
   },
@@ -695,14 +695,14 @@ const RAW_EVENTS = [
     "intro": "You find rows of Roman graves — hastily dug, poorly marked. Three legions died here. Some graves are open, the occupants already walking. But a few remain sealed.",
     "choices": [
       { "text": "Seal the open graves with Roman burial rites.", "outcomes": [
-        { "weight": 1.0, "text": "Your officer leads the rites. Grave by grave, the dead settle. The forest feels lighter here. Your men fight with renewed purpose.", "effects": { "morale": 20, "grantBlock": { "amount": 1, "count": 3 }, "healAll": 4 } }
+        { "weight": 1.0, "text": "Your officer leads the rites. Grave by grave, the dead settle. The forest feels lighter here. Your men fight with renewed purpose.", "effects": { "morale": 10, "grantBlock": { "amount": 1, "count": 3 }, "healAll": 4 } }
       ]},
       { "text": "Search the sealed graves for equipment.", "outcomes": [
         { "weight": 0.6, "text": "Roman weapons, still sharp. Roman armor, still strong. The dead have no use for them anymore.", "effects": { "grantDamage": { "amount": 1, "count": 2 }, "grantBlock": { "amount": 1, "tag": "melee", "count": 2 } } },
-        { "weight": 0.4, "text": "Beneath a centurion's grave, a sealed chest. Inside — the legion's pay chest, and a fine blade.", "effects": { "grantItem": "chiefs_spear", "morale": 8 } }
+        { "weight": 0.4, "text": "Beneath a centurion's grave, a sealed chest. Inside — the legion's pay chest, and a fine blade.", "effects": { "grantItem": "chiefs_spear", "morale": 4 } }
       ]},
       { "text": "March on. You can't help the dead.", "outcomes": [
-        { "weight": 1.0, "text": "Some things are best left alone. Your men avert their eyes.", "effects": { "morale": 5 } }
+        { "weight": 1.0, "text": "Some things are best left alone. Your men avert their eyes.", "effects": { "morale": 3 } }
       ]}
     ]
   },
@@ -716,8 +716,8 @@ const RAW_EVENTS = [
     "intro": "Half-submerged in the swamp, a stone shrine older than any tribe. Water flows from a carved face, crystal clear despite the murk around it. Runes you cannot read line the walls.",
     "choices": [
       { "text": "Drink from the shrine.", "outcomes": [
-        { "weight": 0.4, "text": "The water burns, then heals. Ancient power floods through you. Your soldiers gasp — then laugh. They feel invincible.", "effects": { "healAll": 10, "grantMaxHp": { "amount": 3, "count": 2 }, "morale": 10 } },
-        { "weight": 0.3, "text": "Visions of the past. You see the kingdom that was, and the weapons they forged. Knowledge becomes power.", "effects": { "grantDamage": { "amount": 1, "count": 3 }, "morale": 8 } },
+        { "weight": 0.4, "text": "The water burns, then heals. Ancient power floods through you. Your soldiers gasp — then laugh. They feel invincible.", "effects": { "healAll": 10, "grantMaxHp": { "amount": 3, "count": 2 }, "morale": 5 } },
+        { "weight": 0.3, "text": "Visions of the past. You see the kingdom that was, and the weapons they forged. Knowledge becomes power.", "effects": { "grantDamage": { "amount": 1, "count": 3 }, "morale": 4 } },
         { "weight": 0.3, "text": "The water turns black in your hands. Poison seeps in — but also strength.", "effects": { "poisonParty": 3, "grantPoison": { "amount": 2, "count": 2 }, "grantDamage": { "amount": 1, "count": 1 } } }
       ]},
       { "text": "Take the shrine stones. They're valuable.", "outcomes": [
@@ -726,10 +726,10 @@ const RAW_EVENTS = [
       ]},
       { "text": "Your fighters dive to explore the sunken chambers.", "requiresTag": "melee", "outcomes": [
         { "weight": 0.5, "text": "Beneath the waterline, sealed vaults. Your fighters pry them open and find ancient arms — heavy, brutal, and perfectly preserved.", "effects": { "grantDamage": { "amount": 2, "tag": "melee", "count": 2 }, "grantBlock": { "amount": 1, "tag": "melee", "count": 2 } } },
-        { "weight": 0.5, "text": "A sealed sarcophagus contains a weapon of dark metal. It hums with old power.", "effects": { "grantItem": "mire_mothers_tusk", "morale": 5 } }
+        { "weight": 0.5, "text": "A sealed sarcophagus contains a weapon of dark metal. It hums with old power.", "effects": { "grantItem": "mire_mothers_tusk", "morale": 3 } }
       ]},
       { "text": "Pray to whatever god this belongs to.", "outcomes": [
-        { "weight": 1.0, "text": "No god answers, but the water rises and cleanses. Poison, pain, and fear wash away.", "effects": { "healAll": 8, "morale": 15 } }
+        { "weight": 1.0, "text": "No god answers, but the water rises and cleanses. Poison, pain, and fear wash away.", "effects": { "healAll": 8, "morale": 8 } }
       ]}
     ]
   },
@@ -743,20 +743,20 @@ const RAW_EVENTS = [
     "intro": "A figure steps from a tree — not an enemy, but a dryad, ancient and vast. Her bark-skin is covered in flowers. She studies you with amber eyes and speaks in broken Latin: 'You are not the forest's enemy. Not yet.'",
     "choices": [
       { "text": "Ask her for passage.", "outcomes": [
-        { "weight": 0.5, "text": "'Passage is earned, not given.' She touches each soldier's forehead. Pain, then clarity. Your bodies harden like heartwood.", "effects": { "grantMaxHp": { "amount": 3, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 }, "morale": 10 } },
-        { "weight": 0.5, "text": "'The forest will test you. But I will ease the way.' Roots shift. The path ahead clears. Healing sap drips from the canopy.", "effects": { "healAll": 12, "morale": 15, "grantHeal": { "amount": 2, "tag": "support", "count": 1 } } }
+        { "weight": 0.5, "text": "'Passage is earned, not given.' She touches each soldier's forehead. Pain, then clarity. Your bodies harden like heartwood.", "effects": { "grantMaxHp": { "amount": 3, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 }, "morale": 5 } },
+        { "weight": 0.5, "text": "'The forest will test you. But I will ease the way.' Roots shift. The path ahead clears. Healing sap drips from the canopy.", "effects": { "healAll": 12, "morale": 8, "grantHeal": { "amount": 2, "tag": "support", "count": 1 } } }
       ]},
       { "text": "Ask her about the spirits ahead.", "outcomes": [
-        { "weight": 0.6, "text": "'They are bound. Arminius and Varus — hate holds them. You must break the bond.' She gives you a charm woven from living wood.", "effects": { "grantItem": "heartwood_charm", "morale": 12 } },
-        { "weight": 0.4, "text": "'Strike them both at once. The bond heals what you damage apart.' She marks your weapons with sap. They glow faintly.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "morale": 10 } }
+        { "weight": 0.6, "text": "'They are bound. Arminius and Varus — hate holds them. You must break the bond.' She gives you a charm woven from living wood.", "effects": { "grantItem": "heartwood_charm", "morale": 6 } },
+        { "weight": 0.4, "text": "'Strike them both at once. The bond heals what you damage apart.' She marks your weapons with sap. They glow faintly.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "morale": 5 } }
       ]},
       { "text": "Your healer offers to trade knowledge.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.6, "text": "The dryad is fascinated by Roman medicine. She trades forest remedies — salves that knit bone, sap that purges poison. Your healer is transformed.", "effects": { "grantHeal": { "amount": 3, "tag": "support", "count": 1 }, "grantMaxHp": { "amount": 2, "tag": "support", "count": 1 }, "morale": 10 } },
-        { "weight": 0.4, "text": "She gives your healer a living seed. 'Plant this in a wound,' she says. 'It will grow into healing.' The seed pulses with green light.", "effects": { "grantItem": "marsh_fang", "grantHeal": { "amount": 1, "count": 2 }, "morale": 8 } }
+        { "weight": 0.6, "text": "The dryad is fascinated by Roman medicine. She trades forest remedies — salves that knit bone, sap that purges poison. Your healer is transformed.", "effects": { "grantHeal": { "amount": 3, "tag": "support", "count": 1 }, "grantMaxHp": { "amount": 2, "tag": "support", "count": 1 }, "morale": 5 } },
+        { "weight": 0.4, "text": "She gives your healer a living seed. 'Plant this in a wound,' she says. 'It will grow into healing.' The seed pulses with green light.", "effects": { "grantItem": "marsh_fang", "grantHeal": { "amount": 1, "count": 2 }, "morale": 4 } }
       ]},
       { "text": "Attack her. She's part of the forest.", "outcomes": [
-        { "weight": 0.7, "text": "She vanishes into the wood before your blade connects. Thorns erupt from every surface. The forest will show no mercy now.", "effects": { "damageAll": 6, "morale": -15 } },
-        { "weight": 0.3, "text": "Your blade bites bark. She bleeds golden sap and screams. The sap hardens on your weapons — laced with power and fury.", "effects": { "damageAll": 4, "grantDamage": { "amount": 3, "count": 1 }, "grantPoison": { "amount": 2, "count": 1 }, "morale": -20 } }
+        { "weight": 0.7, "text": "She vanishes into the wood before your blade connects. Thorns erupt from every surface. The forest will show no mercy now.", "effects": { "damageAll": 6, "morale": -8 } },
+        { "weight": 0.3, "text": "Your blade bites bark. She bleeds golden sap and screams. The sap hardens on your weapons — laced with power and fury.", "effects": { "damageAll": 4, "grantDamage": { "amount": 3, "count": 1 }, "grantPoison": { "amount": 2, "count": 1 }, "morale": -10 } }
       ]}
     ]
   },
@@ -770,18 +770,18 @@ const RAW_EVENTS = [
     "intro": "You find a campfire still burning — impossible, since no one lives here. Around it, ghostly impressions of Roman soldiers. Not hostile. Waiting. One gestures for you to sit.",
     "choices": [
       { "text": "Sit and share your fire.", "outcomes": [
-        { "weight": 0.5, "text": "The ghosts smile. They share memories of home — wives, children, Rome. When dawn comes, your men are rested and resolute. The final march begins.", "effects": { "healAll": 15, "morale": 25, "grantMaxHp": { "amount": 2, "count": 3 } } },
-        { "weight": 0.5, "text": "One ghost offers you his gladius. 'Finish what we couldn't,' he whispers. Then they fade, one by one.", "effects": { "healAll": 10, "morale": 20, "grantDamage": { "amount": 2, "count": 2 } } }
+        { "weight": 0.5, "text": "The ghosts smile. They share memories of home — wives, children, Rome. When dawn comes, your men are rested and resolute. The final march begins.", "effects": { "healAll": 15, "morale": 13, "grantMaxHp": { "amount": 2, "count": 3 } } },
+        { "weight": 0.5, "text": "One ghost offers you his gladius. 'Finish what we couldn't,' he whispers. Then they fade, one by one.", "effects": { "healAll": 10, "morale": 10, "grantDamage": { "amount": 2, "count": 2 } } }
       ]},
       { "text": "Stand watch while your men rest.", "outcomes": [
-        { "weight": 1.0, "text": "You guard through the night. The ghosts guard with you. When dawn breaks, every soldier is healed, armored, and ready for the end.", "effects": { "healAll": 12, "morale": 20, "grantBlock": { "amount": 2, "count": 3 }, "grantDamage": { "amount": 1, "count": 3 } } }
+        { "weight": 1.0, "text": "You guard through the night. The ghosts guard with you. When dawn breaks, every soldier is healed, armored, and ready for the end.", "effects": { "healAll": 12, "morale": 10, "grantBlock": { "amount": 2, "count": 3 }, "grantDamage": { "amount": 1, "count": 3 } } }
       ]},
       { "text": "Your officer rallies them for one last drill.", "requiresTag": "command", "outcomes": [
-        { "weight": 0.6, "text": "Living and dead drill together through the night. The ghosts remember their training. When dawn comes, your cohort has absorbed centuries of experience.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 }, "morale": 15 } },
-        { "weight": 0.4, "text": "The ghost centurion steps forward and salutes your officer. 'You are worthy.' He offers the legion's eagle — broken, but still powerful.", "effects": { "grantItem": "eagle_lost_ninth", "morale": 20 } }
+        { "weight": 0.6, "text": "Living and dead drill together through the night. The ghosts remember their training. When dawn comes, your cohort has absorbed centuries of experience.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 }, "morale": 8 } },
+        { "weight": 0.4, "text": "The ghost centurion steps forward and salutes your officer. 'You are worthy.' He offers the legion's eagle — broken, but still powerful.", "effects": { "grantItem": "eagle_lost_ninth", "morale": 10 } }
       ]},
       { "text": "This is a trap. Move on.", "outcomes": [
-        { "weight": 1.0, "text": "The ghosts watch you go with sad eyes. Maybe it was real. Maybe it wasn't. Your men march on, wary but unbroken.", "effects": { "morale": 10, "grantBlock": { "amount": 1, "count": 3 } } }
+        { "weight": 1.0, "text": "The ghosts watch you go with sad eyes. Maybe it was real. Maybe it wasn't. Your men march on, wary but unbroken.", "effects": { "morale": 5, "grantBlock": { "amount": 1, "count": 3 } } }
       ]}
     ]
   }

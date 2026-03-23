@@ -56,7 +56,7 @@ const CURSE_DEFS = [
   { id: 'witchs_gaze', name: "Witch's Gaze", achievement: 'boss_grove_witch_x3', description: "Morale decay +2 per turn.", renown: 20 },
   { id: 'hunters_shadow', name: "Hunter's Shadow", achievement: 'boss_silent_huntsman_x3', description: "Enemies deal +1 damage.", renown: 25 },
   { id: 'mothers_brood', name: "Mother's Brood", achievement: 'boss_mire_mother_x3', description: "Enemies that can spawn always spawn on first opportunity.", renown: 15 },
-  { id: 'deaths_whisper', name: "Death's Whisper", achievement: 'boss_bone_speaker_x3', description: "Start each encounter at -10 morale.", renown: 20 },
+  { id: 'deaths_whisper', name: "Death's Whisper", achievement: 'boss_bone_speaker_x3', description: "Start each encounter at -5 morale.", renown: 20 },
   { id: 'rare_collector', name: "Rare Collector", achievement: 'hero_three_rares', description: "Uncommon/rare items drop 30% less.", renown: 10 },
   { id: 'golden_challenge', name: "Golden Challenge", achievement: 'hero_only_rares', description: "Start with 1 fewer die (3 instead of 4).", renown: 30 },
   { id: 'ultimate_test', name: "Ultimate Test", achievement: 'party_all_rares', description: "All curses active simultaneously.", renown: 50 },
@@ -180,24 +180,22 @@ class Game {
   }
 
   updateMoraleLowpass(morale) {
+    // Morale 0-100: 50 = neutral, below 50 = low morale effects
+    const lowAmount = morale < 50 ? (50 - morale) / 50 : 0; // 0 at 50+, 1 at 0
     if (this.audioFilterActive && this.lowpassFilter && this.audioCtx) {
       const t = this.audioCtx.currentTime;
 
       // Lowpass — stronger cutoff at low morale
       let freq;
-      if (morale >= 50) freq = 20000;
-      else if (morale >= 0) freq = 3000 + (morale / 50) * 17000;
-      else freq = 250 + ((morale + 100) / 100) * 2750;
+      if (morale >= 70) freq = 20000;
+      else if (morale >= 50) freq = 3000 + ((morale - 50) / 20) * 17000;
+      else freq = 250 + (morale / 50) * 2750;
       this.lowpassFilter.frequency.setTargetAtTime(freq, t, 0.8);
 
       // Reverb — wet mix increases at low morale (cavernous, haunted)
       if (this.reverbGain && this.dryGain) {
-        let wetAmount = 0;
-        let dryAmount = 1.0;
-        if (morale < 0) {
-          wetAmount = (Math.abs(morale) / 100) * 0.45; // up to 0.45 wet at -100
-          dryAmount = 1.0 - wetAmount * 0.3; // slight dry reduction
-        }
+        const wetAmount = lowAmount * 0.45; // up to 0.45 wet at 0
+        const dryAmount = 1.0 - wetAmount * 0.3;
         this.reverbGain.gain.setTargetAtTime(wetAmount, t, 0.8);
         this.dryGain.gain.setTargetAtTime(dryAmount, t, 0.8);
       }
@@ -205,26 +203,20 @@ class Game {
       // Volume boost to compensate for muffling
       if (this.currentTrack) {
         const baseVol = this.getMusicVolume();
-        let volBoost = 1.0;
-        if (morale < 0) volBoost = 1.0 + (Math.abs(morale) / 100) * 0.5;
+        const volBoost = 1.0 + lowAmount * 0.5;
         this.currentTrack.volume = Math.min(1.0, baseVol * volBoost);
       }
 
       // Pitch down at low morale — subtle detune
       if (this.currentTrack) {
-        let rate = 1.0;
-        if (morale < 0) rate = 1.0 - (Math.abs(morale) / 100) * 0.04; // down to 0.96x at -100
+        const rate = 1.0 - lowAmount * 0.04; // down to 0.96x at 0
         this.currentTrack.playbackRate = rate;
       }
     } else if (this.currentTrack) {
       // Fallback without Web Audio: volume + slowdown only
       const baseVol = this.getMusicVolume();
-      let volMult = 1.0;
-      let rate = 1.0;
-      if (morale < 0) {
-        volMult = 1.0 + (Math.abs(morale) / 100) * 0.3; // slightly louder
-        rate = 1.0 - (Math.abs(morale) / 100) * 0.04; // subtle pitch-down
-      }
+      const volMult = 1.0 + lowAmount * 0.3;
+      const rate = 1.0 - lowAmount * 0.04;
       this.currentTrack.volume = Math.min(1.0, baseVol * volMult);
       this.currentTrack.playbackRate = rate;
     }
