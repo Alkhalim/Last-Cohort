@@ -2678,7 +2678,7 @@ class GameUI {
     const isBoss = this.engine.hasBossEnemy();
     const title = isBoss ? 'THE CHAMPION FALLS' : 'ENCOUNTER WON';
     const text = isBoss
-      ? "Arminius's Champion lies defeated. The path is clear."
+      ? "The warlord lies defeated. The path is clear."
       : 'The enemy falls. You press deeper into the forest.';
 
     // Track stats

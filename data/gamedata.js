@@ -11,7 +11,7 @@ const RAW_ENCOUNTERS = {
     { "name": "The Clearing", "enemies": ["cheruscan_raider", "cheruscan_raider", "marsh_wolf", "sling_hunter"], "intro": "You stumble into a clearing \u2014 and into an ambush. Steel and fangs surround you." }
   ],
   "bossEncounters": [
-    { "name": "Arminius's Champion", "enemies": ["arminius_champion", "cheruscan_raider"], "intro": "The Champion of Arminius blocks your path." },
+    { "name": "Germanic Warlord", "enemies": ["arminius_champion", "cheruscan_raider"], "intro": "A hulking war leader blocks the trail, flanked by his raider." },
     { "name": "The Grove Witch", "enemies": ["grove_witch", "bog_seer", "marsh_wolf"], "intro": "Green flame parts the trees. The forest itself rises." },
     { "name": "The Silent Huntsman", "minDifficulty": 2, "enemies": ["silent_huntsman", "sling_hunter", "cheruscan_raider"], "intro": "Arrows from the shadows. The Huntsman has found you." },
     { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "war_boar", "boar_youngling"], "intro": "The swamp shakes. Something massive rises, flanked by her brood." },

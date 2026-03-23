@@ -129,7 +129,7 @@ const RAW_ENEMIES = {
     ]
   },
   "arminius_champion": {
-    "id": "arminius_champion", "name": "Arminius's Champion",
+    "id": "arminius_champion", "name": "Germanic Warlord",
     "maxHp": 55, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 20,
     "isBoss": true, "ai": "boss",
     "actions": [

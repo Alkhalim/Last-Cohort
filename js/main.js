@@ -22,11 +22,16 @@ const MUSIC_GAMEPLAY = [
 ];
 const MUSIC_BOSS = 'assets/Shadow of Arminius.mp3';
 const MUSIC_BOSS_OVERRIDE = {
+  'arminius_champion': 'assets/Champion of the Forest Warlord.mp3',
   'grove_witch': 'assets/Swamp Fury Unleashed.mp3',
   'serpent_shaman': 'assets/Venom Rite.mp3',
   'silent_huntsman': 'assets/Black Water March.mp3',
   'mire_mother': 'assets/Ironhide Rite.mp3',
   'fog_weaver': 'assets/Fog Remembers.mp3',
+  'bone_speaker': 'assets/Bonefall.mp3',
+  'blood_stag': 'assets/Blood Stag Rising.mp3',
+  'revenant_of_ariovistus': 'assets/Barrow Raider.mp3',
+  'corpse_of_arminius': 'assets/Chosen of Arminius.mp3',
   'corpse_of_varus': 'assets/Stahlwall.mp3',
   'spirit_of_varus': 'assets/Stahlwall.mp3',
   'spirit_of_arminius': 'assets/Legion of the Hollow Standard.mp3',
@@ -40,14 +45,14 @@ const MARCH_THEMES = {
   5:  { name: 'The Old Forest',       subtitle: 'Ancient things stir between the roots.', theme: 'ancient', music: 'assets/Roots Remember Blood.mp3' },
   6:  { name: 'The Blood Grove',      subtitle: 'Altars stained red. The druids watch.', theme: 'blood', music: 'assets/Crimson Ritual.mp3' },
   7:  { name: 'The Haunted March',    subtitle: 'The dead walk in Roman formation.',  theme: 'haunted', music: 'assets/Eagle of the Unremembered.mp3' },
-  8:  { name: 'The Drowned Kingdom',  subtitle: 'Ruins swallowed by the swamp.',     theme: 'drowned' },
-  9:  { name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.', theme: 'heart' },
-  10: { name: 'The Threshold',        subtitle: 'Between worlds. The spirits await.', theme: 'threshold' },
+  8:  { name: 'The Drowned Kingdom',  subtitle: 'Ruins swallowed by the swamp.',     theme: 'drowned', music: 'assets/Drowned Crown.mp3' },
+  9:  { name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.', theme: 'heart', music: 'assets/Root-Rot Cathedral.mp3' },
+  10: { name: 'The Threshold',        subtitle: 'Between worlds. The spirits await.', theme: 'threshold', music: 'assets/Spirits at the Teutoburg Gate.mp3' },
 };
 
 // --- Curse Definitions ---
 const CURSE_DEFS = [
-  { id: 'champions_mark', name: "Champion's Mark", achievement: 'boss_arminius_champion_x3', description: "Bosses have +20% HP.", renown: 10 },
+  { id: 'champions_mark', name: "Warlord's Mark", achievement: 'boss_arminius_champion_x3', description: "Bosses have +20% HP.", renown: 10 },
   { id: 'witchs_gaze', name: "Witch's Gaze", achievement: 'boss_grove_witch_x3', description: "Morale decay +2 per turn.", renown: 20 },
   { id: 'hunters_shadow', name: "Hunter's Shadow", achievement: 'boss_silent_huntsman_x3', description: "Enemies deal +1 damage.", renown: 25 },
   { id: 'mothers_brood', name: "Mother's Brood", achievement: 'boss_mire_mother_x3', description: "Enemies that can spawn always spawn on first opportunity.", renown: 15 },
@@ -1267,7 +1272,7 @@ class Game {
 
     const ACHIEVEMENT_DEFS = [
       // Regular bosses (3 kills)
-      { key: 'boss_arminius_champion_x3', name: "Champion Slayer", desc: "Defeat Arminius's Champion 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion'] || 0) + '/3' },
+      { key: 'boss_arminius_champion_x3', name: "Warlord Slayer", desc: "Defeat the Germanic Warlord 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion'] || 0) + '/3' },
       { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch'] || 0) + '/3' },
       { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman'] || 0) + '/3' },
       { key: 'boss_serpent_shaman_x3', name: "Serpent Slayer", desc: "Defeat the Serpent Shaman 3 times.", progress: () => Math.min(3, s.enemiesKilled['serpent_shaman'] || 0) + '/3' },
