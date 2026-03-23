@@ -1302,6 +1302,7 @@ class CombatEngine {
       }
       result.target.hp = Math.max(0, result.target.hp - total);
       unit.stats.damageDealt += total;
+      if (total > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: total });
       const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
 
@@ -1752,6 +1753,7 @@ class CombatEngine {
           }
           e.hp = Math.max(0, e.hp - dmg);
           unit.stats.damageDealt += dmg;
+          if (dmg > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: e.index, damage: dmg });
           // Ballistarius pinning on AoE
           if (unit.classId === 'ballistarius' && dmg > 0 && e.hp > 0) e._pinned = true;
           // "Whenever deals damage" triggers per target on AoE

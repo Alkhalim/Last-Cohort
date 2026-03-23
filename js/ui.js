@@ -91,6 +91,10 @@ class GameUI {
           this.showStatusPopup(`enemy-${data.enemyIndex}`, data.text, data.color || 'var(--gold)');
         }
         break;
+      case 'enemyHit':
+        this.flashElement(`enemy-${data.enemyIndex}`, 'hit', 400);
+        this.showDamagePopup(`enemy-${data.enemyIndex}`, data.damage, 'damage');
+        break;
       case 'skillCutIn':
         this.showSkillCutIn(data.classTitle, data.skillName);
         break;
@@ -718,10 +722,12 @@ class GameUI {
 
       if (unit.block > 0) el.classList.add('has-block');
       if (unit.poison > 0) el.classList.add('has-poison');
+      if (unit._stunNextTurn) el.classList.add('stunned');
 
       el.innerHTML = `
         ${unit.block > 0 ? '<div class="unit-shield-overlay"></div>' : ''}
         ${unit.poison > 0 ? '<div class="unit-poison-overlay"></div>' : ''}
+        ${unit._stunNextTurn ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
         <div class="unit-header">
           <span class="unit-title">${unit.title}</span>
           <span class="unit-name">${unit.name}</span>
