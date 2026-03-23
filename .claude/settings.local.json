@@ -25,7 +25,9 @@
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/smith.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/camp.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/hardEncounter.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
-      "Bash(cp \"c:/Users/Lutz Görs/Downloads/mediumEncounter.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")"
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/mediumEncounter.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
+      "Bash(wc -l js/*.js data/*.js css/game.css index.html)",
+      "Bash(cat js/*.js data/*.js css/game.css index.html)"
     ]
   }
 }

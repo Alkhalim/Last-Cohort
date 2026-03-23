@@ -651,11 +651,20 @@ function createLeveledItem(itemId, bonusLevels) {
   leveled.level = 1 + bonusLevels;
 
   // Apply bonus levels — each level adds +1 to a random positive stat
+  // If no positive stats exist, reduce the least negative stat instead
   const statKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] >= 0);
   for (let i = 0; i < bonusLevels; i++) {
-    if (statKeys.length === 0) break;
-    const key = statKeys[Math.floor(Math.random() * statKeys.length)];
-    leveled.stats[key]++;
+    if (statKeys.length > 0) {
+      const key = statKeys[Math.floor(Math.random() * statKeys.length)];
+      leveled.stats[key]++;
+    } else {
+      // No positive stats — reduce the penalty on a negative stat
+      const negKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] < 0);
+      if (negKeys.length > 0) {
+        const key = negKeys[Math.floor(Math.random() * negKeys.length)];
+        leveled.stats[key]++;
+      }
+    }
   }
 
   // Update name to show level

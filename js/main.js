@@ -101,7 +101,7 @@ class Game {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return { musicVolume: 15, soundVolume: 50, trackingEnabled: false, fullSoundtrack: false, reducedArt: false };
+    return { musicVolume: 15, soundVolume: 50, trackingEnabled: false, fullSoundtrack: false, reducedArt: false, fastMode: false };
   }
 
   saveSettings() {
@@ -424,6 +424,9 @@ class Game {
     const reducedArtCheckbox = document.getElementById('opt-reduced-art');
     reducedArtCheckbox.checked = !!this.settings.reducedArt;
     document.getElementById('opt-reduced-art-val').textContent = this.settings.reducedArt ? 'On' : 'Off';
+    const fastModeCheckbox = document.getElementById('opt-fast-mode');
+    fastModeCheckbox.checked = !!this.settings.fastMode;
+    document.getElementById('opt-fast-mode-val').textContent = this.settings.fastMode ? 'On' : 'Off';
   }
 
   // --- Bindings ---
@@ -619,6 +622,15 @@ class Game {
     soundtrackCheckbox.addEventListener('change', () => {
       this.settings.fullSoundtrack = soundtrackCheckbox.checked;
       soundtrackVal.textContent = soundtrackCheckbox.checked ? 'On' : 'Off';
+      this.saveSettings();
+    });
+
+    // Fast mode toggle
+    const fastModeCheckbox = document.getElementById('opt-fast-mode');
+    const fastModeVal = document.getElementById('opt-fast-mode-val');
+    fastModeCheckbox.addEventListener('change', () => {
+      this.settings.fastMode = fastModeCheckbox.checked;
+      fastModeVal.textContent = fastModeCheckbox.checked ? 'On' : 'Off';
       this.saveSettings();
     });
 
@@ -1471,6 +1483,10 @@ function getEnemyPortrait(enemyId) {
     return REDUCED_ART_ENEMY[cat] || 'assets/enemy_portrait.png';
   }
   return `assets/enemy_${enemyId}.png`;
+}
+
+function isFastMode() {
+  return window.game && window.game.settings && window.game.settings.fastMode;
 }
 
 // Preload images into browser cache

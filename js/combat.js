@@ -2388,8 +2388,8 @@ class CombatEngine {
       }
     }
 
-    // Delay showing the victory UI so animations (portraits, damage popups) finish
-    setTimeout(() => this.update(), 2000);
+    const fast = typeof isFastMode === 'function' && isFastMode();
+    setTimeout(() => this.update(), fast ? 300 : 2000);
   }
 
   checkEnemyDeaths() {
@@ -2593,8 +2593,8 @@ class CombatEngine {
     if (this.phase !== PHASE.PLAYER_TURN) return;
     this.phase = PHASE.ENEMY_TURN;
     this.update();
-    // Wait for any player cut-in portraits to fully exit before starting enemy turn
-    setTimeout(() => this.executeEnemyTurn(), 2200);
+    const fast = typeof isFastMode === 'function' && isFastMode();
+    setTimeout(() => this.executeEnemyTurn(), fast ? 400 : 2200);
   }
 
   // --- Enemy turn (sequential) ---
@@ -2645,6 +2645,7 @@ class CombatEngine {
 
     // Show enemy portrait before action
     const intentAction = enemy._intent && enemy._intent.action ? enemy._intent.action.name : '';
+    const fast = typeof isFastMode === 'function' && isFastMode();
     if (this.onVisual) this.onVisual('enemyCutIn', { enemyName: enemy.name, enemyId: enemy.id, actionName: intentAction });
 
     // Delay action slightly so portrait is visible
@@ -2673,14 +2674,14 @@ class CombatEngine {
           this.executeEnemySingleAction(enemy);
           this.checkPartyDowned();
           this.update();
-          setTimeout(() => this.executeEnemySequence(enemies, index + 1), 1200);
-        }, 800);
+          setTimeout(() => this.executeEnemySequence(enemies, index + 1), fast ? 200 : 1200);
+        }, fast ? 150 : 800);
       } else {
         this.checkPartyDowned();
         this.update();
-        setTimeout(() => this.executeEnemySequence(enemies, index + 1), 1200);
+        setTimeout(() => this.executeEnemySequence(enemies, index + 1), fast ? 200 : 1200);
       }
-    }, 400);
+    }, fast ? 50 : 400);
   }
 
   executeEnemyAction(enemy) {

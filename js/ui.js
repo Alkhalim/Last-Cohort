@@ -144,7 +144,7 @@ class GameUI {
 
   // Skill cut-in portrait — slides in from left, holds, drifts out right
   showSkillCutIn(classTitle, skillName) {
-    // Remove any existing cut-in
+    if (typeof isFastMode === 'function' && isFastMode()) return;
     const existing = document.getElementById('skill-cutin');
     if (existing) existing.remove();
 
@@ -171,6 +171,7 @@ class GameUI {
 
   // Enemy cut-in — portrait + name + action
   showEnemyCutIn(enemyName, enemyId, actionName) {
+    if (typeof isFastMode === 'function' && isFastMode()) return;
     const existing = document.getElementById('enemy-cutin');
     if (existing) existing.remove();
 
@@ -357,15 +358,15 @@ class GameUI {
     const actions = enemy.actions.map(a => {
       let desc = `<strong>${a.name}</strong>`;
       const details = [];
-      if (a.damage > 0) details.push(`${a.damage} dmg`);
-      if (a.poisonTarget) details.push(`${a.poisonTarget} poison`);
-      if (a.morale) details.push(`${a.morale} morale`);
-      if (a.blockAllEnemies) details.push(`+${a.blockAllEnemies} block to allies`);
-      if (a.blockFrontRow) details.push(`+${a.blockFrontRow} block to front row`);
-      if (a.blockSelf) details.push(`+${a.blockSelf} block to self`);
-      if (a.spawn) details.push('spawns unit');
-      if (a.aoe) details.push('AOE');
-      if (a.ignoreRow) details.push('any row');
+      if (a.damage > 0) details.push(`<span class="stat-dmg">${a.damage} dmg</span>`);
+      if (a.poisonTarget) details.push(`<span class="stat-poison">${a.poisonTarget} poison</span>`);
+      if (a.morale) details.push(`<span class="stat-morale-text">${a.morale} morale</span>`);
+      if (a.blockAllEnemies) details.push(`<span class="stat-block">+${a.blockAllEnemies} block all</span>`);
+      if (a.blockFrontRow) details.push(`<span class="stat-block">+${a.blockFrontRow} block front</span>`);
+      if (a.blockSelf) details.push(`<span class="stat-block">+${a.blockSelf} block self</span>`);
+      if (a.spawn) details.push('<span style="color:var(--gold)">spawns unit</span>');
+      if (a.aoe) details.push('<span style="color:var(--red-bright)">AOE</span>');
+      if (a.ignoreRow) details.push('<span style="color:var(--text-dim)">any row</span>');
       if (details.length > 0) desc += ` (${details.join(', ')})`;
       // Show flavor text for passive/structure abilities or when no mechanical details
       if (a.text && (details.length === 0 || enemy.isStructure)) {
