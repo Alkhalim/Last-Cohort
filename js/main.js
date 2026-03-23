@@ -101,7 +101,7 @@ class Game {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return { musicVolume: 15, soundVolume: 50, trackingEnabled: true, fullSoundtrack: false, reducedArt: false };
+    return { musicVolume: 15, soundVolume: 50, trackingEnabled: false, fullSoundtrack: false, reducedArt: false };
   }
 
   saveSettings() {
