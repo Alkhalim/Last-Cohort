@@ -368,6 +368,7 @@ function buildSkillExecute(skillData) {
     if (effects.fortifiedStrike) result.fortifiedStrike = true;
     if (effects.gladiusThrust) result.gladiusThrust = true;
     if (effects.aimedShot) result.aimedShot = true;
+    if (effects.marchTempo) result.marchTempo = true;
     if (effects.momentumStrike) { result.momentumStrike = true; if (targets[0]) result.target = targets[0]; }
     if (effects.breakneckCharge) { result.breakneckCharge = true; if (targets[0]) result.target = targets[0]; }
     if (effects.allInCharge) { result.allInCharge = true; if (targets[0]) result.target = targets[0]; }

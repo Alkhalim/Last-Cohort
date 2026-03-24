@@ -2456,6 +2456,16 @@ class CombatEngine {
       parts.push(`${unit.name} goes ALL IN — ${dmg} damage! (10 base + ${rerollBonus} from ${unused.length} rerolled dice)`);
     }
 
+    // March Tempo: all allies can act again this turn
+    if (result.marchTempo) {
+      this.party.forEach(u => {
+        if (!u.downed && u !== unit) {
+          u.actedThisTurn = false;
+        }
+      });
+      parts.push(`${unit.name} sounds the march tempo — all allies can act again!`);
+    }
+
     // Shieldbreak All: remove all block from all enemies
     if (result.shieldbreakAll) {
       let totalRemoved = 0;

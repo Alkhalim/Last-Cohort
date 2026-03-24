@@ -631,18 +631,6 @@ class GameUI {
       if (!die.used && this.engine.canAdjustDie() && this.engine.phase === PHASE.PLAYER_TURN && !this.stagedSkill) {
         const adjustContainer = document.createElement('div');
         adjustContainer.className = 'die-adjust';
-        if (die.value < 6) {
-          const up = document.createElement('button');
-          up.className = 'adjust-btn';
-          up.textContent = '+';
-          up.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (up.disabled) return;
-            up.disabled = true;
-            this.engine.adjustDie(die.id, 1);
-          });
-          adjustContainer.appendChild(up);
-        }
         if (die.value > 1) {
           const down = document.createElement('button');
           down.className = 'adjust-btn';
@@ -654,6 +642,18 @@ class GameUI {
             this.engine.adjustDie(die.id, -1);
           });
           adjustContainer.appendChild(down);
+        }
+        if (die.value < 6) {
+          const up = document.createElement('button');
+          up.className = 'adjust-btn';
+          up.textContent = '+';
+          up.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (up.disabled) return;
+            up.disabled = true;
+            this.engine.adjustDie(die.id, 1);
+          });
+          adjustContainer.appendChild(up);
         }
         el.appendChild(adjustContainer);
       }
@@ -2907,11 +2907,13 @@ class GameUI {
         // Apply the randomly chosen upgrade
         chosen.apply();
 
-        // Also update the runtime skill copy
+        // Sync the runtime skill copy with updated baseDef
         const runtimeSkill = unit.skills.find(s => s.id === skill.id);
-        if (runtimeSkill && runtimeSkill.execute) {
-          // Rebuild execute from updated baseDef
-          // The execute is rebuilt from effects via buildSkillExecute
+        if (runtimeSkill) {
+          runtimeSkill.effects = { ...baseDef.effects };
+          if (baseDef.effects.buffAllies) runtimeSkill.effects.buffAllies = { ...baseDef.effects.buffAllies };
+          runtimeSkill.description = baseDef.description;
+          runtimeSkill.execute = buildSkillExecute(baseDef);
         }
 
         // Update description — replace the number matching the upgraded stat
@@ -4317,6 +4319,40 @@ class GameUI {
         else if (eff.morale) baseDef.effects.morale += 3;
         else if (eff.damageAll) baseDef.effects.damageAll++;
         else if (eff.buffAllies) baseDef.effects.buffAllies.bonusDamage++;
+
+        // Update description numbers to match new effects
+        const descKey = Object.keys(eff).find(k => typeof eff[k] === 'number');
+        const descPatterns2 = {
+          damage: /([Dd]eal[s]?\s+)(\d+)/,
+          damageAll: /([Dd]eal[s]?\s+)(\d+)/,
+          heal: /(\s)(\d+)(\s+HP)/,
+          healAll: /(\s)(\d+)(\s+HP)/,
+          block: /(\s)(\d+)(\s+Block)/,
+          blockAll: /(\s)(\d+)(\s+Block)/,
+          poison: /(\s)(\d+)(\s+[Pp]oison)/,
+          poisonAll: /(\s)(\d+)(\s+[Pp]oison)/,
+          morale: /([+-]?)(\d+)(\s+[Mm]orale)/,
+        };
+        const dp = descPatterns2[descKey];
+        if (dp && baseDef.description) {
+          baseDef.description = baseDef.description.replace(dp, (m, ...g) => {
+            const ni = g.findIndex(x => typeof x === 'string' && /^\d+$/.test(x));
+            if (ni >= 0) {
+              g[ni] = String(baseDef.effects[descKey]);
+              return g.slice(0, -2).join('');
+            }
+            return m;
+          });
+        }
+
+        // Sync runtime skill with updated baseDef
+        const rtSkill = unit.skills.find(s => s.id === skill.id);
+        if (rtSkill) {
+          rtSkill.effects = { ...baseDef.effects };
+          if (baseDef.effects.buffAllies) rtSkill.effects.buffAllies = { ...baseDef.effects.buffAllies };
+          rtSkill.description = baseDef.description;
+          rtSkill.execute = buildSkillExecute(baseDef);
+        }
 
         btn.classList.add('disabled');
         btn.style.opacity = '0.5';

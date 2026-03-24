@@ -536,6 +536,12 @@ const RAW_CLASSES = {
         "cost": { "type": "pair" }, "target": "single_enemy",
         "description": "Even pairs: heal all allies for the pair value. Odd pairs: apply pair value as poison to all enemies. Act again.",
         "effects": { "harmonicFrequency": true, "freeAction": true }
+      },
+      {
+        "id": "march_tempo", "name": "March Tempo", "cooldown": 3,
+        "cost": { "type": "combined", "min": 7, "dice": 2 }, "target": "all_allies",
+        "description": "2 dice totaling 7+. All allies act in order again this turn. +3 Morale.",
+        "effects": { "marchTempo": true, "morale": 2 }
       }
     ]
   },
