@@ -299,14 +299,14 @@ const RAW_ENEMIES = {
 
   "cursed_warrior": {
     "id": "cursed_warrior", "name": "Cursed Warrior",
-    "maxHp": 20, "row": "front", "damage": [4, 8], "speed": 1, "xpValue": 6,
+    "maxHp": 20, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 6,
     "minDifficulty": 4,
     "deathPoison": 1,
     "description": "A Germanic warrior marked by the Bone Speaker's rituals. Black veins crawl across his skin. Even in death, he poisons.",
     "ai": "aggressive",
     "actions": [
-      { "name": "Cursed Blade", "damage": 5, "poisonTarget": 2, "chance": 0.4, "text": "strikes with a blackened blade" },
-      { "name": "Death Grip", "damage": 7, "chance": 0.3, "text": "grabs and squeezes with unnatural strength", "cooldown": 1 },
+      { "name": "Cursed Blade", "damage": 4, "poisonTarget": 2, "chance": 0.4, "text": "strikes with a blackened blade" },
+      { "name": "Death Grip", "damage": 5, "chance": 0.3, "text": "grabs and squeezes with unnatural strength", "cooldown": 2 },
       { "name": "Bone Rattle", "damage": 0, "morale": -4, "chance": 0.3, "text": "rattles the bones woven into his armor" }
     ]
   },

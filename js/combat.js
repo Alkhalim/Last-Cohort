@@ -552,8 +552,10 @@ class CombatEngine {
         u._deepCoverBlockNext = 0;
       }
       // Bone Totem stun: skip this turn
+      u._stunnedThisTurn = false;
       if (u._stunNextTurn) {
         u.actedThisTurn = true;
+        u._stunnedThisTurn = true;
         u._stunNextTurn = false;
         this.addLog(`${u.name} is stunned and cannot act!`);
       } else {
@@ -1235,8 +1237,10 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: unit.index, amount: gwBlock });
     }
 
-    // Mark unit as acted
-    unit.actedThisTurn = true;
+    // Mark unit as acted (unless free action was granted)
+    if (!result.freeAction) {
+      unit.actedThisTurn = true;
+    }
 
     this.checkEnemyDeaths();
     this.processBossPhases();
@@ -2571,14 +2575,16 @@ class CombatEngine {
       }
     }
 
-    // Flame Touch: heal a random damaged ally for 1
+    // Flame Touch: heal a random wounded ally (1 + heal bonuses, scaled by bonusHealScale)
     if (result.flameTouch) {
       const damaged = this.party.filter(u => !u.downed && u.hp < u.maxHp);
       if (damaged.length > 0) {
         const target = damaged[Math.floor(Math.random() * damaged.length)];
-        const heal = Math.min(1, target.maxHp - target.hp);
+        const healAmt = 1 + bonusHeal;
+        const heal = Math.min(Math.max(1, healAmt), target.maxHp - target.hp);
         target.hp += heal;
         unit.stats.healingDone += heal;
+        if (heal > 0) parts.push(`Heals ${target.name} for ${heal} HP.`);
       }
     }
 
@@ -2590,6 +2596,7 @@ class CombatEngine {
       if (extraDmg > 0) {
         result.target.hp = Math.max(0, result.target.hp - extraDmg);
         unit.stats.damageDealt += extraDmg;
+        if (this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: extraDmg });
         parts.push(`Vesta's fire burns! +${extraDmg} divine damage!`);
       }
     }
@@ -2694,6 +2701,7 @@ class CombatEngine {
         const extraDmg = (result.damage + Math.floor(bonusDmg * 0.5)) * 2;
         result.target.hp = Math.max(0, result.target.hp - extraDmg);
         unit.stats.damageDealt += extraDmg;
+        if (this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: extraDmg });
         parts.push(`ASSASSINATION! Triple damage on marked target!`);
       }
     }

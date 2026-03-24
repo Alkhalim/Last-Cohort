@@ -26,13 +26,13 @@ const RAW_CLASSES = {
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
         "cost": { "type": "even" }, "target": "self",
-        "description": "Requires an even die. Gain 3 + die value Block, depending on die used.",
+        "description": "Gain 3 + die value Block.",
         "effects": { "block": 3, "dieScaleBlock": true }
       },
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
         "cost": { "type": "odd" }, "target": "single_enemy",
-        "description": "Requires an odd die. Precise thrust. Deals 4 + die value damage, depending on die used.",
+        "description": "Precise thrust. Deals 4 + die value damage.",
         "effects": { "damage": 4, "dieScaleDamage": true }
       },
       {
@@ -51,13 +51,13 @@ const RAW_CLASSES = {
       {
         "id": "twin_slash", "name": "Twin Slash", "cooldown": 1,
         "cost": { "type": "pairOdd" }, "target": "dual_enemy",
-        "description": "Requires a pair of odd dice. Deals 5 damage to each of two targets.",
+        "description": "Deals 5 damage to each of two targets.",
         "effects": { "damage": 10, "splitDamage": true }
       },
       {
         "id": "shield_wall", "name": "Shield Wall", "cooldown": 2,
         "cost": { "type": "pairEven" }, "target": "all_allies",
-        "description": "Requires a pair of even dice. All allies gain 5 Block.",
+        "description": "All allies gain 5 Block.",
         "effects": { "blockAll": 5 }
       },
       {
@@ -81,7 +81,7 @@ const RAW_CLASSES = {
       {
         "id": "precision_drill", "name": "Precision Drill", "cooldown": 1,
         "cost": { "type": "consecutive" }, "target": "single_enemy",
-        "description": "Requires consecutive dice. Deal damage equal to the higher die. Gain Block equal to the lower die.",
+        "description": "Deal damage equal to the higher die. Gain Block equal to the lower die.",
         "effects": { "precisionDrill": true }
       },
       {
@@ -134,7 +134,7 @@ const RAW_CLASSES = {
       {
         "id": "measured_advance", "name": "Measured Advance", "cooldown": 2,
         "cost": { "type": "consecutive" }, "target": "single_enemy",
-        "description": "Requires two consecutive dice. Deals 8 damage and other allies gain 3 Block.",
+        "description": "Deals 8 damage and other allies gain 3 Block.",
         "effects": { "damage": 8, "blockAll": 3, "blockOthersOnly": true }
       },
       {
@@ -146,7 +146,7 @@ const RAW_CLASSES = {
       {
         "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
         "cost": { "type": "oddEven" }, "target": "all_allies",
-        "description": "Requires one odd and one even die. +10 Morale and +1 damage for next 2 attacks.",
+        "description": "+10 Morale and +1 damage for next 2 attacks.",
         "effects": { "morale": 5, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
       },
       {
@@ -197,7 +197,7 @@ const RAW_CLASSES = {
       {
         "id": "bind_wounds", "name": "Bind Wounds", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal an ally for HP equal to die value, depending on die used.",
+        "description": "Heal an ally for HP equal to die value.",
         "effects": { "heal": 0, "dieScaleHeal": true }
       },
       {
@@ -289,7 +289,7 @@ const RAW_CLASSES = {
         "id": "loose_arrow", "name": "Loose Arrow", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Loose an arrow at any target. Deals damage equal to die value, depending on die used.",
+        "description": "Loose an arrow at any target. Deals damage equal to die value.",
         "effects": { "damage": 0, "dieScaleDamage": true }
       },
       {
@@ -522,7 +522,7 @@ const RAW_CLASSES = {
       {
         "id": "resonance", "name": "Resonance", "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_ally",
-        "description": "Mark an ally. The next heal they receive is doubled. Grant Block equal to die value, depending on die used.",
+        "description": "Mark an ally. The next heal they receive is doubled. Grant Block equal to die value.",
         "effects": { "resonance": true, "block": 0, "dieScaleBlock": true }
       },
       {
@@ -534,7 +534,7 @@ const RAW_CLASSES = {
       {
         "id": "harmonic_frequency", "name": "Harmonic Frequency", "cooldown": 2,
         "cost": { "type": "pair" }, "target": "single_enemy",
-        "description": "Requires a pair. Even pairs: heal all allies for the pair value. Odd pairs: apply pair value as poison to all enemies. Act again.",
+        "description": "Even pairs: heal all allies for the pair value. Odd pairs: apply pair value as poison to all enemies. Act again.",
         "effects": { "harmonicFrequency": true, "freeAction": true }
       }
     ]
@@ -583,7 +583,7 @@ const RAW_CLASSES = {
         "id": "reckless_charge", "name": "Reckless Charge", "cooldown": 3,
         "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Requires a 6. A wild, reckless charge. Deals 14 damage to any target. Take 4 self-damage.",
+        "description": "A wild, reckless charge. Deals 14 damage to any target. Take 4 self-damage.",
         "effects": { "damage": 14, "selfDamage": 4, "halfScaleSelfDamage": true }
       },
       {
@@ -816,7 +816,7 @@ const RAW_CLASSES = {
         "id": "last_stand", "name": "Last Stand", "cooldown": 4,
         "cost": { "type": "pairExact6" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Requires two 6s. If HP is below 30%, deal 20 damage ignoring block. Heal for half dealt. (Below 9 HP to activate)",
+        "description": "If HP is below 30%, deal 20 damage ignoring block. Heal for half dealt. (Below 9 HP to activate)",
         "effects": { "damage": 20, "pierceBlock": 99, "lastStand": true }
       }
     ]
@@ -846,13 +846,13 @@ const RAW_CLASSES = {
       {
         "id": "herb_poultice", "name": "Herb Poultice", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal ally for 4 HP. Poison a random enemy.",
+        "description": "Heal ally for 4 HP. Apply 1 Poison to a random enemy.",
         "effects": { "heal": 4, "herbPoulticePoison": true, "bonusHealScale": 0.65 }
       },
       {
         "id": "shield_bash_wlf", "name": "Shield Bash", "starter": true,
         "cost": { "type": "odd" }, "target": "single_enemy",
-        "description": "Deal 2 + die value damage. Gain 2 Block, depending on die used.",
+        "description": "Deal 2 + die value damage. Gain 2 Block.",
         "effects": { "damage": 2, "dieScaleDamage": true, "block": 2 }
       },
       {
@@ -864,7 +864,7 @@ const RAW_CLASSES = {
       {
         "id": "wolfbite", "name": "Wolfbite", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
-        "description": "Deal 5 damage. If target has Block, apply 5 Poison instead of bonus damage.",
+        "description": "Deal 5 damage. If target has Block, apply 5 Poison.",
         "effects": { "damage": 5, "wolfbite": true }
       },
       {
@@ -931,18 +931,18 @@ const RAW_CLASSES = {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +1 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.2 }
+        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.2, "bonusHealScale": 0.85 }
       },
       {
-        "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true,
+        "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
         "description": "Heal ally for 3 HP. +1 Morale.",
         "effects": { "heal": 3, "morale": 1 }
       },
       {
-        "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 1,
+        "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 2,
         "cost": { "type": "even" }, "target": "all_allies",
-        "description": "Requires even die. All allies gain 3 Block. +1 Morale.",
+        "description": "All allies gain 3 Block. +1 Morale.",
         "effects": { "blockAll": 3, "morale": 1 }
       },
       {
@@ -967,7 +967,7 @@ const RAW_CLASSES = {
       {
         "id": "litany_of_courage", "name": "Litany of Courage",
         "cost": { "type": "odd" }, "target": "all_allies",
-        "description": "Requires odd die. +Morale equal to die value x2. Grant an ally an extra action, depending on die used.",
+        "description": "+Morale equal to die value x2. Grant an ally an extra action.",
         "effects": { "litanyOfCourage": true }
       },
       {
@@ -1020,8 +1020,8 @@ const RAW_CLASSES = {
         "id": "throwing_knife", "name": "Throwing Knife", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Deal 2 damage. Apply 1 Poison.",
-        "effects": { "damage": 2, "poison": 1 }
+        "description": "Ranged. Deal 1 damage. Apply 1 Poison.",
+        "effects": { "damage": 1, "poison": 1, "bonusDmgScale": 0.75 }
       },
       {
         "id": "reconnaissance", "name": "Reconnaissance", "starter": true, "cooldown": 1,
@@ -1032,8 +1032,8 @@ const RAW_CLASSES = {
       {
         "id": "nerve_strike", "name": "Nerve Strike", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
-        "description": "Deal 4 damage. Target deals 30% less damage for 1 turn.",
-        "effects": { "damage": 4, "cripple": 1, "bonusDmgScale": 0.5 }
+        "description": "Deal 3 damage. Target deals 30% less damage for 1 turn.",
+        "effects": { "damage": 3, "cripple": 1, "bonusDmgScale": 0.5 }
       },
       {
         "id": "misdirection", "name": "Misdirection", "cooldown": 2,
@@ -1044,7 +1044,7 @@ const RAW_CLASSES = {
       {
         "id": "laced_blade", "name": "Laced Blade", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
-        "description": "Deal 3 damage. Apply Poison equal to die value used, depending on die used.",
+        "description": "Deal 3 damage. Apply Poison equal to die value used.",
         "effects": { "damage": 3, "lacedBlade": true }
       },
       {
@@ -1063,7 +1063,7 @@ const RAW_CLASSES = {
         "id": "expose_weakness", "name": "Expose Weakness", "cooldown": 2,
         "cost": { "type": "consecutive" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Requires consecutive dice. Deal 3 damage. Condemn target (+30% from all, 2 turns).",
+        "description": "Ranged. Deal 3 damage. Condemn target (+30% from all, 2 turns).",
         "effects": { "damage": 3, "condemn": 2 }
       },
       {
@@ -1130,7 +1130,7 @@ const RAW_CLASSES = {
       {
         "id": "iron_curtain", "name": "Iron Curtain",
         "cost": { "type": "even" }, "target": "self",
-        "description": "Requires even die. Gain 3 + die value Block. +1 die next turn, depending on die used.",
+        "description": "Gain 3 + die value Block. +1 die next turn.",
         "effects": { "block": 3, "dieScaleBlock": true, "bonusDiceNext": 1, "blockScale": 0.65 }
       },
       {

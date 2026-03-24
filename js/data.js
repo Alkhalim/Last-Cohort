@@ -398,7 +398,10 @@ function buildSkillExecute(skillData) {
     if (effects.wrathOfVesta) result.wrathOfVesta = true;
     if (effects.resurrectionPrayer) result.resurrectionPrayer = true;
     if (effects.lacedBlade) result.lacedBlade = true;
-    if (effects.misdirection) result.misdirection = true;
+    if (effects.misdirection) {
+      result.misdirection = true;
+      if (targets[0]) result.target = targets[0];
+    }
     if (effects.deadDrop) result.deadDrop = true;
     if (effects.shadowNetwork) result.shadowNetwork = true;
     if (effects.assassination) result.assassination = true;

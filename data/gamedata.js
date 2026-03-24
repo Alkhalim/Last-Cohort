@@ -15,7 +15,7 @@ const RAW_ENCOUNTERS = {
     { "name": "The Grove Witch", "enemies": ["grove_witch", "bog_seer", "marsh_wolf"], "intro": "Green flame parts the trees. The forest itself rises." },
     { "name": "The Silent Huntsman", "minDifficulty": 2, "enemies": ["silent_huntsman", "sling_hunter", "cheruscan_raider"], "intro": "Arrows from the shadows. The Huntsman has found you." },
     { "name": "The Mire Mother", "minDifficulty": 3, "enemies": ["mire_mother", "war_boar", "boar_youngling"], "intro": "The swamp shakes. Something massive rises, flanked by her brood." },
-    { "name": "The Bone Speaker", "minDifficulty": 4, "enemies": ["bone_speaker", "cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Bones rattle. The dead walk at his command. A seer chants behind them." },
+    { "name": "The Bone Speaker", "minDifficulty": 4, "enemies": ["bone_speaker", "cursed_warrior", "cursed_warrior", "cursed_warrior"], "intro": "Bones rattle. The dead walk at his command." },
     { "name": "Serpent Shaman", "minDifficulty": 2, "enemies": ["serpent_shaman", "fen_viper", "fen_viper"], "intro": "A painted figure sways between the trees. The ground writhes with snakes." },
     { "name": "The Fog Weaver", "minDifficulty": 4, "enemies": ["fog_weaver", "fog_illusion", "fog_illusion"], "intro": "The fog thickens until you cannot see your own hands. Shapes move within it. A voice whispers." },
     { "name": "The Blood Stag", "minDifficulty": 5, "enemies": ["blood_stag", "marsh_wolf", "marsh_wolf"], "intro": "Crimson antlers rise above the mist. A god of the forest stands before you, wreathed in blood." },

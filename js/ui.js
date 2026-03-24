@@ -451,6 +451,11 @@ class GameUI {
         if (!targetUnit || targetUnit.downed) {
           targetUnit = alive[0]; // fallback
         }
+        // Taunt override: show the taunting unit as the actual target
+        const taunter = alive.find(u => u.taunt);
+        if (taunter && !action.aoe && !(action.morale && !action.damage && action.morale < 0)) {
+          targetUnit = taunter;
+        }
 
         // Check if action targets self/allies rather than player party
         const isSelfBuff = !action.damage && !action.morale && (action.blockSelf || action.blockAllEnemies || action.blockFrontRow || action.spawn);
@@ -750,12 +755,13 @@ class GameUI {
 
       if (unit.block > 0) el.classList.add('has-block');
       if (unit.poison > 0) el.classList.add('has-poison');
-      if (unit._stunNextTurn) el.classList.add('stunned');
+      const isStunned = unit._stunNextTurn || unit._stunnedThisTurn;
+      if (isStunned) el.classList.add('stunned');
 
       el.innerHTML = `
         ${unit.block > 0 ? '<div class="unit-shield-overlay"></div>' : ''}
         ${unit.poison > 0 ? '<div class="unit-poison-overlay"></div>' : ''}
-        ${unit._stunNextTurn ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
+        ${isStunned ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
         <div class="unit-header">
           <span class="unit-title">${renderClassName(unit.classId, unit.title)}</span>
           <span class="unit-name">${unit.name}</span>
@@ -3946,10 +3952,14 @@ class GameUI {
       options.push({ key: 'poison', label: `+${statAmount} Poison`, desc: 'Deadlier toxins.', color: '#8a4', amount: statAmount });
     }
 
+    // Randomly pick 2 options from the pool
+    const shuffled = options.sort(() => Math.random() - 0.5);
+    const picks = shuffled.slice(0, 2);
+
     document.getElementById('levelup-desc').textContent = `${unit.name} — choose a training bonus:`;
     content.innerHTML = '';
 
-    options.forEach(opt => {
+    picks.forEach(opt => {
       const btn = document.createElement('button');
       btn.className = 'btn-primary levelup-unit-btn';
       btn.innerHTML = `<span style="color:${opt.color}">${opt.label}</span> <span style="font-size:0.75rem;opacity:0.7">${opt.desc}</span>`;
