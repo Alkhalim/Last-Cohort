@@ -392,12 +392,21 @@ class GameUI {
         </div>
       </div>
       <div class="enemy-tooltip-desc">${enemy.description || ''}</div>
-      ${enemy.isStructure && (enemy.aura || enemy.turnDamageAll || enemy.healBoss) ? `<div class="enemy-tooltip-passives">
-        ${enemy.aura && enemy.aura.damageReduction ? `<div class="enemy-tooltip-passive">Aura: nearby enemies take ${enemy.aura.damageReduction} less damage</div>` : ''}
-        ${enemy.turnDamageAll ? `<div class="enemy-tooltip-passive">Passive: deals ${enemy.turnDamageAll} damage to all soldiers each turn</div>` : ''}
-        ${enemy.healBoss ? `<div class="enemy-tooltip-passive">Passive: heals boss for ${enemy.healBoss} HP each turn</div>` : ''}
-        ${enemy.deathDamageEnemy ? `<div class="enemy-tooltip-passive">On death: deals ${enemy.deathDamageEnemy} damage to nearby enemies</div>` : ''}
-      </div>` : ''}
+      ${(() => {
+        const passives = [];
+        if (enemy.woundedDoubleAttack) passives.push('Passive: attacks twice when below 50% HP.');
+        if (enemy.berserkRage) passives.push('Passive: deals bonus damage based on missing HP.');
+        if (enemy.deathPoison) passives.push(`On death: applies ${enemy.deathPoison} Poison to all soldiers.`);
+        if (enemy.deathDamageEnemy) passives.push(`On death: deals ${enemy.deathDamageEnemy} damage to nearby enemies.`);
+        if (enemy.deathMoraleMultiplier) passives.push(`Killing this enemy restores ${enemy.deathMoraleMultiplier}x morale.`);
+        if (enemy.aura && enemy.aura.damageReduction) passives.push(`Aura: nearby enemies take ${enemy.aura.damageReduction} less damage.`);
+        if (enemy.turnDamageAll) passives.push(`Passive: deals ${enemy.turnDamageAll} damage to all soldiers each turn.`);
+        if (enemy.healBoss) passives.push(`Passive: heals boss for ${enemy.healBoss} HP each turn.`);
+        if (enemy.canSpawn) passives.push('Passive: can spawn copies of itself.');
+        if (enemy.id === 'thusnelda') passives.push('Passive: gains Block per living ally each turn.');
+        if (enemy._undyingRage) passives.push('Passive: attacks drain 5 Morale.');
+        return passives.length > 0 ? `<div class="enemy-tooltip-passives">${passives.map(p => `<div class="enemy-tooltip-passive">${p}</div>`).join('')}</div>` : '';
+      })()}
       <div class="enemy-tooltip-actions-title">${enemy.isStructure ? 'Effects:' : 'Attacks:'}</div>
       ${actions}
     `;
@@ -2193,6 +2202,18 @@ class GameUI {
         }
       });
     }
+    // grantRandomItem: pick one random item from a list and grant it
+    if (effects.grantRandomItem && Array.isArray(effects.grantRandomItem)) {
+      const pool = effects.grantRandomItem.filter(id => {
+        const item = getItemData(id);
+        return item && this.engine.party.some(u => canEquipItem(u, item));
+      });
+      if (pool.length > 0) {
+        effects.grantItem = pool[Math.floor(Math.random() * pool.length)];
+      } else {
+        effects.grantItem = effects.grantRandomItem[Math.floor(Math.random() * effects.grantRandomItem.length)];
+      }
+    }
     if (effects.grantItem) {
       const grantedItem = getItemData(effects.grantItem);
       const canUse = grantedItem && this.engine.party.some(u => canEquipItem(u, grantedItem));
@@ -2301,7 +2322,13 @@ class GameUI {
       if (effects.triggerCombat) {
         // Start combat encounter from event
         const combatData = effects.triggerCombat;
-        this.pendingEventCombatLoot = combatData.loot || [];
+        let eventLoot = combatData.loot || [];
+        // lootCount: pick N random items from the pool
+        if (combatData.lootCount && combatData.lootCount < eventLoot.length) {
+          const shuffled = [...eventLoot].sort(() => Math.random() - 0.5);
+          eventLoot = shuffled.slice(0, combatData.lootCount);
+        }
+        this.pendingEventCombatLoot = eventLoot;
         const encounter = { name: combatData.name, enemies: combatData.enemies, intro: combatData.intro };
         this.currentNodeThreat = 3;
         this.engine.initEncounter(encounter);
@@ -3030,192 +3057,257 @@ class GameUI {
   }
 
   renderLootScreen() {
-    this.hideUnitLootTooltip();
     const lootText = document.getElementById('loot-text');
-    const dropsEl = document.getElementById('loot-drops');
-    const equipListEl = document.getElementById('loot-equip-list');
-    const continueBtn = document.getElementById('btn-loot-continue');
+    const itemDisplay = document.getElementById('loot-item-display');
+    const unitDisplay = document.getElementById('loot-unit-display');
+    const actionsEl = document.getElementById('loot-actions');
 
-    dropsEl.innerHTML = '';
-
-    // Show XP bar / training status
-    let trainingEl = document.getElementById('loot-training');
-    if (!trainingEl) {
-      trainingEl = document.createElement('div');
-      trainingEl.id = 'loot-training';
-      lootText.parentNode.insertBefore(trainingEl, lootText.nextSibling);
-    }
-    if (this.lastEncounterGrantedTraining) {
-      trainingEl.innerHTML = '<span class="loot-training-text gained">Your men learned from this battle. Training available!</span>';
-      trainingEl.className = 'loot-training';
-    } else {
-      const xp = this.engine.encounterXP;
-      const xpNeeded = 3;
-      const pips = Array.from({ length: xpNeeded }, (_, i) =>
-        `<span class="xp-pip${i < xp ? ' filled' : ''}"></span>`
-      ).join('');
-      trainingEl.innerHTML = `<span class="loot-training-text none">Experience: ${pips} (${xp}/${xpNeeded})</span>`;
-      trainingEl.className = 'loot-training';
-    }
-
-    // Show party HP status
-    let partyHpEl = document.getElementById('loot-party-hp');
-    if (!partyHpEl) {
-      partyHpEl = document.createElement('div');
-      partyHpEl.id = 'loot-party-hp';
-      partyHpEl.className = 'loot-party-hp';
-      trainingEl.parentNode.insertBefore(partyHpEl, trainingEl.nextSibling);
-    }
-    partyHpEl.innerHTML = this.engine.party.map(u => {
-      const tag = getPrimaryTag(u.classId);
-      const hpPct = Math.round((u.hp / u.maxHp) * 100);
-      const hpColor = u.downed ? 'var(--text-dim)' : hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
-      return `<span class="loot-unit-hp"><span style="color:var(--class-${tag})">${u.title}</span> <span style="color:${hpColor}">${u.downed ? 'DOWN' : u.hp + '/' + u.maxHp}</span></span>`;
-    }).join('');
+    // XP training status
+    const xp = this.engine.encounterXP;
+    const xpNeeded = 3;
+    const xpPips = Array.from({ length: xpNeeded }, (_, i) =>
+      `<span class="xp-pip${i < xp ? ' filled' : ''}"></span>`
+    ).join('');
+    const trainingLine = this.lastEncounterGrantedTraining
+      ? '<div class="loot-training"><span class="loot-training-text gained">Training available!</span></div>'
+      : `<div class="loot-training"><span class="loot-training-text none">XP: ${xpPips}</span></div>`;
 
     if (this.pendingLoot.length === 0) {
-      lootText.textContent = 'Nothing of value was found among the fallen.';
-    } else {
-      lootText.textContent = 'Your soldiers scavenge what they can.';
-
-      this.pendingLoot.forEach((itemId, lootIdx) => {
-        const item = getItemData(itemId);
-        if (!item) return;
-
-        const card = document.createElement('div');
-        card.className = `loot-card rarity-${item.rarity}`;
-
-        const eligible = this.engine.party.filter(u => canEquipItem(u, item));
-
-        const equipBtns = eligible.map(u => {
-          const slots = u.equipment[item.slot];
-          const hasEmpty = slots.some(s => s === null);
-          let replaceHtml = '';
-          if (!hasEmpty) {
-            // Find lowest rarity + lowest level item that would be replaced
-            const rarityOrder = { common: 0, uncommon: 1, rare: 2, epic: 3 };
-            let worstIdx = 0;
-            let worstRarity = 3;
-            let worstLevel = 999;
-            slots.forEach((id, si) => {
-              const existing = id ? getItemData(id) : null;
-              const r = existing ? (rarityOrder[existing.rarity] || 0) : 0;
-              const lv = existing ? (existing.level || 1) : 0;
-              if (r < worstRarity || (r === worstRarity && lv < worstLevel)) {
-                worstRarity = r; worstLevel = lv; worstIdx = si;
-              }
-            });
-            const worstItem = getItemData(slots[worstIdx]);
-            if (worstItem) {
-              const worstStats = formatItemStats(worstItem.stats);
-              const worstSpecial = worstItem.special ? ` | ${formatItemSpecial(worstItem)}` : '';
-              replaceHtml = `<span class="loot-replace">Replaces: ${worstItem.name}</span><span class="loot-replace-stats">${worstStats}${worstSpecial}</span>`;
-            }
-          }
-          const skillNames = u.skills.map(s => s.name).join(', ');
-          const equipNames = ['weapon','armor','trinket'].flatMap(slot =>
-            u.equipment[slot].filter(Boolean).map(id => { const it = getItemData(id); return it ? it.name : ''; }).filter(Boolean)
-          ).join(', ');
-          const tooltipText = `${u.name} (${u.hp}/${u.maxHp} HP)\nSkills: ${skillNames}\nGear: ${equipNames || 'None'}`;
-          return `<button class="loot-equip-btn" data-loot="${lootIdx}" data-unit="${u.index}" title="${tooltipText.replace(/"/g, '&quot;')}">
-            Equip <span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>${replaceHtml}
-          </button>`;
-        }).join('');
-
-        card.innerHTML = `
-          <div class="loot-card-header">
-            <span class="loot-item-name">${item.name}</span>
-            <span class="loot-rarity">${item.rarity.toUpperCase()}${item.level > 1 ? ` Lv${item.level}` : ''}</span>
-          </div>
-          <div class="loot-item-meta">${item.slot} &middot; ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
-          <div class="loot-item-desc">${item.description}</div>
-          ${item.special ? `<div class="loot-item-special">${formatItemSpecial(item)}</div>` : ''}
-          <div class="loot-item-skip">Skip: +${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown</div>
-          <div class="loot-equip-actions">${equipBtns}</div>
-        `;
-
-        card.querySelectorAll('.loot-equip-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const li = parseInt(btn.dataset.loot);
-            const ui = parseInt(btn.dataset.unit);
-            this.equipLootItem(li, ui);
-          });
-          // Hover tooltip showing unit details
-          const unitIdx = parseInt(btn.dataset.unit);
-          btn.addEventListener('mouseenter', () => this.showUnitLootTooltip(unitIdx, btn));
-          btn.addEventListener('mouseleave', () => this.hideUnitLootTooltip());
-          let holdTimer = null;
-          btn.addEventListener('touchstart', () => {
-            holdTimer = setTimeout(() => this.showUnitLootTooltip(unitIdx, btn), 300);
-          }, { passive: true });
-          btn.addEventListener('touchend', () => { clearTimeout(holdTimer); this.hideUnitLootTooltip(); });
-          btn.addEventListener('touchcancel', () => { clearTimeout(holdTimer); this.hideUnitLootTooltip(); });
-        });
-
-        dropsEl.appendChild(card);
-      });
+      lootText.textContent = 'Nothing of value was found.';
+      itemDisplay.innerHTML = trainingLine;
+      unitDisplay.innerHTML = '';
+      actionsEl.innerHTML = '';
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary';
+      btn.textContent = this.lootScreenFinal ? 'Continue' : 'Continue March';
+      btn.onclick = () => this._finishLoot();
+      actionsEl.appendChild(btn);
+      return;
     }
 
-    // Current equipment summary
-    equipListEl.innerHTML = this.engine.party.map(u => {
-      const skillCount = `${u.skills.length}/${u.allSkills.length} skills`;
+    // Show one item at a time
+    if (this._currentLootIdx === undefined) this._currentLootIdx = 0;
+    const itemId = this.pendingLoot[this._currentLootIdx];
+    const item = getItemData(itemId);
+    if (!item) { this._skipCurrentLoot(); return; }
 
-      const slotHtml = ['weapon', 'armor', 'trinket'].map(slot => {
-        const items = u.equipment[slot].map((id, si) => {
-          const item = id ? getItemData(id) : null;
-          return `<span class="equip-slot-item ${item ? 'rarity-' + item.rarity : 'empty'}" ${item ? `data-item-id="${id}"` : ''}>${item ? renderTagPips(item.classTags) + ' ' + item.name : '\u2014'}</span>`;
-        }).join(', ');
-        return `<div class="equip-slot-row">
-          <span class="equip-slot-label">${slot} (${u.equipment[slot].length})</span>
-          ${items}
-        </div>`;
-      }).join('');
+    const eligible = this.engine.party.filter(u => canEquipItem(u, item));
+    if (!this._lootUnitIdx || this._lootUnitIdx >= eligible.length) this._lootUnitIdx = 0;
 
-      return `<div class="equip-unit">
-        <div class="equip-unit-header">
-          <span class="equip-unit-name"><span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name}</span>
-          <span class="equip-unit-xp">${skillCount}</span>
+    const remaining = this.pendingLoot.length - this._currentLootIdx;
+    lootText.textContent = remaining > 1 ? `${remaining} items found` : 'Item found';
+
+    // --- Item card (top) ---
+    itemDisplay.innerHTML = `
+      ${trainingLine}
+      <div class="loot-card rarity-${item.rarity}">
+        <div class="loot-card-header">
+          <span class="loot-item-name">${item.name}</span>
+          <span class="loot-rarity">${item.rarity.toUpperCase()}${item.level > 1 ? ` Lv${item.level}` : ''}</span>
         </div>
-        ${slotHtml}
+        <div class="loot-item-meta">${item.slot} · ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
+        ${item.special ? `<div class="loot-item-special">${formatItemSpecial(item)}</div>` : ''}
+      </div>
+    `;
+
+    // --- Unit panel (bottom) ---
+    if (eligible.length === 0) {
+      unitDisplay.innerHTML = '<div class="loot-no-eligible">No one can equip this item.</div>';
+      actionsEl.innerHTML = '';
+      const skipBtn = document.createElement('button');
+      skipBtn.className = 'btn-secondary';
+      skipBtn.textContent = `Skip (+${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown)`;
+      skipBtn.onclick = () => this._skipCurrentLoot();
+      actionsEl.appendChild(skipBtn);
+      return;
+    }
+
+    const unit = eligible[this._lootUnitIdx];
+    const tag = getPrimaryTag(unit.classId);
+    const slots = unit.equipment[item.slot];
+    const hasEmpty = slots.some(s => s === null);
+
+    // Navigation arrows
+    const prevArrow = eligible.length > 1 ? `<button class="loot-nav-arrow loot-nav-prev" id="loot-prev">◀</button>` : '';
+    const nextArrow = eligible.length > 1 ? `<button class="loot-nav-arrow loot-nav-next" id="loot-next">▶</button>` : '';
+    const unitCounter = eligible.length > 1 ? `<span class="loot-unit-counter">${this._lootUnitIdx + 1}/${eligible.length}</span>` : '';
+
+    // Unit header
+    const hpPct = Math.round((unit.hp / unit.maxHp) * 100);
+    const hpColor = unit.downed ? 'var(--text-dim)' : hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
+
+    // Equipment in the relevant slot
+    const slotItems = slots.map((id, si) => {
+      const eq = id ? getItemData(id) : null;
+      const selected = this._replaceSlotIdx === si;
+      if (!eq) return `<div class="loot-slot-item empty">— empty —</div>`;
+      // Stat diff if this slot is selected for replacement
+      let diffHtml = '';
+      if (selected) {
+        diffHtml = this._buildStatDiff(eq.stats, item.stats);
+      }
+      return `<div class="loot-slot-item ${selected ? 'selected-replace' : ''} rarity-${eq.rarity}" data-slot-idx="${si}">
+        <span class="loot-slot-name">${eq.name}${eq.level > 1 ? ` Lv${eq.level}` : ''}</span>
+        <span class="loot-slot-stats">${formatItemStats(eq.stats)}</span>
+        ${eq.special ? `<span class="loot-slot-special">${eq.special}</span>` : ''}
+        ${diffHtml}
       </div>`;
     }).join('');
 
-    // Bind item tooltips on equipped items
-    equipListEl.querySelectorAll('.equip-slot-item[data-item-id]').forEach(el => {
-      const itemId = el.dataset.itemId;
-      el.addEventListener('mouseenter', (e) => this.showItemTooltip(itemId, el));
-      el.addEventListener('mouseleave', () => this.hideItemTooltip());
-      let holdTimer = null;
-      el.addEventListener('touchstart', () => {
-        holdTimer = setTimeout(() => this.showItemTooltip(itemId, el), 300);
-      }, { passive: true });
-      el.addEventListener('touchend', () => { clearTimeout(holdTimer); this.hideItemTooltip(); });
-      el.addEventListener('touchcancel', () => { clearTimeout(holdTimer); this.hideItemTooltip(); });
-    });
+    // Skills summary (compact)
+    const skillList = unit.skills.map(s => `<span class="loot-skill-pip">${s.name}</span>`).join(' ');
 
-    const afterLoot = () => {
-      // Convert unpicked items to Renown
-      if (this.pendingLoot.length > 0) {
-        const renownPerRarity = { common: 2, uncommon: 5, rare: 10, epic: 20 };
-        let bonusRenown = 0;
-        this.pendingLoot.forEach(itemId => {
-          const item = getItemData(itemId);
-          if (item) bonusRenown += renownPerRarity[item.rarity] || 2;
-        });
-        this.engine.totalRenownEarned += bonusRenown;
-        this.pendingLoot = [];
-      }
-      if (this.engine.pendingSkillPicks > 0) {
-        this.showLevelUpScreen();
-      } else if (this.lootScreenFinal) {
-        this.showPostBossChoice();
-      } else {
-        this.showMapScreen();
+    // Other slots (not the one being replaced)
+    const otherSlots = ['weapon', 'armor', 'trinket'].filter(s => s !== item.slot).map(slot => {
+      const items = unit.equipment[slot].filter(Boolean).map(id => {
+        const eq = getItemData(id);
+        return eq ? `<span class="loot-other-item rarity-${eq.rarity}">${eq.name}</span>` : '';
+      }).filter(Boolean).join(', ');
+      return items ? `<div class="loot-other-slot"><span class="loot-other-label">${slot}:</span> ${items}</div>` : '';
+    }).filter(Boolean).join('');
+
+    unitDisplay.innerHTML = `
+      <div class="loot-unit-panel">
+        <div class="loot-unit-nav">
+          ${prevArrow}
+          <div class="loot-unit-header">
+            <span class="loot-unit-name" style="color:var(--class-${tag})">${unit.title} ${unit.name}</span>
+            <span class="loot-unit-hp" style="color:${hpColor}">${unit.downed ? 'DOWN' : unit.hp + '/' + unit.maxHp}</span>
+            ${unitCounter}
+          </div>
+          ${nextArrow}
+        </div>
+        <div class="loot-unit-slot-title">${item.slot} slots (${slots.filter(Boolean).length}/${slots.length}):</div>
+        <div class="loot-slot-list">${slotItems}</div>
+        ${otherSlots ? `<div class="loot-other-slots">${otherSlots}</div>` : ''}
+        <div class="loot-unit-skills"><span class="loot-skills-label">Skills:</span> ${skillList}</div>
+      </div>
+    `;
+
+    // Bind navigation
+    const prevBtn = document.getElementById('loot-prev');
+    const nextBtn = document.getElementById('loot-next');
+    if (prevBtn) prevBtn.onclick = () => { this._lootUnitIdx = (this._lootUnitIdx - 1 + eligible.length) % eligible.length; this._replaceSlotIdx = undefined; this.renderLootScreen(); };
+    if (nextBtn) nextBtn.onclick = () => { this._lootUnitIdx = (this._lootUnitIdx + 1) % eligible.length; this._replaceSlotIdx = undefined; this.renderLootScreen(); };
+
+    // Swipe support
+    let touchStartX = 0;
+    unitDisplay.ontouchstart = (e) => { touchStartX = e.touches[0].clientX; };
+    unitDisplay.ontouchend = (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40 && eligible.length > 1) {
+        this._lootUnitIdx = dx > 0
+          ? (this._lootUnitIdx - 1 + eligible.length) % eligible.length
+          : (this._lootUnitIdx + 1) % eligible.length;
+        this._replaceSlotIdx = undefined;
+        this.renderLootScreen();
       }
     };
 
-    continueBtn.textContent = this.lootScreenFinal ? 'Continue' : 'Continue March';
-    continueBtn.onclick = afterLoot;
+    // Bind slot click for replacement selection
+    unitDisplay.querySelectorAll('.loot-slot-item[data-slot-idx]').forEach(el => {
+      el.addEventListener('click', () => {
+        this._replaceSlotIdx = parseInt(el.dataset.slotIdx);
+        this.renderLootScreen();
+      });
+    });
+
+    // --- Action buttons ---
+    actionsEl.innerHTML = '';
+
+    if (hasEmpty) {
+      const equipBtn = document.createElement('button');
+      equipBtn.className = 'btn-primary';
+      equipBtn.textContent = `Equip on ${unit.title}`;
+      equipBtn.onclick = () => this._equipCurrentLoot(unit.index);
+      actionsEl.appendChild(equipBtn);
+    } else if (this._replaceSlotIdx !== undefined) {
+      const replacedItem = getItemData(slots[this._replaceSlotIdx]);
+      const replBtn = document.createElement('button');
+      replBtn.className = 'btn-primary';
+      replBtn.textContent = `Replace ${replacedItem ? replacedItem.name : 'item'}`;
+      replBtn.onclick = () => this._equipCurrentLoot(unit.index, this._replaceSlotIdx);
+      actionsEl.appendChild(replBtn);
+    } else {
+      const hint = document.createElement('div');
+      hint.className = 'loot-hint';
+      hint.textContent = 'Tap an equipped item to replace it.';
+      actionsEl.appendChild(hint);
+    }
+
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn-secondary';
+    skipBtn.textContent = `Skip (+${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown)`;
+    skipBtn.onclick = () => this._skipCurrentLoot();
+    actionsEl.appendChild(skipBtn);
+  }
+
+  _buildStatDiff(oldStats, newStats) {
+    const allKeys = new Set([...Object.keys(oldStats), ...Object.keys(newStats)]);
+    const diffs = [];
+    for (const key of allKeys) {
+      const oldVal = oldStats[key] || 0;
+      const newVal = newStats[key] || 0;
+      const diff = newVal - oldVal;
+      if (diff === 0) continue;
+      const color = diff > 0 ? 'var(--green-bright)' : 'var(--red-bright)';
+      const sign = diff > 0 ? '+' : '';
+      diffs.push(`<span style="color:${color}">${sign}${diff} ${key}</span>`);
+    }
+    return diffs.length > 0 ? `<div class="loot-stat-diff">${diffs.join(' ')}</div>` : '';
+  }
+
+  _equipCurrentLoot(unitIndex, replaceSlotIdx) {
+    const itemId = this.pendingLoot[this._currentLootIdx];
+    if (!itemId) return;
+    if (replaceSlotIdx !== undefined) {
+      const item = getItemData(itemId);
+      this.engine.unequipSlot(unitIndex, item.slot, replaceSlotIdx);
+    }
+    const success = this.engine.equipItem(unitIndex, itemId);
+    if (success) {
+      this.pendingLoot.splice(this._currentLootIdx, 1);
+      this._replaceSlotIdx = undefined;
+      this._lootUnitIdx = 0;
+      if (this.pendingLoot.length === 0 || this._currentLootIdx >= this.pendingLoot.length) {
+        this._currentLootIdx = 0;
+      }
+      this.renderLootScreen();
+    }
+  }
+
+  _skipCurrentLoot() {
+    const itemId = this.pendingLoot[this._currentLootIdx];
+    if (itemId) {
+      const item = getItemData(itemId);
+      const renown = { common: 2, uncommon: 5, rare: 10, epic: 20 }[item ? item.rarity : 'common'] || 2;
+      this.engine.totalRenownEarned += renown;
+    }
+    this.pendingLoot.splice(this._currentLootIdx, 1);
+    this._replaceSlotIdx = undefined;
+    this._lootUnitIdx = 0;
+    if (this._currentLootIdx >= this.pendingLoot.length) this._currentLootIdx = 0;
+    this.renderLootScreen();
+  }
+
+  _finishLoot() {
+    // Convert any remaining items to Renown
+    const renownPerRarity = { common: 2, uncommon: 5, rare: 10, epic: 20 };
+    this.pendingLoot.forEach(itemId => {
+      const item = getItemData(itemId);
+      if (item) this.engine.totalRenownEarned += renownPerRarity[item.rarity] || 2;
+    });
+    this.pendingLoot = [];
+    this._currentLootIdx = undefined;
+    this._lootUnitIdx = 0;
+    this._replaceSlotIdx = undefined;
+    if (this.engine.pendingSkillPicks > 0) {
+      this.showLevelUpScreen();
+    } else if (this.lootScreenFinal) {
+      this.showPostBossChoice();
+    } else {
+      this.showMapScreen();
+    }
   }
 
   showItemTooltip(itemId, el) {
@@ -3248,13 +3340,8 @@ class GameUI {
   }
 
   equipLootItem(lootIndex, unitIndex) {
-    const itemId = this.pendingLoot[lootIndex];
-    if (!itemId) return;
-    const success = this.engine.equipItem(unitIndex, itemId);
-    if (success) {
-      this.pendingLoot.splice(lootIndex, 1);
-      this.renderLootScreen();
-    }
+    this._currentLootIdx = lootIndex;
+    this._equipCurrentLoot(unitIndex);
   }
 
   // ================================================================
@@ -3292,19 +3379,8 @@ class GameUI {
         btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} (${u.skills.length}/${MAX_SKILLS} skills)`;
         btn.addEventListener('click', () => this.showSkillChoices(u.index));
       } else {
-        btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} — Toughen Up (+3 HP)`;
-        btn.addEventListener('click', () => {
-          u.maxHp += 3;
-          u.baseMaxHp += 3;
-          u.hp += 3;
-          this.engine.addLog(`${u.name} toughens up! (+3 max HP)`);
-          this.engine.pendingSkillPicks--;
-          if (this.engine.pendingSkillPicks > 0) {
-            this.showLevelUpScreen();
-          } else {
-            this.afterLevelUps();
-          }
-        });
+        btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} — Train Stat`;
+        btn.addEventListener('click', () => this.showStatChoices(u.index));
       }
       content.appendChild(btn);
     });
@@ -3362,6 +3438,74 @@ class GameUI {
     } else {
       this.showMapScreen();
     }
+  }
+
+  showStatChoices(unitIndex) {
+    const content = document.getElementById('levelup-content');
+    const unit = this.engine.party[unitIndex];
+    const tags = CLASS_DATA[unit.classId].tags;
+
+    // Build stat options based on class tags
+    const options = [
+      { key: 'hp', label: '+3 Max HP', desc: 'Toughen up.', color: 'var(--red-bright)' },
+    ];
+    if (tags.includes('melee') || tags.includes('ranged') || tags.includes('elite')) {
+      options.push({ key: 'damage', label: '+1 Damage', desc: 'Hit harder.', color: 'var(--red-bright)' });
+    }
+    if (tags.includes('command') || tags.includes('melee')) {
+      options.push({ key: 'block', label: '+1 Block', desc: 'Tougher defense.', color: 'var(--blue-bright)' });
+    }
+    if (tags.includes('support')) {
+      options.push({ key: 'heal', label: '+1 Heal', desc: 'Stronger mending.', color: 'var(--green-bright)' });
+    }
+    if (tags.includes('support') && (unit.classId === 'medicus' || unit.classId === 'wulfswestr' || unit.classId === 'arcania')) {
+      options.push({ key: 'poison', label: '+1 Poison', desc: 'Deadlier toxins.', color: '#8a4' });
+    }
+
+    document.getElementById('levelup-desc').textContent = `${unit.name} — choose a training bonus:`;
+    content.innerHTML = '';
+
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary levelup-unit-btn';
+      btn.innerHTML = `<span style="color:${opt.color}">${opt.label}</span> <span style="font-size:0.75rem;opacity:0.7">${opt.desc}</span>`;
+      btn.addEventListener('click', () => {
+        if (opt.key === 'hp') {
+          unit.maxHp += 3; unit.baseMaxHp += 3; unit.hp += 3;
+          this.engine.addLog(`${unit.name} toughens up! (+3 max HP)`);
+        } else if (opt.key === 'damage') {
+          unit.bonusDamage = (unit.bonusDamage || 0) + 1;
+          this.engine.computeEquipmentStats(unit);
+          this.engine.addLog(`${unit.name} trains offense! (+1 Damage)`);
+        } else if (opt.key === 'block') {
+          unit.bonusBlock = (unit.bonusBlock || 0) + 1;
+          this.engine.computeEquipmentStats(unit);
+          this.engine.addLog(`${unit.name} trains defense! (+1 Block)`);
+        } else if (opt.key === 'heal') {
+          unit.bonusHeal = (unit.bonusHeal || 0) + 1;
+          this.engine.computeEquipmentStats(unit);
+          this.engine.addLog(`${unit.name} studies medicine! (+1 Heal)`);
+        } else if (opt.key === 'poison') {
+          unit.bonusPoison = (unit.bonusPoison || 0) + 1;
+          this.engine.computeEquipmentStats(unit);
+          this.engine.addLog(`${unit.name} brews deadlier toxins! (+1 Poison)`);
+        }
+        this.engine.pendingSkillPicks--;
+        if (this.engine.pendingSkillPicks > 0) {
+          this.showLevelUpScreen();
+        } else {
+          this.afterLevelUps();
+        }
+      });
+      content.appendChild(btn);
+    });
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'btn-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.style.marginTop = '12px';
+    backBtn.addEventListener('click', () => this.showLevelUpScreen());
+    content.appendChild(backBtn);
   }
 
   showPostBossChoice() {

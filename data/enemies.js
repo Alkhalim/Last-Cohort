@@ -331,10 +331,10 @@ const RAW_ENEMIES = {
     "isBoss": true, "ai": "boss",
     "description": "A painted shaman who dances between the lines, swapping places with her serpents. Fen vipers obey her call. Her venom weakens the body while her chants shatter the mind. Pin her down — if you can.",
     "actions": [
-      { "name": "Venom Spit", "damage": 4, "poisonTarget": 3, "chance": 0.3, "text": "spits a stream of dark venom", "ignoreRow": true },
-      { "name": "Serpent Dance", "damage": 0, "chance": 0.2, "text": "dances — swapping places with a serpent", "cooldown": 1 },
-      { "name": "Fang Strike", "damage": 9, "poisonTarget": 3, "chance": 0.25, "text": "lunges with a fanged staff" },
-      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 1, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 1 }
+      { "name": "Venom Spit", "damage": 5, "poisonTarget": 3, "chance": 0.25, "text": "spits a stream of dark venom", "ignoreRow": true },
+      { "name": "Serpent Dance", "damage": 0, "chance": 0.3, "text": "dances — swapping rows and gaining block", "blockSelf": 5 },
+      { "name": "Fang Strike", "damage": 7, "poisonTarget": 4, "chance": 0.2, "text": "lunges with a fanged staff" },
+      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 2, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 }
     ]
   },
   "serpent_shade": {
@@ -404,11 +404,11 @@ const RAW_ENEMIES = {
     "minDifficulty": 4,
     "description": "A diseased warrior who poisons everything he touches. When he dies, his plague spreads to all soldiers.",
     "ai": "aggressive",
-    "deathPoison": 3,
+    "deathPoison": 2,
     "actions": [
-      { "name": "Plague Touch", "damage": 4, "poisonTarget": 4, "chance": 0.5, "text": "grasps with rotting hands" },
-      { "name": "Bile Spray", "damage": 3, "poisonTarget": 2, "chance": 0.3, "text": "spews bile across the line", "aoe": true, "cooldown": 1 },
-      { "name": "Festering Wound", "damage": 6, "poisonTarget": 5, "chance": 0.2, "text": "drives a rusted blade deep" }
+      { "name": "Plague Touch", "damage": 3, "poisonTarget": 3, "chance": 0.5, "text": "grasps with rotting hands" },
+      { "name": "Bile Spray", "damage": 2, "poisonTarget": 1, "chance": 0.3, "text": "spews bile across the line", "aoe": true, "cooldown": 2 },
+      { "name": "Festering Wound", "damage": 5, "poisonTarget": 3, "chance": 0.2, "text": "drives a rusted blade deep", "cooldown": 2 }
     ]
   },
   "warden_of_the_deep": {
@@ -586,6 +586,21 @@ const RAW_ENEMIES = {
   },
 
   // === MARCH 10 ENEMIES ===
+
+  "thusnelda": {
+    "id": "thusnelda", "name": "Thusnelda",
+    "maxHp": 48, "row": "back", "damage": [3, 6], "speed": 1, "xpValue": 30,
+    "minDifficulty": 7,
+    "isBoss": true, "ai": "boss",
+    "description": "The wife of Arminius, escaped Roman captivity. She commands wolves and warriors with equal authority. Alone she is fragile — but she is never alone for long.",
+    "actions": [
+      { "name": "Call the Pack", "damage": 0, "chance": 0.25, "text": "whistles sharply — wolves answer from the treeline", "spawn": "marsh_wolf" },
+      { "name": "Rally Warriors", "damage": 0, "chance": 0.2, "text": "shouts a rallying cry — a warrior charges from the brush", "spawn": "cheruscan_raider" },
+      { "name": "War Chant", "damage": 0, "chance": 0.2, "text": "chants — her warriors fight harder", "blockAllEnemies": 4, "blockSelf": 4 },
+      { "name": "Defiant Cry", "damage": 2, "morale": -4, "chance": 0.2, "text": "screams defiance — your men's resolve wavers", "ignoreRow": true },
+      { "name": "Dagger Throw", "damage": 4, "chance": 0.15, "text": "hurls a hidden dagger", "ignoreRow": true }
+    ]
+  },
 
   "fate_weaver": {
     "id": "fate_weaver", "name": "Fate Weaver",

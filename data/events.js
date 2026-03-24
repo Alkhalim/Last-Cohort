@@ -784,5 +784,26 @@ const RAW_EVENTS = [
         { "weight": 1.0, "text": "The ghosts watch you go with sad eyes. Maybe it was real. Maybe it wasn't. Your men march on, wary but unbroken.", "effects": { "morale": 5, "grantBlock": { "amount": 1, "count": 3 } } }
       ]}
     ]
+  },
+
+  {
+    "id": "thusneldas_ambush",
+    "name": "The Chieftain's Wife",
+    "minDifficulty": 7, "maxDifficulty": 7,
+    "oncePerRun": true,
+    "intro": "A woman's voice rings out from the trees — clear, commanding, furious. 'Romans! You took me from my husband. You paraded me through your streets. But the forest remembers, and so do I.' Your scouts report movement on all sides. Wolves. Warriors. And at their center, a woman in war paint, holding a spear.",
+    "choices": [
+      { "text": "We answer to no one. Form ranks and fight.", "outcomes": [
+        { "weight": 1.0, "text": "She raises her spear. The forest erupts. Wolves and warriors pour from the undergrowth.", "effects": { "triggerCombat": { "enemies": ["thusnelda", "cheruscan_raider", "marsh_wolf", "marsh_wolf"], "name": "Thusnelda's Ambush", "intro": "Thusnelda, wife of Arminius, leads the attack. Her wolves obey her whistle. Her warriors obey her voice.", "loot": ["thusneldas_torc", "wolfsmother_pelt", "howl_of_defiance", "packleaders_bow", "thusneldas_standard"], "lootCount": 2 } } }
+      ]},
+      { "text": "Offer to negotiate. Rome has changed.", "outcomes": [
+        { "weight": 0.4, "text": "She stares at you for a long time. Something shifts behind her eyes. She drops a bundle at your feet and vanishes into the trees without a word.", "effects": { "morale": 4, "grantRandomItem": ["wolfsmother_pelt", "howl_of_defiance", "packleaders_bow", "thusneldas_standard"] } },
+        { "weight": 0.6, "text": "She stares at you for a long moment. 'Prove it.' She attacks.", "effects": { "triggerCombat": { "enemies": ["thusnelda", "cheruscan_raider", "marsh_wolf", "marsh_wolf"], "name": "Thusnelda's Ambush", "intro": "Thusnelda, wife of Arminius, leads the attack. Her wolves obey her whistle. Her warriors obey her voice.", "loot": ["thusneldas_torc", "wolfsmother_pelt", "howl_of_defiance", "packleaders_bow", "thusneldas_standard"], "lootCount": 2 } } }
+      ]},
+      { "text": "Fall back. We cannot fight the forest itself.", "outcomes": [
+        { "weight": 0.7, "text": "Your men retreat through the brush. Wolves snap at the rearguard but she lets you go. The forest has spoken.", "effects": { "morale": -5, "damageAll": 3 } },
+        { "weight": 0.3, "text": "You retreat cleanly. She watches from the ridge, spear in hand. Another day.", "effects": { "morale": -3 } }
+      ]}
+    ]
   }
 ];

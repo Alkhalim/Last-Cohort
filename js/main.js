@@ -730,6 +730,7 @@ class Game {
         party: this.engine.party.map(u => ({
           index: u.index, classId: u.classId, name: u.name, title: u.title,
           hp: u.hp, maxHp: u.maxHp, baseMaxHp: u.baseMaxHp, downed: u.downed,
+          bonusDamage: u.bonusDamage || 0, bonusBlock: u.bonusBlock || 0, bonusHeal: u.bonusHeal || 0, bonusPoison: u.bonusPoison || 0,
           equipment: { weapon: [...u.equipment.weapon], armor: [...u.equipment.armor], trinket: [...u.equipment.trinket] },
           learnedSkillIds: u.skills.map(s => s.id),
           runStats: { ...(u.runStats || {}) },
@@ -790,6 +791,7 @@ class Game {
           buffs: [], taunt: false, actedThisTurn: false, conditions: [],
           equipment: { weapon: saved.equipment.weapon, armor: saved.equipment.armor, trinket: saved.equipment.trinket },
           equipDamage: 0, equipBlock: 0, equipHeal: 0, equipPoison: 0, equipExtraDice: 0,
+          bonusDamage: saved.bonusDamage || 0, bonusBlock: saved.bonusBlock || 0, bonusHeal: saved.bonusHeal || 0, bonusPoison: saved.bonusPoison || 0,
           stats: saved.stats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
           runStats: saved.runStats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
         };

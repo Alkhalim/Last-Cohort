@@ -61,7 +61,8 @@ class CombatEngine {
           armor: Array(data.equipSlots ? data.equipSlots.armor : 2).fill(null),
           trinket: Array(data.equipSlots ? data.equipSlots.trinket : 3).fill(null),
         },
-        equipDamage: 0, equipBlock: 0, equipHeal: 0, equipExtraDice: 0,
+        equipDamage: 0, equipBlock: 0, equipHeal: 0, equipExtraDice: 0, equipPoison: 0,
+        bonusDamage: 0, bonusBlock: 0, bonusHeal: 0, bonusPoison: 0,
         stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 },
         runStats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 },
       };
@@ -86,6 +87,7 @@ class CombatEngine {
     this._lupaFangUsed = false;
     this._eagleUsed = false;
     this._marsSkillCount = 0;
+    this._aquilaCuirassUsed = false;
     this.killedEnemies = [];
     this.party.forEach(u => {
       // Preserve camp-granted block and buffs, only reset combat-specific state
@@ -96,6 +98,7 @@ class CombatEngine {
       u._mushroomRage = 0;
       u._ironVanguardUsed = false;
       u._intNetUsed = false;
+      u._bardigUsed = false;
       u._poisonOnAttack = null;
       u._untargetable = false;
       u._contingency = false;
@@ -148,6 +151,12 @@ class CombatEngine {
     if (this.partyHasItem('centurions_whistle')) {
       this.morale = Math.min(100, this.morale + 3);
       this.addLog("The Centurion's Whistle steadies the men. (+3 Morale)");
+    }
+
+    // Special: Ivory Warhorn — +5 morale at combat start
+    if (this.partyHasItem('ivory_warhorn')) {
+      this.morale = Math.min(100, this.morale + 5);
+      this.addLog('The Ivory Warhorn sounds — the men rally! (+5 Morale)');
     }
 
     // Curse: Death's Whisper — start each encounter at -5 morale
@@ -486,6 +495,9 @@ class CombatEngine {
         // Varus's Shield: retain up to 5 block between turns
         if (this.unitHasItem(u, 'varus_shield')) {
           u.block = Math.min(u.block || 0, 5);
+        // Destrier's Barding: retain up to 2 block between turns
+        } else if (this.unitHasItem(u, 'destriers_barding')) {
+          u.block = Math.min(u.block || 0, 2);
         } else {
           u.block = 0;
         }
@@ -1133,6 +1145,18 @@ class CombatEngine {
       this.addLog('Iron Vanguard! All allies gain 3 Block.');
     }
 
+    // Destrier's Barding: first action each combat grants all allies +2 Block
+    if (!unit._bardigUsed && this.unitHasItem(unit, 'destriers_barding')) {
+      unit._bardigUsed = true;
+      this.party.forEach(u => {
+        if (!u.downed) {
+          u.block = (u.block || 0) + 2;
+          u.stats.blockGenerated += 2;
+        }
+      });
+      this.addLog("Destrier's Barding! All allies gain 2 Block.");
+    }
+
     // Track skill usage for analytics
     if (!this.skillUsageStats) this.skillUsageStats = {};
     const key = `${unit.classId}:${skillId}`;
@@ -1353,10 +1377,17 @@ class CombatEngine {
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);
+      // Packleader's Bow: +3 damage vs enemies with no block
+      if (this.unitHasItem(unit, 'packleaders_bow') && (!result.target.block || result.target.block <= 0)) {
+        total += 3;
+        parts.push("Packleader's Bow! Unshielded prey! (+3)");
+      }
+      // Corona Obsidionalis: above 70 morale, attacks ignore block
+      const coronaPierce = this.morale > 70 && this.unitHasItem(unit, 'corona_obsidionalis');
       // Pierce block: reduce effective block before absorbing
       let pierceAmount = result.pierceBlock || 0;
       // Enemy block (Warlord's Blade deals 2 extra damage to block)
-      if (result.target.block && result.target.block > 0) {
+      if (result.target.block && result.target.block > 0 && !coronaPierce) {
         let effectiveBlock = Math.max(0, result.target.block - pierceAmount);
         let blockDmg = total;
         if (this.unitHasItem(unit, 'warlords_blade')) blockDmg += 2;
@@ -1626,6 +1657,12 @@ class CombatEngine {
         result.target.buffs.push({ damage: 2, attacksLeft: bsAttacks });
         parts.push(`Bone Saw of Asclepius empowers ${result.target.name} — +2 damage (${bsAttacks === 1 ? 'next attack' : bsAttacks + ' attacks'}).`);
       }
+      // Howl of Defiance: healing a unit below 25% HP also grants 4 Block
+      if (this.unitHasItem(unit, 'howl_of_defiance') && actual > 0 && before <= result.target.maxHp * 0.25) {
+        result.target.block = (result.target.block || 0) + 4;
+        result.target.stats.blockGenerated += 4;
+        parts.push(`Howl of Defiance shields ${result.target.name}! (+4 Block)`);
+      }
       // Special: Marsh Fang — healing clears 1 poison from target
       if (this.unitHasItem(unit, 'marsh_fang') && result.target.poison > 0) {
         result.target.poison = Math.max(0, result.target.poison - 1);
@@ -1714,7 +1751,9 @@ class CombatEngine {
       if (parts.length > 0) parts[parts.length - 1] += ' Taunting!';
     }
     if (result.blockAll) {
-      const totalBlock = result.blockAll + bonusBlock;
+      // Officer's Signet: block granted to allies increased by 1
+      const signetBonus = this.unitHasItem(unit, 'officers_signet') ? 1 : 0;
+      const totalBlock = result.blockAll + bonusBlock + signetBonus;
       const recipients = this.party.filter(u => !u.downed && (!result.blockOthersOnly || u !== unit));
       const count = recipients.length;
       recipients.forEach(u => {
@@ -1732,6 +1771,12 @@ class CombatEngine {
           ally.block = (ally.block || 0) + sgBlock2;
           if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: sgBlock2 });
         }
+      }
+      // Thusnelda's Standard: block-granting skills also restore 2 Morale
+      if (this.unitHasItem(unit, 'thusneldas_standard')) {
+        this.morale = Math.min(100, this.morale + 2);
+        parts.push('+2 Morale (Standard)');
+        if (this.onVisual) this.onVisual('morale', { amount: 2 });
       }
       const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
       if (!result.damage && !result.heal && !result.block) {
@@ -2955,6 +3000,7 @@ class CombatEngine {
     // Clear enemy block, tick cooldowns, track turns alive, handle phase shifts
     this.enemies.forEach(e => {
       if (!e.dead) e.block = 0;
+      e._spawnedLastTurn = false;
       if (e._actionCooldowns) {
         for (const name in e._actionCooldowns) {
           if (e._actionCooldowns[name] > 0) e._actionCooldowns[name]--;
@@ -2975,6 +3021,18 @@ class CombatEngine {
     });
     const alive = this.enemies.filter(e => !e.dead);
     if (alive.length === 0) return;
+
+    // Thusnelda passive: gains block per living ally at start of enemy turn
+    const thusnelda = alive.find(e => e.id === 'thusnelda');
+    if (thusnelda) {
+      const allyCount = alive.filter(e => e !== thusnelda).length;
+      if (allyCount > 0) {
+        const blk = allyCount * 2;
+        thusnelda.block = (thusnelda.block || 0) + blk;
+        this.addLog(`Thusnelda's allies shield her. (+${blk} Block from ${allyCount} allies)`);
+      }
+    }
+
     this.executeEnemySequence(alive, 0);
   }
 
@@ -3053,6 +3111,7 @@ class CombatEngine {
           this.spawnBossMinion(s.id);
         }
       }
+      enemy._spawnedLastTurn = true;
       this.addLog(`${enemy.name} summons reinforcements!`);
       if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: enemy.index });
       return;
@@ -3255,6 +3314,12 @@ class CombatEngine {
           target.buffs.push({ damage: 1, attacksLeft: 1 });
           this.addLog(`Bearskin Aegis — ${target.name} channels pain into fury! (+1 damage)`);
         }
+      }
+      // Praetorian Lorica: when hit below 30% HP, gain +3 damage for 2 attacks
+      if (dmg > 0 && this.unitHasItem(target, 'praetorian_lorica') && target.hp <= target.maxHp * 0.3) {
+        target.buffs.push({ damage: 3, attacksLeft: 2 });
+        this.addLog(`${target.name}'s Lorica blazes — fighting fury! (+3 damage, 2 attacks)`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Lorica!', color: 'var(--red-bright)' });
       }
       // Wolf Pelt: first hit each combat deals less damage (scales with level)
       if (dmg > 0 && !target._wolfPeltUsed && this.unitHasItem(target, 'wolf_pelt')) {
@@ -3464,8 +3529,9 @@ class CombatEngine {
       this.addLog(`${enemy.name} ${action.text}. Gains ${action.blockSelf} Block.`);
     }
 
-    // Mire Leech: spawn another enemy
+    // Spawn action: spawn another enemy
     if (action.spawn) {
+      enemy._spawnedLastTurn = true;
       // Curse: Mother's Brood — enemies that can spawn always spawn on first opportunity
       const mothersBrood = this.getActiveCurses().includes('mothers_brood');
       const alreadySpawned = mothersBrood ? false : enemy._hasSpawned;
@@ -3575,6 +3641,12 @@ class CombatEngine {
       const offCD = availableActions.filter(a => !a.cooldown || !(e._actionCooldowns[a.name] > 0));
       if (offCD.length > 0) availableActions = offCD;
 
+      // Prevent spawn actions two turns in a row
+      if (e._spawnedLastTurn) {
+        const nonSpawn = availableActions.filter(a => !a.spawn);
+        if (nonSpawn.length > 0) availableActions = nonSpawn;
+      }
+
       // Silent Huntsman AI: prefer Mark Prey when no target is marked, Marked Shot when one is
       if (e.id === 'silent_huntsman') {
         const hasMarked = alive.some(u => u._huntMarked && u._huntMarked > 0);
@@ -3670,6 +3742,18 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Contingency!', color: 'var(--gold)' });
           return;
         }
+        // Aquila Cuirass: survive lethal, deal 8 damage to all enemies (once per combat)
+        if (!this._aquilaCuirassUsed && this.unitHasItem(u, 'aquila_cuirass')) {
+          this._aquilaCuirassUsed = true;
+          u.hp = 1;
+          this.enemies.forEach(e => {
+            if (!e.dead) { e.hp = Math.max(0, e.hp - 8); }
+          });
+          this.addLog(`The Aquila screams! ${u.name} refuses to fall — 8 damage to all enemies!`);
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Aquila!', color: 'var(--gold)' });
+          if (this.onVisual) this.onVisual('screenShake', {});
+          return;
+        }
         // Lupa's Fang: first downing prevented (once per combat)
         if (!this._lupaFangUsed && this.partyHasItem('lupas_fang')) {
           this._lupaFangUsed = true;
@@ -3684,6 +3768,13 @@ class CombatEngine {
         this.morale = Math.max(0, this.morale - 10);
         this.clampMorale();
         if (this.onVisual) this.onVisual('morale', { amount: -10 });
+        // Wolfsmother Pelt: when an ally is downed, wielder gains +4 damage for 3 attacks
+        this.party.forEach(ally => {
+          if (!ally.downed && ally !== u && this.unitHasItem(ally, 'wolfsmother_pelt')) {
+            ally.buffs.push({ damage: 4, attacksLeft: 3 });
+            this.addLog(`${ally.name}'s Wolfsmother Pelt blazes — vengeance! (+4 damage, 3 attacks)`);
+          }
+        });
       }
     });
     if (this.party.every(u => u.downed)) {
@@ -3808,6 +3899,11 @@ class CombatEngine {
         if (item.stats.extraDice) unit.equipExtraDice += item.stats.extraDice;
       }
     }
+    // Persistent level-up bonuses
+    if (unit.bonusDamage) unit.equipDamage += unit.bonusDamage;
+    if (unit.bonusBlock) unit.equipBlock += unit.bonusBlock;
+    if (unit.bonusHeal) unit.equipHeal += unit.bonusHeal;
+    if (unit.bonusPoison) unit.equipPoison += unit.bonusPoison;
     // Wulfswestr passive: Forest-Born — +1 damage per march
     if (unit.classId === 'wulfswestr') {
       unit.equipDamage += (this.difficulty || 1);
@@ -4028,6 +4124,27 @@ class CombatEngine {
         }
       }
 
+      // Thusnelda: summons a raider at 50%, a wolf at 30%, buffs allies at 30%
+      if (boss.id === 'thusnelda') {
+        if (!boss._phase50 && boss.hp <= boss.maxHp * 0.5) {
+          boss._phase50 = true;
+          boss._pendingSpawn = [{ id: 'cheruscan_raider' }];
+          this.addLog(`${boss.name} calls for aid! A warrior answers!`);
+        }
+        if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
+          boss._phase30 = true;
+          boss._pendingSpawn = [{ id: 'marsh_wolf' }];
+          // Buff all living allies
+          this.enemies.forEach(e => {
+            if (!e.dead && e !== boss) {
+              e.actions.forEach(a => { if (a.damage > 0) a.damage += 2; });
+            }
+          });
+          this.addLog(`${boss.name} screams — her warriors fight with desperate fury! (+2 damage to all allies)`);
+          if (this.onVisual) this.onVisual('screenShake', {});
+        }
+      }
+
       // Corpse of Arminius: at 50% all allies gain +3 damage, at 25% gains Undying Rage (morale drain)
       if (boss.id === 'corpse_of_arminius') {
         if (!boss._phase50 && boss.hp <= boss.maxHp * 0.5) {
@@ -4090,6 +4207,12 @@ class CombatEngine {
       block: 0,
       justSpawned: true,
     };
+    // Thusnelda's Torc: summoned enemies start with 3 less HP
+    if (this.partyHasItem('thusneldas_torc')) {
+      const reduction = Math.min(3, enemy.hp - 1);
+      enemy.hp -= reduction;
+      enemy.maxHp -= reduction;
+    }
     this.enemies.push(enemy);
     this.addLog(`${data.name} joins the fight!`);
     setTimeout(() => { enemy.justSpawned = false; this.update(); }, 500);

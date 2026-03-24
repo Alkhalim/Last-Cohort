@@ -244,7 +244,14 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   // Enforce merchant spacing: no two merchants within 2 nodes of each other on any path
   // and at least 1 combat node must separate them
   const isMerchant = (n) => n.type === 'event' && n.encounter && n.encounter.type === 'item_trade';
-  const nonMerchantEvents = EVENT_DATA.filter(e => e.type !== 'item_trade' && (!e.minDifficulty || e.minDifficulty <= difficulty) && (!e.maxDifficulty || e.maxDifficulty >= difficulty));
+  const repeatable = ['skill_upgrade', 'item_upgrade', 'item_trade'];
+  const nonMerchantEvents = EVENT_DATA.filter(e => {
+    if (e.type === 'item_trade') return false;
+    if (e.minDifficulty && e.minDifficulty > difficulty) return false;
+    if (e.maxDifficulty && e.maxDifficulty < difficulty) return false;
+    if (!repeatable.includes(e.type) && usedEventIds.has(e.id)) return false;
+    return true;
+  });
 
   for (const node of nodes) {
     if (!isMerchant(node)) continue;
@@ -256,7 +263,9 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       if (isMerchant(parent)) {
         // Re-roll this node to a non-merchant event
         if (nonMerchantEvents.length > 0) {
-          node.encounter = nonMerchantEvents[Math.floor(Math.random() * nonMerchantEvents.length)];
+          const pick = nonMerchantEvents[Math.floor(Math.random() * nonMerchantEvents.length)];
+          node.encounter = pick;
+          if (pick && !repeatable.includes(pick.type)) usedEventIds.add(pick.id);
         }
         break;
       }
@@ -265,7 +274,9 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
         const gp = nodes.find(n => n.id === gpid);
         if (gp && isMerchant(gp) && parent.type !== 'combat') {
           if (nonMerchantEvents.length > 0) {
-            node.encounter = nonMerchantEvents[Math.floor(Math.random() * nonMerchantEvents.length)];
+            const pick = nonMerchantEvents[Math.floor(Math.random() * nonMerchantEvents.length)];
+            node.encounter = pick;
+            if (pick && !repeatable.includes(pick.type)) usedEventIds.add(pick.id);
           }
           break;
         }
