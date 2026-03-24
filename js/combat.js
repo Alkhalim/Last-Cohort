@@ -2263,17 +2263,18 @@ class CombatEngine {
       }
     }
 
-    // Shoulder Charge: knockback to back row, or bonus damage if already back
+    // Shoulder Charge: knockback to back row, or bonus damage (scaled 1.1x) if already back
     if (result.shoulderCharge && result.target) {
       if (result.target.row === 'front') {
         result.target.row = 'back';
         parts.push(`${result.target.name} is knocked to the back row!`);
       } else {
-        // Already back row — deal 2 extra damage
-        const bonusDmg = 2;
-        result.target.hp = Math.max(0, result.target.hp - bonusDmg);
-        unit.stats.damageDealt += bonusDmg;
-        parts.push(`${result.target.name} has nowhere to go! (+${bonusDmg} bonus damage)`);
+        // Already back row — deal 2 + scaled bonus damage (1.1x equipment scaling)
+        const scaledExtra = 2 + Math.floor(bonusDmg * 0.1);
+        result.target.hp = Math.max(0, result.target.hp - scaledExtra);
+        unit.stats.damageDealt += scaledExtra;
+        if (this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: scaledExtra });
+        parts.push(`${result.target.name} has nowhere to go! (+${scaledExtra} bonus damage)`);
       }
     }
 
@@ -2341,6 +2342,7 @@ class CombatEngine {
       if (result.target.block > 0) { const ab = Math.min(result.target.block, totalDmg); result.target.block -= ab; totalDmg -= ab; }
       result.target.hp = Math.max(0, result.target.hp - totalDmg);
       unit.stats.damageDealt += totalDmg;
+      if (totalDmg > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: totalDmg });
       parts.push(`${unit.name} uses ${skill.name} — ${totalDmg} damage (die ${hiDie}), +${blk} Block (die ${loDie}).`);
     }
 
@@ -2374,14 +2376,16 @@ class CombatEngine {
       parts.push(`All allies cleansed of poison and stun.`);
     }
 
-    // Triage Strike: damage weakest enemy, heal weakest ally (1.2x heal scaling)
+    // Triage Strike: damage weakest enemy (1.2x dmg scaling), heal weakest ally (1.05x heal scaling)
     if (result.triageStrike) {
-      const amt = result.triageStrike + bonusHeal;
-      const healAmt = Math.floor(amt * 1.2);
+      const baseDmg = result.triageStrike;
+      const dmgAmt = baseDmg + Math.floor(bonusDmg * 1.2);
+      const baseHealAmt = baseDmg + 1; // +1 base heal over damage
+      const healAmt = baseHealAmt + Math.floor(bonusHeal * 1.05);
       const weakestEnemy = this.enemies.filter(e => !e.dead).sort((a, b) => a.hp - b.hp)[0];
       const weakestAlly = this.party.filter(u => !u.downed).sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
       if (weakestEnemy) {
-        let dmg = amt;
+        let dmg = dmgAmt;
         if (weakestEnemy.block > 0) { const ab = Math.min(weakestEnemy.block, dmg); weakestEnemy.block -= ab; dmg -= ab; }
         weakestEnemy.hp = Math.max(0, weakestEnemy.hp - dmg);
         unit.stats.damageDealt += dmg;
@@ -2831,9 +2835,10 @@ class CombatEngine {
 
   triggerVictory() {
     this.phase = PHASE.VICTORY;
-    this.morale = Math.min(100, this.morale + 4);
-    this.addLog('All enemies defeated! (+4 Morale)');
-    if (this.onVisual) this.onVisual('morale', { amount: 4 });
+    const victoryMorale = 4 + Math.floor((this.difficulty || 1) / 3);
+    this.morale = Math.min(100, this.morale + victoryMorale);
+    this.addLog(`All enemies defeated! (+${victoryMorale} Morale)`);
+    if (this.onVisual) this.onVisual('morale', { amount: victoryMorale });
 
     // Boss encounter bonus: ensure morale is at least 75 after boss victory
     const killedBoss = this.enemies.find(e => e.isBoss && e.dead);
@@ -2873,7 +2878,8 @@ class CombatEngine {
               moraleRestore = 75 - this.morale;
             }
           } else {
-            moraleRestore = baseHp > 10 ? 3 : 2;
+            const diffBonus = Math.floor((this.difficulty || 1) / 3);
+            moraleRestore = (baseHp > 10 ? 3 : 2) + diffBonus;
           }
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
           if (this.partyHasItem('chiefs_spear')) moraleRestore += 2;
@@ -3181,6 +3187,20 @@ class CombatEngine {
       this.addLog(`${enemy.name} is stunned and cannot act!`);
       if (this.onVisual) this.onVisual('statusText', { enemyIndex: enemy.index, text: 'Stunned!', color: 'var(--red-bright)' });
       return;
+    }
+
+    // If enemy is in back row and has no usable ranged/aoe/support actions, move to front
+    if (enemy.row === 'back' && !enemy.isStructure) {
+      const canActFromBack = enemy.actions.some(a =>
+        a.ignoreRow || a.aoe || a.spawn || a.blockSelf || a.blockAllEnemies || a.blockFrontRow ||
+        (a.damage === 0 && (a.morale || a.runeBinding))
+      );
+      if (!canActFromBack) {
+        enemy.row = 'front';
+        this.addLog(`${enemy.name} charges to the front row!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: enemy.index, text: 'Advance!', color: 'var(--text-dim)' });
+        return;
+      }
     }
 
     // Structures (Wicker Man) don't take actions — their damage is passive via turnDamageAll

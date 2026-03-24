@@ -366,7 +366,10 @@ function buildSkillExecute(skillData) {
 
     // New mechanics
     if (effects.fortifiedStrike) result.fortifiedStrike = true;
-    if (effects.precisionDrill) result.precisionDrill = true;
+    if (effects.precisionDrill) {
+      result.precisionDrill = true;
+      if (targets[0]) result.target = targets[0];
+    }
     if (effects.bonusDiceNext) result.bonusDiceNext = effects.bonusDiceNext;
     if (effects.cleanseAll) result.cleanseAll = true;
     if (effects.triageStrike) result.triageStrike = effects.triageStrike;

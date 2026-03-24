@@ -257,10 +257,11 @@ const RAW_CLASSES = {
         "effects": { "transfusion": 6, "block": 3 }
       },
       {
-        "id": "triage_strike", "name": "Triage Strike", "cooldown": 1,
+        "id": "triage_strike", "name": "Hippocratic Strike", "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_enemies",
         "ignoreRow": true,
         "description": "Ranged. Deal 5 damage to the weakest enemy. Heal the most wounded ally for 6 HP.",
+
         "effects": { "triageStrike": 5 }
       },
       {
@@ -290,7 +291,7 @@ const RAW_CLASSES = {
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Loose an arrow at any target. Deals damage equal to die value.",
-        "effects": { "damage": 0, "dieScaleDamage": true }
+        "effects": { "damage": 0, "dieScaleDamage": true, "bonusDmgScale": 0.85 }
       },
       {
         "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 1, "starter": true,
@@ -303,8 +304,8 @@ const RAW_CLASSES = {
         "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A treated arrowhead. Deals 3 damage and applies 2 Poison. Triples poison if target is already poisoned.",
-        "effects": { "damage": 3, "poison": 2, "triplePoison": true }
+        "description": "Ranged. A treated arrowhead. Deals 3 damage and applies 1 Poison. Triples poison if target is already poisoned.",
+        "effects": { "damage": 3, "poison": 1, "triplePoison": true, "bonusDmgScale": 0.85 }
       },
       {
         "id": "kill_shot", "name": "Kill Shot", "cooldown": 1,

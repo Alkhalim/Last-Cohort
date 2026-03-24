@@ -95,7 +95,7 @@ const RAW_ENEMIES = {
     "maxHp": 30, "row": "back", "damage": [2, 4], "speed": 0, "xpValue": 10,
     "description": "A towering effigy of woven branches, set ablaze by Germanic priests. The smoke chokes the air and shields nearby warriors. Periodically erupts in a gout of flame.",
     "ai": "aggressive", "isElite": true,
-    "aura": { "damageReduction": 2 }, "turnDamageAll": 2, "deathDamageEnemy": 6,
+    "aura": { "damageReduction": 3 }, "turnDamageAll": 3, "deathDamageEnemy": 6,
     "actions": [
       { "name": "Burning Effigy", "damage": 0, "chance": 0.4, "text": "burns — smoke shields nearby warriors", "blockAllEnemies": 3 },
       { "name": "Flame Gout", "damage": 4, "chance": 0.35, "text": "erupts in a gout of flame", "aoe": true, "cooldown": 2 },

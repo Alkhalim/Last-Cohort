@@ -218,6 +218,7 @@ class GameUI {
     this.hideEnemyTooltip();
     // Victory/Defeat: render enemies one final time (so death animations show), then phase UI
     if (this.engine.phase === PHASE.VICTORY || this.engine.phase === PHASE.DEFEAT) {
+      this.renderMorale();
       this.renderEnemies();
       this.renderPhaseUI();
       return;
@@ -1105,6 +1106,26 @@ class GameUI {
         }
       }
 
+      // Replace "higher die"/"lower die" with actual values when consecutive dice are staged
+      if (isStaged && this.stagedSkill.diceIds.length >= 2) {
+        const d1 = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[0]);
+        const d2 = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[1]);
+        if (d1 && d2) {
+          const hi = Math.max(d1.value, d2.value);
+          const lo = Math.min(d1.value, d2.value);
+          const hiWithBonus = hi + effectiveBonusDmg;
+          const loWithBlock = lo + equipBlock;
+          desc = desc.replace(/damage equal to the higher die/g,
+            `<span class="stat-dmg">${Math.max(1, hiWithBonus)}</span>${effectiveBonusDmg !== 0 ? ` <span class="stat-breakdown">(${hi}${effectiveBonusDmg >= 0 ? '+' : ''}${effectiveBonusDmg})</span>` : ''} damage`);
+          desc = desc.replace(/Block equal to the lower die/g,
+            `<span class="stat-block">${loWithBlock}</span>${equipBlock > 0 ? ` <span class="stat-breakdown">(${lo}+${equipBlock})</span>` : ''} Block`);
+        }
+      } else if (skill.effects && skill.effects.precisionDrill) {
+        // Not staged yet — show ranges
+        desc = desc.replace(/damage equal to the higher die/g, `<span class="stat-dmg">2-6</span>${effectiveBonusDmg !== 0 ? ` <span class="stat-breakdown">(die${effectiveBonusDmg >= 0 ? '+' : ''}${effectiveBonusDmg})</span>` : ''} damage`);
+        desc = desc.replace(/Block equal to the lower die/g, `<span class="stat-block">1-5</span>${equipBlock > 0 ? ` <span class="stat-breakdown">(die+${equipBlock})</span>` : ''} Block`);
+      }
+
       // Replace poison values
       desc = desc.replace(/(\d+) Poison/g, (match, base) => {
         const b = parseInt(base);
@@ -1734,11 +1755,11 @@ class GameUI {
       return false;
     };
 
-    // Isometric helper: squash Y and slight skew for top-down perspective
+    // Isometric helper: squash Y for top-down perspective, narrow X to compensate
     const isoTransform = (ctx, x, y) => {
       ctx.save();
       ctx.translate(x, y);
-      ctx.scale(1, 0.6);
+      ctx.scale(0.75, 0.6);
       ctx.translate(-x, -y);
     };
 
@@ -2707,7 +2728,14 @@ class GameUI {
     }
     if (effects.grantPoison) {
       const { amount, tag, count } = effects.grantPoison;
-      const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      // Poison only goes to support or ranged classes
+      const poisonTag = tag || null;
+      const eligible = this.engine.party.filter(u => {
+        if (u.downed) return false;
+        const tags = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags : [];
+        if (poisonTag) return tags.includes(poisonTag);
+        return tags.includes('support') || tags.includes('ranged');
+      });
       const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
       targets.forEach(u => { u.equipPoison = (u.equipPoison || 0) + amount; });
       if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent poison)`;
