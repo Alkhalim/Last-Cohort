@@ -165,6 +165,33 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
     }
   }
 
+  // Enforce: sibling nodes (children of the same parent) should have varied types.
+  // If all children of a parent are the same non-combat type, re-roll one to a different type.
+  // Combat siblings are exempt (encounters still provide variety).
+  for (const parent of nodes) {
+    if (parent.children.length < 2) continue;
+    const children = parent.children.map(cid => nodes.find(n => n.id === cid)).filter(Boolean);
+    const nonCombat = children.filter(c => c.type !== 'combat' && c.type !== 'boss');
+    if (nonCombat.length < 2) continue;
+    // Check if all non-combat siblings are the same type
+    const types = new Set(nonCombat.map(c => c.type));
+    if (types.size === 1) {
+      // Pick one to re-roll (not the first)
+      const toChange = nonCombat[1];
+      const currentType = toChange.type;
+      const alternatives = ['combat', 'event', 'rest'].filter(t => t !== currentType);
+      toChange.type = alternatives[Math.floor(Math.random() * alternatives.length)];
+      if (toChange.type === 'combat') {
+        let threat = 1;
+        if (toChange.depth >= 5) threat = 2 + (Math.random() < 0.4 ? 1 : 0);
+        else if (toChange.depth >= 3) threat = 1 + (Math.random() < 0.5 ? 1 : 0);
+        toChange.threat = Math.min(3, threat + (difficulty - 1));
+      } else {
+        toChange.threat = 0;
+      }
+    }
+  }
+
   // Generate encounters for combat nodes (filtered by difficulty)
   const usedEventIds = new Set();
   let merchantCount = 0;

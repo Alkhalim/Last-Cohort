@@ -409,6 +409,22 @@ class GameUI {
         if (enemy._undyingRage) passives.push('Passive: attacks drain 5 Morale.');
         return passives.length > 0 ? `<div class="enemy-tooltip-passives">${passives.map(p => `<div class="enemy-tooltip-passive">${p}</div>`).join('')}</div>` : '';
       })()}
+      ${(() => {
+        const effects = [];
+        if (enemy.poison > 0) effects.push(`<span class="status-poison">Poison ${enemy.poison}</span>`);
+        if (enemy.block > 0) effects.push(`<span class="status-block">Block ${enemy.block}</span>`);
+        if (enemy._marked && enemy._marked > 0) effects.push(`<span class="status-marked">Marked (${enemy._marked}t)</span>`);
+        if (enemy._condemned && enemy._condemned > 0) effects.push(`<span class="status-condemned">Condemned (${enemy._condemned}t)</span>`);
+        if (enemy._pinned) effects.push(`<span class="status-debuff">Pinned (-15% dmg)</span>`);
+        if (enemy._suppressed && enemy._suppressed > 0) effects.push(`<span class="status-debuff">Suppressed (${enemy._suppressed})</span>`);
+        if (enemy._crippled && enemy._crippled > 0) effects.push(`<span class="status-debuff">Crippled (${enemy._crippled})</span>`);
+        if (enemy._deafened && enemy._deafened > 0) effects.push(`<span class="status-debuff">Deafened (${enemy._deafened}t)</span>`);
+        if (enemy._skipNextAction) effects.push(`<span class="status-debuff">Stunned</span>`);
+        if (enemy._snareTrap) effects.push(`<span class="status-debuff">Trapped (${enemy._snareTrap} dmg)</span>`);
+        if (enemy._smokeScreen) effects.push(`<span class="status-debuff">Smoked (${Math.round(enemy._smokeScreen * 100)}% miss)</span>`);
+        if (enemy._pendingSpawn) effects.push(`<span class="status-buff">Summoning next turn</span>`);
+        return effects.length > 0 ? `<div class="enemy-tooltip-statuses">${effects.join(' ')}</div>` : '';
+      })()}
       <div class="enemy-tooltip-actions-title">${enemy.isStructure ? 'Effects:' : 'Attacks:'}</div>
       ${actions}
     `;
@@ -741,7 +757,7 @@ class GameUI {
         ${unit.poison > 0 ? '<div class="unit-poison-overlay"></div>' : ''}
         ${unit._stunNextTurn ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
         <div class="unit-header">
-          <span class="unit-title">${unit.title}</span>
+          <span class="unit-title">${renderClassName(unit.classId, unit.title)}</span>
           <span class="unit-name">${unit.name}</span>
         </div>
         <div class="hp-bar-container">
@@ -1457,7 +1473,7 @@ class GameUI {
     bar.innerHTML = this.engine.party.map((u, i) => {
       const pct = (u.hp / u.maxHp) * 100;
       return `<div class="map-party-unit${u.downed ? ' downed' : ''}" data-unit-idx="${i}">
-        <span class="map-party-name" style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>
+        <span class="map-party-name">${renderClassName(u.classId, u.title)}</span>
         <div class="map-party-hp-bar">
           <div class="map-party-hp-fill${pct < 20 ? ' critical' : pct < 40 ? ' hp-low' : pct < 65 ? ' hp-mid' : ''}" style="width:${pct}%"></div>
         </div>
@@ -1527,7 +1543,7 @@ class GameUI {
       <div class="profile-backdrop"></div>
       <div class="profile-panel">
         <div class="profile-header">
-          <span class="profile-name" style="color:var(--class-${tag})">${unit.title} ${unit.name}</span>
+          <span class="profile-name">${renderClassName(unit.classId, unit.title)} ${unit.name}</span>
           <span class="profile-hp" style="color:${hpColor}">${unit.downed ? 'DOWNED' : `${unit.hp}/${unit.maxHp} HP`}</span>
           <span class="profile-class-desc">${classData.description}</span>
         </div>
@@ -3615,7 +3631,7 @@ class GameUI {
         <div class="loot-unit-nav">
           ${prevArrow}
           <div class="loot-unit-header">
-            <span class="loot-unit-name" style="color:var(--class-${tag})">${unit.title} ${unit.name}</span>
+            <span class="loot-unit-name">${renderClassName(unit.classId, unit.title)} ${unit.name}</span>
             <span class="loot-unit-hp" style="color:${hpColor}">${unit.downed ? 'DOWN' : unit.hp + '/' + unit.maxHp}</span>
             ${unitCounter}
           </div>
@@ -3834,10 +3850,10 @@ class GameUI {
       const btn = document.createElement('button');
       btn.className = 'btn-primary levelup-unit-btn';
       if (canLearn) {
-        btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} (${u.skills.length}/${MAX_SKILLS} skills)`;
+        btn.innerHTML = `${renderClassName(u.classId, u.title)} ${u.name} (${u.skills.length}/${MAX_SKILLS} skills)`;
         btn.addEventListener('click', () => this.showSkillChoices(u.index));
       } else {
-        btn.innerHTML = `<span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name} — Train Stat`;
+        btn.innerHTML = `${renderClassName(u.classId, u.title)} ${u.name} — Train Stat`;
         btn.addEventListener('click', () => this.showStatChoices(u.index));
       }
       content.appendChild(btn);
@@ -4003,7 +4019,7 @@ class GameUI {
 
     html += this.engine.party.map(u => {
       return `<div class="run-complete-unit">
-        <span class="run-complete-unit-name"><span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name}</span>
+        <span class="run-complete-unit-name">${renderClassName(u.classId, u.title)} ${u.name}</span>
         <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
         <span class="run-complete-unit-level">${u.skills.length} skills</span>
       </div>`;
@@ -4290,7 +4306,7 @@ class GameUI {
 
     html += this.engine.party.map(u => {
       return `<div class="run-complete-unit">
-        <span class="run-complete-unit-name"><span style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span> ${u.name}</span>
+        <span class="run-complete-unit-name">${renderClassName(u.classId, u.title)} ${u.name}</span>
         <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
         <span class="run-complete-unit-level">${u.skills.length} skills</span>
       </div>`;

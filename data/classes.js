@@ -838,10 +838,10 @@ const RAW_CLASSES = {
     },
     "skills": [
       {
-        "id": "axe_strike", "name": "Axe Strike", "starter": true,
-        "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Basic axe strike. Deals 3 damage.",
-        "effects": { "damage": 3 }
+        "id": "wild_swing", "name": "Wild Swing", "starter": true,
+        "cost": { "type": "any" }, "target": "random_enemy",
+        "description": "Swing wildly at a random enemy. Deals 5 damage.",
+        "effects": { "damage": 5, "bonusDmgScale": 1.2 }
       },
       {
         "id": "herb_poultice", "name": "Herb Poultice", "starter": true,
@@ -930,20 +930,20 @@ const RAW_CLASSES = {
       {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +3 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 2, "bonusDmgScale": 0.2 }
+        "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +1 Morale.",
+        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.2 }
       },
       {
         "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal ally for 3 HP. +3 Morale.",
-        "effects": { "heal": 3, "morale": 2 }
+        "description": "Heal ally for 3 HP. +1 Morale.",
+        "effects": { "heal": 3, "morale": 1 }
       },
       {
         "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 1,
         "cost": { "type": "even" }, "target": "all_allies",
-        "description": "Requires even die. All allies gain 3 Block. +4 Morale.",
-        "effects": { "blockAll": 3, "morale": 2 }
+        "description": "Requires even die. All allies gain 3 Block. +1 Morale.",
+        "effects": { "blockAll": 3, "morale": 1 }
       },
       {
         "id": "vestas_judgment", "name": "Vesta's Judgment", "cooldown": 1,
@@ -955,8 +955,8 @@ const RAW_CLASSES = {
       {
         "id": "purifying_flame", "name": "Purifying Flame", "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
-        "description": "Cleanse all poison and stun. Apply 2 Poison to all enemies. +5 Morale.",
-        "effects": { "cleanseAll": true, "poisonAll": 2, "morale": 3 }
+        "description": "Cleanse all poison and stun. Apply 2 Poison to all enemies. +2 Morale.",
+        "effects": { "cleanseAll": true, "poisonAll": 2, "morale": 2 }
       },
       {
         "id": "divine_intercession", "name": "Divine Intercession", "cooldown": 2,
@@ -973,8 +973,8 @@ const RAW_CLASSES = {
       {
         "id": "rite_of_consecration", "name": "Rite of Consecration", "cooldown": 3,
         "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "all_allies",
-        "description": "3 dice totaling 10+. All allies +2 damage for 3 attacks. +12 Morale. Heal all 3 HP.",
-        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 3 }, "morale": 6, "healAll": 3 }
+        "description": "3 dice totaling 10+. All allies +2 damage for 3 attacks. +5 Morale. Heal all 3 HP.",
+        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 3 }, "morale": 5, "healAll": 3 }
       },
       {
         "id": "flame_shield", "name": "Flame Shield", "cooldown": 3,
@@ -991,14 +991,14 @@ const RAW_CLASSES = {
       {
         "id": "resurrection_prayer", "name": "Resurrection Prayer", "cooldown": 5,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_ally",
-        "description": "2 dice totaling 8+. Revive downed ally at 30% HP with Block. +10 Morale. Vestalis loses HP equal to ally's revived HP, gains that as Block.",
-        "effects": { "revive": true, "morale": 5, "resurrectionPrayer": true }
+        "description": "2 dice totaling 8+. Revive downed ally at 30% HP with Block. +4 Morale. Vestalis loses HP equal to ally's revived HP, gains that as Block.",
+        "effects": { "revive": true, "morale": 4, "resurrectionPrayer": true }
       },
       {
         "id": "eternal_flame", "name": "Eternal Flame", "cooldown": 4,
         "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 9+. Free action. Heal all 6 HP, gain 4 Block, +15 Morale. Act again.",
-        "effects": { "healAll": 6, "blockAll": 4, "morale": 8, "freeAction": true }
+        "description": "2 dice totaling 9+. Free action. Heal all 6 HP, gain 4 Block, +7 Morale. Act again.",
+        "effects": { "healAll": 6, "blockAll": 4, "morale": 7, "freeAction": true }
       }
     ]
   },

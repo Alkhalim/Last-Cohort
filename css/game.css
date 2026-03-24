@@ -545,6 +545,28 @@ html, body {
   padding: 1px 0;
 }
 
+.enemy-tooltip-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+.enemy-tooltip-statuses span {
+  font-size: 0.55rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.status-poison { background: rgba(100, 140, 40, 0.2); color: #8a4; }
+.status-block { background: rgba(60, 100, 180, 0.2); color: var(--blue-bright); }
+.status-marked { background: rgba(200, 160, 40, 0.2); color: var(--gold); }
+.status-condemned { background: rgba(200, 60, 60, 0.2); color: var(--red-bright); }
+.status-debuff { background: rgba(180, 60, 60, 0.15); color: #cc6666; }
+.status-buff { background: rgba(60, 140, 60, 0.15); color: var(--green-bright); }
+
 .enemy-tooltip-intent {
   font-size: 0.65rem;
   margin-top: 6px;
@@ -1395,15 +1417,11 @@ html, body {
 }
 
 /* --- Class color coding --- */
-.class-melee .unit-title,
+/* Unit title colors now set inline via renderClassName() for hybrid support */
 .class-melee .summary-unit-title { color: var(--class-melee); }
-.class-command .unit-title,
 .class-command .summary-unit-title { color: var(--class-command); }
-.class-support .unit-title,
 .class-support .summary-unit-title { color: var(--class-support); }
-.class-ranged .unit-title,
 .class-ranged .summary-unit-title { color: var(--class-ranged); }
-.class-elite .unit-title,
 .class-elite .summary-unit-title { color: var(--class-elite); }
 
 .unit-card.class-melee.selected { border-color: var(--class-melee); box-shadow: 0 0 8px rgba(196, 74, 58, 0.25); }

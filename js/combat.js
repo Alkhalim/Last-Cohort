@@ -1067,6 +1067,12 @@ class CombatEngine {
         this.targetMode = { unitIndex, skillId, diceIds, skill, targetType: 'enemy' };
         this.update();
       }
+    } else if (skill.target === TARGET.RANDOM_ENEMY) {
+      const validTargets = this.getValidEnemyTargets(skill, unit);
+      if (validTargets.length > 0) {
+        const target = validTargets[Math.floor(Math.random() * validTargets.length)];
+        this.executeSkill(unitIndex, skillId, diceIds, [target]);
+      }
     } else if (skill.target === TARGET.DUAL_ENEMY) {
       const validTargets = this.getValidEnemyTargets(skill, unit);
       if (validTargets.length === 1) {

@@ -24,6 +24,7 @@ const COST = {
 const TARGET = {
   SINGLE_ENEMY: 'single_enemy',
   DUAL_ENEMY: 'dual_enemy',
+  RANDOM_ENEMY: 'random_enemy',
   ALL_ENEMIES: 'all_enemies',
   FRONT_ROW: 'front_row',
   SELF: 'self',
@@ -656,6 +657,20 @@ function getItemData(itemId) {
 function getPrimaryTag(classId) {
   const tags = CLASS_DATA[classId] ? CLASS_DATA[classId].tags : [];
   return tags.find(t => t !== 'roman') || tags[0] || 'roman';
+}
+
+// Returns dual-color HTML for hybrid class names
+function renderClassName(classId, name) {
+  const tags = CLASS_DATA[classId] ? CLASS_DATA[classId].tags : [];
+  const displayTags = tags.filter(t => t !== 'roman' && t !== 'germanic');
+  if (displayTags.length >= 2) {
+    const mid = Math.ceil(name.length / 2);
+    const first = name.slice(0, mid);
+    const second = name.slice(mid);
+    return `<span style="color:var(--class-${displayTags[0]})">${first}</span><span style="color:var(--class-${displayTags[1]})">${second}</span>`;
+  }
+  const tag = displayTags[0] || 'roman';
+  return `<span style="color:var(--class-${tag})">${name}</span>`;
 }
 
 // Returns tag pip HTML for an item's classTags
