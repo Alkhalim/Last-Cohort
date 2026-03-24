@@ -873,6 +873,29 @@ class Game {
         return unit;
       });
 
+      // Re-create leveled item instances in ITEM_DATA after load
+      this.engine.party.forEach(u => {
+        for (const slot of ['weapon', 'armor', 'trinket']) {
+          u.equipment[slot].forEach(id => {
+            if (!id || ITEM_DATA[id]) return; // already registered or null
+            // Parse baseId and level from instance ID pattern: baseId_lvN_xxxx
+            const match = id.match(/^(.+)_lv(\d+)_/);
+            if (match) {
+              const baseId = match[1];
+              const level = parseInt(match[2]);
+              const bonusLevels = level - 1;
+              if (bonusLevels > 0 && ITEM_DATA[baseId]) {
+                const newId = createLeveledItem(baseId, bonusLevels);
+                // Replace the equipment reference with the new instance
+                const idx = u.equipment[slot].indexOf(id);
+                if (idx >= 0) u.equipment[slot][idx] = newId;
+              }
+            }
+          });
+        }
+        this.engine.computeEquipmentStats(u);
+      });
+
       this.ui.mapNodes = data.mapNodes;
       this.ui.currentNodeId = data.currentNodeId;
       this.ui.difficulty = data.uiDifficulty || data.difficulty;

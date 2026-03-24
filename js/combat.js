@@ -129,7 +129,8 @@ class CombatEngine {
     // Special: Lorica of the Damned — start combat with block equal to 20% max HP
     this.party.forEach(u => {
       if (!u.downed && this.unitHasItem(u, 'lorica_of_the_damned')) {
-        const loricaBlock = Math.floor(u.maxHp * 0.2);
+        const ldLv = this.getItemLevel(u, 'lorica_of_the_damned');
+        const loricaBlock = Math.floor(u.maxHp * (0.2 + ldLv * 0.03));
         u.block = (u.block || 0) + loricaBlock;
         this.addLog(`${u.name}'s Lorica of the Damned grants ${loricaBlock} Block.`);
       }
@@ -181,6 +182,7 @@ class CombatEngine {
       if (this.isAmbush) {
         this.isAmbush = false; // only the first turn is ambushed
         this._ambushTargeted = new Set(); // spread targets during ambush
+        this._ambushStunCount = 0; // limit stuns during ambush turn
         this.addLog('AMBUSH! The enemy strikes before you can react!');
         this.phase = PHASE.ENEMY_TURN;
         this.update();
@@ -421,7 +423,8 @@ class CombatEngine {
     // Difficulty adds +1 base decay per level above 1 (diff 2 = +1, diff 3 = +2, etc.)
     // Champion's Helm reduces decay by 1 per helm equipped
     // Curse: Witch's Gaze — morale decay +2 per turn
-    const helmReduction = this.party.filter(u => !u.downed && this.unitHasItem(u, 'champions_helm')).length;
+    const helmCarrier = this.party.find(u => !u.downed && this.unitHasItem(u, 'champions_helm'));
+    const helmReduction = helmCarrier ? this.getItemLevel(helmCarrier, 'champions_helm') : 0;
     const diffDecay = Math.max(0, (this.difficulty || 1) - 1);
     const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
     const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
@@ -432,15 +435,17 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('morale', { amount: -moraleDecay });
     }
 
-    // Special: Wicker Ash — enemies take 1 damage per ash equipped at start of turn
-    const wickerAshCount = this.party.filter(u => !u.downed && this.unitHasItem(u, 'wicker_ash')).length;
-    if (wickerAshCount > 0) {
+    // Special: Wicker Ash — enemies take damage at start of turn (scales with level)
+    const wickerAshCarrier = this.party.find(u => !u.downed && this.unitHasItem(u, 'wicker_ash'));
+    if (wickerAshCarrier) {
+      const waLv = this.getItemLevel(wickerAshCarrier, 'wicker_ash');
+      const waDmg = waLv;
       this.enemies.forEach(e => {
         if (!e.dead) {
-          e.hp = Math.max(0, e.hp - wickerAshCount);
+          e.hp = Math.max(0, e.hp - waDmg);
         }
       });
-      this.addLog(`Wicker ash burns — all enemies take ${wickerAshCount} damage.`);
+      this.addLog(`Wicker ash burns — all enemies take ${waDmg} damage.`);
       this.checkEnemyDeaths();
     }
 
@@ -595,6 +600,7 @@ class CombatEngine {
     this.dicePool.itemAdjustUsed = false;
     this.dicePool.itemRerollUsed = false;
     this._ambushTargeted = null; // clear ambush spread tracking
+    this._ambushStunCount = undefined; // clear ambush stun limit
 
     // Tick down skill cooldowns
     this.party.forEach(u => {
@@ -1431,10 +1437,11 @@ class CombatEngine {
       }
       // Corona Obsidionalis: above 70 morale, attacks ignore block
       const coronaPierce = this.morale > 70 && this.unitHasItem(unit, 'corona_obsidionalis');
-      // Pierce block: reduce effective block before absorbing
-      let pierceAmount = result.pierceBlock || 0;
-      // Enemy block (Warlord's Blade deals 2 extra damage to block)
-      if (result.target.block && result.target.block > 0 && !coronaPierce) {
+      // Full block pierce (pierceBlock >= 99 or coronaPierce): skip block entirely, don't reduce it
+      const fullPierce = coronaPierce || (result.pierceBlock && result.pierceBlock >= 99);
+      // Partial pierce or normal block interaction
+      if (result.target.block && result.target.block > 0 && !fullPierce) {
+        let pierceAmount = result.pierceBlock || 0;
         let effectiveBlock = Math.max(0, result.target.block - pierceAmount);
         let blockDmg = total;
         if (this.unitHasItem(unit, 'warlords_blade')) blockDmg += 2;
@@ -1447,11 +1454,29 @@ class CombatEngine {
         total -= Math.min(total, absorbed);
         if (absorbed > 0) parts.push(`${result.target.name}'s block absorbs ${absorbed}${pierceAmount > 0 ? ` (pierced ${pierceAmount})` : ''}.`);
       }
+      const hpBeforeHit = result.target.hp;
       result.target.hp = Math.max(0, result.target.hp - total);
       unit.stats.damageDealt += total;
       if (total > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: total });
       const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
+
+      // Overkill morale: if kill has massive overkill, restore morale
+      if (result.target.hp <= 0 && hpBeforeHit > 0 && total > 0) {
+        const overkill = total - hpBeforeHit;
+        const overkillPct = overkill / total;
+        if (overkillPct >= 0.9) {
+          this.morale = Math.min(100, this.morale + 3);
+          parts.push('OVERKILL!!! (+3 Morale)');
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
+          if (this.onVisual) this.onVisual('morale', { amount: 3 });
+        } else if (overkillPct >= 0.5) {
+          this.morale = Math.min(100, this.morale + 1);
+          parts.push('Overkill! (+1 Morale)');
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
+          if (this.onVisual) this.onVisual('morale', { amount: 1 });
+        }
+      }
 
       // Ballistarius passive: Pinning Fire — target deals 15% less damage next action
       if (unit.classId === 'ballistarius' && total > 0 && result.target.hp > 0) {
@@ -1782,15 +1807,17 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('unitBlock', { unitIndex: ally.index, amount: sgBlock });
         }
       }
-      // Special: Oak Splinter — block skills grant +2 block to all other allies
+      // Special: Oak Splinter — block skills grant block to all other allies (scales with level)
       if (this.unitHasItem(unit, 'oak_splinter')) {
+        const osLv = this.getItemLevel(unit, 'oak_splinter');
+        const osBlock = 2 + (osLv - 1);
         this.party.forEach(u => {
           if (!u.downed && u !== result.target) {
-            u.block = (u.block || 0) + 2;
-            if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: 2 });
+            u.block = (u.block || 0) + osBlock;
+            if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: osBlock });
           }
         });
-        parts.push('Oak Splinter spreads +2 Block to allies.');
+        parts.push(`Oak Splinter spreads +${osBlock} Block to allies.`);
       }
     }
     if (result.taunt) {
@@ -1935,9 +1962,12 @@ class CombatEngine {
     if (result.damageAll) {
       const aoeBonus = result.halfBonusDmg ? Math.floor(bonusDmg / 2) : bonusDmg;
       const aoeDmg = result.damageAll + aoeBonus;
+      let bestOverkillPct = 0;
+      let bestOverkillIdx = -1;
       this.enemies.forEach(e => {
         if (!e.dead) {
           let dmg = aoeDmg;
+          const hpBefore = e.hp;
           const auraRed = this.getAuraDamageReduction(e);
           if (auraRed > 0) dmg = Math.max(1, dmg - auraRed);
           if (e.block && e.block > 0) {
@@ -1948,6 +1978,11 @@ class CombatEngine {
           e.hp = Math.max(0, e.hp - dmg);
           unit.stats.damageDealt += dmg;
           if (dmg > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: e.index, damage: dmg });
+          // Track best overkill for morale
+          if (e.hp <= 0 && hpBefore > 0 && dmg > 0) {
+            const okPct = (dmg - hpBefore) / dmg;
+            if (okPct > bestOverkillPct) { bestOverkillPct = okPct; bestOverkillIdx = e.index; }
+          }
           // Ballistarius pinning on AoE
           if (unit.classId === 'ballistarius' && dmg > 0 && e.hp > 0) e._pinned = true;
           // "Whenever deals damage" triggers per target on AoE
@@ -1982,6 +2017,18 @@ class CombatEngine {
         spiritV.hp = Math.min(spiritV.maxHp, spiritV.hp + healForV);
         spiritA.hp = Math.min(spiritA.maxHp, spiritA.hp + healForA);
         parts.push(`The spirits' bond pulses — each heals ${healForV} HP!`);
+      }
+      // AoE overkill morale
+      if (bestOverkillPct >= 0.9) {
+        this.morale = Math.min(100, this.morale + 3);
+        parts.push('OVERKILL!!! (+3 Morale)');
+        if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
+        if (this.onVisual) this.onVisual('morale', { amount: 3 });
+      } else if (bestOverkillPct >= 0.5) {
+        this.morale = Math.min(100, this.morale + 1);
+        parts.push('Overkill! (+1 Morale)');
+        if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
+        if (this.onVisual) this.onVisual('morale', { amount: 1 });
       }
     }
     // Consume all damage buffs after dealing damage
@@ -2263,18 +2310,25 @@ class CombatEngine {
       }
     }
 
-    // Shoulder Charge: knockback to back row, or bonus damage (scaled 1.1x) if already back
+    // Shoulder Charge: knockback to back row, or bonus damage + stun if already back
     if (result.shoulderCharge && result.target) {
       if (result.target.row === 'front') {
         result.target.row = 'back';
         parts.push(`${result.target.name} is knocked to the back row!`);
       } else {
-        // Already back row — deal 2 + scaled bonus damage (1.1x equipment scaling)
+        // Already back row — deal 2 + scaled bonus damage (1.1x) and stun
         const scaledExtra = 2 + Math.floor(bonusDmg * 0.1);
         result.target.hp = Math.max(0, result.target.hp - scaledExtra);
         unit.stats.damageDealt += scaledExtra;
         if (this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: scaledExtra });
-        parts.push(`${result.target.name} has nowhere to go! (+${scaledExtra} bonus damage)`);
+        const stunCount = this.enemies.filter(e => !e.dead && e._skipNextAction).length;
+        if (stunCount < 2) {
+          result.target._skipNextAction = true;
+          parts.push(`${result.target.name} has nowhere to go! (+${scaledExtra} bonus damage, stunned!)`);
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Stunned!', color: 'var(--red-bright)' });
+        } else {
+          parts.push(`${result.target.name} has nowhere to go! (+${scaledExtra} bonus damage)`);
+        }
       }
     }
 
@@ -2849,6 +2903,8 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('morale', { amount: bossBonus });
     }
 
+    // Immediate update so morale bar and mood reflect the victory right away
+    this.update();
     const fast = typeof isFastMode === 'function' && isFastMode();
     setTimeout(() => this.update(), fast ? 300 : 2000);
   }
@@ -2882,13 +2938,17 @@ class CombatEngine {
             moraleRestore = (baseHp > 10 ? 3 : 2) + diffBonus;
           }
           if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
-          if (this.partyHasItem('chiefs_spear')) moraleRestore += 2;
-          // Sword of Germanicus: kills grant +3 morale and heal 2 HP
+          if (this.partyHasItem('chiefs_spear')) {
+            const csLv = this.getPartyItemLevel('chiefs_spear');
+            moraleRestore += 2 + (csLv - 1);
+          }
+          // Sword of Germanicus: kills grant morale and heal (scales with level)
           if (this.partyHasItem('sword_of_germanicus')) {
-            moraleRestore += 3;
+            const sogLv = this.getPartyItemLevel('sword_of_germanicus');
+            moraleRestore += 3 + (sogLv - 1);
             this.party.forEach(u => {
               if (!u.downed && this.unitHasItem(u, 'sword_of_germanicus') && u.hp < u.maxHp) {
-                const healAmt = Math.min(2, u.maxHp - u.hp);
+                const healAmt = Math.min(2 + Math.floor(sogLv / 2), u.maxHp - u.hp);
                 u.hp += healAmt;
                 if (healAmt > 0) this.addLog(`Sword of Germanicus heals ${u.name} for ${healAmt} HP.`);
               }
@@ -3408,9 +3468,10 @@ class CombatEngine {
         this.addLog(`Wolf Pelt absorbs the first blow! (-${wpReduction} damage)`);
         if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Pelt!', color: 'var(--gold)' });
       }
-      // Centurion's Gorget: reduce incoming damage by 3 (minimum 1)
+      // Centurion's Gorget: reduce incoming damage (scales with level, minimum 1)
       if (dmg > 0 && this.unitHasItem(target, 'centurions_gorget')) {
-        dmg = Math.max(1, dmg - 3);
+        const gorgetLv = this.getItemLevel(target, 'centurions_gorget');
+        dmg = Math.max(1, dmg - (3 + (gorgetLv - 1)));
       }
       // Damage Shield: reduce incoming damage
       if (target._damageShield && dmg > 0) {
@@ -3563,15 +3624,18 @@ class CombatEngine {
       }
     }
 
-    // Boar Charge: move to front row and stun the target
+    // Boar Charge: move to front row and stun the target (ambush: max 1 stun)
     if (action.boarCharge && target) {
       if (enemy.row === 'back') {
         enemy.row = 'front';
         this.addLog(`${enemy.name} charges from the back line!`);
       }
-      target._stunNextTurn = true;
-      this.addLog(`${target.name} is stunned by the charge!`);
-      if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Stunned!', color: 'var(--red-bright)' });
+      if (this._ambushStunCount === undefined || this._ambushStunCount < 1) {
+        target._stunNextTurn = true;
+        if (this._ambushStunCount !== undefined) this._ambushStunCount++;
+        this.addLog(`${target.name} is stunned by the charge!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Stunned!', color: 'var(--red-bright)' });
+      }
     }
 
     // Enemy mark target: mark a player unit for bonus damage
@@ -4135,12 +4199,12 @@ class CombatEngine {
       if (boss.id === 'mire_mother') {
         if (!boss._phase70 && boss.hp <= boss.maxHp * 0.7) {
           boss._phase70 = true;
-          boss._pendingSpawn = [{ id: 'boar_youngling' }, { id: 'boar_youngling' }];
+          boss._pendingSpawn = [{ id: 'boar_youngling' }];
           this.addLog(`${boss.name} bellows! Her brood is coming!`);
         }
         if (!boss._phase40 && boss.hp <= boss.maxHp * 0.4) {
           boss._phase40 = true;
-          boss._pendingSpawn = [{ id: 'war_boar' }, { id: 'boar_youngling' }];
+          boss._pendingSpawn = [{ id: 'war_boar' }];
           this.addLog(`${boss.name} screams in fury! War boars crash through the undergrowth!`);
         }
       }

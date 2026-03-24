@@ -3306,10 +3306,27 @@ class GameUI {
 
   onVictory() {
     const isBoss = this.engine.hasBossEnemy();
-    const title = isBoss ? 'THE CHAMPION FALLS' : 'ENCOUNTER WON';
-    const text = isBoss
-      ? "The warlord lies defeated. The path is clear."
-      : 'The enemy falls. You press deeper into the forest.';
+    const bossEnemy = isBoss ? this.engine.enemies.find(e => e.isBoss) : null;
+    const bossVictoryText = {
+      'arminius_champion': { title: 'THE WARLORD FALLS', text: 'The Germanic warlord lies broken. His warriors scatter into the trees.' },
+      'grove_witch': { title: 'THE WITCH BURNS', text: 'The grove witch crumbles into ash and root. The forest exhales.' },
+      'silent_huntsman': { title: 'THE HUNTER FALLS', text: 'The huntsman\'s bow clatters to the ground. Silence returns to the canopy.' },
+      'mire_mother': { title: 'THE MOTHER FALLS', text: 'The great sow collapses. Her brood scatters, squealing into the mire.' },
+      'bone_speaker': { title: 'THE BONES ARE SILENT', text: 'The bone speaker\'s chanting stops. The dead lie still at last.' },
+      'serpent_shaman': { title: 'THE DANCER STILLS', text: 'The shaman collapses mid-step. Her serpents dissolve into mist.' },
+      'fog_weaver': { title: 'THE FOG LIFTS', text: 'The weaver shrieks and unravels. The fog parts, and the path is clear.' },
+      'blood_stag': { title: 'THE STAG FALLS', text: 'The crimson stag crashes to the earth. The forest trembles with its passing.' },
+      'corpse_of_arminius': { title: 'ARMINIUS RESTS', text: 'The corpse crumbles. The betrayer of Rome is laid to rest at last.' },
+      'corpse_of_varus': { title: 'VARUS IS REDEEMED', text: 'The ghost of the general fades. Rome\'s shame dissolves into the mist.' },
+      'spirit_of_arminius': { title: 'THE SPIRITS PART', text: 'Arminius and Varus — bound in death — are finally unbound. The forest sighs.' },
+      'thusnelda': { title: 'THUSNELDA RETREATS', text: 'The chieftain\'s wife vanishes into the treeline, wolves at her heels. She will not forget.' },
+      'revenant_of_ariovistus': { title: 'THE KING FALLS', text: 'The dead king sinks back into his barrow. The crown rolls free.' },
+    };
+    const bossText = bossEnemy && bossVictoryText[bossEnemy.id]
+      ? bossVictoryText[bossEnemy.id]
+      : { title: 'THE CHAMPION FALLS', text: 'The enemy leader lies defeated. The path is clear.' };
+    const title = isBoss ? bossText.title : 'ENCOUNTER WON';
+    const text = isBoss ? bossText.text : 'The enemy falls. You press deeper into the forest.';
 
     // Track stats
     if (window.game) window.game.trackEncounterStats();
