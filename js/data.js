@@ -366,6 +366,13 @@ function buildSkillExecute(skillData) {
 
     // New mechanics
     if (effects.fortifiedStrike) result.fortifiedStrike = true;
+    if (effects.gladiusThrust) result.gladiusThrust = true;
+    if (effects.aimedShot) result.aimedShot = true;
+    if (effects.momentumStrike) { result.momentumStrike = true; if (targets[0]) result.target = targets[0]; }
+    if (effects.breakneckCharge) { result.breakneckCharge = true; if (targets[0]) result.target = targets[0]; }
+    if (effects.allInCharge) { result.allInCharge = true; if (targets[0]) result.target = targets[0]; }
+    if (effects.cleanseMarks) result.cleanseMarks = true;
+    if (effects.cleanseStun) result.cleanseStun = true;
     if (effects.precisionDrill) {
       result.precisionDrill = true;
       if (targets[0]) result.target = targets[0];

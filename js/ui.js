@@ -2867,7 +2867,7 @@ class GameUI {
       if (effects.buffAllies) candidates.push({ key: 'buffAllies', text: `+1 buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + 1})`, apply: () => baseDef.effects.buffAllies.bonusDamage++ });
       // Fallback numeric effects — exclude non-upgradeable mechanics
       const excludeFromUpgrade = new Set([
-        'pierceBlock', 'moraleCost', 'bonusDmgScale', 'caltrops', 'splashAdjacentPct',
+        'pierceBlock', 'moraleCost', 'bonusDmgScale', 'caltrops', 'splashAdjacentPct', 'momentumStrike', 'breakneckCharge', 'allInCharge', 'gladiusThrust', 'aimedShot',
         'dieScaleDamage', 'dieScaleBlock', 'dieScaleHeal', 'splitDamage', 'splashHalf',
         'splashRow', 'pierceRow', 'splashBackRow', 'execute', 'markTarget', 'knockback',
         'shieldbreak', 'shieldbreakAll', 'blockOthersOnly', 'halfBonusDmg',

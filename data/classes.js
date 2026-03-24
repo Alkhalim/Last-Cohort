@@ -32,8 +32,8 @@ const RAW_CLASSES = {
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
         "cost": { "type": "odd" }, "target": "single_enemy",
-        "description": "Precise thrust. Deals 4 + die value damage.",
-        "effects": { "damage": 4, "dieScaleDamage": true }
+        "description": "Precise thrust. Deals 2 + die value damage. +50% damage vs targets with Block, stun, or mark.",
+        "effects": { "damage": 2, "dieScaleDamage": true, "gladiusThrust": true }
       },
       {
         "id": "hold_fast", "name": "Hold Fast", "cooldown": 1,
@@ -216,8 +216,8 @@ const RAW_CLASSES = {
       {
         "id": "emergency_draught", "name": "Emergency Draught", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_ally",
-        "description": "Heal an ally for 7 HP.",
-        "effects": { "heal": 7 }
+        "description": "Heal an ally for 7 HP. Cleanse poison, marks, and stun.",
+        "effects": { "heal": 7, "cleanse": true, "cleanseMarks": true, "cleanseStun": true }
       },
       {
         "id": "plague_flask", "name": "Plague Flask", "cooldown": 1,
@@ -297,8 +297,8 @@ const RAW_CLASSES = {
         "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 1, "starter": true,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Carefully aimed shot. Deals 6 damage. Ignores block.",
-        "effects": { "damage": 6, "pierceBlock": 99 }
+        "description": "Ranged. Carefully aimed shot. Deals 4 damage. Ignores block. +3 bonus damage vs back row.",
+        "effects": { "damage": 4, "pierceBlock": 99, "aimedShot": true }
       },
       {
         "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 2,
@@ -509,7 +509,7 @@ const RAW_CLASSES = {
       },
       {
         "id": "dissonant_blast", "name": "Dissonant Blast", "cooldown": 2,
-        "cost": { "type": "exact", "val": 1 }, "target": "single_enemy",
+        "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
         "description": "A jarring horn note. Deals 2 damage and stuns the target.",
         "effects": { "damage": 2, "stun": true }
       },
@@ -554,18 +554,18 @@ const RAW_CLASSES = {
     },
     "skills": [
       {
-        "id": "lance_thrust", "name": "Lance Thrust", "starter": true,
+        "id": "momentum_strike", "name": "Momentum Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A quick lance jab at any target. Deals 2 damage (light strike).",
-        "effects": { "damage": 2, "bonusDmgScale": 0.65 }
+        "description": "Deal 1 damage per skill used this combat. Grows stronger each action.",
+        "effects": { "momentumStrike": true }
       },
       {
-        "id": "charging_strike", "name": "Charging Strike", "starter": true, "cooldown": 1,
-        "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
+        "id": "breakneck_charge", "name": "Breakneck Charge", "starter": true, "cooldown": 2,
+        "cost": { "type": "combined", "min": 4, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A powerful charging blow. Deals 8 damage.",
-        "effects": { "damage": 8 }
+        "description": "Use 2 dice. Deal their sum as damage. Stun target and self.",
+        "effects": { "breakneckCharge": true }
       },
       {
         "id": "trample", "name": "Trample", "starter": true,
@@ -581,11 +581,11 @@ const RAW_CLASSES = {
         "effects": { "damage": 3, "block": 3 }
       },
       {
-        "id": "reckless_charge", "name": "Reckless Charge", "cooldown": 3,
+        "id": "all_in_charge", "name": "All-In Charge", "cooldown": 3,
         "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A wild, reckless charge. Deals 14 damage to any target. Take 4 self-damage.",
-        "effects": { "damage": 14, "selfDamage": 4, "halfScaleSelfDamage": true }
+        "description": "Deal 10 damage. All other unused dice are rerolled and added as bonus damage.",
+        "effects": { "allInCharge": true }
       },
       {
         "id": "overrun", "name": "Overrun",
@@ -652,15 +652,15 @@ const RAW_CLASSES = {
         "id": "ballista_bolt", "name": "Ballista Bolt", "starter": true, "cooldown": 1,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Fire a heavy bolt at any target. Deals 5 damage.",
-        "effects": { "damage": 5 }
+        "description": "Fire a heavy bolt at any target. Deals 6 damage.",
+        "effects": { "damage": 6 }
       },
       {
         "id": "pinning_shot", "name": "Pinning Shot", "starter": true, "cooldown": 3,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A heavy bolt that pins the target. Deals 5 damage. Target deals 30% less damage for next 2 actions.",
-        "effects": { "damage": 5, "cripple": 2 }
+        "description": "Ranged. A heavy bolt that pins the target. Deals 4 damage. Target deals 30% less damage for next 2 actions.",
+        "effects": { "damage": 4, "cripple": 2 }
       },
       {
         "id": "suppressive_volley", "name": "Suppressive Volley", "starter": true,

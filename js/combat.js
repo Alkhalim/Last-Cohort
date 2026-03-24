@@ -1208,10 +1208,11 @@ class CombatEngine {
       this.addLog("Destrier's Barding! All allies gain 2 Block.");
     }
 
-    // Track skill usage for analytics
+    // Track skill usage for analytics and momentum
     if (!this.skillUsageStats) this.skillUsageStats = {};
     const key = `${unit.classId}:${skillId}`;
     this.skillUsageStats[key] = (this.skillUsageStats[key] || 0) + 1;
+    this._totalSkillsUsed = (this._totalSkillsUsed || 0) + 1;
 
     const usedDice = diceIds.map(id => this.dicePool.dice.find(d => d.id === id));
     diceIds.forEach(id => this.dicePool.useDie(id));
@@ -1420,6 +1421,23 @@ class CombatEngine {
         total *= 2;
         parts.push('EXECUTE!');
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Execute!', color: 'var(--red-bright)' });
+      }
+      // Gladius Thrust: +50% damage vs targets with Block, stun, or mark
+      if (result.gladiusThrust && result.target) {
+        const hasDebuff = (result.target.block && result.target.block > 0) ||
+          result.target._skipNextAction ||
+          (result.target._marked && result.target._marked > 0) ||
+          (result.target._condemned && result.target._condemned > 0);
+        if (hasDebuff) {
+          const bonus = Math.floor(total * 0.5);
+          total += bonus;
+          parts.push('Precise! (+50% vs vulnerable target)');
+        }
+      }
+      // Aimed Shot: +3 bonus damage vs back row
+      if (result.aimedShot && result.target && result.target.row === 'back') {
+        total += 3;
+        parts.push('Back row shot! (+3)');
       }
       // Kill Shot: double damage to marked or poisoned targets
       if (result.killShot && ((result.target._marked && result.target._marked > 0) || (result.target.poison && result.target.poison > 0))) {
@@ -2113,6 +2131,15 @@ class CombatEngine {
       result.target.poison = 0;
       parts.push('Poison cleared.');
     }
+    // Cleanse marks from target
+    if (result.cleanseMarks && result.target) {
+      if (result.target._huntMarked) { result.target._huntMarked = 0; parts.push('Mark cleared.'); }
+    }
+    // Cleanse stun from target
+    if (result.cleanseStun && result.target) {
+      if (result.target._stunNextTurn) { result.target._stunNextTurn = false; result.target._stunnedThisTurn = false; parts.push('Stun cleared.'); }
+      if (result.target._stunnedThisTurn) { result.target._stunnedThisTurn = false; result.target.actedThisTurn = false; parts.push('Stun cleared — ready to act!'); }
+    }
     if (result.morale) {
       const oldMorale = this.morale;
       this.morale = Math.max(0, Math.min(100, this.morale + result.morale));
@@ -2359,6 +2386,74 @@ class CombatEngine {
       } else {
         parts.push(`${result.target.name} resists — too many enemies already stunned.`);
       }
+    }
+
+    // Momentum Strike: deal 1 damage per skill used this combat
+    if (result.momentumStrike && result.target) {
+      const momentum = this._totalSkillsUsed || 1;
+      let dmg = momentum + bonusDmg;
+      // Block interaction
+      if (result.target.block && result.target.block > 0) {
+        const ab = Math.min(result.target.block, dmg);
+        result.target.block -= ab;
+        dmg -= ab;
+        if (ab > 0) parts.push(`${result.target.name}'s block absorbs ${ab}.`);
+      }
+      result.target.hp = Math.max(0, result.target.hp - dmg);
+      unit.stats.damageDealt += dmg;
+      if (dmg > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: dmg });
+      parts.push(`${unit.name} uses ${skill.name} — ${dmg} damage (${momentum} momentum).`);
+    }
+
+    // Breakneck Charge: deal sum of 2 dice as damage, stun target and self
+    if (result.breakneckCharge && result.target) {
+      const usedDice = this.dicePool.dice.filter(d => d.used).slice(-2);
+      const dieSum = usedDice.reduce((s, d) => s + d.value, 0);
+      let dmg = dieSum + Math.floor(bonusDmg * 1.3);
+      // Block interaction
+      if (result.target.block && result.target.block > 0) {
+        const ab = Math.min(result.target.block, dmg);
+        result.target.block -= ab;
+        dmg -= ab;
+        if (ab > 0) parts.push(`${result.target.name}'s block absorbs ${ab}.`);
+      }
+      result.target.hp = Math.max(0, result.target.hp - dmg);
+      unit.stats.damageDealt += dmg;
+      if (dmg > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: dmg });
+      // Stun target (anti-stunlock)
+      const stunCount = this.enemies.filter(e => !e.dead && e._skipNextAction).length;
+      if (stunCount < 2) {
+        result.target._skipNextAction = true;
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Stunned!', color: 'var(--red-bright)' });
+      }
+      // Stun self
+      unit._stunNextTurn = true;
+      parts.push(`${unit.name} crashes into ${result.target.name} for ${dmg} damage (dice ${usedDice.map(d => d.value).join('+')}). Both are stunned!`);
+    }
+
+    // All-In Charge: deal 10 + sum of rerolled unused dice as bonus damage
+    if (result.allInCharge && result.target) {
+      let baseDmg = 10 + bonusDmg;
+      // Reroll all unused dice and add their values as bonus
+      const unused = this.dicePool.dice.filter(d => !d.used);
+      let rerollBonus = 0;
+      unused.forEach(d => {
+        d.value = Math.floor(Math.random() * 6) + 1;
+        rerollBonus += d.value;
+      });
+      const totalDmg = baseDmg + rerollBonus;
+      // Block interaction
+      let dmg = totalDmg;
+      if (result.target.block && result.target.block > 0) {
+        const ab = Math.min(result.target.block, dmg);
+        result.target.block -= ab;
+        dmg -= ab;
+        if (ab > 0) parts.push(`${result.target.name}'s block absorbs ${ab}.`);
+      }
+      result.target.hp = Math.max(0, result.target.hp - dmg);
+      unit.stats.damageDealt += dmg;
+      if (dmg > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: dmg });
+      parts.push(`${unit.name} goes ALL IN — ${dmg} damage! (10 base + ${rerollBonus} from ${unused.length} rerolled dice)`);
     }
 
     // Shieldbreak All: remove all block from all enemies
