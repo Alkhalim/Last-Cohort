@@ -206,6 +206,8 @@ class GameUI {
   showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    // Stop map sway when leaving map
+    if (id !== 'map-screen') this._stopMapSway();
     // Clean up any stray tooltips
     this.hideUnitLootTooltip();
     this.hideEnemyTooltip();
@@ -1053,6 +1055,34 @@ class GameUI {
         return `<span class="stat-heal">${b}</span> HP`;
       });
 
+      // Replace "pair value" with actual value when dice are staged
+      if (skill.cost && skill.cost.type === 'pair') {
+        let pairVal = null;
+        if (isStaged && this.stagedSkill.diceIds.length >= 2) {
+          const stagedDice = this.stagedSkill.diceIds.map(id => this.engine.dicePool.dice.find(d => d.id === id)).filter(Boolean);
+          if (stagedDice.length >= 2 && stagedDice[0].value === stagedDice[1].value) {
+            pairVal = stagedDice[0].value;
+          }
+        }
+        if (pairVal !== null) {
+          // Replace "pair value" with the actual number, color-coded
+          desc = desc.replace(/pair value x(\d+)/g, (m, mult) => `<span class="stat-block">${pairVal * parseInt(mult)}</span> <span class="stat-breakdown">(${pairVal}×${mult})</span>`);
+          desc = desc.replace(/pair value/g, `<span class="stat-block">${pairVal}</span>`);
+        } else {
+          // Show range: 1-6 for pair value
+          desc = desc.replace(/pair value x(\d+)/g, (m, mult) => `<span class="stat-block">${mult}-${6 * parseInt(mult)}</span>`);
+          desc = desc.replace(/pair value/g, `<span class="stat-block">1-6</span>`);
+        }
+      }
+
+      // Replace "die value" with actual value when dice are staged (non-scaling contexts)
+      if (isStaged && this.stagedSkill.diceIds.length >= 1) {
+        const stagedDie = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[0]);
+        if (stagedDie) {
+          desc = desc.replace(/die value x(\d+)/g, (m, mult) => `<span class="stat-block">${stagedDie.value * parseInt(mult)}</span> <span class="stat-breakdown">(${stagedDie.value}×${mult})</span>`);
+        }
+      }
+
       // Replace poison values
       desc = desc.replace(/(\d+) Poison/g, (match, base) => {
         const b = parseInt(base);
@@ -1394,6 +1424,7 @@ class GameUI {
     this.renderMapPartyBar();
     this.renderMapMorale();
     this.renderMap();
+    this._startMapSway();
     if (window.game && window.game.musicMode === 'boss') {
       window.game.resumeGameplayMusic();
     }
@@ -1401,11 +1432,31 @@ class GameUI {
     if (window.game && window.game.saveRun) window.game.saveRun();
   }
 
+  _startMapSway() {
+    if (this._mapSwayActive) return;
+    this._mapSwayActive = true;
+    this._mapAnimTime = 0;
+    const tick = () => {
+      if (!this._mapSwayActive) return;
+      this._mapAnimTime += 0.016;
+      // Only redraw terrain every ~2 seconds for performance
+      if (Math.floor(this._mapAnimTime * 0.5) !== Math.floor((this._mapAnimTime - 0.016) * 0.5)) {
+        this.renderMap();
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  _stopMapSway() {
+    this._mapSwayActive = false;
+  }
+
   renderMapPartyBar() {
     const bar = document.getElementById('map-party-bar');
-    bar.innerHTML = this.engine.party.map(u => {
+    bar.innerHTML = this.engine.party.map((u, i) => {
       const pct = (u.hp / u.maxHp) * 100;
-      return `<div class="map-party-unit${u.downed ? ' downed' : ''}">
+      return `<div class="map-party-unit${u.downed ? ' downed' : ''}" data-unit-idx="${i}">
         <span class="map-party-name" style="color:var(--class-${getPrimaryTag(u.classId)})">${u.title}</span>
         <div class="map-party-hp-bar">
           <div class="map-party-hp-fill${pct < 20 ? ' critical' : pct < 40 ? ' hp-low' : pct < 65 ? ' hp-mid' : ''}" style="width:${pct}%"></div>
@@ -1413,6 +1464,87 @@ class GameUI {
         <span class="map-party-hp-text">${u.hp}/${u.maxHp}</span>
       </div>`;
     }).join('');
+
+    // Bind click to show character profile
+    bar.querySelectorAll('.map-party-unit').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.unitIdx);
+        this.showCharacterProfile(idx);
+      });
+    });
+  }
+
+  showCharacterProfile(unitIndex) {
+    const unit = this.engine.party[unitIndex];
+    const tag = getPrimaryTag(unit.classId);
+    const classData = CLASS_DATA[unit.classId];
+
+    // Passive
+    const passiveHtml = unit.passive && unit.passive.name
+      ? `<div class="profile-passive"><span class="profile-label">Passive:</span> <span class="profile-passive-name">${unit.passive.name}</span> — ${unit.passive.description}</div>`
+      : '';
+
+    // Bonus stats from training/events
+    const bonuses = [];
+    if (unit.bonusDamage) bonuses.push(`<span style="color:var(--red-bright)">+${unit.bonusDamage} dmg</span>`);
+    if (unit.bonusBlock) bonuses.push(`<span style="color:var(--blue-bright)">+${unit.bonusBlock} block</span>`);
+    if (unit.bonusHeal) bonuses.push(`<span style="color:var(--green-bright)">+${unit.bonusHeal} heal</span>`);
+    if (unit.bonusPoison) bonuses.push(`<span style="color:#8a4">+${unit.bonusPoison} poison</span>`);
+    const bonusHtml = bonuses.length > 0
+      ? `<div class="profile-bonuses"><span class="profile-label">Training:</span> ${bonuses.join(' ')}</div>`
+      : '';
+
+    // Equipment totals
+    const equipTotals = this._buildEquipTotals(unit);
+
+    // Equipment list
+    const equipHtml = ['weapon', 'armor', 'trinket'].map(slot => {
+      const items = unit.equipment[slot].filter(Boolean).map(id => {
+        const item = getItemData(id);
+        if (!item) return '';
+        return `<div class="profile-item rarity-${item.rarity}"><span class="profile-item-name">${item.name}${item.level > 1 ? ` Lv${item.level}` : ''}</span> <span class="profile-item-stats">${formatItemStats(item.stats)}</span>${item.special ? `<div class="profile-item-special">${item.special}</div>` : ''}</div>`;
+      }).filter(Boolean).join('');
+      return items || '';
+    }).join('');
+
+    // Skills
+    const skillsHtml = unit.skills.map(s =>
+      `<div class="profile-skill"><span class="profile-skill-name">${s.name}</span> <span class="profile-skill-cost">[${s.cost.label}]</span>${s.cooldown ? ` <span class="profile-skill-cd">CD:${s.cooldown}</span>` : ''}<div class="profile-skill-desc">${s.description}</div></div>`
+    ).join('');
+
+    // Build overlay
+    const hpPct = Math.round((unit.hp / unit.maxHp) * 100);
+    const hpColor = unit.downed ? 'var(--text-dim)' : hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
+
+    // Remove existing profile
+    const existing = document.getElementById('character-profile');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'character-profile';
+    overlay.innerHTML = `
+      <div class="profile-backdrop"></div>
+      <div class="profile-panel">
+        <div class="profile-header">
+          <span class="profile-name" style="color:var(--class-${tag})">${unit.title} ${unit.name}</span>
+          <span class="profile-hp" style="color:${hpColor}">${unit.downed ? 'DOWNED' : `${unit.hp}/${unit.maxHp} HP`}</span>
+          <span class="profile-class-desc">${classData.description}</span>
+        </div>
+        ${passiveHtml}
+        <div class="profile-equip-totals"><span class="profile-label">Equipment:</span> ${equipTotals}</div>
+        ${bonusHtml}
+        <div class="profile-section-title">Items</div>
+        <div class="profile-items">${equipHtml || '<span class="profile-none">No equipment</span>'}</div>
+        <div class="profile-section-title">Skills (${unit.skills.length})</div>
+        <div class="profile-skills">${skillsHtml}</div>
+        <button class="btn-secondary profile-close">Close</button>
+      </div>
+    `;
+
+    document.getElementById('map-screen').appendChild(overlay);
+    overlay.querySelector('.profile-backdrop').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.profile-close').addEventListener('click', () => overlay.remove());
   }
 
   renderMapMorale() {
@@ -1429,6 +1561,26 @@ class GameUI {
     const band = getMoraleBand(this.engine.morale);
     label.textContent = `${band.label} (${this.engine.morale})`;
     label.style.color = band.color;
+
+    // Bind morale tooltip on map label
+    if (!label._moraleTooltipBound) {
+      label._moraleTooltipBound = true;
+      const showTip = () => {
+        let effects = '';
+        const m = this.engine.morale;
+        if (m >= 85) effects = 'Inspired: +2 damage and +2 healing to all actions.';
+        else if (m >= 70) effects = 'Confident: +1 damage and +1 healing to all actions.';
+        else if (m >= 55) effects = 'Steady: No modifiers.';
+        else if (m >= 40) effects = 'Shaken: No major modifiers.';
+        else if (m >= 30) effects = 'Distressed: -1 damage and -1 healing to all actions.';
+        else if (m >= 15) effects = 'Wavering: -1 damage and -1 healing to all actions.';
+        else effects = 'Broken: -2 damage and -2 healing to all actions.';
+        label.title = effects;
+      };
+      label.addEventListener('mouseenter', showTip);
+      label.addEventListener('touchstart', showTip, { passive: true });
+      label.style.cursor = 'help';
+    }
 
     // Update mood class on #game for map/event/summary screens too
     this.updateMoodClass();
@@ -1560,23 +1712,86 @@ class GameUI {
       return false;
     };
 
-    // Layer 1: Ground patches (large, very subtle, blended)
-    const patchCount = 6 + Math.floor(tRand(800) * 4);
+    // Isometric helper: squash Y and slight skew for top-down perspective
+    const isoTransform = (ctx, x, y) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, 0.6);
+      ctx.translate(-x, -y);
+    };
+
+    // Layer 1: Ground patches — irregular organic blobs using bezier curves
+    const patchCount = 12 + Math.floor(tRand(800) * 6);
+    const patchColors = {
+      'forest': '#2a5a20', 'forest-dark': '#1a4a18', 'warcamp': '#4a3820',
+      'bog': '#1a4a3a', 'ancient': '#3a5a18', 'blood': '#4a1818',
+      'haunted': '#2a2a40', 'drowned': '#1a3a4a', 'heart': '#5a2a10', 'threshold': '#3a1a4a',
+    };
     for (let i = 0; i < patchCount; i++) {
       const px = tX(i * 7 + 100);
       const py = tY(i * 7 + 101);
-      const pr = 30 + tRand(i * 7 + 102) * 50;
-      ctx.globalAlpha = 0.06 + tRand(i * 7 + 103) * 0.06;
-      const patchColors = {
-        'forest': '#2a5a20', 'forest-dark': '#1a4a18', 'warcamp': '#4a3820',
-        'bog': '#1a4a3a', 'ancient': '#3a5a18', 'blood': '#4a1818',
-        'haunted': '#2a2a40', 'drowned': '#1a3a4a', 'heart': '#5a2a10', 'threshold': '#3a1a4a',
-      };
-      const grad = ctx.createRadialGradient(px, py, 0, px, py, pr);
-      grad.addColorStop(0, patchColors[marchTheme] || '#2a3a20');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.fillRect(px - pr, py - pr, pr * 2, pr * 2);
+      const pr = 25 + tRand(i * 7 + 102) * 55;
+      ctx.globalAlpha = 0.05 + tRand(i * 7 + 103) * 0.07;
+      ctx.fillStyle = patchColors[marchTheme] || '#2a3a20';
+      // Draw organic blob using bezier curves (no sharp angles)
+      ctx.beginPath();
+      const points = 6 + Math.floor(tRand(i * 7 + 110) * 3);
+      for (let p = 0; p <= points; p++) {
+        const angle = (p / points) * Math.PI * 2;
+        const wobble = 0.7 + tRand(i * 13 + p * 7) * 0.6;
+        const bx = px + Math.cos(angle) * pr * wobble;
+        const by = py + Math.sin(angle) * pr * wobble;
+        if (p === 0) { ctx.moveTo(bx, by); }
+        else {
+          const prevAngle = ((p - 0.5) / points) * Math.PI * 2;
+          const cpWobble = 0.7 + tRand(i * 17 + p * 11) * 0.6;
+          const cpx = px + Math.cos(prevAngle) * pr * cpWobble * 1.1;
+          const cpy = py + Math.sin(prevAngle) * pr * cpWobble * 1.1;
+          ctx.quadraticCurveTo(cpx, cpy, bx, by);
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Layer 1b: Tiny scatter details (grass tufts, pebbles, leaf litter)
+    const scatterCount = 25 + Math.floor(tRand(850) * 15);
+    const scatterColors = {
+      'forest': '#3a6a2a', 'forest-dark': '#2a5a1a', 'warcamp': '#5a4a30',
+      'bog': '#2a5a3a', 'ancient': '#4a6a20', 'blood': '#5a2020',
+      'haunted': '#3a3a50', 'drowned': '#2a4a5a', 'heart': '#6a3a18', 'threshold': '#4a2a5a',
+    };
+    for (let i = 0; i < scatterCount; i++) {
+      const sx = tX(i * 11 + 500);
+      const sy = tY(i * 11 + 501);
+      if (nearPath(sx, sy, 15)) continue;
+      ctx.globalAlpha = 0.08 + tRand(i * 11 + 502) * 0.08;
+      ctx.fillStyle = scatterColors[marchTheme] || '#3a5a20';
+      const kind = tRand(i * 11 + 503);
+      if (kind < 0.4) {
+        // Grass tuft
+        ctx.strokeStyle = scatterColors[marchTheme] || '#3a5a20';
+        ctx.lineWidth = 1;
+        for (let g = 0; g < 3; g++) {
+          const gx = sx + (tRand(i * 11 + g * 3 + 510) - 0.5) * 6;
+          ctx.beginPath();
+          ctx.moveTo(gx, sy);
+          ctx.quadraticCurveTo(gx + (tRand(i * 11 + g * 3 + 511) - 0.5) * 4, sy - 4 - tRand(i * 11 + g * 3 + 512) * 4, gx + (tRand(i * 11 + g * 3 + 513) - 0.5) * 3, sy - 6 - tRand(i * 11 + g * 3 + 514) * 5);
+          ctx.stroke();
+        }
+      } else if (kind < 0.7) {
+        // Pebble cluster
+        for (let p = 0; p < 2; p++) {
+          ctx.beginPath();
+          ctx.ellipse(sx + (tRand(i * 11 + p * 5 + 520) - 0.5) * 5, sy + (tRand(i * 11 + p * 5 + 521) - 0.5) * 3, 1.5 + tRand(i * 11 + p * 5 + 522) * 1.5, 1 + tRand(i * 11 + p * 5 + 523) * 1, tRand(i * 11 + p * 5 + 524) * Math.PI, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        // Leaf / debris spot
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, 2 + tRand(i * 11 + 530) * 3, 1.5 + tRand(i * 11 + 531) * 2, tRand(i * 11 + 532) * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Layer 2: Rivers/streams (for bog, drowned, ancient, heart)
@@ -1603,8 +1818,8 @@ class GameUI {
       }
     }
 
-    // Layer 3: Detail decorations — higher density, avoid paths
-    const decoCount = 35 + Math.floor(tRand(999) * 15);
+    // Layer 3: Detail decorations — high density, avoid paths
+    const decoCount = 55 + Math.floor(tRand(999) * 24);
     for (let i = 0; i < decoCount; i++) {
       const tx = tX(i * 3);
       const ty = tY(i * 3 + 1);
@@ -1618,71 +1833,174 @@ class GameUI {
       switch (marchTheme) {
         case 'forest':
         case 'forest-dark': {
-          // Multi-layered pine tree
           const dark = marchTheme === 'forest-dark';
-          ctx.fillStyle = dark ? '#2a6a2a' : '#3a8a3a';
-          for (let layer = 0; layer < 3; layer++) {
-            const lw = size * (1 - layer * 0.25);
-            const ly = ty - size * (0.6 + layer * 0.6);
+          const decoType = tRand(i * 19);
+          if (dark && decoType > 0.55 && decoType <= 0.78) {
+            // Forest-dark: mossy rocks (isometric)
+            isoTransform(ctx, tx, ty);
+            const rockCount = 1 + Math.floor(tRand(i * 31) * 2);
+            for (let r = 0; r < rockCount; r++) {
+              const rx = tx + (tRand(i * 33 + r) - 0.5) * size * 1.2;
+              const ry = ty + (tRand(i * 37 + r) - 0.5) * size * 0.5;
+              const rw = size * (0.4 + tRand(i * 39 + r) * 0.5);
+              const rh = rw * (0.5 + tRand(i * 41 + r) * 0.3);
+              ctx.fillStyle = '#4a4a3a';
+              ctx.beginPath();
+              ctx.ellipse(rx, ry, rw, rh, tRand(i * 43 + r) * 0.5, 0, Math.PI * 2);
+              ctx.fill();
+              // Moss patches on top
+              ctx.fillStyle = '#3a6a2a';
+              ctx.globalAlpha *= 0.7;
+              ctx.beginPath();
+              ctx.ellipse(rx - rw * 0.2, ry - rh * 0.3, rw * 0.5, rh * 0.35, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalAlpha /= 0.7;
+            }
+            ctx.restore();
+          } else if (dark && decoType > 0.78) {
+            // Forest-dark: fallen log with mushrooms (isometric)
+            isoTransform(ctx, tx, ty);
+            ctx.fillStyle = '#3a2a15';
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.rotate((tRand(i * 23) - 0.5) * 0.6);
             ctx.beginPath();
-            ctx.moveTo(tx, ly - lw * 0.8);
-            ctx.lineTo(tx - lw, ly + lw * 0.3);
-            ctx.lineTo(tx + lw, ly + lw * 0.3);
+            ctx.ellipse(0, 0, size * 1.2, size * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#2a1a0a';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath(); ctx.moveTo(-size * 0.5, -size * 0.1); ctx.lineTo(-size * 0.5, size * 0.1); ctx.stroke();
+            // Mushrooms
+            ctx.fillStyle = '#8a6a3a';
+            for (let m = 0; m < 2; m++) {
+              const mx = (tRand(i * 29 + m) - 0.5) * size * 1.2;
+              ctx.beginPath();
+              ctx.ellipse(mx, -size * 0.25, size * 0.2, size * 0.08, 0, Math.PI, 0);
+              ctx.fill();
+            }
+            ctx.restore();
+            ctx.restore(); // isoTransform
+          } else {
+            // Pine tree with gentle sway (isometric)
+            const time = typeof this._mapAnimTime === 'number' ? this._mapAnimTime : 0;
+            const swayAngle = Math.sin(time * 0.4 + i * 2.3) * 0.012;
+            isoTransform(ctx, tx, ty);
+            ctx.translate(tx, ty);
+            ctx.rotate(swayAngle);
+            ctx.translate(-tx, -ty);
+            // Shadow ellipse on ground
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.beginPath();
+            ctx.ellipse(tx + size * 0.3, ty + size * 0.3, size * 0.7, size * 0.25, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            // Canopy layers
+            ctx.fillStyle = dark ? '#2a6a2a' : '#3a8a3a';
+            for (let layer = 0; layer < 3; layer++) {
+              const lw = size * (1 - layer * 0.25);
+              const ly = ty - size * (0.6 + layer * 0.6);
+              ctx.beginPath();
+              ctx.moveTo(tx, ly - lw * 0.8);
+              ctx.quadraticCurveTo(tx - lw * 0.6, ly - lw * 0.2, tx - lw, ly + lw * 0.3);
+              ctx.quadraticCurveTo(tx, ly + lw * 0.15, tx + lw, ly + lw * 0.3);
+              ctx.quadraticCurveTo(tx + lw * 0.6, ly - lw * 0.2, tx, ly - lw * 0.8);
+              ctx.closePath();
+              ctx.fill();
+            }
+            // Trunk
+            ctx.fillStyle = '#5a3a20';
+            ctx.beginPath();
+            ctx.moveTo(tx - size * 0.14, ty + size * 0.5);
+            ctx.quadraticCurveTo(tx - size * 0.12, ty, tx - size * 0.08, ty - size * 0.3);
+            ctx.lineTo(tx + size * 0.08, ty - size * 0.3);
+            ctx.quadraticCurveTo(tx + size * 0.12, ty, tx + size * 0.14, ty + size * 0.5);
             ctx.closePath();
             ctx.fill();
+            ctx.restore(); // isoTransform + sway
           }
-          ctx.fillStyle = '#5a3a20';
-          ctx.fillRect(tx - size * 0.12, ty - size * 0.3, size * 0.24, size * 0.5);
           break;
         }
         case 'warcamp': {
+          isoTransform(ctx, tx, ty);
           if (tRand(i * 7) > 0.5) {
-            // Tent with detail
+            // Tent (isometric — wider base, lower peak)
             ctx.fillStyle = '#7a5535';
             ctx.beginPath();
-            ctx.moveTo(tx, ty - size * 1.5);
-            ctx.lineTo(tx - size, ty + size * 0.3);
+            ctx.moveTo(tx, ty - size * 1.2);
+            ctx.quadraticCurveTo(tx - size * 0.5, ty - size * 0.3, tx - size, ty + size * 0.3);
             ctx.lineTo(tx + size, ty + size * 0.3);
+            ctx.quadraticCurveTo(tx + size * 0.5, ty - size * 0.3, tx, ty - size * 1.2);
             ctx.closePath();
             ctx.fill();
             ctx.strokeStyle = '#5a3a20';
             ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(tx, ty - size * 1.5); ctx.lineTo(tx, ty + size * 0.3); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(tx, ty - size * 1.2); ctx.lineTo(tx, ty + size * 0.3); ctx.stroke();
           } else {
-            // Campfire embers
+            // Campfire ring (isometric ellipse)
+            ctx.fillStyle = '#555';
+            ctx.beginPath();
+            ctx.ellipse(tx, ty, size * 0.5, size * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
             ctx.fillStyle = '#aa6030';
             ctx.beginPath();
-            ctx.arc(tx, ty, size * 0.3, 0, Math.PI * 2);
+            ctx.ellipse(tx, ty, size * 0.25, size * 0.15, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#cc8840';
             ctx.globalAlpha *= 0.6;
             ctx.beginPath();
-            ctx.arc(tx, ty, size * 0.15, 0, Math.PI * 2);
+            ctx.ellipse(tx, ty - size * 0.05, size * 0.12, size * 0.07, 0, 0, Math.PI * 2);
             ctx.fill();
           }
+          ctx.restore();
           break;
         }
         case 'bog': {
-          // Reed clusters
+          // Reed clusters (isometric, with sway)
+          const time3 = typeof this._mapAnimTime === 'number' ? this._mapAnimTime : 0;
+          isoTransform(ctx, tx, ty);
           ctx.strokeStyle = '#4a8a4a';
           ctx.lineWidth = 1.5;
           for (let r = 0; r < 4; r++) {
             const rx = tx + (tRand(i * 13 + r) - 0.5) * size * 1.5;
             const lean = (tRand(i * 17 + r) - 0.5) * 4;
+            const sway = Math.sin(time3 * 0.5 + i * 1.7 + r) * 2;
             ctx.beginPath();
             ctx.moveTo(rx, ty + size * 0.2);
-            ctx.quadraticCurveTo(rx + lean, ty - size * 0.5, rx + lean * 1.5, ty - size * 1.2);
+            ctx.quadraticCurveTo(rx + lean + sway, ty - size * 0.5, rx + lean * 1.5 + sway * 1.5, ty - size * 1.2);
             ctx.stroke();
           }
+          // Mud puddle at base
+          ctx.fillStyle = '#2a3a2a';
+          ctx.globalAlpha *= 0.4;
+          ctx.beginPath();
+          ctx.ellipse(tx, ty + size * 0.2, size * 0.8, size * 0.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
           break;
         }
         case 'ancient': {
-          // Gnarled tree with roots
+          // Gnarled tree with roots (isometric, with sway)
+          const time4 = typeof this._mapAnimTime === 'number' ? this._mapAnimTime : 0;
+          const sway4 = Math.sin(time4 * 0.3 + i * 3.1) * 0.01;
+          isoTransform(ctx, tx, ty);
+          ctx.translate(tx, ty); ctx.rotate(sway4); ctx.translate(-tx, -ty);
+          // Shadow
+          ctx.fillStyle = 'rgba(0,0,0,0.07)';
+          ctx.beginPath();
+          ctx.ellipse(tx + size * 0.4, ty + size * 0.4, size * 0.9, size * 0.3, 0.2, 0, Math.PI * 2);
+          ctx.fill();
+          // Trunk
           ctx.fillStyle = '#4a3a18';
-          ctx.fillRect(tx - size * 0.2, ty - size * 0.8, size * 0.4, size * 1.2);
+          ctx.beginPath();
+          ctx.moveTo(tx - size * 0.25, ty + size * 0.4);
+          ctx.quadraticCurveTo(tx - size * 0.2, ty - size * 0.3, tx - size * 0.1, ty - size * 0.8);
+          ctx.lineTo(tx + size * 0.1, ty - size * 0.8);
+          ctx.quadraticCurveTo(tx + size * 0.2, ty - size * 0.3, tx + size * 0.25, ty + size * 0.4);
+          ctx.closePath();
+          ctx.fill();
+          // Canopy
           ctx.fillStyle = '#4a7a28';
           ctx.beginPath();
-          ctx.arc(tx, ty - size, size * 0.9, 0, Math.PI * 2);
+          ctx.ellipse(tx, ty - size, size * 0.9, size * 0.7, 0, 0, Math.PI * 2);
           ctx.fill();
           // Roots
           ctx.strokeStyle = '#3a2a10';
@@ -1693,17 +2011,19 @@ class GameUI {
             ctx.quadraticCurveTo(tx + (tRand(i * 23 + r) - 0.5) * size * 2, ty + size * 0.8, tx + (tRand(i * 29 + r) - 0.5) * size * 3, ty + size);
             ctx.stroke();
           }
+          ctx.restore();
           break;
         }
         case 'blood': {
-          // Standing stone with rune marks
+          // Standing stone with rune marks (isometric, no sway)
+          isoTransform(ctx, tx, ty);
           ctx.fillStyle = '#4a2828';
           const stoneW = size * 0.5, stoneH = size * 1.6;
           ctx.beginPath();
           ctx.moveTo(tx - stoneW, ty + stoneH * 0.3);
-          ctx.lineTo(tx - stoneW * 0.8, ty - stoneH * 0.5);
-          ctx.quadraticCurveTo(tx, ty - stoneH * 0.7, tx + stoneW * 0.8, ty - stoneH * 0.5);
-          ctx.lineTo(tx + stoneW, ty + stoneH * 0.3);
+          ctx.quadraticCurveTo(tx - stoneW * 0.9, ty - stoneH * 0.3, tx - stoneW * 0.6, ty - stoneH * 0.55);
+          ctx.quadraticCurveTo(tx, ty - stoneH * 0.7, tx + stoneW * 0.6, ty - stoneH * 0.55);
+          ctx.quadraticCurveTo(tx + stoneW * 0.9, ty - stoneH * 0.3, tx + stoneW, ty + stoneH * 0.3);
           ctx.closePath();
           ctx.fill();
           // Rune scratch
@@ -1715,98 +2035,177 @@ class GameUI {
           ctx.moveTo(tx + size * 0.15, ty - size * 0.4);
           ctx.lineTo(tx - size * 0.15, ty + size * 0.1);
           ctx.stroke();
+          ctx.restore();
           break;
         }
         case 'haunted': {
+          isoTransform(ctx, tx, ty);
           if (tRand(i * 7) > 0.4) {
-            // Gravestone with cross
+            // Gravestone (isometric, no sway)
             ctx.fillStyle = '#454560';
-            ctx.fillRect(tx - size * 0.3, ty - size * 0.8, size * 0.6, size * 1.1);
             ctx.beginPath();
-            ctx.arc(tx, ty - size * 0.8, size * 0.3, Math.PI, 0);
+            ctx.moveTo(tx - size * 0.3, ty + size * 0.3);
+            ctx.quadraticCurveTo(tx - size * 0.3, ty - size * 0.6, tx, ty - size * 0.9);
+            ctx.quadraticCurveTo(tx + size * 0.3, ty - size * 0.6, tx + size * 0.3, ty + size * 0.3);
+            ctx.closePath();
             ctx.fill();
           } else {
-            // Wisp with trail
+            // Wisp (floating, with gentle drift)
+            const time5 = typeof this._mapAnimTime === 'number' ? this._mapAnimTime : 0;
+            const drift = Math.sin(time5 * 0.6 + i * 2.1) * 3;
             ctx.fillStyle = '#5050bb';
             ctx.globalAlpha *= 0.5;
             ctx.beginPath();
-            ctx.arc(tx, ty, size * 0.3, 0, Math.PI * 2);
+            ctx.arc(tx + drift, ty, size * 0.3, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#4040aa';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(tx, ty);
-            ctx.quadraticCurveTo(tx + size * 0.5, ty + size * 0.3, tx + size, ty - size * 0.2);
+            ctx.moveTo(tx + drift, ty);
+            ctx.quadraticCurveTo(tx + size * 0.5 + drift, ty + size * 0.3, tx + size + drift * 0.5, ty - size * 0.2);
             ctx.stroke();
           }
+          ctx.restore();
           break;
         }
         case 'drowned': {
+          isoTransform(ctx, tx, ty);
           if (tRand(i * 23) > 0.5) {
-            // Broken column
+            // Broken column (isometric, no sway)
             ctx.fillStyle = '#3a5a68';
-            ctx.fillRect(tx - size * 0.25, ty - size * 1.5, size * 0.5, size * 1.5);
-            // Capital
-            ctx.fillRect(tx - size * 0.4, ty - size * 1.7, size * 0.8, size * 0.25);
-            // Cracks
-            ctx.strokeStyle = '#2a4a58';
-            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(tx - size * 0.1, ty - size * 0.3);
-            ctx.lineTo(tx + size * 0.05, ty - size * 0.8);
-            ctx.stroke();
+            ctx.moveTo(tx - size * 0.25, ty);
+            ctx.quadraticCurveTo(tx - size * 0.28, ty - size * 0.8, tx - size * 0.2, ty - size * 1.4);
+            ctx.lineTo(tx + size * 0.2, ty - size * 1.4);
+            ctx.quadraticCurveTo(tx + size * 0.28, ty - size * 0.8, tx + size * 0.25, ty);
+            ctx.closePath();
+            ctx.fill();
+            // Capital
+            ctx.beginPath();
+            ctx.ellipse(tx, ty - size * 1.4, size * 0.4, size * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
           } else {
-            // Algae patch
+            // Algae patch (isometric ellipse)
             ctx.fillStyle = '#2a6a5a';
             ctx.globalAlpha *= 0.6;
             ctx.beginPath();
             ctx.ellipse(tx, ty, size * 1.2, size * 0.4, tRand(i * 31) * 0.5, 0, Math.PI * 2);
             ctx.fill();
           }
+          ctx.restore();
           break;
         }
         case 'heart': {
-          // Fungal cluster
+          // Fungal cluster (isometric, with gentle pulse via alpha)
+          isoTransform(ctx, tx, ty);
           ctx.fillStyle = '#8a4020';
           for (let f = 0; f < 3; f++) {
             const fx = tx + (tRand(i * 29 + f) - 0.5) * size;
             const fy = ty + (tRand(i * 31 + f) - 0.5) * size * 0.5;
             const fs = size * (0.3 + tRand(i * 37 + f) * 0.4);
             ctx.beginPath();
-            ctx.ellipse(fx, fy, fs, fs * 0.6, 0, 0, Math.PI * 2);
+            ctx.ellipse(fx, fy, fs, fs * 0.5, 0, 0, Math.PI * 2);
             ctx.fill();
           }
-          // Tendrils
+          // Tendrils (with sway)
+          const time6 = typeof this._mapAnimTime === 'number' ? this._mapAnimTime : 0;
+          const tendrilSway = Math.sin(time6 * 0.4 + i * 1.9) * 3;
           ctx.strokeStyle = '#6a3018';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(tx, ty + size * 0.4);
-          ctx.quadraticCurveTo(tx + size, ty + size, tx + size * 1.5, ty + size * 0.3);
+          ctx.quadraticCurveTo(tx + size + tendrilSway, ty + size, tx + size * 1.5 + tendrilSway, ty + size * 0.3);
           ctx.stroke();
+          ctx.restore();
           break;
         }
         case 'threshold': {
-          // Spectral rift
+          // Spectral rift (isometric, with shimmer)
+          isoTransform(ctx, tx, ty);
+          const time7 = typeof this._mapAnimTime === 'number' ? this._mapAnimTime : 0;
           ctx.strokeStyle = '#6a3a8a';
           ctx.lineWidth = 2;
+          const riftShift = Math.sin(time7 * 0.5 + i * 2.7) * 2;
           ctx.beginPath();
           ctx.moveTo(tx - size * 0.8, ty);
-          ctx.bezierCurveTo(tx - size * 0.3, ty - size, tx + size * 0.3, ty + size, tx + size * 0.8, ty);
+          ctx.bezierCurveTo(tx - size * 0.3, ty - size + riftShift, tx + size * 0.3, ty + size - riftShift, tx + size * 0.8, ty);
           ctx.stroke();
-          // Void particles
+          // Void particles (drifting)
           ctx.fillStyle = '#5a2a7a';
           for (let p = 0; p < 3; p++) {
-            const px2 = tx + (tRand(i * 41 + p) - 0.5) * size * 1.5;
+            const drift2 = Math.sin(time7 * 0.3 + p * 1.5 + i) * 2;
+            const px2 = tx + (tRand(i * 41 + p) - 0.5) * size * 1.5 + drift2;
             const py2 = ty + (tRand(i * 43 + p) - 0.5) * size;
             ctx.beginPath();
             ctx.arc(px2, py2, size * 0.12, 0, Math.PI * 2);
             ctx.fill();
           }
+          ctx.restore();
           break;
         }
       }
     }
     ctx.globalAlpha = 1;
+
+    // Irregular vignette — soft darkening at edges with organic variation
+    const vignetteMargin = 40;
+    // Left edge
+    for (let v = 0; v < 8; v++) {
+      const vy = tRand(v * 71 + 900) * totalHeight;
+      const vw = vignetteMargin + tRand(v * 73 + 901) * 30;
+      const vh = 80 + tRand(v * 77 + 902) * 120;
+      const grad = ctx.createRadialGradient(0, vy, 0, 0, vy, vw + vh * 0.3);
+      grad.addColorStop(0, 'rgba(0,0,0,0.35)');
+      grad.addColorStop(0.6, 'rgba(0,0,0,0.15)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, vy - vh, vw + vh * 0.3, vh * 2);
+    }
+    // Right edge
+    for (let v = 0; v < 8; v++) {
+      const vy = tRand(v * 79 + 910) * totalHeight;
+      const vw = vignetteMargin + tRand(v * 83 + 911) * 30;
+      const vh = 80 + tRand(v * 87 + 912) * 120;
+      const grad = ctx.createRadialGradient(wrapperWidth, vy, 0, wrapperWidth, vy, vw + vh * 0.3);
+      grad.addColorStop(0, 'rgba(0,0,0,0.35)');
+      grad.addColorStop(0.6, 'rgba(0,0,0,0.15)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(wrapperWidth - vw - vh * 0.3, vy - vh, vw + vh * 0.3, vh * 2);
+    }
+    // Top edge
+    for (let v = 0; v < 5; v++) {
+      const vx = tRand(v * 91 + 920) * wrapperWidth;
+      const vr = 60 + tRand(v * 97 + 921) * 80;
+      const grad = ctx.createRadialGradient(vx, 0, 0, vx, 0, vr);
+      grad.addColorStop(0, 'rgba(0,0,0,0.3)');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.1)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(vx - vr, -vr * 0.3, vr * 2, vr * 1.3);
+    }
+    // Bottom edge
+    for (let v = 0; v < 5; v++) {
+      const vx = tRand(v * 101 + 930) * wrapperWidth;
+      const vr = 60 + tRand(v * 103 + 931) * 80;
+      const grad = ctx.createRadialGradient(vx, totalHeight, 0, vx, totalHeight, vr);
+      grad.addColorStop(0, 'rgba(0,0,0,0.3)');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.1)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(vx - vr, totalHeight - vr, vr * 2, vr * 1.3);
+    }
+    // Corner darkening (stronger)
+    const corners = [[0, 0], [wrapperWidth, 0], [0, totalHeight], [wrapperWidth, totalHeight]];
+    corners.forEach((c, ci) => {
+      const cr = 80 + tRand(ci * 113 + 940) * 60;
+      const grad = ctx.createRadialGradient(c[0], c[1], 0, c[0], c[1], cr);
+      grad.addColorStop(0, 'rgba(0,0,0,0.45)');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.15)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(c[0] - cr, c[1] - cr, cr * 2, cr * 2);
+    });
 
     // Collect all edges with positions
     const edges = [];
@@ -3092,7 +3491,11 @@ class GameUI {
     if (!item) { this._skipCurrentLoot(); return; }
 
     const eligible = this.engine.party.filter(u => canEquipItem(u, item));
-    if (!this._lootUnitIdx || this._lootUnitIdx >= eligible.length) this._lootUnitIdx = 0;
+    if (!this._lootUnitIdx || this._lootUnitIdx >= eligible.length) {
+      // Default to first unit with a free slot for this item type
+      const freeIdx = eligible.findIndex(u => u.equipment[item.slot].some(s => s === null));
+      this._lootUnitIdx = freeIdx >= 0 ? freeIdx : 0;
+    }
 
     const remaining = this.pendingLoot.length - this._currentLootIdx;
     lootText.textContent = remaining > 1 ? `${remaining} items found` : 'Item found';
@@ -3154,8 +3557,49 @@ class GameUI {
       </div>`;
     }).join('');
 
-    // Skills summary (compact)
-    const skillList = unit.skills.map(s => `<span class="loot-skill-pip">${s.name}</span>`).join(' ');
+    // Passive ability
+    const passiveHtml = unit.passive && unit.passive.name
+      ? `<div class="loot-passive"><span class="loot-passive-label">Passive:</span> <span class="loot-passive-name">${unit.passive.name}</span> — ${unit.passive.description}</div>`
+      : '';
+
+    // Skills with descriptions — show how item stats affect them
+    const equipDmg = (unit.equipDamage || 0);
+    const equipHeal = (unit.equipHeal || 0);
+    const equipBlock = (unit.equipBlock || 0);
+    const equipPoison = (unit.equipPoison || 0);
+    const newDmg = equipDmg + (item.stats.damage || 0);
+    const newHeal = equipHeal + (item.stats.heal || 0);
+    const newBlock = equipBlock + (item.stats.block || 0);
+    const newPoison = equipPoison + (item.stats.poison || 0);
+    // If replacing, subtract the old item's stats
+    let diffDmg = item.stats.damage || 0;
+    let diffHeal = item.stats.heal || 0;
+    let diffBlock = item.stats.block || 0;
+    let diffPoison = item.stats.poison || 0;
+    if (this._replaceSlotIdx !== undefined) {
+      const oldEq = getItemData(slots[this._replaceSlotIdx]);
+      if (oldEq) {
+        diffDmg -= (oldEq.stats.damage || 0);
+        diffHeal -= (oldEq.stats.heal || 0);
+        diffBlock -= (oldEq.stats.block || 0);
+        diffPoison -= (oldEq.stats.poison || 0);
+      }
+    }
+    const statChanges = [];
+    if (diffDmg !== 0) statChanges.push(`<span style="color:${diffDmg > 0 ? 'var(--green-bright)' : 'var(--red-bright)'}">${diffDmg > 0 ? '+' : ''}${diffDmg} dmg</span>`);
+    if (diffHeal !== 0) statChanges.push(`<span style="color:${diffHeal > 0 ? 'var(--green-bright)' : 'var(--red-bright)'}">${diffHeal > 0 ? '+' : ''}${diffHeal} heal</span>`);
+    if (diffBlock !== 0) statChanges.push(`<span style="color:${diffBlock > 0 ? 'var(--green-bright)' : 'var(--red-bright)'}">${diffBlock > 0 ? '+' : ''}${diffBlock} block</span>`);
+    if (diffPoison !== 0) statChanges.push(`<span style="color:${diffPoison > 0 ? 'var(--green-bright)' : 'var(--red-bright)'}">${diffPoison > 0 ? '+' : ''}${diffPoison} poison</span>`);
+    const statChangeHtml = statChanges.length > 0
+      ? `<div class="loot-stat-preview">${statChanges.join(' ')}</div>`
+      : '';
+
+    const skillList = unit.skills.map(s => {
+      return `<div class="loot-skill-row">
+        <span class="loot-skill-name">${s.name}</span>
+        <span class="loot-skill-desc">${s.description}</span>
+      </div>`;
+    }).join('');
 
     // Other slots (not the one being replaced)
     const otherSlots = ['weapon', 'armor', 'trinket'].filter(s => s !== item.slot).map(slot => {
@@ -3177,10 +3621,14 @@ class GameUI {
           </div>
           ${nextArrow}
         </div>
+        <div class="loot-equip-totals">${this._buildEquipTotals(unit)}</div>
+        ${passiveHtml}
+        ${statChangeHtml}
         <div class="loot-unit-slot-title">${item.slot} slots (${slots.filter(Boolean).length}/${slots.length}):</div>
         <div class="loot-slot-list">${slotItems}</div>
         ${otherSlots ? `<div class="loot-other-slots">${otherSlots}</div>` : ''}
-        <div class="loot-unit-skills"><span class="loot-skills-label">Skills:</span> ${skillList}</div>
+        <div class="loot-unit-skills-title">Skills:</div>
+        <div class="loot-unit-skills">${skillList}</div>
       </div>
     `;
 
@@ -3240,6 +3688,16 @@ class GameUI {
     skipBtn.textContent = `Skip (+${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown)`;
     skipBtn.onclick = () => this._skipCurrentLoot();
     actionsEl.appendChild(skipBtn);
+  }
+
+  _buildEquipTotals(unit) {
+    const parts = [];
+    if (unit.equipDamage) parts.push(`<span class="equip-total-stat"><span class="equip-total-val">${unit.equipDamage}</span> dmg</span>`);
+    if (unit.equipHeal) parts.push(`<span class="equip-total-stat"><span class="equip-total-val">${unit.equipHeal}</span> heal</span>`);
+    if (unit.equipBlock) parts.push(`<span class="equip-total-stat"><span class="equip-total-val">${unit.equipBlock}</span> block</span>`);
+    if (unit.equipPoison) parts.push(`<span class="equip-total-stat"><span class="equip-total-val">${unit.equipPoison}</span> poison</span>`);
+    if (unit.equipExtraDice) parts.push(`<span class="equip-total-stat"><span class="equip-total-val">+${unit.equipExtraDice}</span> dice</span>`);
+    return parts.length > 0 ? parts.join(' ') : '<span style="color:var(--text-dim)">No bonuses</span>';
   }
 
   _buildStatDiff(oldStats, newStats) {
@@ -3445,21 +3903,31 @@ class GameUI {
     const unit = this.engine.party[unitIndex];
     const tags = CLASS_DATA[unit.classId].tags;
 
-    // Build stat options based on class tags
+    // Scaling stat amounts based on difficulty
+    const diff = window.game ? window.game.difficulty : 1;
+    const hpAmount = 3 + Math.floor(diff / 2);
+    const statAmount = 1 + Math.floor(diff / 4);
+
+    // Build stat options based on class tags and class identity
+    const cid = unit.classId;
     const options = [
-      { key: 'hp', label: '+3 Max HP', desc: 'Toughen up.', color: 'var(--red-bright)' },
+      { key: 'hp', label: `+${hpAmount} Max HP`, desc: 'Toughen up.', color: 'var(--red-bright)', amount: hpAmount },
     ];
-    if (tags.includes('melee') || tags.includes('ranged') || tags.includes('elite')) {
-      options.push({ key: 'damage', label: '+1 Damage', desc: 'Hit harder.', color: 'var(--red-bright)' });
+    // Damage: melee, ranged, elite, cornicen (7 damage skills), centurion (4 damage skills)
+    if (tags.includes('melee') || tags.includes('ranged') || tags.includes('elite') || cid === 'cornicen' || cid === 'centurion') {
+      options.push({ key: 'damage', label: `+${statAmount} Damage`, desc: 'Hit harder.', color: 'var(--red-bright)', amount: statAmount });
     }
-    if (tags.includes('command') || tags.includes('melee')) {
-      options.push({ key: 'block', label: '+1 Block', desc: 'Tougher defense.', color: 'var(--blue-bright)' });
+    // Block: command, melee, ballistarius (Brace Position, Burning Pitch)
+    if (tags.includes('command') || tags.includes('melee') || cid === 'ballistarius') {
+      options.push({ key: 'block', label: `+${statAmount} Block`, desc: 'Tougher defense.', color: 'var(--blue-bright)', amount: statAmount });
     }
-    if (tags.includes('support')) {
-      options.push({ key: 'heal', label: '+1 Heal', desc: 'Stronger mending.', color: 'var(--green-bright)' });
+    // Heal: support, signifer (Eagle's Blessing, revive)
+    if (tags.includes('support') || cid === 'signifer') {
+      options.push({ key: 'heal', label: `+${statAmount} Heal`, desc: 'Stronger mending.', color: 'var(--green-bright)', amount: statAmount });
     }
-    if (tags.includes('support') && (unit.classId === 'medicus' || unit.classId === 'wulfswestr' || unit.classId === 'arcania')) {
-      options.push({ key: 'poison', label: '+1 Poison', desc: 'Deadlier toxins.', color: '#8a4' });
+    // Poison: medicus, wulfswestr, arcania, sagittarius (3 poison skills)
+    if (cid === 'medicus' || cid === 'wulfswestr' || cid === 'arcania' || cid === 'sagittarius') {
+      options.push({ key: 'poison', label: `+${statAmount} Poison`, desc: 'Deadlier toxins.', color: '#8a4', amount: statAmount });
     }
 
     document.getElementById('levelup-desc').textContent = `${unit.name} — choose a training bonus:`;
@@ -3470,25 +3938,26 @@ class GameUI {
       btn.className = 'btn-primary levelup-unit-btn';
       btn.innerHTML = `<span style="color:${opt.color}">${opt.label}</span> <span style="font-size:0.75rem;opacity:0.7">${opt.desc}</span>`;
       btn.addEventListener('click', () => {
+        const amt = opt.amount;
         if (opt.key === 'hp') {
-          unit.maxHp += 3; unit.baseMaxHp += 3; unit.hp += 3;
-          this.engine.addLog(`${unit.name} toughens up! (+3 max HP)`);
+          unit.maxHp += amt; unit.baseMaxHp += amt; unit.hp += amt;
+          this.engine.addLog(`${unit.name} toughens up! (+${amt} max HP)`);
         } else if (opt.key === 'damage') {
-          unit.bonusDamage = (unit.bonusDamage || 0) + 1;
+          unit.bonusDamage = (unit.bonusDamage || 0) + amt;
           this.engine.computeEquipmentStats(unit);
-          this.engine.addLog(`${unit.name} trains offense! (+1 Damage)`);
+          this.engine.addLog(`${unit.name} trains offense! (+${amt} Damage)`);
         } else if (opt.key === 'block') {
-          unit.bonusBlock = (unit.bonusBlock || 0) + 1;
+          unit.bonusBlock = (unit.bonusBlock || 0) + amt;
           this.engine.computeEquipmentStats(unit);
-          this.engine.addLog(`${unit.name} trains defense! (+1 Block)`);
+          this.engine.addLog(`${unit.name} trains defense! (+${amt} Block)`);
         } else if (opt.key === 'heal') {
-          unit.bonusHeal = (unit.bonusHeal || 0) + 1;
+          unit.bonusHeal = (unit.bonusHeal || 0) + amt;
           this.engine.computeEquipmentStats(unit);
-          this.engine.addLog(`${unit.name} studies medicine! (+1 Heal)`);
+          this.engine.addLog(`${unit.name} studies medicine! (+${amt} Heal)`);
         } else if (opt.key === 'poison') {
-          unit.bonusPoison = (unit.bonusPoison || 0) + 1;
+          unit.bonusPoison = (unit.bonusPoison || 0) + amt;
           this.engine.computeEquipmentStats(unit);
-          this.engine.addLog(`${unit.name} brews deadlier toxins! (+1 Poison)`);
+          this.engine.addLog(`${unit.name} brews deadlier toxins! (+${amt} Poison)`);
         }
         this.engine.pendingSkillPicks--;
         if (this.engine.pendingSkillPicks > 0) {

@@ -2429,22 +2429,115 @@ html, body {
 .loot-other-item.rarity-rare { color: var(--gold); }
 .loot-other-item.rarity-epic { color: #b040d0; }
 
-.loot-unit-skills {
+/* --- Character Profile (map screen) --- */
+#character-profile { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; align-items: center; justify-content: center; }
+.profile-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); }
+.profile-panel {
+  position: relative; z-index: 1; background: var(--bg-deep); border: 1px solid var(--border-highlight);
+  border-radius: 6px; padding: 14px 16px; max-width: 440px; width: 92%; max-height: 85vh; overflow-y: auto;
+}
+.profile-header { margin-bottom: 8px; }
+.profile-name { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 700; }
+.profile-hp { font-size: 0.7rem; margin-left: 8px; }
+.profile-class-desc { display: block; font-size: 0.6rem; color: var(--text-dim); margin-top: 2px; }
+.profile-passive { font-size: 0.6rem; color: var(--gold); padding: 4px 0; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+.profile-passive-name { font-weight: 600; }
+.profile-label { font-size: 0.5rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.profile-equip-totals { font-size: 0.6rem; color: var(--text-dim); padding: 3px 0; }
+.profile-bonuses { font-size: 0.6rem; padding: 3px 0; margin-bottom: 4px; }
+.profile-section-title { font-size: 0.55rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--border); padding-bottom: 2px; }
+.profile-items { display: flex; flex-direction: column; gap: 3px; }
+.profile-item { background: rgba(30,30,35,0.5); border-radius: 2px; padding: 3px 6px; }
+.profile-item.rarity-common { border-left: 2px solid var(--text-dim); }
+.profile-item.rarity-uncommon { border-left: 2px solid var(--blue-bright); }
+.profile-item.rarity-rare { border-left: 2px solid var(--gold); }
+.profile-item.rarity-epic { border-left: 2px solid #b040d0; }
+.profile-item-name { font-size: 0.65rem; font-weight: 600; color: var(--text-bright); }
+.profile-item-stats { font-size: 0.58rem; }
+.profile-item-special { font-size: 0.52rem; color: var(--green-bright); margin-top: 1px; }
+.profile-skills { display: flex; flex-direction: column; gap: 3px; }
+.profile-skill { background: rgba(30,30,35,0.5); border-radius: 2px; padding: 3px 6px; }
+.profile-skill-name { font-size: 0.65rem; font-weight: 600; color: var(--text-bright); }
+.profile-skill-cost { font-size: 0.55rem; color: var(--text-dim); }
+.profile-skill-cd { font-size: 0.5rem; color: var(--gold); }
+.profile-skill-desc { font-size: 0.55rem; color: var(--text-dim); margin-top: 1px; }
+.profile-close { margin-top: 10px; width: 100%; }
+.profile-none { font-size: 0.6rem; color: var(--text-dim); }
+
+.loot-equip-totals {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
   font-size: 0.6rem;
   color: var(--text-dim);
+  padding: 3px 0;
+  margin-bottom: 4px;
 }
 
-.loot-skills-label { color: var(--text-dim); }
+.equip-total-stat { white-space: nowrap; }
+.equip-total-val { color: var(--gold); font-weight: 600; }
 
-.loot-skill-pip {
-  display: inline-block;
-  background: rgba(40, 40, 50, 0.6);
-  border: 1px solid var(--border);
+.loot-passive {
+  font-size: 0.6rem;
+  color: var(--gold);
+  padding: 4px 0;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.loot-passive-label {
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+}
+
+.loot-passive-name {
+  font-weight: 600;
+}
+
+.loot-stat-preview {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 4px 0;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.loot-unit-skills-title {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 6px;
+  margin-bottom: 3px;
+}
+
+.loot-unit-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.loot-skill-row {
+  background: rgba(30, 30, 35, 0.5);
   border-radius: 2px;
-  padding: 1px 4px;
-  font-size: 0.52rem;
+  padding: 3px 6px;
+}
+
+.loot-skill-name {
+  font-size: 0.62rem;
+  font-weight: 600;
   color: var(--text-bright);
-  margin: 1px;
+}
+
+.loot-skill-desc {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  margin-left: 4px;
 }
 
 .loot-hint {

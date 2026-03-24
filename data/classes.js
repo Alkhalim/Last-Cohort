@@ -223,7 +223,7 @@ const RAW_CLASSES = {
         "id": "plague_flask", "name": "Plague Flask", "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to all others.",
+        "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to adjacent enemies.",
         "effects": { "poison": 4, "poisonSplash": 2 }
       },
       {
@@ -260,7 +260,7 @@ const RAW_CLASSES = {
         "id": "triage_strike", "name": "Triage Strike", "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_enemies",
         "ignoreRow": true,
-        "description": "Ranged. Deal 5 damage to the weakest enemy. Heal the most wounded ally for 5 HP.",
+        "description": "Ranged. Deal 5 damage to the weakest enemy. Heal the most wounded ally for 6 HP.",
         "effects": { "triageStrike": 5 }
       },
       {
@@ -300,11 +300,11 @@ const RAW_CLASSES = {
         "effects": { "damage": 6, "pierceBlock": 99 }
       },
       {
-        "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 1,
+        "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A treated arrowhead. Deals 3 damage and applies 2 Poison. Doubles poison if target is already poisoned.",
-        "effects": { "damage": 3, "poison": 2, "doublePoison": true }
+        "description": "Ranged. A treated arrowhead. Deals 3 damage and applies 2 Poison. Triples poison if target is already poisoned.",
+        "effects": { "damage": 3, "poison": 2, "triplePoison": true }
       },
       {
         "id": "kill_shot", "name": "Kill Shot", "cooldown": 1,
@@ -330,7 +330,7 @@ const RAW_CLASSES = {
         "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 3,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. 2 dice totaling 8+. Deals 7 damage and applies 3 Poison. Poison splashes to all other enemies.",
+        "description": "Ranged. 2 dice totaling 8+. Deals 7 damage and applies 3 Poison. Poison splashes to adjacent enemies.",
         "effects": { "damage": 7, "poison": 3, "poisonSplash": 3 }
       },
       {
@@ -491,7 +491,7 @@ const RAW_CLASSES = {
         "id": "shrieking_note", "name": "Shrieking Note",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A piercing shriek. Deals 4 damage to target. Applies 1 Poison to all other enemies.",
+        "description": "Ranged. A piercing shriek. Deals 4 damage to target. Applies 1 Poison to adjacent enemies.",
         "effects": { "damage": 4, "poisonSplash": 1 }
       },
       {

@@ -331,6 +331,7 @@ function buildSkillExecute(skillData) {
 
     // Double Poison: doubles poison if target already poisoned
     if (effects.doublePoison) result.doublePoison = true;
+    if (effects.triplePoison) result.triplePoison = true;
 
     // Kill Shot: double damage to marked or poisoned targets
     if (effects.killShot) result.killShot = true;
@@ -740,7 +741,15 @@ function formatItemSpecial(item) {
 }
 
 function formatItemStats(stats) {
-  const fmt = (val, label) => val > 0 ? `+${val} ${label}` : `${val} ${label}`;
+  const colors = {
+    dmg: 'var(--red-bright)', block: 'var(--blue-bright)', HP: '#cc8844',
+    heal: 'var(--green-bright)', poison: '#8a4', die: 'var(--gold)',
+  };
+  const fmt = (val, label) => {
+    const sign = val > 0 ? '+' : '';
+    const color = val < 0 ? 'var(--red-bright)' : (colors[label] || 'var(--text-bright)');
+    return `<span style="color:${color}">${sign}${val} ${label}</span>`;
+  };
   const parts = [];
   if (stats.damage) parts.push(fmt(stats.damage, 'dmg'));
   if (stats.block) parts.push(fmt(stats.block, 'block'));

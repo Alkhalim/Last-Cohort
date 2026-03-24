@@ -1829,13 +1829,15 @@ class CombatEngine {
     // Poison (single target)
     if (result.poison && result.target) {
       let totalPoison = result.poison + (unit.equipPoison || 0);
-      // Double Poison: doubles applied poison if target is already poisoned
-      const doubled = result.doublePoison && (result.target.poison || 0) > 0;
-      if (doubled) totalPoison *= 2;
+      // Double/Triple Poison: multiplies applied poison if target is already poisoned
+      const alreadyPoisoned = (result.target.poison || 0) > 0;
+      if (result.triplePoison && alreadyPoisoned) totalPoison *= 3;
+      else if (result.doublePoison && alreadyPoisoned) totalPoison *= 2;
+      const multiplied = (result.triplePoison || result.doublePoison) && alreadyPoisoned;
       result.target.poison = (result.target.poison || 0) + totalPoison;
       unit.stats.poisonInflicted += totalPoison;
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
-      const doubledStr = doubled ? ' Doubled!' : '';
+      const doubledStr = multiplied ? (result.triplePoison ? ' TRIPLED!' : ' Doubled!') : '';
       parts.push(`Applies ${totalPoison}${bonusStr} Poison.${doubledStr}`);
     }
     // Mark Target: enemy takes +20% damage for 1 turn
@@ -1846,13 +1848,21 @@ class CombatEngine {
     // Poison splash: apply to all other enemies (includes equipment poison)
     if (result.poisonSplash && result.target) {
       const splashPoison = result.poisonSplash + (unit.equipPoison || 0);
-      this.enemies.forEach(e => {
-        if (!e.dead && e !== result.target) {
-          e.poison = (e.poison || 0) + splashPoison;
-          unit.stats.poisonInflicted += splashPoison;
-        }
+      // Splash to adjacent enemies (up to 2 closest in same row)
+      const sameRow = this.enemies.filter(e => !e.dead && e !== result.target && e.row === result.target.row);
+      sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
+      const adjacent = sameRow.slice(0, 2);
+      // If fewer than 2 adjacent in same row, also check other row
+      if (adjacent.length < 2) {
+        const otherRow = this.enemies.filter(e => !e.dead && e !== result.target && e.row !== result.target.row && !adjacent.includes(e));
+        otherRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
+        adjacent.push(...otherRow.slice(0, 2 - adjacent.length));
+      }
+      adjacent.forEach(e => {
+        e.poison = (e.poison || 0) + splashPoison;
+        unit.stats.poisonInflicted += splashPoison;
       });
-      parts.push(`${splashPoison} Poison splashes to other enemies.`);
+      if (adjacent.length > 0) parts.push(`${splashPoison} Poison splashes to ${adjacent.map(e => e.name).join(' and ')}.`);
     }
     // Poison all enemies (includes equipment poison)
     if (result.poisonAll) {
@@ -2317,9 +2327,10 @@ class CombatEngine {
       parts.push(`All allies cleansed of poison and stun.`);
     }
 
-    // Triage Strike: damage weakest enemy, heal weakest ally
+    // Triage Strike: damage weakest enemy, heal weakest ally (1.2x heal scaling)
     if (result.triageStrike) {
       const amt = result.triageStrike + bonusHeal;
+      const healAmt = Math.floor(amt * 1.2);
       const weakestEnemy = this.enemies.filter(e => !e.dead).sort((a, b) => a.hp - b.hp)[0];
       const weakestAlly = this.party.filter(u => !u.downed).sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
       if (weakestEnemy) {
@@ -2330,7 +2341,7 @@ class CombatEngine {
         parts.push(`${weakestEnemy.name} takes ${dmg} damage.`);
       }
       if (weakestAlly && weakestAlly.hp < weakestAlly.maxHp) {
-        const heal = Math.min(amt, weakestAlly.maxHp - weakestAlly.hp);
+        const heal = Math.min(healAmt, weakestAlly.maxHp - weakestAlly.hp);
         weakestAlly.hp += heal;
         unit.stats.healingDone += heal;
         parts.push(`${weakestAlly.name} heals ${heal} HP.`);
@@ -2773,17 +2784,13 @@ class CombatEngine {
     this.addLog('All enemies defeated! (+4 Morale)');
     if (this.onVisual) this.onVisual('morale', { amount: 4 });
 
-    // Boss encounter bonus: if a boss was killed but minions survived after it,
-    // grant an additional morale boost at victory
+    // Boss encounter bonus: ensure morale is at least 75 after boss victory
     const killedBoss = this.enemies.find(e => e.isBoss && e.dead);
-    if (killedBoss) {
-      const nonBossKills = this.enemies.filter(e => !e.isBoss && e.dead && !e.isStructure);
-      if (nonBossKills.length > 0) {
-        const bossBonus = 8;
-        this.morale = Math.min(100, this.morale + bossBonus);
-        this.addLog(`The champion is slain! Your men roar in triumph! (+${bossBonus} Morale)`);
-        if (this.onVisual) this.onVisual('morale', { amount: bossBonus });
-      }
+    if (killedBoss && this.morale < 75) {
+      const bossBonus = 75 - this.morale;
+      this.morale = 75;
+      this.addLog(`The champion is slain! Your men roar in triumph! (+${bossBonus} Morale)`);
+      if (this.onVisual) this.onVisual('morale', { amount: bossBonus });
     }
 
     const fast = typeof isFastMode === 'function' && isFastMode();
@@ -2808,11 +2815,11 @@ class CombatEngine {
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
           let moraleRestore;
           if (e.isBoss) {
-            // Boss: restore to 60, or +12 if already above 60
-            if (this.morale >= 60) {
+            // Boss: restore to 75, or +12 if already above 75
+            if (this.morale >= 75) {
               moraleRestore = 12;
             } else {
-              moraleRestore = 60 - this.morale;
+              moraleRestore = 75 - this.morale;
             }
           } else {
             moraleRestore = baseHp > 10 ? 3 : 2;
