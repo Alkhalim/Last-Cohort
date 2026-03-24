@@ -1872,6 +1872,10 @@ html, body {
   color: var(--blue-bright);
 }
 
+.damage-popup.poison {
+  color: #8a4;
+}
+
 .damage-popup.morale {
   color: var(--purple);
   font-size: 0.9rem;

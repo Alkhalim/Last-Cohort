@@ -95,6 +95,12 @@ class GameUI {
         this.flashElement(`enemy-${data.enemyIndex}`, 'hit', 400);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.damage, 'damage');
         break;
+      case 'unitPoison':
+        this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'poison');
+        break;
+      case 'enemyPoison':
+        this.showDamagePopup(`enemy-${data.enemyIndex}`, data.amount, 'poison');
+        break;
       case 'skillCutIn':
         this.showSkillCutIn(data.classTitle, data.skillName);
         break;
@@ -1418,13 +1424,15 @@ class GameUI {
     if (!target) return;
 
     const popup = document.createElement('div');
-    popup.className = `damage-popup${type === 'heal' ? ' heal' : ''}${type === 'morale' ? ' morale' : ''}${type === 'block' ? ' block' : ''}`;
+    popup.className = `damage-popup${type === 'heal' ? ' heal' : ''}${type === 'morale' ? ' morale' : ''}${type === 'block' ? ' block' : ''}${type === 'poison' ? ' poison' : ''}`;
     if (type === 'damage') {
       popup.textContent = `-${amount}`;
     } else if (type === 'heal') {
       popup.textContent = `+${amount}`;
     } else if (type === 'block') {
       popup.textContent = `+${amount}`;
+    } else if (type === 'poison') {
+      popup.textContent = `+${amount}☠`;
     } else if (type === 'morale') {
       popup.textContent = amount > 0 ? `+${amount}` : `${amount}`;
     }
@@ -1841,23 +1849,60 @@ class GameUI {
     const hasWater = ['bog', 'drowned', 'ancient', 'heart'].includes(marchTheme);
     if (hasWater) {
       const riverCount = marchTheme === 'drowned' ? 2 : 1;
+      const waterColor = marchTheme === 'heart' ? '#6a3020' : '#3a7a8a';
       for (let r = 0; r < riverCount; r++) {
-        ctx.globalAlpha = marchTheme === 'drowned' ? 0.12 : 0.08;
-        ctx.strokeStyle = marchTheme === 'heart' ? '#6a3020' : '#3a7a8a';
-        ctx.lineWidth = 4 + tRand(r * 50 + 200) * 6;
+        const riverAlpha = marchTheme === 'drowned' ? 0.12 : 0.08;
+        ctx.globalAlpha = riverAlpha;
+        ctx.strokeStyle = waterColor;
+        const baseWidth = 4 + tRand(r * 50 + 200) * 6;
+        ctx.lineWidth = baseWidth;
         ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.beginPath();
         let rx = margin + tRand(r * 50 + 201) * (wrapperWidth - margin * 2);
-        let ry = margin;
+        let ry = margin * 0.5;
         ctx.moveTo(rx, ry);
-        for (let s = 0; s < 8; s++) {
-          const nx = rx + (tRand(r * 50 + s * 11 + 210) - 0.5) * 80;
-          ry += totalHeight / 8;
-          const cpx = rx + (tRand(r * 50 + s * 11 + 215) - 0.5) * 60;
-          ctx.quadraticCurveTo(Math.max(margin, Math.min(wrapperWidth - margin, cpx)), ry - totalHeight / 16, Math.max(margin, Math.min(wrapperWidth - margin, nx)), Math.min(totalHeight - margin, ry));
-          rx = Math.max(margin, Math.min(wrapperWidth - margin, nx));
+        // Smoother curves with bezier and gentler wandering
+        const segments = 10;
+        for (let s = 0; s < segments; s++) {
+          const drift = (tRand(r * 50 + s * 13 + 210) - 0.5) * 50;
+          const nx = Math.max(margin, Math.min(wrapperWidth - margin, rx + drift));
+          const ny = ry + totalHeight / segments;
+          // Two control points for smooth S-curves
+          const cp1x = Math.max(margin, Math.min(wrapperWidth - margin, rx + (tRand(r * 50 + s * 13 + 215) - 0.5) * 40));
+          const cp1y = ry + totalHeight / segments * 0.33;
+          const cp2x = Math.max(margin, Math.min(wrapperWidth - margin, nx + (tRand(r * 50 + s * 13 + 218) - 0.5) * 40));
+          const cp2y = ry + totalHeight / segments * 0.66;
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, nx, Math.min(totalHeight - margin, ny));
+          rx = nx;
+          ry = Math.min(totalHeight - margin, ny);
         }
         ctx.stroke();
+
+        // Pond/lake at the end of the river
+        const pondRx = 12 + tRand(r * 50 + 280) * 15;
+        const pondRy = pondRx * (0.5 + tRand(r * 50 + 281) * 0.3);
+        ctx.globalAlpha = riverAlpha * 1.2;
+        ctx.fillStyle = waterColor;
+        ctx.beginPath();
+        // Organic pond shape using bezier blob
+        const pondPts = 6;
+        for (let p = 0; p <= pondPts; p++) {
+          const angle = (p / pondPts) * Math.PI * 2;
+          const wobble = 0.7 + tRand(r * 50 + 285 + p * 7) * 0.6;
+          const px = rx + Math.cos(angle) * pondRx * wobble;
+          const py = ry + Math.sin(angle) * pondRy * wobble;
+          if (p === 0) { ctx.moveTo(px, py); }
+          else {
+            const midAngle = ((p - 0.5) / pondPts) * Math.PI * 2;
+            const cpWobble = 0.7 + tRand(r * 50 + 290 + p * 7) * 0.6;
+            const cpx = rx + Math.cos(midAngle) * pondRx * cpWobble * 1.1;
+            const cpy = ry + Math.sin(midAngle) * pondRy * cpWobble * 1.1;
+            ctx.quadraticCurveTo(cpx, cpy, px, py);
+          }
+        }
+        ctx.closePath();
+        ctx.fill();
       }
     }
 
@@ -3561,7 +3606,7 @@ class GameUI {
     if (!item) { this._skipCurrentLoot(); return; }
 
     const eligible = this.engine.party.filter(u => canEquipItem(u, item));
-    if (!this._lootUnitIdx || this._lootUnitIdx >= eligible.length) {
+    if (this._lootUnitIdx === undefined || this._lootUnitIdx === null || this._lootUnitIdx >= eligible.length) {
       // Default to first unit with a free slot for this item type
       const freeIdx = eligible.findIndex(u => u.equipment[item.slot].some(s => s === null));
       this._lootUnitIdx = freeIdx >= 0 ? freeIdx : 0;
@@ -3796,7 +3841,7 @@ class GameUI {
     if (success) {
       this.pendingLoot.splice(this._currentLootIdx, 1);
       this._replaceSlotIdx = undefined;
-      this._lootUnitIdx = 0;
+      this._lootUnitIdx = undefined;
       if (this.pendingLoot.length === 0 || this._currentLootIdx >= this.pendingLoot.length) {
         this._currentLootIdx = 0;
       }
@@ -3813,7 +3858,7 @@ class GameUI {
     }
     this.pendingLoot.splice(this._currentLootIdx, 1);
     this._replaceSlotIdx = undefined;
-    this._lootUnitIdx = 0;
+    this._lootUnitIdx = undefined;
     if (this._currentLootIdx >= this.pendingLoot.length) this._currentLootIdx = 0;
     this.renderLootScreen();
   }
@@ -3827,7 +3872,7 @@ class GameUI {
     });
     this.pendingLoot = [];
     this._currentLootIdx = undefined;
-    this._lootUnitIdx = 0;
+    this._lootUnitIdx = undefined;
     this._replaceSlotIdx = undefined;
     if (this.engine.pendingSkillPicks > 0) {
       this.showLevelUpScreen();

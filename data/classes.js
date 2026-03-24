@@ -224,7 +224,7 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to adjacent enemies.",
-        "effects": { "poison": 4, "poisonSplash": 2 }
+        "effects": { "poison": 4, "poisonSplash": 2, "bonusDmgScale": 0.9 }
       },
       {
         "id": "sawbones_choice", "name": "Sawbones' Choice", "cooldown": 1,
@@ -501,10 +501,10 @@ const RAW_CLASSES = {
         "effects": { "healAll": 6, "morale": 6 }
       },
       {
-        "id": "cacophony", "name": "Cacophony", "cooldown": 1,
-        "cost": { "type": "exact", "val": 1 }, "target": "all_enemies",
+        "id": "cacophony", "name": "Cacophony", "cooldown": 2,
+        "cost": { "type": "range", "min": 1, "max": 2 }, "target": "all_enemies",
         "description": "A cacophony of noise. Deals 1 damage and applies 1 Poison to all enemies.",
-        "effects": { "damageAll": 1, "poisonAll": 1 }
+        "effects": { "damageAll": 1, "poisonAll": 1, "bonusDmgScale": 0.8 }
       },
       {
         "id": "dissonant_blast", "name": "Dissonant Blast", "cooldown": 2,

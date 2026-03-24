@@ -383,28 +383,43 @@ class CombatEngine {
       this.triggerVictory();
       return;
     }
-    // Poison tick on allies
+    // Poison tick on allies (can down units)
     this.party.forEach(u => {
       if (!u.downed && u.poison > 0) {
         const poisonDmg = u.poison;
-        u.hp = Math.max(1, u.hp - poisonDmg);
+        u.hp = Math.max(0, u.hp - poisonDmg);
+        u.stats.damageTaken += poisonDmg;
         this.addLog(`${u.name} takes ${poisonDmg} poison damage.`);
         if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: poisonDmg, type: 'poison' });
         u.poison = Math.max(0, u.poison - 1);
       }
     });
+    this.checkPartyDowned();
+    if (this.party.every(u => u.downed)) {
+      this.phase = PHASE.DEFEAT;
+      this.addLog('The last cohort falls to poison...');
+      this.update();
+      return;
+    }
 
     // Structure aura damage (Wicker Man: turnDamageAll)
     this.enemies.forEach(e => {
       if (!e.dead && e.turnDamageAll) {
         this.party.forEach(u => {
           if (!u.downed) {
-            u.hp = Math.max(1, u.hp - e.turnDamageAll);
+            u.hp = Math.max(0, u.hp - e.turnDamageAll);
             u.stats.damageTaken += e.turnDamageAll;
             if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: e.turnDamageAll, type: 'burn' });
           }
         });
         this.addLog(`${e.name} burns — all soldiers take ${e.turnDamageAll} damage!`);
+        this.checkPartyDowned();
+        if (this.party.every(u => u.downed)) {
+          this.phase = PHASE.DEFEAT;
+          this.addLog('The cohort burns...');
+          this.update();
+          return;
+        }
       }
       // Healing Totem: heals the boss each turn
       if (!e.dead && e.healBoss) {
@@ -1483,12 +1498,12 @@ class CombatEngine {
       if (result.target.hp <= 0 && hpBeforeHit > 0 && total > 0) {
         const overkill = total - hpBeforeHit;
         const overkillPct = overkill / total;
-        if (overkillPct >= 0.9) {
-          this.morale = Math.min(100, this.morale + 3);
-          parts.push('OVERKILL!!! (+3 Morale)');
+        if (overkillPct >= 0.75) {
+          this.morale = Math.min(100, this.morale + 2);
+          parts.push('OVERKILL! (+2 Morale)');
           if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
-          if (this.onVisual) this.onVisual('morale', { amount: 3 });
-        } else if (overkillPct >= 0.5) {
+          if (this.onVisual) this.onVisual('morale', { amount: 2 });
+        } else if (overkillPct >= 0.6) {
           this.morale = Math.min(100, this.morale + 1);
           parts.push('Overkill! (+1 Morale)');
           if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
@@ -1920,7 +1935,8 @@ class CombatEngine {
     }
     // Poison (single target)
     if (result.poison && result.target) {
-      let totalPoison = result.poison + (unit.equipPoison || 0);
+      const poisonScale = result.bonusDmgScale || 1;
+      let totalPoison = result.poison + Math.floor((unit.equipPoison || 0) * poisonScale);
       // Double/Triple Poison: multiplies applied poison if target is already poisoned
       const alreadyPoisoned = (result.target.poison || 0) > 0;
       if (result.triplePoison && alreadyPoisoned) totalPoison *= 3;
@@ -1928,6 +1944,7 @@ class CombatEngine {
       const multiplied = (result.triplePoison || result.doublePoison) && alreadyPoisoned;
       result.target.poison = (result.target.poison || 0) + totalPoison;
       unit.stats.poisonInflicted += totalPoison;
+      if (this.onVisual) this.onVisual('enemyPoison', { enemyIndex: result.target.index, amount: totalPoison });
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
       const doubledStr = multiplied ? (result.triplePoison ? ' TRIPLED!' : ' Doubled!') : '';
       parts.push(`Applies ${totalPoison}${bonusStr} Poison.${doubledStr}`);
@@ -1953,6 +1970,7 @@ class CombatEngine {
       adjacent.forEach(e => {
         e.poison = (e.poison || 0) + splashPoison;
         unit.stats.poisonInflicted += splashPoison;
+        if (this.onVisual) this.onVisual('enemyPoison', { enemyIndex: e.index, amount: splashPoison });
       });
       if (adjacent.length > 0) parts.push(`${splashPoison} Poison splashes to ${adjacent.map(e => e.name).join(' and ')}.`);
     }
@@ -1963,6 +1981,7 @@ class CombatEngine {
         if (!e.dead) {
           e.poison = (e.poison || 0) + totalPoison;
           unit.stats.poisonInflicted += totalPoison;
+          if (this.onVisual) this.onVisual('enemyPoison', { enemyIndex: e.index, amount: totalPoison });
         }
       });
       parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${totalPoison} Poison to all enemies.`);
@@ -1978,7 +1997,8 @@ class CombatEngine {
     }
 
     if (result.damageAll) {
-      const aoeBonus = result.halfBonusDmg ? Math.floor(bonusDmg / 2) : bonusDmg;
+      const aoeDmgScale = result.bonusDmgScale || (result.halfBonusDmg ? 0.5 : 1);
+      const aoeBonus = aoeDmgScale !== 1 ? Math.floor(bonusDmg * aoeDmgScale) : bonusDmg;
       const aoeDmg = result.damageAll + aoeBonus;
       let bestOverkillPct = 0;
       let bestOverkillIdx = -1;
@@ -2037,12 +2057,12 @@ class CombatEngine {
         parts.push(`The spirits' bond pulses — each heals ${healForV} HP!`);
       }
       // AoE overkill morale
-      if (bestOverkillPct >= 0.9) {
-        this.morale = Math.min(100, this.morale + 3);
-        parts.push('OVERKILL!!! (+3 Morale)');
+      if (bestOverkillPct >= 0.75) {
+        this.morale = Math.min(100, this.morale + 2);
+        parts.push('OVERKILL! (+2 Morale)');
         if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
-        if (this.onVisual) this.onVisual('morale', { amount: 3 });
-      } else if (bestOverkillPct >= 0.5) {
+        if (this.onVisual) this.onVisual('morale', { amount: 2 });
+      } else if (bestOverkillPct >= 0.6) {
         this.morale = Math.min(100, this.morale + 1);
         parts.push('Overkill! (+1 Morale)');
         if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
@@ -2556,6 +2576,7 @@ class CombatEngine {
         unit.stats.healingDone += heal;
         parts.push(`${weakestAlly.name} heals ${heal} HP.`);
         if (this.onVisual) this.onVisual('unitHeal', { unitIndex: weakestAlly.index, amount: heal });
+        this.triggerOnHealEffects(weakestAlly, heal);
       }
     }
 
@@ -2627,6 +2648,7 @@ class CombatEngine {
             const heal = Math.min(pairValue, u.maxHp - u.hp);
             u.hp += heal;
             unit.stats.healingDone += heal;
+            this.triggerOnHealEffects(u, heal);
           }
         });
         parts.push(`Harmonic healing! All allies heal ${pairValue} HP.`);
@@ -2785,6 +2807,7 @@ class CombatEngine {
         target.hp += heal;
         unit.stats.healingDone += heal;
         if (heal > 0) parts.push(`Heals ${target.name} for ${heal} HP.`);
+        this.triggerOnHealEffects(target, heal);
       }
     }
 
@@ -3660,6 +3683,7 @@ class CombatEngine {
     if (action.poisonTarget && target) {
       target.poison = (target.poison || 0) + action.poisonTarget;
       this.addLog(`${target.name} is poisoned! (+${action.poisonTarget} Poison)`);
+      if (target.index !== undefined && this.onVisual) this.onVisual('unitPoison', { unitIndex: target.index, amount: action.poisonTarget });
     }
 
     if (action.morale) {
@@ -4504,6 +4528,17 @@ class CombatEngine {
   }
 
   // --- Curse helpers ---
+  // Trigger on-heal item effects (Crown of Thorns, etc.)
+  triggerOnHealEffects(healedUnit, amount) {
+    if (!healedUnit || amount <= 0 || healedUnit.downed) return;
+    if (this.unitHasItem(healedUnit, 'crown_of_thorns')) {
+      const cotLv = this.getItemLevel(healedUnit, 'crown_of_thorns');
+      const cotDmg = 2 * cotLv;
+      this.enemies.forEach(e => { if (!e.dead) e.hp = Math.max(0, e.hp - cotDmg); });
+      this.addLog(`Crown of Thorns — ${cotDmg} damage to all enemies!`);
+    }
+  }
+
   getActiveCurses() {
     return (window.game && window.game.activeCurses) ? window.game.activeCurses : [];
   }
