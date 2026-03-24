@@ -62,6 +62,20 @@ const CURSE_DEFS = [
   { id: 'ultimate_test', name: "Ultimate Test", achievement: 'party_all_rares', description: "All curses active simultaneously.", renown: 50 },
 ];
 
+const BOON_DEFS = [
+  { id: 'serpent_blessing', name: "Serpent's Blessing", achievement: 'boss_serpent_shaman_x3', description: "Start each combat with 1 Poison on all enemies.", renown: -10 },
+  { id: 'fog_sight', name: "Fog Sight", achievement: 'boss_fog_weaver_x3', description: "Enemy intents always show exact damage numbers.", renown: -10 },
+  { id: 'stag_vigor', name: "Stag's Vigor", achievement: 'boss_blood_stag_x3', description: "Heal 2 HP per unit at the start of each combat.", renown: -15 },
+  { id: 'spirits_peace', name: "Spirit's Peace", achievement: 'boss_spirits_defeated', description: "Start each march at 60 morale instead of 50.", renown: -15 },
+  { id: 'varus_lesson', name: "Varus's Lesson", achievement: 'boss_corpse_varus', description: "+1 bonus die on the first turn of each combat.", renown: -10 },
+  { id: 'arminius_defiance', name: "Arminius's Defiance", achievement: 'boss_corpse_arminius', description: "Downed units revive at 1 HP after boss fights.", renown: -20 },
+  { id: 'kings_hoard', name: "King's Hoard", achievement: 'boss_ariovistus', description: "Start each run with a random uncommon item.", renown: -10 },
+  { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+1 damage to all units for the first 2 turns of combat.", renown: -10 },
+  { id: 'epic_fortune', name: "Epic Fortune", achievement: 'hero_three_epics', description: "Item drops have +10% chance to upgrade rarity.", renown: -15 },
+  { id: 'demigods_shield', name: "Demigod's Shield", achievement: 'hero_only_epics', description: "All units start combat with 3 Block.", renown: -15 },
+  { id: 'pantheons_grace', name: "Pantheon's Grace", achievement: 'party_all_epics', description: "All boons active simultaneously.", renown: -50 },
+];
+
 class Game {
   constructor() {
     this.engine = new CombatEngine();
@@ -73,6 +87,7 @@ class Game {
     this.difficulty = 1;
     this.marchCount = 0;
     this.activeCurses = [];
+    this.activeBoons = [];
     this.selectedPartyClasses = [];
 
     // Disable umami if tracking opt-out
@@ -373,8 +388,17 @@ class Game {
   }
 
   addRunRenown(amount) {
-    this.lifetimeRenown += amount;
-    this.currentRunRenown = (this.currentRunRenown || 0) + amount;
+    // Apply curse/boon renown modifier
+    const curseBonus = this.activeCurses.reduce((sum, cid) => {
+      const c = CURSE_DEFS.find(d => d.id === cid); return sum + (c ? c.renown : 0);
+    }, 0);
+    const boonPenalty = this.activeBoons.reduce((sum, bid) => {
+      const b = BOON_DEFS.find(d => d.id === bid); return sum + (b ? b.renown : 0);
+    }, 0);
+    const modifier = 1 + (curseBonus + boonPenalty) / 100;
+    const modified = Math.max(0, Math.round(amount * modifier));
+    this.lifetimeRenown += modified;
+    this.currentRunRenown = (this.currentRunRenown || 0) + modified;
     this.saveLifetimeRenown();
   }
 
@@ -446,6 +470,7 @@ class Game {
   showPartySelectScreen() {
     this.selectedPartyClasses = [];
     this.activeCurses = [];
+    this.activeBoons = [];
     this.ui.showScreen('party-select-screen');
     this.renderPartySelect();
   }
@@ -508,7 +533,7 @@ class Game {
     // Continue button: go to curse select (or straight to run if no curses unlocked)
     continueBtn.onclick = () => {
       if (this.selectedPartyClasses.length === 3) {
-        const anyUnlocked = CURSE_DEFS.some(c => !!this.achievements[c.achievement]);
+        const anyUnlocked = CURSE_DEFS.some(c => !!this.achievements[c.achievement]) || BOON_DEFS.some(b => !!this.achievements[b.achievement]);
         if (anyUnlocked) {
           this.showCurseSelectScreen();
         } else {
@@ -530,44 +555,91 @@ class Game {
     const totalLabel = document.getElementById('curse-renown-total');
     const unlockedAchievements = this.achievements;
 
-    let curseHtml = '';
-    CURSE_DEFS.forEach(curse => {
-      const unlocked = !!unlockedAchievements[curse.achievement];
-      if (!unlocked) return;
-      const active = this.activeCurses.includes(curse.id);
-      curseHtml += `<div class="ps-curse-card ${active ? 'active' : ''}" data-curse-id="${curse.id}">
-        <div class="ps-curse-name">${curse.name}</div>
-        <div class="ps-curse-desc">${curse.description}</div>
-        <div class="ps-curse-renown" style="color:var(--gold);font-size:0.75rem;margin-top:4px;">+${curse.renown}% Renown</div>
-      </div>`;
-    });
-    curseContainer.innerHTML = curseHtml;
+    let html = '';
 
-    // Show total renown bonus
-    const totalBonus = this.activeCurses.reduce((sum, cid) => {
+    // Curses section
+    const unlockedCurses = CURSE_DEFS.filter(c => !!unlockedAchievements[c.achievement]);
+    if (unlockedCurses.length > 0) {
+      html += '<div class="ps-modifier-section-title" style="color:var(--red-bright)">CURSES <span style="font-size:0.6rem;color:var(--text-dim)">(increase Renown)</span></div>';
+      unlockedCurses.forEach(curse => {
+        const active = this.activeCurses.includes(curse.id);
+        html += `<div class="ps-curse-card ${active ? 'active' : ''}" data-curse-id="${curse.id}" data-type="curse">
+          <div class="ps-curse-name">${curse.name}</div>
+          <div class="ps-curse-desc">${curse.description}</div>
+          <div class="ps-curse-renown" style="color:var(--gold);font-size:0.75rem;margin-top:4px;">+${curse.renown}% Renown</div>
+        </div>`;
+      });
+    }
+
+    // Boons section
+    const unlockedBoons = BOON_DEFS.filter(b => !!unlockedAchievements[b.achievement]);
+    if (unlockedBoons.length > 0) {
+      html += '<div class="ps-modifier-section-title" style="color:var(--green-bright);margin-top:12px">BOONS <span style="font-size:0.6rem;color:var(--text-dim)">(decrease Renown)</span></div>';
+      unlockedBoons.forEach(boon => {
+        const active = this.activeBoons.includes(boon.id);
+        html += `<div class="ps-curse-card boon ${active ? 'active' : ''}" data-curse-id="${boon.id}" data-type="boon">
+          <div class="ps-curse-name">${boon.name}</div>
+          <div class="ps-curse-desc">${boon.description}</div>
+          <div class="ps-curse-renown" style="color:var(--green-bright);font-size:0.75rem;margin-top:4px;">${boon.renown}% Renown</div>
+        </div>`;
+      });
+    }
+
+    curseContainer.innerHTML = html;
+
+    // Show total renown modifier
+    const curseBonus = this.activeCurses.reduce((sum, cid) => {
       const curse = CURSE_DEFS.find(c => c.id === cid);
       return sum + (curse ? curse.renown : 0);
     }, 0);
-    totalLabel.textContent = totalBonus > 0 ? `Total bonus: +${totalBonus}% Renown` : 'No curses selected';
+    const boonPenalty = this.activeBoons.reduce((sum, bid) => {
+      const boon = BOON_DEFS.find(b => b.id === bid);
+      return sum + (boon ? boon.renown : 0);
+    }, 0);
+    const totalMod = curseBonus + boonPenalty;
+    if (totalMod > 0) totalLabel.textContent = `Renown modifier: +${totalMod}%`;
+    else if (totalMod < 0) totalLabel.textContent = `Renown modifier: ${totalMod}%`;
+    else totalLabel.textContent = 'No modifiers selected';
 
-    // Bind curse clicks
+    // Bind clicks
     curseContainer.querySelectorAll('.ps-curse-card').forEach(card => {
       card.addEventListener('click', () => {
         const cid = card.dataset.curseId;
-        if (cid === 'ultimate_test') {
-          if (this.activeCurses.includes('ultimate_test')) {
-            this.activeCurses = [];
+        const type = card.dataset.type;
+        if (type === 'curse') {
+          if (cid === 'ultimate_test') {
+            if (this.activeCurses.includes('ultimate_test')) {
+              this.activeCurses = [];
+            } else {
+              this.activeCurses = CURSE_DEFS.filter(c => !!unlockedAchievements[c.achievement]).map(c => c.id);
+            }
           } else {
-            this.activeCurses = CURSE_DEFS.filter(c => !!unlockedAchievements[c.achievement]).map(c => c.id);
+            const idx = this.activeCurses.indexOf(cid);
+            if (idx >= 0) {
+              this.activeCurses.splice(idx, 1);
+              const utIdx = this.activeCurses.indexOf('ultimate_test');
+              if (utIdx >= 0) this.activeCurses.splice(utIdx, 1);
+            } else {
+              this.activeCurses.push(cid);
+            }
           }
         } else {
-          const idx = this.activeCurses.indexOf(cid);
-          if (idx >= 0) {
-            this.activeCurses.splice(idx, 1);
-            const utIdx = this.activeCurses.indexOf('ultimate_test');
-            if (utIdx >= 0) this.activeCurses.splice(utIdx, 1);
+          // Boon toggle
+          if (cid === 'pantheons_grace') {
+            if (this.activeBoons.includes('pantheons_grace')) {
+              this.activeBoons = [];
+            } else {
+              this.activeBoons = BOON_DEFS.filter(b => !!unlockedAchievements[b.achievement]).map(b => b.id);
+            }
           } else {
-            this.activeCurses.push(cid);
+            const idx = this.activeBoons.indexOf(cid);
+            if (idx >= 0) {
+              this.activeBoons.splice(idx, 1);
+              const pgIdx = this.activeBoons.indexOf('pantheons_grace');
+              if (pgIdx >= 0) this.activeBoons.splice(pgIdx, 1);
+            } else {
+              this.activeBoons.push(cid);
+            }
           }
         }
         this.renderCurseSelect();
@@ -716,6 +788,7 @@ class Game {
         difficulty: this.difficulty,
         marchCount: this.marchCount,
         activeCurses: [...(this.activeCurses || [])],
+        activeBoons: [...(this.activeBoons || [])],
         selectedPartyClasses: [...(this.selectedPartyClasses || [])],
         currentRunRenown: this.currentRunRenown || 0,
         recentBosses: [...(this.recentBosses || [])],
@@ -762,6 +835,7 @@ class Game {
       this.difficulty = data.difficulty;
       this.marchCount = data.marchCount;
       this.activeCurses = data.activeCurses || [];
+      this.activeBoons = data.activeBoons || [];
       this.selectedPartyClasses = data.selectedPartyClasses || [];
       this.currentRunRenown = data.currentRunRenown || 0;
       this.recentBosses = data.recentBosses || [];
@@ -1315,9 +1389,17 @@ class Game {
         </div>`;
         return;
       }
+      const curse = CURSE_DEFS.find(c => c.achievement === def.key);
+      const boon = BOON_DEFS.find(b => b.achievement === def.key);
+      const unlockText = curse
+        ? `<div class="achievement-unlock" style="color:var(--red-bright)">Unlocks curse: ${curse.name}</div>`
+        : boon
+        ? `<div class="achievement-unlock" style="color:var(--green-bright)">Unlocks boon: ${boon.name}</div>`
+        : '';
       html += `<div class="achievement-slot ${unlocked ? 'unlocked' : 'locked'}">
         <div class="achievement-name">${unlocked ? '&#9733; ' : ''}${def.name}</div>
         <div class="achievement-desc">${def.desc}</div>
+        ${unlockText}
         <div class="achievement-progress">${def.progress()}</div>
       </div>`;
     });
@@ -1334,7 +1416,8 @@ class Game {
     this.usedRunEventIds = new Set();
     this._leaderboardSaved = false;
     this.currentRunRenown = 0;
-    this.engine.morale = 50;
+    // Boon: Spirit's Peace — start at 60 morale
+    this.engine.morale = this.activeBoons.includes('spirits_peace') ? 60 : 50;
     this.engine.totalEnemiesKilled = 0;
     this.engine.encountersCompleted = 0;
     this.engine.totalRenownEarned = 0;
@@ -1347,6 +1430,18 @@ class Game {
       ? [...this.selectedPartyClasses]
       : ['legionary', 'centurion', 'medicus'];
     this.engine.initParty(partyClasses);
+
+    // Boon: King's Hoard — start with a random uncommon item
+    if (this.activeBoons.includes('kings_hoard')) {
+      const uncommons = Object.values(ITEM_DATA).filter(i => i.rarity === 'uncommon' && this.engine.party.some(u => canEquipItem(u, i)));
+      if (uncommons.length > 0) {
+        const item = uncommons[Math.floor(Math.random() * uncommons.length)];
+        const eligible = this.engine.party.filter(u => canEquipItem(u, item));
+        if (eligible.length > 0) {
+          this.engine.equipItem(eligible[0].index, item.id);
+        }
+      }
+    }
 
     this.startGameplayMusic();
 

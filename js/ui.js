@@ -3473,6 +3473,18 @@ class GameUI {
 
     this.lootScreenFinal = isBossVictory;
     this.lootReturnToMap = !isBossVictory;
+
+    // Boon: Arminius's Defiance — revive downed units after boss fights
+    if (isBossVictory && this.engine.getActiveBoons().includes('arminius_defiance')) {
+      this.engine.party.forEach(u => {
+        if (u.downed) {
+          u.downed = false;
+          u.hp = 1;
+          this.engine.addLog(`${u.name} stirs — Arminius's defiance refuses to let them fall.`);
+        }
+      });
+    }
+
     this.showScreen('loot-screen');
     this.renderLootScreen();
   }

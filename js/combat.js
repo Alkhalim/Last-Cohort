@@ -199,6 +199,27 @@ class CombatEngine {
           this.addLog(`War Hound's spirit strikes — ${victim.name} is poisoned! (+${hcPoison} Poison)`);
         }
       }
+      // Apply boon effects at combat start
+      const boons = this.getActiveBoons();
+      if (boons.includes('serpent_blessing')) {
+        this.enemies.forEach(e => { if (!e.dead) e.poison = (e.poison || 0) + 1; });
+        this.addLog("Serpent's Blessing — all enemies start poisoned!");
+      }
+      if (boons.includes('stag_vigor')) {
+        this.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + 2); });
+        this.addLog("Stag's Vigor — all soldiers heal 2 HP!");
+      }
+      if (boons.includes('demigods_shield')) {
+        this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + 3; });
+        this.addLog("Demigod's Shield — all soldiers gain 3 Block!");
+      }
+      if (boons.includes('first_blood')) {
+        this.party.forEach(u => { if (!u.downed) u.buffs.push({ damage: 1, attacksLeft: 99 }); });
+        this._firstBloodTurn = 2; // remove after 2 turns
+      }
+      if (boons.includes('varus_lesson')) {
+        this._boonBonusDice = 1;
+      }
       this.addLog('Prepare yourselves!');
       this.startRollPhase();
       return;
@@ -595,6 +616,22 @@ class CombatEngine {
     if (this.partyHasItem('moonstone_ring') && this.morale > 70) {
       extraDice++;
       this.addLog('Moonstone Ring shines — morale grants an extra die!');
+    }
+    // Boon: Varus's Lesson — +1 die on first turn
+    if (this._boonBonusDice && this.turn === 1) {
+      extraDice += this._boonBonusDice;
+      this.addLog("Varus's Lesson grants a bonus die!");
+      this._boonBonusDice = 0;
+    }
+    // Boon: First Blood — remove damage buff after 2 turns
+    if (this._firstBloodTurn !== undefined) {
+      this._firstBloodTurn--;
+      if (this._firstBloodTurn <= 0) {
+        this.party.forEach(u => {
+          u.buffs = u.buffs.filter(b => b.attacksLeft !== 99);
+        });
+        this._firstBloodTurn = undefined;
+      }
     }
     // Bonus dice from abilities (Tactical Preparation, etc.)
     if (this._bonusDiceNext) {
@@ -4278,6 +4315,10 @@ class CombatEngine {
   // --- Curse helpers ---
   getActiveCurses() {
     return (window.game && window.game.activeCurses) ? window.game.activeCurses : [];
+  }
+
+  getActiveBoons() {
+    return (window.game && window.game.activeBoons) ? window.game.activeBoons : [];
   }
 
   update() {

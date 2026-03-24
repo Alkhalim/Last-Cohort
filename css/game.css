@@ -4053,6 +4053,21 @@ html, body {
   background: #261a1a;
 }
 
+.ps-curse-card.boon { border-left: 3px solid var(--green-bright); }
+.ps-curse-card.boon.active {
+  border-color: var(--green-bright);
+  box-shadow: 0 0 8px rgba(64, 180, 64, 0.3);
+  background: #1a261a;
+}
+
+.ps-modifier-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
 .ps-curse-name {
   font-family: 'Cinzel', serif;
   font-size: 0.85rem;
