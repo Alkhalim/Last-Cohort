@@ -261,7 +261,6 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_enemies",
         "ignoreRow": true,
         "description": "Ranged. Deal 5 damage to the weakest enemy. Heal the most wounded ally for 6 HP.",
-
         "effects": { "triageStrike": 5 }
       },
       {

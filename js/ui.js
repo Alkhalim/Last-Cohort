@@ -940,6 +940,7 @@ class GameUI {
         ? this.engine.enemies.filter(e => !e.dead && e.aura && e.aura.damageReduction).reduce((s, e) => s + e.aura.damageReduction, 0)
         : 0;
       const effectiveBonusDmg = totalBonusDmg - auraReduction;
+      const ownBonusDmg = equipDmg + moraleMod - auraReduction;
 
       // Equites passive: Cavalry Charge — preview +50% on first attack
       const cavalryCharge = unit.classId === 'equites' && !unit.passiveTriggered;
@@ -1023,7 +1024,6 @@ class GameUI {
       // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
       // Bonus damage scaling: only scales own equip+morale, buff damage always full
       const dmgScale = (skill.effects && skill.effects.bonusDmgScale) || (skill.effects && skill.effects.halfBonusDmg ? 0.5 : 1);
-      const ownBonusDmg = equipDmg + moraleMod - auraReduction;
       const skillBonusDmg = dmgScale !== 1 ? Math.floor(ownBonusDmg * dmgScale) + buffDmg : effectiveBonusDmg;
       desc = desc.replace(/([Dd]eal[s]?) (\d+) damage/g, (match, verb, base) => {
         const b = parseInt(base);
@@ -3518,17 +3518,6 @@ class GameUI {
 
     this.lootScreenFinal = isBossVictory;
     this.lootReturnToMap = !isBossVictory;
-
-    // Boon: Arminius's Defiance — revive downed units after boss fights
-    if (isBossVictory && this.engine.getActiveBoons().includes('arminius_defiance')) {
-      this.engine.party.forEach(u => {
-        if (u.downed) {
-          u.downed = false;
-          u.hp = 1;
-          this.engine.addLog(`${u.name} stirs — Arminius's defiance refuses to let them fall.`);
-        }
-      });
-    }
 
     this.showScreen('loot-screen');
     this.renderLootScreen();

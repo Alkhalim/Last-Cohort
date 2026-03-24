@@ -4249,10 +4249,12 @@ class CombatEngine {
   }
 
   afterEncounter() {
+    const hasDefiance = this.getActiveBoons().includes('arminius_defiance');
+    const revivePct = hasDefiance ? 0.7 : 0.5;
     this.party.forEach(u => {
       if (u.downed) {
         u.downed = false;
-        u.hp = Math.floor(u.maxHp * 0.5);
+        u.hp = Math.floor(u.maxHp * revivePct);
         this.addLog(`${u.name} recovers at ${u.hp} HP.`);
       }
       u.block = 0;
