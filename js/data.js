@@ -471,6 +471,7 @@ function buildClassData(rawClasses) {
     };
     if (rawClass.hidden) result[classId].hidden = true;
     if (rawClass.unlockCondition) result[classId].unlockCondition = rawClass.unlockCondition;
+    if (rawClass.unlockKey) result[classId].unlockKey = rawClass.unlockKey;
   }
   return result;
 }

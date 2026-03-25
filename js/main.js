@@ -424,6 +424,7 @@ class Game {
   returnHome() {
     this.clearSavedRun();
     if (this.engine) {
+      this.trackRunEnd(true);
       this.finalizeLeaderboard(true);
     }
     this.showHomeScreen();
@@ -480,6 +481,8 @@ class Game {
     this.selectedPartyClasses = [];
     this.activeCurses = [];
     this.activeBoons = [];
+    // Ensure all earned unlocks are granted before showing class selection
+    this.checkAchievements();
     this.ui.showScreen('party-select-screen');
     this.renderPartySelect();
   }
@@ -1393,58 +1396,61 @@ class Game {
     // Class unlock achievements
     // Use both stats and current run difficulty to catch unlocks
     const currentDiff = Math.max(s.highestDifficulty || 1, this.difficulty || 1);
+    // Class unlock achievements — check BOTH live stats AND existing prerequisite achievements
+    // (prerequisite achievements persist even if stats are reset between versions)
+
     // First boss kill → Sagittarius
-    if (!a.class_sagittarius && (s.bossesKilled || 0) >= 1) {
+    if (!a.class_sagittarius && ((s.bossesKilled || 0) >= 1 || a.first_boss_kill)) {
       a.class_sagittarius = true;
       this.addNotification('Class Unlocked: Sagittarius!');
     }
     // First elite kill → Cornicen
-    if (!a.class_cornicen && s.enemiesKilled) {
+    if (!a.class_cornicen) {
       const eliteIds = ['oak_shield', 'wicker_man', 'ironbound_champion'];
-      const hasEliteKill = eliteIds.some(eid => (s.enemiesKilled[eid] || 0) >= 1);
-      if (hasEliteKill) { a.class_cornicen = true; this.addNotification('Class Unlocked: Cornicen!'); }
+      const hasEliteKill = s.enemiesKilled && eliteIds.some(eid => (s.enemiesKilled[eid] || 0) >= 1);
+      if (hasEliteKill || a.first_elite_kill) { a.class_cornicen = true; this.addNotification('Class Unlocked: Cornicen!'); }
     }
-    // Reach march 3 → Signifer
-    if (!a.class_signifer && currentDiff >= 3) {
+    // Reach march 3 → Signifer (also unlock if any march 3+ achievement exists)
+    if (!a.class_signifer && (currentDiff >= 3 || a.class_equites || a.class_ballistarius || a.class_praetorian || a.class_cataphract)) {
       a.class_signifer = true;
       this.addNotification('Class Unlocked: Signifer!');
     }
     // Reach march 5 → Equites
-    if (!a.class_equites && currentDiff >= 5) {
+    if (!a.class_equites && (currentDiff >= 5 || a.class_ballistarius || a.class_praetorian || a.class_cataphract)) {
       a.class_equites = true;
       this.addNotification('Class Unlocked: Equites!');
     }
     // Reach march 7 → Ballistarius
-    if (!a.class_ballistarius && currentDiff >= 7) {
+    if (!a.class_ballistarius && (currentDiff >= 7 || a.class_praetorian || a.class_cataphract)) {
       a.class_ballistarius = true;
       this.addNotification('Class Unlocked: Ballistarius!');
     }
     // Reach march 8 → Praetorian
-    if (!a.class_praetorian && currentDiff >= 8) {
+    if (!a.class_praetorian && (currentDiff >= 8 || a.class_cataphract || a.boss_corpse_varus)) {
       a.class_praetorian = true;
       this.addNotification('Class Unlocked: Praetorian!');
     }
     // Reach march 9 → Cataphract
-    if (!a.class_cataphract && currentDiff >= 9) {
+    if (!a.class_cataphract && (currentDiff >= 9 || a.class_vestalis || a.boss_spirits_defeated)) {
       a.class_cataphract = true;
       this.addNotification('Class Unlocked: Cataphract!');
     }
     // Defeat Fog Weaver → Arcania
-    if (!a.class_arcania && (s.enemiesKilled && (s.enemiesKilled['fog_weaver'] || 0) >= 1)) {
-      a.class_arcania = true;
-      this.addNotification('Class Unlocked: Arcania!');
+    if (!a.class_arcania) {
+      const fogKill = s.enemiesKilled && (s.enemiesKilled['fog_weaver'] || 0) >= 1;
+      if (fogKill || a.boss_fog_weaver_x3) { a.class_arcania = true; this.addNotification('Class Unlocked: Arcania!'); }
     }
     // Defeat Thusnelda → Wulfswestr
-    if (!a.class_wulfswestr && (s.enemiesKilled && (s.enemiesKilled['thusnelda'] || 0) >= 1)) {
-      a.class_wulfswestr = true;
-      this.addNotification('Class Unlocked: Wulfswestr!');
+    if (!a.class_wulfswestr) {
+      const thusKill = s.enemiesKilled && (s.enemiesKilled['thusnelda'] || 0) >= 1;
+      if (thusKill) { a.class_wulfswestr = true; this.addNotification('Class Unlocked: Wulfswestr!'); }
     }
     // Flawless boss win — tracked for achievements but no longer unlocks Praetorian
     if (!a._bossFlawless && this._pendingBossFlawless) {
       a._bossFlawless = true;
     }
     // Win full run → Vestalis
-    if (!a.class_vestalis && (s.runsCompleted || 0) >= 1) {
+    if (!a.class_vestalis && ((s.runsCompleted || 0) >= 1 || a.boss_spirits_defeated)) {
       a.class_vestalis = true;
       this.addNotification('Class Unlocked: Vestalis!');
     }

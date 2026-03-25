@@ -983,6 +983,14 @@ class GameUI {
       // Equites passive: Cavalry Charge — preview +50% on first attack
       const cavalryCharge = unit.classId === 'equites' && !unit.passiveTriggered;
 
+      // Staged die total: if dice are selected, compute exact value for die-scaling preview
+      const stagedDieTotal = (isStaged && this.stagedSkill.diceIds.length > 0)
+        ? this.stagedSkill.diceIds.reduce((sum, id) => {
+            const d = this.engine.dicePool.dice.find(die => die.id === id);
+            return sum + (d ? d.value : 0);
+          }, 0)
+        : null;
+
       // Die-value scaling preview: show range based on cost type
       const dieRange = (costType) => {
         if (costType === 'odd') return [1, 3, 5];
@@ -1002,8 +1010,13 @@ class GameUI {
         const hiDieScale = vals[vals.length - 1] / 3;
         const loBonusDmg = Math.floor(rawBonusDmg * loDieScale);
         const hiBonusDmg = Math.floor(rawBonusDmg * hiDieScale);
+        // If dice are staged, show exact value
+        const exactDmg = stagedDieTotal != null ? Math.max(1, baseDmg + stagedDieTotal + Math.floor(rawBonusDmg * (stagedDieTotal / 3))) : null;
         // "X + die value damage" pattern
         desc = desc.replace(/(\d+) \+ die value damage/g, () => {
+          if (exactDmg != null) {
+            return `<span class="stat-dmg" style="color:var(--gold)">${exactDmg}</span> damage`;
+          }
           const lo = Math.max(1, baseDmg + vals[0] + loBonusDmg);
           const hi = Math.max(1, baseDmg + vals[vals.length - 1] + hiBonusDmg);
           if (rawBonusDmg !== 0) {
@@ -1013,6 +1026,9 @@ class GameUI {
         });
         // "damage equal to die value" pattern
         desc = desc.replace(/damage equal to die value/g, () => {
+          if (exactDmg != null) {
+            return `<span class="stat-dmg" style="color:var(--gold)">${exactDmg}</span> damage`;
+          }
           const lo = Math.max(1, baseDmg + vals[0] + loBonusDmg);
           const hi = Math.max(1, baseDmg + vals[vals.length - 1] + hiBonusDmg);
           if (rawBonusDmg !== 0) {
@@ -1024,13 +1040,15 @@ class GameUI {
       if (skill.effects && skill.effects.dieScaleBlock) {
         const baseBlock = skill.effects.block || 0;
         const vals = dieRange(costType);
-        // "X + die value Block" — use effects.block as base
-        // Die-scale: equipment block bonus scales with die value (die/3)
         const loBlockScale = vals[0] / 3;
         const hiBlockScale = vals[vals.length - 1] / 3;
         const loBlockBonus = Math.floor(equipBlock * loBlockScale);
         const hiBlockBonus = Math.floor(equipBlock * hiBlockScale);
+        const exactBlock = stagedDieTotal != null ? baseBlock + stagedDieTotal + Math.floor(equipBlock * (stagedDieTotal / 3)) : null;
         desc = desc.replace(/(\d+) \+ die value Block/g, () => {
+          if (exactBlock != null) {
+            return `<span class="stat-block" style="color:var(--gold)">${exactBlock}</span> Block`;
+          }
           const lo = baseBlock + vals[0] + loBlockBonus;
           const hi = baseBlock + vals[vals.length - 1] + hiBlockBonus;
           if (equipBlock > 0) {
@@ -1039,6 +1057,9 @@ class GameUI {
           return `<span class="stat-block">${lo}-${hi}</span> Block`;
         });
         desc = desc.replace(/Block equal to die value/g, () => {
+          if (exactBlock != null) {
+            return `<span class="stat-block" style="color:var(--gold)">${exactBlock}</span> Block`;
+          }
           const lo = baseBlock + vals[0] + loBlockBonus;
           const hi = baseBlock + vals[vals.length - 1] + hiBlockBonus;
           if (equipBlock > 0) {
@@ -1050,12 +1071,15 @@ class GameUI {
       if (skill.effects && skill.effects.dieScaleHeal) {
         const baseHeal = skill.effects.heal || 0;
         const vals = dieRange(costType);
-        // Die-scale: equipment heal bonus scales with die value (die/3)
         const loHealScale = vals[0] / 3;
         const hiHealScale = vals[vals.length - 1] / 3;
         const loHealBonus = Math.floor(totalBonusHeal * loHealScale);
         const hiHealBonus = Math.floor(totalBonusHeal * hiHealScale);
+        const exactHeal = stagedDieTotal != null ? Math.max(0, baseHeal + stagedDieTotal + Math.floor(totalBonusHeal * (stagedDieTotal / 3))) : null;
         desc = desc.replace(/HP equal to die value/g, () => {
+          if (exactHeal != null) {
+            return `<span class="stat-heal" style="color:var(--gold)">${exactHeal}</span> HP`;
+          }
           const lo = Math.max(0, baseHeal + vals[0] + loHealBonus);
           const hi = Math.max(0, baseHeal + vals[vals.length - 1] + hiHealBonus);
           if (totalBonusHeal !== 0) {

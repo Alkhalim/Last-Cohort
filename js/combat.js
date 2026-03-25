@@ -3545,9 +3545,9 @@ class CombatEngine {
             }
           }
         });
-        // Check if all enemies died to poison
-        if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
-          this.triggerVictory();
+        // Process death effects (grove witch totems, ariovistus, etc.) and check victory
+        this.checkEnemyDeaths();
+        if (this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
           this.update();
           return;
         }
