@@ -138,11 +138,12 @@ class CombatEngine {
       }
     });
 
-    // Special: Gilded Cuirass — start combat with Block equal to training Block bonus
+    // Special: Gilded Cuirass — start combat with Block equal to total training sessions
     this.party.forEach(u => {
-      if (!u.downed && this.unitHasItem(u, 'gilded_cuirass') && (u.bonusBlock || 0) > 0) {
-        u.block = (u.block || 0) + u.bonusBlock;
-        this.addLog(`${u.name}'s Gilded Cuirass grants ${u.bonusBlock} Block from training.`);
+      if (!u.downed && this.unitHasItem(u, 'gilded_cuirass') && (u._trainingCount || 0) > 0) {
+        const cuirassBlock = u._trainingCount;
+        u.block = (u.block || 0) + cuirassBlock;
+        this.addLog(`${u.name}'s Gilded Cuirass grants ${cuirassBlock} Block from training.`);
       }
     });
 
@@ -398,71 +399,7 @@ class CombatEngine {
       u._contingency = false;
     });
 
-    // Poison tick on enemies
-    this.enemies.forEach(e => {
-      if (!e.dead && e.poison > 0) {
-        const poisonDmg = e.poison;
-        e.hp = Math.max(0, e.hp - poisonDmg);
-        // Attribute poison damage to the unit with highest poisonInflicted
-        const poisoner = this.party.filter(u => !u.downed && u.stats.poisonInflicted > 0)
-          .sort((a, b) => b.stats.poisonInflicted - a.stats.poisonInflicted)[0];
-        if (poisoner) poisoner.stats.poisonDamageDealt += poisonDmg;
-        this.addLog(`${e.name} takes ${poisonDmg} poison damage.`);
-        if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: e.index, type: 'poison' });
-        e.poison = Math.max(0, e.poison - 1);
-        if (e.hp <= 0) {
-          e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
-          this.addLog(`${e.name} falls to poison!`);
-          // Morale restore on poison kill
-          const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
-          const diffBonusKill = Math.floor((this.difficulty || 1) / 3);
-          let moraleRestore = (baseHp > 10 ? 3 : 2) + diffBonusKill;
-          if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
-          this.morale = Math.min(100, this.morale + moraleRestore);
-          this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
-          if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
-          // Serpent's Coil: spread 2 poison to all other enemies on poison kill
-          if (this.partyHasItem('serpents_coil')) {
-            this.enemies.forEach(other => {
-              if (!other.dead && other !== e) other.poison = (other.poison || 0) + 2;
-            });
-            this.addLog("Serpent's Coil spreads venom! (+2 Poison to all enemies)");
-          }
-          // Corpsebloom: heal all allies when enemy dies from poison (scales with level)
-          if (this.partyHasItem('corpsebloom')) {
-            const cbLv = this.getPartyItemLevel('corpsebloom');
-            const cbHeal = 1 * cbLv;
-            this.party.forEach(u => {
-              if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + cbHeal);
-            });
-            this.addLog(`Corpsebloom blooms — all allies heal ${cbHeal} HP!`);
-          }
-        }
-      }
-    });
-    // Check if all enemies died to poison
-    if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
-      this.triggerVictory();
-      return;
-    }
-    // Poison tick on allies (can down units)
-    this.party.forEach(u => {
-      if (!u.downed && u.poison > 0) {
-        const poisonDmg = u.poison;
-        u.hp = Math.max(0, u.hp - poisonDmg);
-        u.stats.damageTaken += poisonDmg;
-        this.addLog(`${u.name} takes ${poisonDmg} poison damage.`);
-        if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: poisonDmg, type: 'poison' });
-        u.poison = Math.max(0, u.poison - 1);
-      }
-    });
-    this.checkPartyDowned();
-    if (this.party.every(u => u.downed)) {
-      this.phase = PHASE.DEFEAT;
-      this.addLog('The last cohort falls to poison...');
-      this.update();
-      return;
-    }
+    // Poison ticks moved: ally poison at end of player turn, enemy poison at end of enemy turn
 
     // Structure aura damage (Wicker Man: turnDamageAll)
     this.enemies.forEach(e => {
@@ -910,7 +847,7 @@ class CombatEngine {
     // Story bosses: spawn spectral images of previously killed bosses
     const storyBossIds = ['corpse_of_arminius', 'corpse_of_varus', 'spirit_of_arminius', 'spirit_of_varus'];
     const hasStoryBoss = this.enemies.some(e => storyBossIds.includes(e.id) && !e.dead);
-    if (hasStoryBoss && this.runKilledBosses && this.runKilledBosses.length > 0) {
+    if (hasStoryBoss && this.turn >= 2 && this.runKilledBosses && this.runKilledBosses.length > 0) {
       if (!this._spectralQueue) {
         // Build queue: exclude all arminius/varus variants
         const excludeIds = ['corpse_of_arminius', 'corpse_of_varus', 'spirit_of_arminius', 'spirit_of_varus'];
@@ -935,7 +872,7 @@ class CombatEngine {
           const spectral = {
             index: this.enemies.length,
             ...data,
-            name: `Spectral ${data.name}`,
+            name: `Spectral ${data.name.replace(/^The /, '')}`,
             maxHp: spectralHp,
             hp: spectralHp,
             actions: spectralActions,
@@ -1555,6 +1492,19 @@ class CombatEngine {
     const healScale = result.bonusHealScale != null ? result.bonusHealScale : 1;
     const bonusHeal = Math.floor(((unit.equipHeal || 0) + moraleMod) * healScale);
 
+    // Shieldbreak: strip all block BEFORE dealing damage, and weaken target if block was removed
+    if (result.shieldbreak && result.target) {
+      const removedBlock = result.target.block || 0;
+      result.target.block = 0;
+      if (removedBlock > 0) {
+        parts.push(`${result.target.name}'s defenses shattered! (-${removedBlock} Block)`);
+        // Weaken: target deals 40% less damage for 2 turns (reuses suppress mechanic)
+        result.target._suppressed = Math.max(result.target._suppressed || 0, 2);
+        parts.push(`${result.target.name} is weakened! (-40% damage for 2 turns)`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Sundered!', color: 'var(--blue-bright)' });
+      }
+    }
+
     if (result.damage && result.target && result.target.hp !== undefined) {
       // Morale Scaling: damage scales from 0.5x at 0 morale to 2.5x at 100 morale
       let scaledDamage = result.damage;
@@ -1568,7 +1518,11 @@ class CombatEngine {
       // Bonus damage scaling: only scales own equipment damage, buff damage always full
       const dmgScale = result.bonusDmgScale || (result.halfBonusDmg ? 0.5 : 1);
       const ownBonusDmg = (unit.equipDamage || 0) + moraleMod + chargeBonus;
-      const effectiveBonusDmg = dmgScale !== 1 ? Math.floor(ownBonusDmg * dmgScale) + buffDmg : bonusDmg;
+      let effectiveBonusDmg = dmgScale !== 1 ? Math.floor(ownBonusDmg * dmgScale) + buffDmg : bonusDmg;
+      // Die-scale: equipment bonus scales with die value (die/3). High rolls amplify gear, low rolls diminish it.
+      if (result._dieScaleFactor != null) {
+        effectiveBonusDmg = Math.floor(effectiveBonusDmg * result._dieScaleFactor);
+      }
       // Overrun: log bonus from matching dice
       if (result._overrunBonus) {
         parts.push(`Overrun! (+${result._overrunBonus})`);
@@ -1919,7 +1873,9 @@ class CombatEngine {
       }
     }
     if (result.heal && result.target) {
-      let totalHeal = result.heal + bonusHeal;
+      let scaledBonusHeal = bonusHeal;
+      if (result._dieScaleFactor != null) scaledBonusHeal = Math.floor(bonusHeal * result._dieScaleFactor);
+      let totalHeal = result.heal + scaledBonusHeal;
       // Wulfswestr passive: Forest-Born — healing on self is doubled
       if (result.target.classId === 'wulfswestr' && result.target === unit) {
         totalHeal *= 2;
@@ -1957,10 +1913,11 @@ class CombatEngine {
         result.target.stats.blockGenerated += 4;
         parts.push(`Howl of Defiance shields ${result.target.name}! (+4 Block)`);
       }
-      // Special: Marsh Fang — healing clears 1 poison from target
+      // Special: Marsh Fang — healing clears 3 poison from target
       if (this.unitHasItem(unit, 'marsh_fang') && result.target.poison > 0) {
-        result.target.poison = Math.max(0, result.target.poison - 1);
-        parts.push('Marsh Fang purges 1 poison.');
+        const purgeAmt = Math.min(3, result.target.poison);
+        result.target.poison = Math.max(0, result.target.poison - 3);
+        parts.push(`Marsh Fang purges ${purgeAmt} poison.`);
       }
       // Herbalist's Satchel: healing applies poison to random enemy (scales with level)
       if (this.unitHasItem(unit, 'herbalists_satchel') && actual > 0) {
@@ -2007,7 +1964,9 @@ class CombatEngine {
     }
     if (result.block) {
       const blockTarget = result.blockTarget || result.target || unit;
-      const totalBlock = result.block + bonusBlock;
+      let scaledBonusBlock = bonusBlock;
+      if (result._dieScaleFactor != null) scaledBonusBlock = Math.floor(bonusBlock * result._dieScaleFactor);
+      const totalBlock = result.block + scaledBonusBlock;
       blockTarget.block = (blockTarget.block || 0) + totalBlock;
       unit.stats.blockGenerated += totalBlock;
       const bonusStr = bonusBlock > 0 ? ` (${result.block}+${bonusBlock})` : '';
@@ -2072,7 +2031,7 @@ class CombatEngine {
       // Battle Standard Cord / Thusnelda's Standard: block skills restore morale
       let blockMorale = 0;
       if (this.unitHasItem(unit, 'thusneldas_standard')) blockMorale += 2;
-      if (this.unitHasItem(unit, 'battle_standard_cord')) blockMorale += 1;
+      if (this.unitHasItem(unit, 'battle_standard_cord')) blockMorale += 3;
       if (blockMorale > 0) {
         this.morale = Math.min(100, this.morale + blockMorale);
         parts.push(`+${blockMorale} Morale`);
@@ -2126,9 +2085,10 @@ class CombatEngine {
       const attackStr = selfAttacks === 1 ? 'next attack' : `next ${selfAttacks} attacks`;
       parts.push(`${unit.name} gains +${selfBonusDmg} damage (${attackStr}).`);
     }
-    // Poison (single target — full equipment scaling)
+    // Poison (single target — equipment scaling, optionally amplified by bonusPoisonScale)
     if (result.poison && result.target) {
-      let totalPoison = result.poison + (unit.equipPoison || 0);
+      const poisonScale = result.bonusPoisonScale || 1;
+      let totalPoison = result.poison + Math.floor((unit.equipPoison || 0) * poisonScale);
       // Double/Triple Poison: multiplies applied poison if target is already poisoned
       const alreadyPoisoned = (result.target.poison || 0) > 0;
       if (result.triplePoison && alreadyPoisoned) totalPoison *= 3;
@@ -2146,9 +2106,9 @@ class CombatEngine {
       result.target._marked = 2; // ticks down each enemy turn; active while > 0
       parts.push(`${result.target.name} is marked! (+20% damage next turn)`);
     }
-    // Poison splash: apply to adjacent enemies (scales 0.1 lower than main target)
+    // Poison splash: apply to adjacent enemies (scales slower than main target)
     if (result.poisonSplash && result.target) {
-      const splashScale = result.bonusDmgScale || 0.9;
+      const splashScale = result.splashPoisonScale || 0.5;
       const splashPoison = result.poisonSplash + Math.floor((unit.equipPoison || 0) * splashScale);
       // Splash to adjacent enemies (up to 2 closest in same row)
       const sameRow = this.enemies.filter(e => !e.dead && e !== result.target && e.row === result.target.row);
@@ -2368,12 +2328,7 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'Counter', color: 'var(--gold)' });
     }
 
-    // Shieldbreak: remove all block from target
-    if (result.shieldbreak && result.target) {
-      const removedBlock = result.target.block || 0;
-      result.target.block = 0;
-      if (removedBlock > 0) parts.push(`${result.target.name}'s block shattered! (-${removedBlock} Block)`);
-    }
+    // Shieldbreak: handled before damage (see above)
 
     // Overwatch: set flag on unit, checked during enemy damage
     if (result.overwatch) {
@@ -3224,6 +3179,13 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('morale', { amount: bossBonus });
     }
 
+    // Clear stuns and per-combat debuffs from party
+    this.party.forEach(u => {
+      u._stunNextTurn = false;
+      u._stunnedThisTurn = false;
+      u.actedThisTurn = false;
+    });
+
     // Immediate update so morale bar and mood reflect the victory right away
     this.update();
     const fast = typeof isFastMode === 'function' && isFastMode();
@@ -3277,8 +3239,12 @@ class CombatEngine {
               }
             });
           }
-          this.morale = Math.min(100, this.morale + moraleRestore);
-          this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
+          this.morale = Math.max(0, Math.min(100, this.morale + moraleRestore));
+          if (moraleRestore >= 0) {
+            this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
+          } else {
+            this.addLog(`The men recoil in horror. (${moraleRestore} Morale)`);
+          }
           if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
 
           // Fang Necklace: killing an enemy grants damage buff for 2 attacks (scales with level)
@@ -3334,6 +3300,18 @@ class CombatEngine {
               this.addLog(`${champion.name} charges forward in rage and strikes ${victim.name} for 5 damage!`);
               if (this.onVisual) this.onVisual('unitHit', { unitIndex: victim.index, damage: 5 });
             }
+          }
+
+          // Grove Witch death: all healing totems die with her
+          if (e.id === 'grove_witch') {
+            this.enemies.forEach(t => {
+              if (!t.dead && t.id === 'healing_totem') {
+                t.hp = 0; t.dead = true;
+                this.killedEnemies.push(t.id);
+                this.totalEnemiesKilled++;
+                this.addLog(`${t.name} withers and crumbles!`);
+              }
+            });
           }
 
           // Mire Mother: gains +2 damage per action when a boar dies
@@ -3419,6 +3397,10 @@ class CombatEngine {
         }
       }
     }
+    // Safety: if all enemies are dead after processing deaths, trigger victory
+    if (this.enemies.length > 0 && this.enemies.every(e => e.dead) && this.phase !== PHASE.VICTORY && this.phase !== PHASE.DEFEAT) {
+      this.triggerVictory();
+    }
   }
 
   shouldAutoEndTurn() {
@@ -3449,6 +3431,25 @@ class CombatEngine {
     if (moraleDecay > 0) {
       this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
       if (this.onVisual) this.onVisual('morale', { amount: -moraleDecay });
+    }
+
+    // Poison tick on allies at end of player turn
+    this.party.forEach(u => {
+      if (!u.downed && u.poison > 0) {
+        const poisonDmg = u.poison;
+        u.hp = Math.max(0, u.hp - poisonDmg);
+        u.stats.damageTaken += poisonDmg;
+        this.addLog(`${u.name} takes ${poisonDmg} poison damage.`);
+        if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: poisonDmg, type: 'poison' });
+        u.poison = Math.max(0, u.poison - 1);
+      }
+    });
+    this.checkPartyDowned();
+    if (this.party.every(u => u.downed)) {
+      this.phase = PHASE.DEFEAT;
+      this.addLog('The last cohort falls to poison...');
+      this.update();
+      return;
     }
 
     this.phase = PHASE.ENEMY_TURN;
@@ -3502,6 +3503,54 @@ class CombatEngine {
     if (index >= enemies.length || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
       this.checkPartyDowned();
       if (this.phase !== PHASE.DEFEAT && this.phase !== PHASE.VICTORY) {
+        // Poison tick on enemies at end of enemy turn
+        this.enemies.forEach(e => {
+          if (!e.dead && e.poison > 0) {
+            const poisonDmg = e.poison;
+            e.hp = Math.max(0, e.hp - poisonDmg);
+            const poisoner = this.party.filter(u => !u.downed && u.stats.poisonInflicted > 0)
+              .sort((a, b) => b.stats.poisonInflicted - a.stats.poisonInflicted)[0];
+            if (poisoner) poisoner.stats.poisonDamageDealt += poisonDmg;
+            this.addLog(`${e.name} takes ${poisonDmg} poison damage.`);
+            if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: e.index, type: 'poison' });
+            e.poison = Math.max(0, e.poison - 1);
+            if (e.hp <= 0) {
+              e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
+              this.addLog(`${e.name} falls to poison!`);
+              const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
+              const diffBonusKill = Math.floor((this.difficulty || 1) / 3);
+              let moraleRestore = (baseHp > 10 ? 3 : 2) + diffBonusKill;
+              if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
+              this.morale = Math.max(0, Math.min(100, this.morale + moraleRestore));
+              if (moraleRestore >= 0) {
+                this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
+              } else {
+                this.addLog(`The men recoil in horror. (${moraleRestore} Morale)`);
+              }
+              if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
+              if (this.partyHasItem('serpents_coil')) {
+                this.enemies.forEach(other => {
+                  if (!other.dead && other !== e) other.poison = (other.poison || 0) + 2;
+                });
+                this.addLog("Serpent's Coil spreads venom! (+2 Poison to all enemies)");
+              }
+              if (this.partyHasItem('corpsebloom')) {
+                const cbLv = this.getPartyItemLevel('corpsebloom');
+                const cbHeal = 1 * cbLv;
+                this.party.forEach(u => {
+                  if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + cbHeal);
+                });
+                this.addLog(`Corpsebloom blooms — all allies heal ${cbHeal} HP!`);
+              }
+            }
+          }
+        });
+        // Check if all enemies died to poison
+        if (this.enemies.length > 0 && this.enemies.every(e => e.dead)) {
+          this.triggerVictory();
+          this.update();
+          return;
+        }
         this.rollEnemyIntents();
         setTimeout(() => this.startRollPhase(), 400);
       } else {
@@ -3590,7 +3639,7 @@ class CombatEngine {
     // If enemy is in back row and has no usable ranged/aoe/support actions, move to front
     if (enemy.row === 'back' && !enemy.isStructure) {
       const canActFromBack = enemy.actions.some(a =>
-        a.ignoreRow || a.aoe || a.spawn || a.blockSelf || a.blockAllEnemies || a.blockFrontRow ||
+        a.ignoreRow || a.aoe || a.spawn || a.blockSelf || a.blockAllEnemies || a.blockFrontRow || a.healAlly ||
         (a.damage === 0 && (a.morale || a.runeBinding))
       );
       if (!canActFromBack) {
@@ -3912,6 +3961,13 @@ class CombatEngine {
       if (target.index !== undefined && this.onVisual) this.onVisual('unitPoison', { unitIndex: target.index, amount: action.poisonTarget });
     }
 
+    // Weaken target: reduce target's equipDamage for the rest of combat
+    if (action.weakenTarget && target) {
+      target.equipDamage = (target.equipDamage || 0) - action.weakenTarget;
+      this.addLog(`${enemy.name} ${action.text}! ${target.name}'s damage reduced by ${action.weakenTarget}.`);
+      if (target.index !== undefined && this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: `-${action.weakenTarget} Dmg`, color: '#aa66aa' });
+    }
+
     if (action.morale) {
       let moraleDelta = action.morale;
       // Deafened: morale attacks have no effect
@@ -4005,6 +4061,7 @@ class CombatEngine {
       this.enemies.forEach(e => {
         if (!e.dead && e !== enemy) {
           e.block = (e.block || 0) + action.blockAllEnemies;
+          if (this.onVisual) this.onVisual('enemyBlock', { enemyIndex: e.index, amount: action.blockAllEnemies });
         }
       });
       this.addLog(`${enemy.name} ${action.text}. All enemies gain ${action.blockAllEnemies} Block.`);
@@ -4015,6 +4072,7 @@ class CombatEngine {
       this.enemies.forEach(e => {
         if (!e.dead && e.row === 'front' && e !== enemy) {
           e.block = (e.block || 0) + action.blockFrontRow;
+          if (this.onVisual) this.onVisual('enemyBlock', { enemyIndex: e.index, amount: action.blockFrontRow });
         }
       });
       this.addLog(`${enemy.name} ${action.text}. Front-row enemies gain ${action.blockFrontRow} Block.`);
@@ -4024,6 +4082,23 @@ class CombatEngine {
     if (action.blockSelf) {
       enemy.block = (enemy.block || 0) + action.blockSelf;
       this.addLog(`${enemy.name} ${action.text}. Gains ${action.blockSelf} Block.`);
+      if (this.onVisual) this.onVisual('enemyBlock', { enemyIndex: enemy.index, amount: action.blockSelf });
+    }
+
+    // Heal ally: heal the most wounded non-dead ally
+    if (action.healAlly) {
+      const wounded = this.enemies.filter(e => !e.dead && e !== enemy && e.hp < e.maxHp)
+        .sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp));
+      if (wounded.length > 0) {
+        const ally = wounded[0];
+        const healAmt = Math.min(action.healAlly, ally.maxHp - ally.hp);
+        ally.hp += healAmt;
+        this.addLog(`${enemy.name} ${action.text}. ${ally.name} heals ${healAmt} HP.`);
+      }
+      if (action.selfDamage) {
+        enemy.hp = Math.max(1, enemy.hp - action.selfDamage);
+        this.addLog(`${enemy.name} sacrifices ${action.selfDamage} HP.`);
+      }
     }
 
     // Spawn action: spawn another enemy

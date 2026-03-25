@@ -94,6 +94,12 @@ function buildSkillExecute(skillData) {
     // Die value scaling: add die value(s) to base damage or block
     const dieTotal = dice.reduce((s, d) => s + (d ? d.value : 0), 0);
 
+    // Die-scale factor: equipment bonuses scale with die value (dieTotal/3)
+    // A die of 3 is baseline (1x), die of 1 = 0.33x, die of 6 = 2x
+    if (effects.dieScaleDamage || effects.dieScaleBlock || effects.dieScaleHeal) {
+      result._dieScaleFactor = dieTotal / 3;
+    }
+
     // Damage (single target or split across dual targets)
     if (effects.damage !== undefined) {
       const dmg = effects.damage + (effects.dieScaleDamage ? dieTotal : 0);
@@ -360,6 +366,9 @@ function buildSkillExecute(skillData) {
 
     // Custom bonus damage scaling (e.g. 1.5x)
     if (effects.bonusDmgScale) result.bonusDmgScale = effects.bonusDmgScale;
+    // Custom bonus poison scaling for main target and splash
+    if (effects.bonusPoisonScale) result.bonusPoisonScale = effects.bonusPoisonScale;
+    if (effects.splashPoisonScale) result.splashPoisonScale = effects.splashPoisonScale;
 
     // Consume all damage buffs after dealing damage
     if (effects.consumeAllBuffs) result.consumeAllBuffs = true;

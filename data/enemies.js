@@ -301,7 +301,7 @@ const RAW_ENEMIES = {
     "id": "cursed_warrior", "name": "Cursed Warrior",
     "maxHp": 20, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 6,
     "minDifficulty": 4,
-    "deathPoison": 1,
+    "deathPoison": 3,
     "description": "A Germanic warrior marked by the Bone Speaker's rituals. Black veins crawl across his skin. Even in death, he poisons.",
     "ai": "aggressive",
     "actions": [
@@ -348,13 +348,13 @@ const RAW_ENEMIES = {
 
   "fog_weaver": {
     "id": "fog_weaver", "name": "The Fog Weaver",
-    "maxHp": 38, "row": "back", "damage": [4, 8], "speed": 1, "xpValue": 27,
+    "maxHp": 38, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 27,
     "minDifficulty": 5,
     "isBoss": true, "ai": "boss",
     "description": "A spectral seeress who fights from behind a veil of fog. Attacks miss, dice fail, and illusions draw your steel. You must cut through the fog to reach the weaver within.",
     "actions": [
-      { "name": "Mind Shatter", "damage": 6, "morale": -5, "chance": 0.3, "text": "reaches into a soldier's mind and tears", "ignoreRow": true },
-      { "name": "Fog Pulse", "damage": 4, "chance": 0.25, "text": "sends a pulse of fog that chills the blood", "aoe": true },
+      { "name": "Mind Shatter", "damage": 8, "morale": -5, "chance": 0.3, "text": "reaches into a soldier's mind and tears", "ignoreRow": true },
+      { "name": "Fog Pulse", "damage": 5, "chance": 0.25, "text": "sends a pulse of fog that chills the blood", "aoe": true },
       { "name": "Weave Illusion", "damage": 0, "chance": 0.25, "text": "weaves a fog illusion to fight for her", "spawn": "fog_illusion" },
       { "name": "Hex", "damage": 0, "morale": -6, "chance": 0.2, "text": "speaks a hex — a die crumbles to dust", "cooldown": 1 }
     ]
@@ -362,11 +362,12 @@ const RAW_ENEMIES = {
   "fog_illusion": {
     "id": "fog_illusion", "name": "Fog Illusion",
     "maxHp": 16, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 1,
-    "description": "A shape in the fog that looks like a warrior but dissolves when struck. It draws attacks away from the Weaver.",
+    "deathMoraleMultiplier": -1,
+    "description": "The fog takes the shape of a wife, a mother, a sister — someone the men left behind. They hesitate, blades trembling. Killing it feels wrong.",
     "ai": "aggressive",
     "actions": [
-      { "name": "Phantom Strike", "damage": 4, "chance": 0.7, "text": "lashes out with foggy tendrils" },
-      { "name": "Fade", "damage": 0, "morale": -2, "chance": 0.3, "text": "shimmers and fades — your men swing at nothing" }
+      { "name": "Pleading Whisper", "damage": 0, "weakenTarget": 2, "chance": 0.5, "text": "whispers with a familiar voice — resolve falters" },
+      { "name": "Spectral Touch", "damage": 4, "pierceBlock": true, "chance": 0.5, "text": "reaches through armor with ghostly fingers" }
     ]
   },
 
@@ -444,19 +445,19 @@ const RAW_ENEMIES = {
       { "name": "Blood Siphon", "damage": 6, "chance": 0.35, "text": "drains life from a soldier", "ignoreRow": true },
       { "name": "Crimson Ward", "damage": 0, "chance": 0.3, "text": "weaves a ward of blood — allies brace", "blockAllEnemies": 5 },
       { "name": "Hemorrhage", "damage": 4, "poisonTarget": 4, "chance": 0.2, "text": "opens wounds that won't close", "ignoreRow": true },
-      { "name": "Blood Offering", "damage": 0, "chance": 0.15, "text": "sacrifices his own blood to strengthen an ally", "blockSelf": -3 }
+      { "name": "Blood Offering", "damage": 0, "chance": 0.15, "text": "sacrifices his own blood to mend an ally", "healAlly": 8, "selfDamage": 3 }
     ]
   },
   "ironhide_boar": {
     "id": "ironhide_boar", "name": "Ironhide Boar",
-    "maxHp": 30, "row": "front", "damage": [7, 12], "speed": 1, "xpValue": 8,
+    "maxHp": 30, "row": "front", "damage": [5, 9], "speed": 1, "xpValue": 8,
     "minDifficulty": 6,
     "description": "A massive boar with hide like iron plate. Its charge shatters shields and bones alike.",
     "ai": "aggressive",
     "actions": [
-      { "name": "Tusk Gore", "damage": 9, "chance": 0.4, "text": "gores with iron-hard tusks" },
-      { "name": "Iron Charge", "damage": 7, "chance": 0.35, "text": "charges through the line", "aoe": true, "cooldown": 1 },
-      { "name": "Stomp", "damage": 11, "chance": 0.25, "text": "tramples a soldier underfoot" }
+      { "name": "Tusk Gore", "damage": 7, "chance": 0.4, "text": "gores with iron-hard tusks" },
+      { "name": "Iron Charge", "damage": 5, "chance": 0.35, "text": "charges through the line", "aoe": true, "cooldown": 1 },
+      { "name": "Stomp", "damage": 9, "chance": 0.25, "text": "tramples a soldier underfoot" }
     ]
   },
   "forest_wraith": {

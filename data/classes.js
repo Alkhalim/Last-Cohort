@@ -69,8 +69,8 @@ const RAW_CLASSES = {
       {
         "id": "sunder", "name": "Sunder",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "Smash through defenses. Remove all block from target and deal 3 damage.",
-        "effects": { "damage": 3, "shieldbreak": true }
+        "description": "Smash through defenses. Remove all block from target and deal 2 damage. If block was removed, weaken target (-40% damage, 2 turns).",
+        "effects": { "damage": 2, "shieldbreak": true, "bonusDmgScale": 0.5 }
       },
       {
         "id": "shoulder_charge", "name": "Shoulder Charge", "cooldown": 1,
@@ -158,8 +158,8 @@ const RAW_CLASSES = {
       {
         "id": "overwatch", "name": "Overwatch", "cooldown": 1,
         "cost": { "type": "exact", "val": 5 }, "target": "self",
-        "description": "Set a watch. The next enemy to deal damage this turn takes 5 damage.",
-        "effects": { "overwatch": 5 }
+        "description": "Free action. Set a watch. The next enemy to deal damage this turn takes 5 damage.",
+        "effects": { "overwatch": 5, "freeAction": true }
       },
       {
         "id": "press_advantage", "name": "Press the Advantage", "cooldown": 2,
@@ -212,7 +212,7 @@ const RAW_CLASSES = {
         "id": "triage", "name": "Triage", "starter": true,
         "cost": { "type": "exact", "val": 4 }, "target": "single_ally",
         "description": "Heal an ally for 6 HP. Clears poison.",
-        "effects": { "heal": 6, "cleanse": true }
+        "effects": { "heal": 6, "cleanse": true, "bonusHealScale": 1.15 }
       },
       {
         "id": "emergency_draught", "name": "Emergency Draught", "cooldown": 1,
@@ -225,7 +225,7 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to adjacent enemies.",
-        "effects": { "poison": 4, "poisonSplash": 2, "bonusDmgScale": 0.9 }
+        "effects": { "poison": 4, "poisonSplash": 2, "bonusPoisonScale": 1.15, "splashPoisonScale": 0.5 }
       },
       {
         "id": "sawbones_choice", "name": "Sawbones' Choice", "cooldown": 1,
@@ -237,7 +237,7 @@ const RAW_CLASSES = {
         "id": "field_surgery", "name": "Field Surgery", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. Heal all allies for 4 HP.",
-        "effects": { "healAll": 4 }
+        "effects": { "healAll": 4, "bonusHealScale": 0.85 }
       },
       {
         "id": "venom_strike", "name": "Venom Strike", "cooldown": 1,

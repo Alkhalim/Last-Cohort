@@ -102,16 +102,108 @@ const RAW_ENCOUNTERS = {
     ]
   },
   "marchIntroEncounters": {
-    "1": { "name": "Forest Scouts", "enemies": ["cheruscan_raider", "sling_hunter"], "intro": "Scouts spot your column as you enter the forest. The first blood of the march." },
-    "2": { "name": "The Hunters' Welcome", "enemies": ["germanic_berserker", "spear_thrower", "sling_hunter"], "intro": "A berserker and a spearman burst from the undergrowth. The hunting grounds are hostile." },
-    "3": { "name": "Warcamp Vanguard", "enemies": ["ironbound_champion", "cheruscan_shieldbearer"], "intro": "An iron-clad warrior and his shieldbearer block the camp's entrance." },
-    "4": { "name": "Bog Crawlers", "enemies": ["plague_bearer", "shadow_stalker", "fen_viper"], "intro": "A diseased figure stumbles from the murk. An assassin strikes from the shadows. The bog is hostile." },
-    "5": { "name": "Ancient Sentinels", "enemies": ["warden_of_the_deep", "raven_caller"], "intro": "A bark-bound guardian and a curse raven bar the way into the old forest." },
-    "6": { "name": "Blood Offering", "enemies": ["blood_druid", "cursed_warrior", "cursed_warrior"], "intro": "The grove reeks of iron. A druid and his cursed thralls guard a fresh altar." },
-    "7": { "name": "Ghosts of the March", "enemies": ["hollow_legionary", "hollow_legionary", "hollow_equites"], "intro": "Roman soldiers block the trail — your countrymen, risen from their graves. Their empty eyes know no mercy." },
-    "8": { "name": "The Flooded Gate", "enemies": ["elder_seer", "warden_of_the_deep", "plague_bearer"], "intro": "An ancient seer guards the flooded gate. Her curses echo off the drowned walls." },
-    "9": { "name": "The Pulsing Threshold", "enemies": ["heartwood_sentinel", "rot_spawn", "dryad_huntress"], "intro": "The forest's heart beats beneath your feet. A massive sentinel and fungal horrors rise to stop you." },
-    "10": { "name": "The Final Guard", "enemies": ["fate_weaver", "spirit_wolf", "spirit_wolf", "death_champion"], "intro": "A fate weaver and spectral wolves guard the threshold. Beyond them, the spirits of Arminius and Varus await." }
+    "1": [
+      { "name": "Forest Scouts", "enemies": ["cheruscan_raider", "sling_hunter"], "intro": "Scouts spot your column as you enter the forest." },
+      { "name": "Wolf Ambush", "enemies": ["marsh_wolf", "marsh_wolf", "fen_viper"], "intro": "Wolves burst from the undergrowth, fangs bared." },
+      { "name": "Raider Patrol", "enemies": ["cheruscan_raider", "cheruscan_raider"], "intro": "A patrol of raiders blocks the trail ahead." }
+    ],
+    "2": [
+      { "name": "The Hunters' Welcome", "enemies": ["germanic_berserker", "spear_thrower", "sling_hunter"], "intro": "A berserker and a spearman burst from the undergrowth." },
+      { "name": "Spear Volley", "enemies": ["spear_thrower", "spear_thrower", "cheruscan_raider"], "intro": "Spears fly from the canopy. The hunters have found you." },
+      { "name": "Berserker's Rush", "enemies": ["germanic_berserker", "germanic_berserker"], "intro": "Two wild-eyed berserkers charge from the treeline, frothing at the mouth." }
+    ],
+    "3": [
+      { "name": "Warcamp Vanguard", "enemies": ["ironbound_champion", "cheruscan_shieldbearer"], "intro": "An iron-clad warrior and his shieldbearer block the camp's entrance." },
+      { "name": "Runecarver's Ward", "enemies": ["runecarver", "cheruscan_guardian", "cheruscan_raider"], "intro": "A runecarver has warded the path. His runes shimmer with power." },
+      { "name": "Shield Wall", "enemies": ["cheruscan_shieldbearer", "cheruscan_shieldbearer", "spear_thrower"], "intro": "A wall of shields blocks the narrow trail. Spears jab from behind." }
+    ],
+    "4": [
+      { "name": "Bog Crawlers", "enemies": ["plague_bearer", "shadow_stalker", "fen_viper"], "intro": "A diseased figure stumbles from the murk. An assassin strikes from the shadows." },
+      { "name": "Leech Swarm", "enemies": ["mire_leech", "mire_leech", "plague_bearer"], "intro": "The black water churns. Bloated leeches and a plague bearer rise from the bog." },
+      { "name": "Stalker's Trap", "enemies": ["shadow_stalker", "shadow_stalker"], "intro": "Shadows move between the dead trees. The bog stalkers have been waiting." }
+    ],
+    "5": [
+      { "name": "Ancient Sentinels", "enemies": ["warden_of_the_deep", "raven_caller"], "intro": "A bark-bound guardian and a curse raven bar the way into the old forest." },
+      { "name": "Raven Murder", "enemies": ["raven_caller", "raven_caller", "war_hound"], "intro": "Black feathers fill the air. The ravens screech and dive." },
+      { "name": "Deep Warden", "enemies": ["warden_of_the_deep", "cheruscan_guardian", "bog_seer"], "intro": "An ancient guardian stands between massive roots, flanked by forest kin." }
+    ],
+    "6": [
+      { "name": "Blood Offering", "enemies": ["blood_druid", "cursed_warrior", "cursed_warrior"], "intro": "The grove reeks of iron. A druid and his cursed thralls guard a fresh altar." },
+      { "name": "Ironhide Charge", "enemies": ["ironhide_boar", "war_boar", "blood_druid"], "intro": "A massive boar crashes through the brush, followed by a blood druid chanting war rites." },
+      { "name": "Druid Circle", "enemies": ["blood_druid", "blood_druid"], "intro": "Two druids channel crimson light between the standing stones. The air tastes like iron." }
+    ],
+    "7": [
+      { "name": "Ghosts of the March", "enemies": ["hollow_legionary", "hollow_legionary", "hollow_equites"], "intro": "Roman soldiers block the trail — your countrymen, risen from their graves." },
+      { "name": "Haunted Patrol", "enemies": ["hollow_centurion", "hollow_legionary", "forest_wraith"], "intro": "A ghostly centurion leads the dead. A forest wraith drifts in their wake." },
+      { "name": "Waldgeist Ambush", "enemies": ["forest_wraith", "forest_wraith", "dryad_huntress"], "intro": "The trees themselves seem to move. Spectral shapes coalesce from the mist." }
+    ],
+    "8": [
+      { "name": "The Flooded Gate", "enemies": ["elder_seer", "warden_of_the_deep", "plague_bearer"], "intro": "An ancient seer guards the flooded gate. Her curses echo off the drowned walls." },
+      { "name": "Drowned Legion", "enemies": ["hollow_legionary", "hollow_centurion", "elder_seer"], "intro": "Dead legionaries stand in the flooded ruins, commanded by a seer." },
+      { "name": "Seer's Court", "enemies": ["elder_seer", "elder_seer"], "intro": "Two ancient seers chant in unison. The air crackles with doom." }
+    ],
+    "9": [
+      { "name": "The Pulsing Threshold", "enemies": ["heartwood_sentinel", "rot_spawn", "dryad_huntress"], "intro": "The forest's heart beats beneath your feet. A massive sentinel rises." },
+      { "name": "Rot Garden", "enemies": ["rot_spawn", "rot_spawn", "heartwood_sentinel"], "intro": "Fungal horrors sprout from the living ground. A sentinel of heartwood guards them." },
+      { "name": "Huntress Pack", "enemies": ["dryad_huntress", "dryad_huntress", "rot_spawn"], "intro": "Thorn arrows rain from the canopy. The dryads are protecting the heart." }
+    ],
+    "10": [
+      { "name": "The Final Guard", "enemies": ["fate_weaver", "spirit_wolf", "spirit_wolf", "death_champion"], "intro": "A fate weaver and spectral wolves guard the threshold." },
+      { "name": "Spectral Gauntlet", "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "fate_weaver"], "intro": "A pack of spectral wolves circles you. A fate weaver watches from behind." },
+      { "name": "Death's Vanguard", "enemies": ["death_champion", "death_champion", "fate_weaver"], "intro": "Two wiedergangr and a fate weaver stand at the final gate." }
+    ]
+  },
+  "marchSecondEncounters": {
+    "1": [
+      { "name": "Viper Den", "enemies": ["fen_viper", "fen_viper", "sling_hunter"], "intro": "You nearly step on a nest of vipers. A slinger watches from the rocks above." },
+      { "name": "Hunters and Fangs", "enemies": ["sling_hunter", "sling_hunter", "marsh_wolf"], "intro": "Stones crack against bark. Two slingers drive you toward a waiting wolf." },
+      { "name": "Trail Predators", "enemies": ["marsh_wolf", "fen_viper", "cheruscan_raider"], "intro": "The forest narrows. A raider blocks the trail while beasts close from the flanks." }
+    ],
+    "2": [
+      { "name": "Javelin and Fang", "enemies": ["spear_thrower", "germanic_berserker", "marsh_wolf"], "intro": "A spear whistles past your ear. A berserker and a wolf charge from the brush." },
+      { "name": "Savage Charge", "enemies": ["germanic_berserker", "cheruscan_raider", "fen_viper"], "intro": "A screaming berserker crashes through the ferns, a raider and viper at his heels." },
+      { "name": "Spear and Fang", "enemies": ["spear_thrower", "spear_thrower", "marsh_wolf"], "intro": "Javelins arc from the canopy while a wolf circles to cut off retreat." }
+    ],
+    "3": [
+      { "name": "Ironbound Advance", "enemies": ["ironbound_champion", "runecarver", "sling_hunter"], "intro": "An iron-clad warrior strides forward, runes shimmering on his armor. A slinger covers the flank." },
+      { "name": "Guardian's Stand", "enemies": ["cheruscan_guardian", "cheruscan_guardian", "germanic_berserker"], "intro": "Two guardians lock shields. A berserker howls behind them, waiting for an opening." },
+      { "name": "Warded Patrol", "enemies": ["runecarver", "cheruscan_shieldbearer", "spear_thrower"], "intro": "A runecarver wards a shieldbearer as a spearman readies his javelins." }
+    ],
+    "4": [
+      { "name": "Diseased Ambush", "enemies": ["plague_bearer", "mire_leech", "fen_viper"], "intro": "The bog reeks of rot. A plague bearer and its parasites surge from the muck." },
+      { "name": "Shadows in the Mire", "enemies": ["shadow_stalker", "mire_leech", "bog_seer"], "intro": "A shadow darts between the dead trees. A seer chants while leeches writhe at her feet." },
+      { "name": "Leech Pit", "enemies": ["mire_leech", "mire_leech", "shadow_stalker"], "intro": "The black water erupts with leeches. A stalker waits in the reeds for the distraction to do its work." }
+    ],
+    "5": [
+      { "name": "Raven's Watch", "enemies": ["raven_caller", "cheruscan_guardian", "war_hound"], "intro": "A curse raven shrieks from the branches. A guardian and war hound block the old path." },
+      { "name": "Twin Wardens", "enemies": ["warden_of_the_deep", "warden_of_the_deep"], "intro": "Two bark-bound wardens rise from the roots, ancient and unyielding." },
+      { "name": "Curse Flock", "enemies": ["raven_caller", "bog_seer", "shadow_stalker"], "intro": "Ravens circle overhead as a seer chants. An assassin moves in the peripheral darkness." }
+    ],
+    "6": [
+      { "name": "Boar Guard", "enemies": ["ironhide_boar", "cursed_warrior", "blood_druid"], "intro": "An armored boar snorts before a bloodied altar. A cursed warrior and druid stand behind it." },
+      { "name": "Crimson Sentries", "enemies": ["blood_druid", "shadow_stalker", "war_hound"], "intro": "A druid paints sigils in blood. Her sentries — a stalker and a war hound — move to intercept." },
+      { "name": "Tusked Fury", "enemies": ["ironhide_boar", "ironhide_boar"], "intro": "Two ironhide boars lower their tusks and charge. The ground shakes beneath them." }
+    ],
+    "7": [
+      { "name": "Centurion's Command", "enemies": ["hollow_centurion", "hollow_equites", "hollow_legionary"], "intro": "A ghostly centurion barks orders. Dead cavalrymen and legionaries fall into formation." },
+      { "name": "Thorn Volley", "enemies": ["dryad_huntress", "dryad_huntress", "hollow_legionary"], "intro": "Thorn arrows rain from the canopy. A hollow legionary guards the huntresses' perch." },
+      { "name": "Spectral Riders", "enemies": ["hollow_equites", "hollow_equites", "forest_wraith"], "intro": "Ghostly riders thunder through the mist. A forest wraith drifts in their wake." }
+    ],
+    "8": [
+      { "name": "Sunken Patrol", "enemies": ["elder_seer", "hollow_legionary", "hollow_legionary"], "intro": "An elder seer commands drowned legionaries through the flooded halls." },
+      { "name": "Warden's Flood", "enemies": ["warden_of_the_deep", "warden_of_the_deep", "elder_seer"], "intro": "Two wardens block the flooded passage. An elder seer chants behind the rising water." },
+      { "name": "Drowned Officers", "enemies": ["hollow_centurion", "hollow_centurion", "plague_bearer"], "intro": "Two hollow centurions march from the drowned ruins, disease trailing in their wake." }
+    ],
+    "9": [
+      { "name": "Corrupted Roots", "enemies": ["heartwood_sentinel", "heartwood_sentinel", "blood_druid"], "intro": "Two massive sentinels of corrupted wood rise. A blood druid feeds them with crimson light." },
+      { "name": "Spore Burst", "enemies": ["rot_spawn", "rot_spawn", "dryad_huntress"], "intro": "Fungal horrors erupt from the ground. A dryad huntress fires from the canopy above." },
+      { "name": "Living Barricade", "enemies": ["heartwood_sentinel", "rot_spawn", "forest_wraith"], "intro": "A living wall of wood and fungus blocks the path. A wraith shimmers behind it." }
+    ],
+    "10": [
+      { "name": "Fate's Puppets", "enemies": ["fate_weaver", "fate_weaver", "death_champion"], "intro": "Two fate weavers twist the threads of destiny. A wiedergangr guards them with dead eyes." },
+      { "name": "Wolf Hunt", "enemies": ["spirit_wolf", "spirit_wolf", "death_champion", "death_champion"], "intro": "Spectral wolves and wiedergangr hunt in pairs. They have found you." },
+      { "name": "The Unraveling", "enemies": ["fate_weaver", "spirit_wolf", "elder_seer", "heartwood_sentinel"], "intro": "Reality frays at the seams. The threshold's guardians converge from every direction." }
+    ]
   },
   "dropTables": {
     "cheruscan_raider": { "nothingChance": 0.25, "tiers": [

@@ -96,6 +96,9 @@ class Game {
     this.activeBoons = [];
     this.selectedPartyClasses = [];
 
+    // Retroactively grant any achievements based on existing stats
+    this.checkAchievements();
+
     // Disable umami if tracking opt-out
     if (!this.settings.trackingEnabled) {
       window['umami.disabled'] = true;
@@ -816,7 +819,7 @@ class Game {
         party: this.engine.party.map(u => ({
           index: u.index, classId: u.classId, name: u.name, title: u.title,
           hp: u.hp, maxHp: u.maxHp, baseMaxHp: u.baseMaxHp, downed: u.downed,
-          bonusDamage: u.bonusDamage || 0, bonusBlock: u.bonusBlock || 0, bonusHeal: u.bonusHeal || 0, bonusPoison: u.bonusPoison || 0,
+          bonusDamage: u.bonusDamage || 0, bonusBlock: u.bonusBlock || 0, bonusHeal: u.bonusHeal || 0, bonusPoison: u.bonusPoison || 0, _trainingCount: u._trainingCount || 0,
           equipment: { weapon: [...u.equipment.weapon], armor: [...u.equipment.armor], trinket: [...u.equipment.trinket] },
           learnedSkillIds: u.skills.map(s => s.id),
           runStats: { ...(u.runStats || {}) },
@@ -879,7 +882,7 @@ class Game {
           buffs: [], taunt: false, actedThisTurn: false, conditions: [],
           equipment: { weapon: saved.equipment.weapon, armor: saved.equipment.armor, trinket: saved.equipment.trinket },
           equipDamage: 0, equipBlock: 0, equipHeal: 0, equipPoison: 0, equipExtraDice: 0,
-          bonusDamage: saved.bonusDamage || 0, bonusBlock: saved.bonusBlock || 0, bonusHeal: saved.bonusHeal || 0, bonusPoison: saved.bonusPoison || 0,
+          bonusDamage: saved.bonusDamage || 0, bonusBlock: saved.bonusBlock || 0, bonusHeal: saved.bonusHeal || 0, bonusPoison: saved.bonusPoison || 0, _trainingCount: saved._trainingCount || 0,
           stats: saved.stats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
           runStats: saved.runStats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
         };
@@ -1388,6 +1391,8 @@ class Game {
     }
 
     // Class unlock achievements
+    // Use both stats and current run difficulty to catch unlocks
+    const currentDiff = Math.max(s.highestDifficulty || 1, this.difficulty || 1);
     // First boss kill → Sagittarius
     if (!a.class_sagittarius && (s.bossesKilled || 0) >= 1) {
       a.class_sagittarius = true;
@@ -1400,27 +1405,27 @@ class Game {
       if (hasEliteKill) { a.class_cornicen = true; this.addNotification('Class Unlocked: Cornicen!'); }
     }
     // Reach march 3 → Signifer
-    if (!a.class_signifer && (s.highestDifficulty || 1) >= 3) {
+    if (!a.class_signifer && currentDiff >= 3) {
       a.class_signifer = true;
       this.addNotification('Class Unlocked: Signifer!');
     }
     // Reach march 5 → Equites
-    if (!a.class_equites && (s.highestDifficulty || 1) >= 5) {
+    if (!a.class_equites && currentDiff >= 5) {
       a.class_equites = true;
       this.addNotification('Class Unlocked: Equites!');
     }
     // Reach march 7 → Ballistarius
-    if (!a.class_ballistarius && (s.highestDifficulty || 1) >= 7) {
+    if (!a.class_ballistarius && currentDiff >= 7) {
       a.class_ballistarius = true;
       this.addNotification('Class Unlocked: Ballistarius!');
     }
     // Reach march 8 → Praetorian
-    if (!a.class_praetorian && (s.highestDifficulty || 1) >= 8) {
+    if (!a.class_praetorian && currentDiff >= 8) {
       a.class_praetorian = true;
       this.addNotification('Class Unlocked: Praetorian!');
     }
     // Reach march 9 → Cataphract
-    if (!a.class_cataphract && (s.highestDifficulty || 1) >= 9) {
+    if (!a.class_cataphract && currentDiff >= 9) {
       a.class_cataphract = true;
       this.addNotification('Class Unlocked: Cataphract!');
     }

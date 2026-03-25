@@ -236,7 +236,28 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       // First combat node (depth 0): use region-specific intro encounter
       const introEncounters = typeof RAW_ENCOUNTERS !== 'undefined' && RAW_ENCOUNTERS.marchIntroEncounters;
       if (node.depth === 0 && introEncounters && introEncounters[String(difficulty)]) {
-        node.encounter = introEncounters[String(difficulty)];
+        const intros = introEncounters[String(difficulty)];
+        if (Array.isArray(intros)) {
+          const pick = intros[Math.floor(Math.random() * intros.length)];
+          node.encounter = pick;
+          node._introEncounterName = pick.name; // track to avoid repeat in next encounter
+        } else {
+          node.encounter = intros;
+          node._introEncounterName = intros.name;
+        }
+      } else if (node.depth === 1 && typeof RAW_ENCOUNTERS !== 'undefined' && RAW_ENCOUNTERS.marchSecondEncounters && RAW_ENCOUNTERS.marchSecondEncounters[String(difficulty)]) {
+        // Second combat node: use curated second encounter, different from intro
+        const seconds = RAW_ENCOUNTERS.marchSecondEncounters[String(difficulty)];
+        const usedIntroName = nodes.find(n => n._introEncounterName)?._introEncounterName;
+        let pool = Array.isArray(seconds) ? seconds : [seconds];
+        if (usedIntroName) {
+          pool = pool.filter(e => e.name !== usedIntroName);
+        }
+        if (pool.length > 0) {
+          node.encounter = pool[Math.floor(Math.random() * pool.length)];
+        } else {
+          node.encounter = generateEncounterByThreat(node.threat, difficulty);
+        }
       } else {
         node.encounter = generateEncounterByThreat(node.threat, difficulty);
       }
