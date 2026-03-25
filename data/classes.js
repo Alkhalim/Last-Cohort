@@ -953,7 +953,7 @@ const RAW_CLASSES = {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +1 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.2, "bonusHealScale": 0.85 }
+        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.2, "bonusHealScale": 0.70 }
       },
       {
         "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true, "cooldown": 1,
@@ -1159,7 +1159,7 @@ const RAW_CLASSES = {
       {
         "id": "rally_the_line", "name": "Rally the Line", "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
-        "description": "Other allies gain +2 damage for 2 attacks. Others gain 2 Block.",
+        "description": "Other allies gain +2 damage for 2 attacks and gain 2 Block.",
         "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 2, "blockOthersOnly": true }
       },
       {

@@ -289,6 +289,12 @@ class CombatEngine {
       block: startBlock,
       justSpawned: true,
     };
+    // Scale passive effects with difficulty
+    if (enemy.turnDamageAll) enemy.turnDamageAll = Math.round(enemy.turnDamageAll * (1 + diffBonus * 0.35));
+    if (enemy.deathDamageEnemy) enemy.deathDamageEnemy = Math.round(enemy.deathDamageEnemy * (1 + diffBonus * 0.35));
+    if (enemy.aura && enemy.aura.damageReduction) {
+      enemy.aura = { ...enemy.aura, damageReduction: enemy.aura.damageReduction + diffBonus };
+    }
     this.enemies.push(enemy);
     // Ironbound Champion: starts with block equal to half HP
     if (data.id === 'ironbound_champion') {
@@ -1582,10 +1588,11 @@ class CombatEngine {
           parts.push('Precise! (+50% vs vulnerable target)');
         }
       }
-      // Aimed Shot: +3 bonus damage vs back row
+      // Aimed Shot: +3 bonus damage vs back row (scales 0.2x with equipment)
       if (result.aimedShot && result.target && result.target.row === 'back') {
-        total += 3;
-        parts.push('Back row shot! (+3)');
+        const aimedBonus = 3 + Math.floor(effectiveBonusDmg * 0.2);
+        total += aimedBonus;
+        parts.push(`Back row shot! (+${aimedBonus})`);
       }
       // Kill Shot: double damage to marked or poisoned targets
       if (result.killShot && ((result.target._marked && result.target._marked > 0) || (result.target.poison && result.target.poison > 0))) {
@@ -2155,8 +2162,14 @@ class CombatEngine {
       const aoeDmg = result.damageAll + aoeBonus;
       let bestOverkillPct = 0;
       let bestOverkillIdx = -1;
+      // Mounted Sweep: target front row only, or backline if no front row exists
+      let aoeTargetFilter = null;
+      if (result.mountedSweep) {
+        const hasFront = this.enemies.some(e => !e.dead && e.row === 'front');
+        aoeTargetFilter = hasFront ? 'front' : 'back';
+      }
       this.enemies.forEach(e => {
-        if (!e.dead) {
+        if (!e.dead && (!aoeTargetFilter || e.row === aoeTargetFilter)) {
           let dmg = aoeDmg;
           const hpBefore = e.hp;
           const auraRed = this.getAuraDamageReduction(e);
@@ -3102,11 +3115,13 @@ class CombatEngine {
 
     // Mounted Sweep: gain 1 block per enemy hit
     if (result.mountedSweep) {
-      const frontHit = this.enemies.filter(e => !e.dead && e.row === 'front').length;
-      if (frontHit > 0) {
-        unit.block = (unit.block || 0) + frontHit;
-        unit.stats.blockGenerated += frontHit;
-        parts.push(`+${frontHit} Block from sweep.`);
+      const hasFront = this.enemies.some(e => !e.dead && e.row === 'front');
+      const hitRow = hasFront ? 'front' : 'back';
+      const hitCount = this.enemies.filter(e => !e.dead && e.row === hitRow).length;
+      if (hitCount > 0) {
+        unit.block = (unit.block || 0) + hitCount;
+        unit.stats.blockGenerated += hitCount;
+        parts.push(`+${hitCount} Block from sweep.`);
       }
     }
 
@@ -3277,12 +3292,20 @@ class CombatEngine {
           }
 
           if (e.deathDamageEnemy) {
-            const aliveEnemies = this.enemies.filter(oe => !oe.dead && oe !== e);
-            if (aliveEnemies.length > 0) {
-              const victim = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-              victim.hp = Math.max(0, victim.hp - e.deathDamageEnemy);
-              this.addLog(`${e.name} collapses onto ${victim.name} for ${e.deathDamageEnemy} damage!`);
-            }
+            this.party.forEach(u => {
+              if (!u.downed) {
+                let dmg = e.deathDamageEnemy;
+                if (u.block > 0) {
+                  const absorbed = Math.min(u.block, dmg);
+                  u.block -= absorbed;
+                  dmg -= absorbed;
+                }
+                u.hp = Math.max(0, u.hp - dmg);
+                u.stats.damageTaken += dmg;
+                if (this.onVisual) this.onVisual('unitHit', { unitIndex: u.index, damage: dmg });
+              }
+            });
+            this.addLog(`${e.name} explodes! All soldiers take ${e.deathDamageEnemy} damage!`);
           }
 
           // --- Boss-specific death reactions ---
@@ -4790,14 +4813,14 @@ class CombatEngine {
       xpValue: 3,
       ai: 'passive',
       isStructure: true,
-      healBoss: 5 + (Math.max(0, (this.difficulty || 1) - 1) * 2),
+      healBoss: 7 + (Math.max(0, (this.difficulty || 1) - 1) * 2),
       healBossId: boss.id,
       dead: false,
       poison: 0,
       block: 0,
       justSpawned: true,
-      description: `A living totem of twisted roots. Heals the Grove Witch for ${5 + (Math.max(0, (this.difficulty || 1) - 1) * 2)} HP each turn. Destroy it to stop the healing.`,
-      actions: [{ name: 'Pulsing Roots', damage: 0, chance: 1.0, text: `pulses with green energy — heals the Witch for ${5 + (Math.max(0, (this.difficulty || 1) - 1) * 2)} HP` }],
+      description: `A living totem of twisted roots. Heals the Grove Witch for ${7 + (Math.max(0, (this.difficulty || 1) - 1) * 2)} HP each turn. Destroy it to stop the healing.`,
+      actions: [{ name: 'Pulsing Roots', damage: 0, chance: 1.0, text: `pulses with green energy — heals the Witch for ${7 + (Math.max(0, (this.difficulty || 1) - 1) * 2)} HP` }],
     };
     this.enemies.push(totem);
     // Grove Witch gains block when summoning a totem (3 x difficulty)
