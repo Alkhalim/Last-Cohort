@@ -631,13 +631,13 @@ const RAW_ENEMIES = {
 
   "corpse_of_arminius": {
     "id": "corpse_of_arminius", "name": "Corpse of Arminius",
-    "maxHp": 65, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 30,
+    "maxHp": 55, "row": "front", "damage": [6, 11], "speed": 2, "xpValue": 30,
     "minDifficulty": 6,
     "isBoss": true, "ai": "boss",
     "description": "The reanimated corpse of the Germanic chieftain who destroyed three Roman legions at Teutoburg. He wears Roman training armor, corrupted by death. His discipline is inhuman.",
     "actions": [
-      { "name": "Betrayer's Blade", "damage": 12, "chance": 0.3, "text": "strikes with the blade that betrayed Rome" },
-      { "name": "Legionary Drill", "damage": 8, "chance": 0.25, "text": "executes a Roman drill strike against the whole line", "aoe": true, "cooldown": 1 },
+      { "name": "Betrayer's Blade", "damage": 10, "chance": 0.3, "text": "strikes with the blade that betrayed Rome" },
+      { "name": "Legionary Drill", "damage": 6, "chance": 0.25, "text": "executes a Roman drill strike against the whole line", "aoe": true, "cooldown": 1 },
       { "name": "Ghost Command", "damage": 0, "chance": 0.2, "text": "raises a hand — a cursed warrior claws from the mud", "spawn": "cursed_warrior" },
       { "name": "Death's Discipline", "damage": 0, "chance": 0.25, "text": "barks a dead command — his warriors brace", "blockAllEnemies": 4, "blockSelf": 6 }
     ]
@@ -645,12 +645,12 @@ const RAW_ENEMIES = {
 
   "corpse_of_varus": {
     "id": "corpse_of_varus", "name": "Corpse of Varus",
-    "maxHp": 50, "row": "back", "damage": [6, 12], "speed": 1, "xpValue": 35,
+    "maxHp": 42, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 35,
     "minDifficulty": 8,
     "isBoss": true, "ai": "boss",
     "description": "The corrupted spirit of Publius Quinctilius Varus, the Roman general who led his legions to slaughter. He commands the dead from the back row, whispering Rome's failure.",
     "actions": [
-      { "name": "Commander's Lash", "damage": 7, "morale": -5, "chance": 0.3, "text": "lashes out with spectral authority", "ignoreRow": true },
+      { "name": "Commander's Lash", "damage": 6, "morale": -5, "chance": 0.3, "text": "lashes out with spectral authority", "ignoreRow": true },
       { "name": "Rally the Dead", "damage": 0, "chance": 0.2, "text": "raises a hand — the dead answer his command", "spawn": "cursed_warrior" },
       { "name": "Shield Formation", "damage": 0, "chance": 0.25, "text": "commands a ghostly formation — all warriors brace", "blockAllEnemies": 6 },
       { "name": "Varus's Shame", "damage": 0, "morale": -8, "chance": 0.25, "text": "whispers of Rome's failure — your men's resolve crumbles", "cooldown": 2 }
@@ -659,29 +659,29 @@ const RAW_ENEMIES = {
 
   "spirit_of_arminius": {
     "id": "spirit_of_arminius", "name": "Spirit of Arminius",
-    "maxHp": 45, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 40,
+    "maxHp": 38, "row": "front", "damage": [6, 11], "speed": 2, "xpValue": 40,
     "minDifficulty": 10,
     "isBoss": true, "ai": "boss",
     "description": "The defiant spirit of Arminius, bound to Varus in death. They cannot be separated — damaging one heals the other. Both must fall.",
     "actions": [
-      { "name": "Phantom Blade", "damage": 10, "chance": 0.35, "text": "slashes with a spectral blade" },
-      { "name": "Spirit Charge", "damage": 7, "chance": 0.25, "text": "charges through the line as a ghost", "aoe": true, "cooldown": 1 },
+      { "name": "Phantom Blade", "damage": 8, "chance": 0.35, "text": "slashes with a spectral blade" },
+      { "name": "Spirit Charge", "damage": 6, "chance": 0.25, "text": "charges through the line as a ghost", "aoe": true, "cooldown": 1 },
       { "name": "Defiance", "damage": 0, "morale": -5, "chance": 0.2, "text": "roars defiance — his spirit hardens", "blockSelf": 8 },
-      { "name": "Wrath of the Forest", "damage": 12, "poisonTarget": 3, "chance": 0.2, "text": "channels the forest's wrath", "ignoreRow": true }
+      { "name": "Wrath of the Forest", "damage": 10, "poisonTarget": 3, "chance": 0.2, "text": "channels the forest's wrath", "ignoreRow": true }
     ]
   },
 
   "spirit_of_varus": {
     "id": "spirit_of_varus", "name": "Spirit of Varus",
-    "maxHp": 40, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 40,
+    "maxHp": 34, "row": "back", "damage": [4, 8], "speed": 1, "xpValue": 40,
     "minDifficulty": 10,
     "isBoss": true, "ai": "boss",
     "description": "The guilt-wracked spirit of Varus, bound to Arminius in death. They cannot be separated — damaging one heals the other. Both must fall.",
     "actions": [
-      { "name": "Spectral Command", "damage": 6, "morale": -5, "chance": 0.3, "text": "commands from beyond the grave", "ignoreRow": true },
-      { "name": "Legion's Ghost", "damage": 5, "chance": 0.25, "text": "summons the ghosts of the lost legions", "aoe": true },
+      { "name": "Spectral Command", "damage": 5, "morale": -5, "chance": 0.3, "text": "commands from beyond the grave", "ignoreRow": true },
+      { "name": "Legion's Ghost", "damage": 4, "chance": 0.25, "text": "summons the ghosts of the lost legions", "aoe": true },
       { "name": "Guilt's Embrace", "damage": 0, "morale": -6, "chance": 0.2, "text": "drowns your men in the weight of Rome's guilt", "cooldown": 1 },
-      { "name": "Death's Verdict", "damage": 14, "chance": 0.25, "text": "passes a final verdict from beyond death", "ignoreRow": true, "cooldown": 1 }
+      { "name": "Death's Verdict", "damage": 11, "chance": 0.25, "text": "passes a final verdict from beyond death", "ignoreRow": true, "cooldown": 1 }
     ]
   }
 };

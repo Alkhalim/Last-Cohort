@@ -1588,7 +1588,7 @@ class GameUI {
 
     // Skills
     const skillsHtml = unit.skills.map(s =>
-      `<div class="profile-skill"><span class="profile-skill-name">${s.name}</span> <span class="profile-skill-cost">[${s.cost.label}]</span>${s.cooldown ? ` <span class="profile-skill-cd">CD:${s.cooldown}</span>` : ''}<div class="profile-skill-desc">${s.description}</div></div>`
+      `<div class="profile-skill"><span class="profile-skill-name">${s.name}</span> <span class="profile-skill-cost">[${s.cost.label}]</span>${s.cooldown ? ` <span class="profile-skill-cd">CD:${s.cooldown}</span>` : ''}<div class="profile-skill-desc">${this._enhanceSkillDesc(s, unit)}</div></div>`
     ).join('');
 
     // Build overlay
@@ -2794,20 +2794,28 @@ class GameUI {
     if (effects.poisonParty) outcomeText += ` (${effects.poisonParty} Poison to all)`;
     if (effects.extraDiceNext) outcomeText += ` (+${effects.extraDiceNext} bonus dice next combat)`;
     if (effects.maxHpAll) outcomeText += ` (+${effects.maxHpAll} max HP to all)`;
-    // Permanent stat boosts to specific units by tag
+    // Permanent stat boosts — scale with difficulty (+1 per 4 difficulty above 1)
+    const statGrantBonus = Math.floor(((window.game ? window.game.difficulty : 1) - 1) / 4);
     if (effects.grantMaxHp) {
       const { amount, tag, count } = effects.grantMaxHp;
+      const scaledAmt = amount + statGrantBonus;
       const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
       const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
-      targets.forEach(u => { u.maxHp += amount; u.baseMaxHp += amount; u.hp += amount; });
-      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} max HP)`;
+      targets.forEach(u => { u.maxHp += scaledAmt; u.baseMaxHp += scaledAmt; u.hp += scaledAmt; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${scaledAmt} max HP)`;
     }
     if (effects.grantDamage) {
-      const { amount, tag, count } = effects.grantDamage;
-      const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      let { amount, tag, count, fallbackTag, fallbackCount } = effects.grantDamage;
+      const scaledAmt = amount + statGrantBonus;
+      let eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
+      // Fallback: if no matching units, use fallback tag/count
+      if (eligible.length === 0 && fallbackTag) {
+        eligible = this.engine.party.filter(u => !u.downed);
+        count = fallbackCount || 1;
+      }
       const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
-      targets.forEach(u => { u.equipDamage = (u.equipDamage || 0) + amount; });
-      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent damage)`;
+      targets.forEach(u => { u.equipDamage = (u.equipDamage || 0) + scaledAmt; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${scaledAmt} permanent damage)`;
     }
     if (effects.grantPoison) {
       const { amount, tag, count } = effects.grantPoison;
@@ -2820,22 +2828,25 @@ class GameUI {
         return tags.includes('support') || tags.includes('ranged');
       });
       const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
-      targets.forEach(u => { u.equipPoison = (u.equipPoison || 0) + amount; });
-      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent poison)`;
+      const scaledPoisonAmt = amount + statGrantBonus;
+      targets.forEach(u => { u.equipPoison = (u.equipPoison || 0) + scaledPoisonAmt; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${scaledPoisonAmt} permanent poison)`;
     }
     if (effects.grantHeal) {
       const { amount, tag, count } = effects.grantHeal;
+      const scaledHealAmt = amount + statGrantBonus;
       const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
       const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
-      targets.forEach(u => { u.equipHeal = (u.equipHeal || 0) + amount; });
-      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent healing)`;
+      targets.forEach(u => { u.equipHeal = (u.equipHeal || 0) + scaledHealAmt; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${scaledHealAmt} permanent healing)`;
     }
     if (effects.grantBlock && typeof effects.grantBlock === 'object') {
       const { amount, tag, count } = effects.grantBlock;
+      const scaledBlockAmt = amount + statGrantBonus;
       const eligible = this.engine.party.filter(u => !u.downed && (!tag || (CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes(tag))));
       const targets = eligible.sort(() => Math.random() - 0.5).slice(0, count || 1);
-      targets.forEach(u => { u.equipBlock = (u.equipBlock || 0) + amount; });
-      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${amount} permanent block)`;
+      targets.forEach(u => { u.equipBlock = (u.equipBlock || 0) + scaledBlockAmt; });
+      if (targets.length > 0) outcomeText += ` (${targets.map(u => u.name).join(', ')} +${scaledBlockAmt} permanent block)`;
     }
     if (effects.grantItem) {
       if (this.pendingEventItem) {
@@ -3174,7 +3185,7 @@ class GameUI {
             const item = getItemData(id);
             if (!item) return;
             const rarityIdx = rarityOrder.indexOf(item.rarity);
-            if (rarityIdx < 0 || rarityIdx >= rarityOrder.length - 1) return; // already max rarity
+            if (rarityIdx < 0) return;
             allItems.push({ unit: u, itemId: id, item, slot, slotIdx, rarityIdx });
           });
         }
@@ -3193,13 +3204,14 @@ class GameUI {
     }
 
     shuffled.forEach(({ unit, itemId, item, slot, slotIdx, rarityIdx }) => {
-      const nextRarity = rarityOrder[rarityIdx + 1];
+      const isMaxRarity = rarityIdx >= rarityOrder.length - 1;
+      const nextRarity = isMaxRarity ? rarityOrder[rarityIdx] : rarityOrder[rarityIdx + 1];
+      const tradeLabel = isMaxRarity ? `a different ${nextRarity}` : `${/^[aeiou]/i.test(nextRarity) ? 'an' : 'a'} ${nextRarity}`;
       const tag = getPrimaryTag(unit.classId);
 
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
-      const article = /^[aeiou]/i.test(nextRarity) ? 'an' : 'a';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--gold)">Trade for ${article} ${nextRarity} ${slot}</span>`;
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--gold)">Trade for ${tradeLabel} ${slot}</span>`;
 
       btn.addEventListener('click', () => {
         // Find eligible replacement items: same slot, higher rarity, matching class tags
@@ -3225,10 +3237,17 @@ class GameUI {
         // Pick a random replacement
         const replacement = candidates[Math.floor(Math.random() * candidates.length)];
 
-        // Clone the item data so upgrades don't affect the base template
-        const newId = replacement.id + '_trade_' + Date.now();
-        ITEM_DATA[newId] = JSON.parse(JSON.stringify(replacement));
-        ITEM_DATA[newId].id = newId;
+        // Level the replacement to current difficulty
+        const difficulty = window.game ? window.game.difficulty : 1;
+        const itemNativeDiff = replacement.minDifficulty || 1;
+        const scaledBonus = Math.max(0, difficulty - itemNativeDiff);
+        const minBonus = Math.max(0, Math.floor((difficulty - 1) / 2));
+        const bonusLevels = Math.max(scaledBonus, minBonus);
+        const newId = bonusLevels > 0 ? createLeveledItem(replacement.id, bonusLevels) : (replacement.id + '_trade_' + Date.now());
+        if (bonusLevels <= 0) {
+          ITEM_DATA[newId] = JSON.parse(JSON.stringify(replacement));
+          ITEM_DATA[newId].id = newId;
+        }
 
         // Swap the item on the unit
         unit.equipment[slot][slotIdx] = newId;
@@ -3675,7 +3694,7 @@ class GameUI {
       actionsEl.innerHTML = '';
       const skipBtn = document.createElement('button');
       skipBtn.className = 'btn-secondary';
-      skipBtn.textContent = `Skip (+${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown)`;
+      skipBtn.textContent = `Skip (+${this._getSkipRenown(item.rarity)} Renown)`;
       skipBtn.onclick = () => this._skipCurrentLoot();
       actionsEl.appendChild(skipBtn);
       return;
@@ -3753,7 +3772,7 @@ class GameUI {
     const skillList = unit.skills.map(s => {
       return `<div class="loot-skill-row">
         <span class="loot-skill-name">${s.name}</span>
-        <span class="loot-skill-desc">${s.description}</span>
+        <span class="loot-skill-desc">${this._enhanceSkillDesc(s, unit)}</span>
       </div>`;
     }).join('');
 
@@ -3841,9 +3860,90 @@ class GameUI {
 
     const skipBtn = document.createElement('button');
     skipBtn.className = 'btn-secondary';
-    skipBtn.textContent = `Skip (+${{ common: 2, uncommon: 5, rare: 10, epic: 20 }[item.rarity] || 2} Renown)`;
+    skipBtn.textContent = `Skip (+${this._getSkipRenown(item.rarity)} Renown)`;
     skipBtn.onclick = () => this._skipCurrentLoot();
     actionsEl.appendChild(skipBtn);
+  }
+
+  // Apply equipment-aware stat replacements to a skill description
+  _enhanceSkillDesc(skill, unit) {
+    let desc = skill.description;
+    const equipDmg = unit.equipDamage || 0;
+    const equipHeal = unit.equipHeal || 0;
+    const equipBlock = unit.equipBlock || 0;
+    const equipPoison = unit.equipPoison || 0;
+    const moraleMod = 0; // can't know morale context outside combat
+
+    const bonusDmg = equipDmg + moraleMod;
+    const dmgScale = (skill.effects && skill.effects.bonusDmgScale) || (skill.effects && skill.effects.halfBonusDmg ? 0.5 : 1);
+    const scaledBonusDmg = dmgScale !== 1 ? Math.floor(bonusDmg * dmgScale) : bonusDmg;
+    const healScale = (skill.effects && skill.effects.bonusHealScale != null) ? skill.effects.bonusHealScale : 1;
+    const bonusHeal = Math.floor(equipHeal * healScale);
+
+    // Replace "Deals/Deal X damage"
+    desc = desc.replace(/([Dd]eal[s]?) (\d+) damage/g, (match, verb, base) => {
+      const b = parseInt(base);
+      if (scaledBonusDmg !== 0) {
+        const total = Math.max(1, b + scaledBonusDmg);
+        return `${verb} <span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${scaledBonusDmg})</span> damage`;
+      }
+      return `${verb} <span class="stat-dmg">${b}</span> damage`;
+    });
+
+    // Die-scaled damage
+    if (skill.effects && skill.effects.dieScaleDamage) {
+      const dieBonusDmg = dmgScale !== 1 ? Math.floor(bonusDmg * dmgScale) : bonusDmg;
+      desc = desc.replace(/(\d+) \+ die value damage/g, (m, base) => {
+        const b = parseInt(base);
+        const lo = Math.max(1, b + 1 + dieBonusDmg);
+        const hi = Math.max(1, b + 6 + dieBonusDmg);
+        return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
+      });
+      desc = desc.replace(/damage equal to die value/g, () => {
+        const lo = Math.max(1, 1 + dieBonusDmg);
+        const hi = Math.max(1, 6 + dieBonusDmg);
+        return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
+      });
+    }
+
+    // Block values
+    desc = desc.replace(/(\d+) Block/g, (match, base) => {
+      const b = parseInt(base);
+      if (equipBlock > 0) {
+        return `<span class="stat-block">${b + equipBlock}</span> <span class="stat-breakdown">(${b}+${equipBlock})</span> Block`;
+      }
+      return `<span class="stat-block">${b}</span> Block`;
+    });
+
+    // Heal values
+    desc = desc.replace(/(\d+) HP/g, (match, base) => {
+      const b = parseInt(base);
+      if (bonusHeal !== 0) {
+        return `<span class="stat-heal">${Math.max(0, b + bonusHeal)}</span> <span class="stat-breakdown">(${b}+${bonusHeal})</span> HP`;
+      }
+      return `<span class="stat-heal">${b}</span> HP`;
+    });
+
+    // Poison values
+    desc = desc.replace(/(\d+) Poison/g, (match, base) => {
+      const b = parseInt(base);
+      if (equipPoison > 0) {
+        return `<span class="stat-poison">${b + equipPoison}</span> <span class="stat-breakdown">(${b}+${equipPoison})</span> Poison`;
+      }
+      return `<span class="stat-poison">${b}</span> Poison`;
+    });
+
+    // Color remaining damage
+    desc = desc.replace(/(?<!">)(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
+    desc = desc.replace(/(\d+) Morale/g, '<span class="stat-morale-text">$1</span> Morale');
+
+    return desc;
+  }
+
+  _getSkipRenown(rarity) {
+    const base = { common: 2, uncommon: 5, rare: 10, epic: 20 }[rarity] || 2;
+    const diff = window.game ? window.game.difficulty : 1;
+    return base + Math.floor((diff - 1) * 0.75);
   }
 
   _buildEquipTotals(unit) {
@@ -3894,7 +3994,7 @@ class GameUI {
     const itemId = this.pendingLoot[this._currentLootIdx];
     if (itemId) {
       const item = getItemData(itemId);
-      const renown = { common: 2, uncommon: 5, rare: 10, epic: 20 }[item ? item.rarity : 'common'] || 2;
+      const renown = this._getSkipRenown(item ? item.rarity : 'common');
       this.engine.totalRenownEarned += renown;
     }
     this.pendingLoot.splice(this._currentLootIdx, 1);
@@ -3906,10 +4006,9 @@ class GameUI {
 
   _finishLoot() {
     // Convert any remaining items to Renown
-    const renownPerRarity = { common: 2, uncommon: 5, rare: 10, epic: 20 };
     this.pendingLoot.forEach(itemId => {
       const item = getItemData(itemId);
-      if (item) this.engine.totalRenownEarned += renownPerRarity[item.rarity] || 2;
+      if (item) this.engine.totalRenownEarned += this._getSkipRenown(item.rarity);
     });
     this.pendingLoot = [];
     this._currentLootIdx = undefined;
@@ -4047,6 +4146,8 @@ class GameUI {
   }
 
   afterLevelUps() {
+    this._cachedStatPicksMap = null;
+    this._cachedSkillChoicesMap = null;
     if (this.lootScreenFinal) {
       this.showPostBossChoice();
     } else {
@@ -4086,9 +4187,13 @@ class GameUI {
       options.push({ key: 'poison', label: `+${statAmount} Poison`, desc: 'Deadlier toxins.', color: '#8a4', amount: statAmount });
     }
 
-    // Randomly pick 2 options from the pool
-    const shuffled = options.sort(() => Math.random() - 0.5);
-    const picks = shuffled.slice(0, 2);
+    // Cache picks per unit so back/forth doesn't reroll
+    if (!this._cachedStatPicksMap) this._cachedStatPicksMap = {};
+    if (!this._cachedStatPicksMap[unitIndex]) {
+      const shuffled = options.sort(() => Math.random() - 0.5);
+      this._cachedStatPicksMap[unitIndex] = shuffled.slice(0, 2);
+    }
+    const picks = this._cachedStatPicksMap[unitIndex];
 
     document.getElementById('levelup-desc').textContent = `${unit.name} — choose a training bonus:`;
     content.innerHTML = '';

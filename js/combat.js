@@ -181,7 +181,8 @@ class CombatEngine {
     if (this.spawnIndex >= this.enemyDefs.length) {
       // Ambush: enemies strike first before the player gets dice
       if (this.isAmbush) {
-        this.isAmbush = false; // only the first turn is ambushed
+        this.isAmbush = false;
+        this._ambushDamageHalved = true; // enemies deal half damage this turn
         this._ambushTargeted = new Set(); // spread targets during ambush
         this._ambushStunCount = 0; // limit stuns during ambush turn
         this.addLog('AMBUSH! The enemy strikes before you can react!');
@@ -645,6 +646,7 @@ class CombatEngine {
     this.dicePool.itemRerollUsed = false;
     this._ambushTargeted = null; // clear ambush spread tracking
     this._ambushStunCount = undefined; // clear ambush stun limit
+    this._ambushDamageHalved = false; // clear ambush half damage
 
     // Tick down skill cooldowns
     this.party.forEach(u => {
@@ -1629,6 +1631,16 @@ class CombatEngine {
       const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
 
+      // Stormcaller Bow: attacks dealing 1/3+ of target's max HP stun the target
+      if (total >= Math.ceil(result.target.maxHp / 3) && this.unitHasItem(unit, 'stormcaller_bow') && result.target.hp > 0) {
+        const stunCount = this.enemies.filter(e => !e.dead && e._skipNextAction).length;
+        if (stunCount < 2) {
+          result.target._skipNextAction = true;
+          parts.push('Thunderbolt! Target stunned!');
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Stunned!', color: 'var(--blue-bright)' });
+        }
+      }
+
       // Overkill morale: if kill has massive overkill, restore morale
       if (result.target.hp <= 0 && hpBeforeHit > 0 && total > 0) {
         const overkill = total - hpBeforeHit;
@@ -2068,10 +2080,9 @@ class CombatEngine {
       const attackStr = selfAttacks === 1 ? 'next attack' : `next ${selfAttacks} attacks`;
       parts.push(`${unit.name} gains +${selfBonusDmg} damage (${attackStr}).`);
     }
-    // Poison (single target)
+    // Poison (single target — full equipment scaling)
     if (result.poison && result.target) {
-      const poisonScale = result.bonusDmgScale || 1;
-      let totalPoison = result.poison + Math.floor((unit.equipPoison || 0) * poisonScale);
+      let totalPoison = result.poison + (unit.equipPoison || 0);
       // Double/Triple Poison: multiplies applied poison if target is already poisoned
       const alreadyPoisoned = (result.target.poison || 0) > 0;
       if (result.triplePoison && alreadyPoisoned) totalPoison *= 3;
@@ -2089,9 +2100,10 @@ class CombatEngine {
       result.target._marked = 2; // ticks down each enemy turn; active while > 0
       parts.push(`${result.target.name} is marked! (+20% damage next turn)`);
     }
-    // Poison splash: apply to all other enemies (includes equipment poison)
+    // Poison splash: apply to adjacent enemies (scales 0.1 lower than main target)
     if (result.poisonSplash && result.target) {
-      const splashPoison = result.poisonSplash + (unit.equipPoison || 0);
+      const splashScale = result.bonusDmgScale || 0.9;
+      const splashPoison = result.poisonSplash + Math.floor((unit.equipPoison || 0) * splashScale);
       // Splash to adjacent enemies (up to 2 closest in same row)
       const sameRow = this.enemies.filter(e => !e.dead && e !== result.target && e.row === result.target.row);
       sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
@@ -3616,6 +3628,10 @@ class CombatEngine {
         }
       }
       let actionDamage = action.damage || 0;
+      // Ambush: enemies deal half damage on the surprise round
+      if (this._ambushDamageHalved) {
+        actionDamage = Math.max(1, Math.floor(actionDamage / 2));
+      }
       if (action.damageFromBlock && enemy.block > 0) {
         actionDamage += enemy.block;
         this.addLog(`${enemy.name} channels ${enemy.block} block into the charge!`);

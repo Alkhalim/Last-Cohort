@@ -588,7 +588,9 @@ function rollDrop(enemyId, party, difficulty) {
       candidates = candidates.filter(itemId => {
         const item = ITEM_DATA[itemId];
         if (!item) return true;
-        return !item.minDifficulty || item.minDifficulty <= diff;
+        if (item.minDifficulty && item.minDifficulty > diff) return false;
+        if (item.maxDifficulty && item.maxDifficulty < diff) return false;
+        return true;
       });
       if (candidates.length === 0) candidates = tier.items.filter(itemId => {
         const item = ITEM_DATA[itemId];

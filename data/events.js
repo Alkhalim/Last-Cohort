@@ -555,16 +555,16 @@ const RAW_EVENTS = [
     "intro": "Smoke still rises from a forge abandoned by fleeing villagers. Tools, ingots, and half-finished weapons lie scattered. Your men could put this to use.",
     "choices": [
       { "text": "Reforge weapons.", "outcomes": [
-        { "weight": 0.6, "text": "Your strongest fighters hammer new edges onto their blades. The iron sings.", "effects": { "grantDamage": { "amount": 1, "tag": "melee", "count": 2 }, "morale": 3 } },
-        { "weight": 0.4, "text": "The forge produces a fine blade before the coals die.", "effects": { "grantItem": "iron_gladius", "grantDamage": { "amount": 1, "count": 1 } } }
+        { "weight": 0.6, "text": "Your strongest fighters hammer new edges onto their blades. The iron sings.", "effects": { "grantDamage": { "amount": 2, "tag": "melee", "count": 2, "fallbackTag": "any", "fallbackCount": 1 }, "morale": 3 } },
+        { "weight": 0.4, "text": "The forge produces a fine blade before the coals die.", "effects": { "grantItem": "iron_gladius", "grantDamage": { "amount": 2, "count": 1 } } }
       ]},
-      { "text": "Forge arrowheads and bolts.", "outcomes": [
-        { "weight": 0.6, "text": "Your ranged fighters tip their projectiles with fresh iron. Sharper, heavier, deadlier.", "effects": { "grantDamage": { "amount": 1, "tag": "ranged", "count": 2 } } },
-        { "weight": 0.4, "text": "Enough iron for poison-tipped arrowheads. Nasty work, but effective.", "effects": { "grantPoison": { "amount": 1, "tag": "ranged", "count": 1 }, "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 } } }
+      { "text": "Forge arrowheads and bolts.", "requiresTag": "ranged", "outcomes": [
+        { "weight": 0.6, "text": "Your ranged fighters tip their projectiles with fresh iron. Sharper, heavier, deadlier.", "effects": { "grantDamage": { "amount": 2, "tag": "ranged", "count": 2 } } },
+        { "weight": 0.4, "text": "Enough iron for poison-tipped arrowheads. Nasty work, but effective.", "effects": { "grantPoison": { "amount": 2, "tag": "ranged", "count": 2 }, "grantDamage": { "amount": 1, "tag": "ranged", "count": 1 } } }
       ]},
       { "text": "Mend armor instead.", "outcomes": [
-        { "weight": 0.6, "text": "Dents hammered out, straps replaced. Your front line feels hardened.", "effects": { "grantBlock": { "amount": 1, "tag": "melee", "count": 2 }, "grantMaxHp": { "amount": 1, "count": 3 } } },
-        { "weight": 0.4, "text": "New rivets, reinforced plate. Your officers' armor gleams.", "effects": { "grantBlock": { "amount": 1, "tag": "command", "count": 2 }, "grantMaxHp": { "amount": 1, "count": 3 } } }
+        { "weight": 0.6, "text": "Dents hammered out, straps replaced. Your front line feels hardened.", "effects": { "grantBlock": { "amount": 1, "tag": "melee", "count": 2 }, "grantMaxHp": { "amount": 3, "count": 3 } } },
+        { "weight": 0.4, "text": "New rivets, reinforced plate. Your officers' armor gleams.", "effects": { "grantBlock": { "amount": 1, "tag": "command", "count": 2 }, "grantMaxHp": { "amount": 3, "count": 3 } } }
       ]}
     ]
   },
@@ -576,8 +576,8 @@ const RAW_EVENTS = [
     "intro": "A grove of dark-barked trees drips with a sticky, foul-smelling sap. Your healer recognizes it — deadly nightshade, distilled by the forest itself.",
     "choices": [
       { "text": "Have your healer harvest the sap.", "requiresTag": "support", "outcomes": [
-        { "weight": 0.6, "text": "Your healer carefully extracts the toxin. Blades are coated, needles dipped. The poison will serve you well.", "effects": { "grantPoison": { "amount": 1, "count": 2 } } },
-        { "weight": 0.4, "text": "The healer brews an antidote and a toxin from the same source. Clever work.", "effects": { "grantHeal": { "amount": 1, "tag": "support", "count": 1 }, "grantPoison": { "amount": 1, "count": 1 } } }
+        { "weight": 0.6, "text": "Your healer carefully extracts the toxin and brews a salve. Blades are coated, wounds are mended.", "effects": { "grantPoison": { "amount": 1, "count": 2 }, "grantHeal": { "amount": 1, "count": 2 } } },
+        { "weight": 0.4, "text": "The healer distills a potent concentrate — both remedy and weapon in one. Masterful work.", "effects": { "grantHeal": { "amount": 2, "count": 2 }, "grantPoison": { "amount": 2, "count": 2 } } }
       ]},
       { "text": "Coat everyone's weapons.", "outcomes": [
         { "weight": 0.7, "text": "A thin sheen of poison on every blade. The next fight will be uglier — for them.", "effects": { "grantPoison": { "amount": 1, "count": 2 } } },
