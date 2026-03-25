@@ -4064,6 +4064,51 @@ html, body {
   background: #1a261a;
 }
 
+/* Locked class card */
+.ps-class-card.locked {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+.ps-class-unlock {
+  font-size: 0.65rem;
+  padding: 4px 0;
+}
+
+/* Achievement toast popup */
+.achievement-toast {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(10, 10, 12, 0.95);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 0.75rem;
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+}
+.achievement-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.achievement-toast.fade-out {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
+}
+.achievement-toast-icon {
+  color: var(--gold);
+  margin-right: 6px;
+}
+
 .ps-modifier-section-title {
   font-family: 'Cinzel', serif;
   font-size: 0.7rem;
@@ -4334,6 +4379,7 @@ html, body {
   opacity: 0;
   transform: translateX(-50%) translateX(-60px);
   transition: none;
+  will-change: transform, opacity;
 }
 
 .skill-cutin-name {

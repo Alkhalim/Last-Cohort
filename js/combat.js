@@ -32,6 +32,7 @@ class CombatEngine {
     this.pendingSkillPicks = 0;
     this.encounterXP = 0; // XP bar: grants skill pick every 3 encounters
     this.skillUsageStats = {}; // track skill usage for analytics
+    this.runKilledBosses = []; // boss IDs killed this run (for final boss spectral images)
   }
 
   // --- Setup ---
@@ -286,6 +287,32 @@ class CombatEngine {
       this.addLog(`${enemy.name} carves runes — all enemies gain ${scaledStartBlock} Block!`);
     }
 
+    // Corpse of Varus: copy one non-starter ability from each party member
+    if (data.id === 'corpse_of_varus') {
+      const stolenActions = [];
+      this.party.forEach(u => {
+        const nonStarter = u.allSkills.filter(s => !s.starter && u.skills.some(sk => sk.id === s.id));
+        if (nonStarter.length > 0) {
+          const stolen = nonStarter[Math.floor(Math.random() * nonStarter.length)];
+          // Convert player skill to an enemy action
+          const baseDmg = stolen.effects.damage || stolen.effects.damageAll || 0;
+          const scaledDmg = Math.max(3, Math.round(baseDmg * (1 + diffBonus * 0.35)));
+          stolenActions.push({
+            name: `Stolen: ${stolen.name}`,
+            damage: scaledDmg,
+            chance: 0.15,
+            text: `mimics ${u.name}'s ${stolen.name} with twisted precision`,
+            ignoreRow: !!stolen.ignoreRow,
+            cooldown: 2,
+          });
+        }
+      });
+      if (stolenActions.length > 0) {
+        enemy.actions.push(...stolenActions);
+        this.addLog(`${enemy.name} studies your soldiers — he learns their techniques!`);
+      }
+    }
+
     this.spawnIndex++;
     this.update();
     setTimeout(() => {
@@ -296,7 +323,7 @@ class CombatEngine {
 
   // --- Logging ---
   addLog(text) {
-    this.log.push(text);
+    this.log.push(typeof text === 'string' ? text : String(text));
     if (this.log.length > 50) this.log.shift();
   }
 
@@ -440,7 +467,9 @@ class CombatEngine {
     // Curse: Witch's Gaze — morale decay +2 per turn
     const helmCarrier = this.party.find(u => !u.downed && this.unitHasItem(u, 'champions_helm'));
     const helmReduction = helmCarrier ? this.getItemLevel(helmCarrier, 'champions_helm') : 0;
-    const diffDecay = Math.max(0, (this.difficulty || 1) - 1);
+    // Difficulty decay: +1 per level above 1, softcapped at 5+ (half rate)
+    const rawDiff = (this.difficulty || 1) - 1;
+    const diffDecay = rawDiff <= 4 ? rawDiff : 4 + Math.floor((rawDiff - 4) / 2);
     const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
     const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
     this.morale = Math.max(0, this.morale - moraleDecay);
@@ -772,6 +801,112 @@ class CombatEngine {
           spirit._resurrectTimer = undefined;
         } else if (spirit._resurrectTimer > 0) {
           this.addLog(`${spirit.name} channels resurrection... ${spirit._resurrectTimer} turn(s) remain.`);
+        }
+      }
+    }
+
+    // Healing Totem: each living totem roots (disables) one die
+    const livingTotems = this.enemies.filter(e => !e.dead && e.id === 'healing_totem');
+    if (livingTotems.length > 0) {
+      let rootCount = 0;
+      const available = this.dicePool.dice.filter(d => !d.used);
+      for (let t = 0; t < livingTotems.length && rootCount < available.length; t++) {
+        const victim = available[rootCount];
+        if (victim) {
+          this.dicePool.useDie(victim.id);
+          rootCount++;
+        }
+      }
+      if (rootCount > 0) {
+        this.addLog(`Healing Totems entangle ${rootCount} dice in roots!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: 0, text: `${rootCount} dice rooted!`, color: '#4a7a28' });
+      }
+    }
+
+    // Fog Weaver: decrease the value of 1-2 random dice each turn
+    const fogWeaver = this.enemies.find(e => e.id === 'fog_weaver' && !e.dead);
+    if (fogWeaver) {
+      const fogCount = 1 + (this.turn >= 4 ? 1 : 0);
+      const available = this.dicePool.dice.filter(d => !d.used && d.value > 1);
+      const shuffled = available.sort(() => Math.random() - 0.5).slice(0, fogCount);
+      shuffled.forEach(d => {
+        const reduction = 1 + Math.floor(Math.random() * 2); // reduce by 1-2
+        const oldVal = d.value;
+        d.value = Math.max(1, d.value - reduction);
+        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: d.id, type: 'damage' }] });
+      });
+      if (shuffled.length > 0) {
+        this.addLog(`The fog warps ${shuffled.length} dice — values decrease!`);
+      }
+    }
+
+    // Germanic Warlord: Iron Discipline — every 3 turns, grant all enemies 7 Block
+    const warlord = this.enemies.find(e => e.id === 'arminius_champion' && !e.dead);
+    if (warlord && this.turn > 0 && this.turn % 3 === 0) {
+      this.enemies.forEach(e => {
+        if (!e.dead) e.block = (e.block || 0) + 7;
+      });
+      this.addLog(`${warlord.name} bellows — Iron Discipline! All enemies gain 7 Block!`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: warlord.index, text: 'Iron Discipline!', color: 'var(--blue-bright)' });
+    }
+
+    // Blood Stag: announce charge when in back row (will deal double next turn vs no-block)
+    const stag = this.enemies.find(e => e.id === 'blood_stag' && !e.dead);
+    if (stag) {
+      if (stag._chargingNextTurn) {
+        stag._chargingNextTurn = false;
+        stag._chargeReady = true;
+      } else if (stag.row === 'back' && !stag._chargeReady && this.turn > 1) {
+        stag._chargingNextTurn = true;
+        this.addLog(`${stag.name} lowers its antlers — CHARGING next turn!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: stag.index, text: 'CHARGING!', color: 'var(--red-bright)' });
+      }
+    }
+
+    // Story bosses: spawn spectral images of previously killed bosses
+    const storyBossIds = ['corpse_of_arminius', 'corpse_of_varus', 'spirit_of_arminius', 'spirit_of_varus'];
+    const hasStoryBoss = this.enemies.some(e => storyBossIds.includes(e.id) && !e.dead);
+    if (hasStoryBoss && this.runKilledBosses && this.runKilledBosses.length > 0) {
+      if (!this._spectralQueue) {
+        // Build queue: exclude all arminius/varus variants
+        const excludeIds = ['corpse_of_arminius', 'corpse_of_varus', 'spirit_of_arminius', 'spirit_of_varus'];
+        this._spectralQueue = this.runKilledBosses.filter(id => !excludeIds.includes(id));
+        this._spectralDefeated = new Set();
+      }
+      // Corpse fights: max 1 spectral. Spirits fight: max 2.
+      const isSpirits = this.enemies.some(e => (e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus') && !e.dead);
+      const maxSpectrals = isSpirits ? 2 : 1;
+      const livingSpectrals = this.enemies.filter(e => !e.dead && e._isSpectral).length;
+      const remaining = this._spectralQueue.filter(id => !this._spectralDefeated.has(id));
+      if (livingSpectrals < maxSpectrals && remaining.length > 0) {
+        const nextId = remaining[0];
+        const data = ENEMY_DATA[nextId];
+        if (data && this.enemies.filter(e => !e.dead).length < 6) {
+          const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+          const spectralHp = Math.round(data.maxHp * (1 + diffBonus * 0.65) / 3);
+          const spectralActions = data.actions.map(a => ({
+            ...a,
+            damage: a.damage > 0 ? Math.max(1, Math.round(a.damage * (1 + diffBonus * 0.35) / 3)) : 0,
+          }));
+          const spectral = {
+            index: this.enemies.length,
+            ...data,
+            name: `Spectral ${data.name}`,
+            maxHp: spectralHp,
+            hp: spectralHp,
+            actions: spectralActions,
+            dead: false,
+            poison: 0,
+            block: 0,
+            justSpawned: true,
+            _isSpectral: true,
+            _spectralOf: nextId,
+          };
+          this.enemies.push(spectral);
+          this._spectralDefeated.add(nextId);
+          this.addLog(`A spectral image of ${data.name} materializes from the void!`);
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: spectral.index, text: 'Spectral!', color: '#7a4aaa' });
+          setTimeout(() => { spectral.justSpawned = false; this.update(); }, 500);
         }
       }
     }
@@ -3054,7 +3189,9 @@ class CombatEngine {
           // Morale restored on kill — based on enemy base maxHp, doubled for seers
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
           let moraleRestore;
-          if (e.isBoss) {
+          if (e.isBoss && !e._isSpectral) {
+            // Track boss kills for final boss spectral images
+            if (!this.runKilledBosses.includes(e.id)) this.runKilledBosses.push(e.id);
             // Boss: restore to 75, or +12 if already above 75
             if (this.morale >= 75) {
               moraleRestore = 12;
@@ -3483,6 +3620,18 @@ class CombatEngine {
         actionDamage += enemy.block;
         this.addLog(`${enemy.name} channels ${enemy.block} block into the charge!`);
         enemy.block = 0;
+      }
+      // Blood Stag Charge: double damage vs targets without block
+      if (enemy.id === 'blood_stag' && enemy._chargeReady) {
+        enemy._chargeReady = false;
+        enemy.row = 'front';
+        if (!target.block || target.block <= 0) {
+          actionDamage *= 2;
+          this.addLog(`${enemy.name} CHARGES! Double damage — ${target.name} had no block!`);
+          if (this.onVisual) this.onVisual('screenShake', {});
+        } else {
+          this.addLog(`${enemy.name} charges — ${target.name}'s block absorbs the impact!`);
+        }
       }
       // Berserk Rage: bonus damage based on missing HP (up to +50% at 0 HP)
       if (enemy.berserkRage && enemy.maxHp > 0) {
@@ -4407,13 +4556,15 @@ class CombatEngine {
         if (!boss._phase30 && boss.hp <= boss.maxHp * 0.3) {
           boss._phase30 = true;
           boss._pendingSpawn = [{ id: 'marsh_wolf' }];
-          // Buff all living allies
+          // Retreat Call: all surviving allies heal 50% HP and gain +2 damage
           this.enemies.forEach(e => {
             if (!e.dead && e !== boss) {
+              const healAmt = Math.floor(e.maxHp * 0.5);
+              e.hp = Math.min(e.maxHp, e.hp + healAmt);
               e.actions.forEach(a => { if (a.damage > 0) a.damage += 2; });
             }
           });
-          this.addLog(`${boss.name} screams — her warriors fight with desperate fury! (+2 damage to all allies)`);
+          this.addLog(`${boss.name} lets out a piercing whistle — RETREAT CALL! All allies rally, healing and fighting harder!`);
           if (this.onVisual) this.onVisual('screenShake', {});
         }
       }

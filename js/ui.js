@@ -149,6 +149,19 @@ class GameUI {
   }
 
   // Skill cut-in portrait — slides in from left, holds, drifts out right
+  // Preload party portraits for smooth cut-ins
+  preloadPartyPortraits() {
+    if (!this._preloadedPortraits) this._preloadedPortraits = {};
+    this.engine.party.forEach(u => {
+      const src = `assets/${u.title}.png`;
+      if (!this._preloadedPortraits[u.title]) {
+        const img = new Image();
+        img.src = src;
+        this._preloadedPortraits[u.title] = img;
+      }
+    });
+  }
+
   showSkillCutIn(classTitle, skillName) {
     if (typeof isFastMode === 'function' && isFastMode()) return;
     const existing = document.getElementById('skill-cutin');
@@ -157,18 +170,21 @@ class GameUI {
     const cutin = document.createElement('div');
     cutin.id = 'skill-cutin';
     cutin.className = 'skill-cutin';
+    // Use preloaded image if available
+    const preloaded = this._preloadedPortraits && this._preloadedPortraits[classTitle];
+    const imgSrc = preloaded ? preloaded.src : `assets/${classTitle}.png`;
     cutin.innerHTML = `
-      <img class="skill-cutin-portrait" src="${typeof getPlayerPortrait === 'function' ? getPlayerPortrait(classTitle) : 'assets/' + classTitle + '.png'}" alt="${classTitle}">
+      <img class="skill-cutin-portrait" src="${imgSrc}" alt="${classTitle}">
       <div class="skill-cutin-name">${skillName}</div>
     `;
     const combatScreen = document.getElementById('combat-screen');
     if (combatScreen) combatScreen.appendChild(cutin);
     else document.getElementById('game').appendChild(cutin);
 
-    // Trigger animation
+    // Trigger slide-in via translateX
     requestAnimationFrame(() => cutin.classList.add('active'));
 
-    // Remove after animation completes
+    // Slide out after animation
     setTimeout(() => {
       cutin.classList.add('exit');
       setTimeout(() => cutin.remove(), 600);
@@ -411,8 +427,14 @@ class GameUI {
         if (enemy.aura && enemy.aura.damageReduction) passives.push(`Aura: nearby enemies take ${enemy.aura.damageReduction} less damage.`);
         if (enemy.turnDamageAll) passives.push(`Passive: deals ${enemy.turnDamageAll} damage to all soldiers each turn.`);
         if (enemy.healBoss) passives.push(`Passive: heals boss for ${enemy.healBoss} HP each turn.`);
+        if (enemy.id === 'healing_totem') passives.push('Passive: roots one of your dice each turn.');
         if (enemy.canSpawn) passives.push('Passive: can spawn copies of itself.');
+        if (enemy.id === 'arminius_champion') passives.push('Passive: Iron Discipline — all enemies gain 7 Block every 3 turns.');
         if (enemy.id === 'thusnelda') passives.push('Passive: gains Block per living ally each turn.');
+        if (enemy.id === 'blood_stag') passives.push('Passive: channels charge from back row. Double damage vs targets without Block.');
+        if (enemy.id === 'fog_weaver') passives.push('Passive: warps 1-2 dice each turn, reducing their values.');
+        if (enemy.id === 'corpse_of_varus') passives.push('Passive: learns your soldiers\' techniques.');
+        if (enemy._isSpectral) passives.push('Spectral image — 1/3 HP and damage.');
         if (enemy._undyingRage) passives.push('Passive: attacks drain 5 Morale.');
         return passives.length > 0 ? `<div class="enemy-tooltip-passives">${passives.map(p => `<div class="enemy-tooltip-passive">${p}</div>`).join('')}</div>` : '';
       })()}
@@ -430,6 +452,8 @@ class GameUI {
         if (enemy._snareTrap) effects.push(`<span class="status-debuff">Trapped (${enemy._snareTrap} dmg)</span>`);
         if (enemy._smokeScreen) effects.push(`<span class="status-debuff">Smoked (${Math.round(enemy._smokeScreen * 100)}% miss)</span>`);
         if (enemy._pendingSpawn) effects.push(`<span class="status-buff">Summoning next turn</span>`);
+        if (enemy._chargingNextTurn) effects.push(`<span class="status-debuff">CHARGING next turn!</span>`);
+        if (enemy._chargeReady) effects.push(`<span class="status-debuff">CHARGE READY — double vs no block!</span>`);
         return effects.length > 0 ? `<div class="enemy-tooltip-statuses">${effects.join(' ')}</div>` : '';
       })()}
       <div class="enemy-tooltip-actions-title">${enemy.isStructure ? 'Effects:' : 'Attacks:'}</div>
@@ -858,7 +882,10 @@ class GameUI {
       } else {
         endBtn.classList.remove('hidden');
         endBtn.textContent = 'Continue';
-        endBtn.onclick = () => this.onVictory();
+        endBtn.onclick = () => {
+          if (this._victoryTimeout) { clearTimeout(this._victoryTimeout); this._victoryTimeout = null; }
+          if (!this._victoryHandled) this.onVictory();
+        };
       }
     } else if (this.engine.phase === PHASE.DEFEAT) {
       const hasCutIn = document.getElementById('skill-cutin') || document.getElementById('enemy-cutin');
@@ -2480,16 +2507,21 @@ class GameUI {
     // Use the encounter intro as flavor text (not the mechanical description)
     const bossFlavorText = node.encounter.intro || (bossData ? bossData.description : '');
 
-    // Switch to combat screen first (hidden behind splash) to prevent map flash
+    // Switch to combat screen (hidden until splash fades)
     this.currentNodeThreat = node.threat || 1;
     this.engine.initEncounter(node.encounter);
+    this.preloadPartyPortraits();
     this.showScreen('combat-screen');
+    const combatScreen = document.getElementById('combat-screen');
+    combatScreen.style.opacity = '0';
     this.selectedUnitIndex = null;
     this.stagedSkill = null;
     this.prevEnemyHp = {};
     this.prevUnitHp = {};
     this._prevBossHpPct = undefined;
     this.diceRevealRunning = false;
+    this._victoryHandled = false;
+    this._victoryTimeout = null;
 
     // Create splash overlay on top
     const splash = document.createElement('div');
@@ -2511,12 +2543,15 @@ class GameUI {
       window.game.currentTrack = null;
     }
 
-    // After 2.5s: fade out splash, start boss music, auto-start fight
+    // After 3.5s: fade out splash, reveal combat, start boss music, auto-start fight
     setTimeout(() => {
       splash.classList.add('fade-out');
+      combatScreen.style.opacity = '1';
+      combatScreen.style.transition = 'opacity 0.5s';
       window.game.startBossMusic(bossEnemyId);
       setTimeout(() => {
         splash.remove();
+        combatScreen.style.transition = '';
         // Auto-start: skip "Begin Encounter" and go straight to spawning
         this.engine.beginSpawning();
       }, 600);
@@ -2533,6 +2568,9 @@ class GameUI {
     this.prevUnitHp = {};
     this._prevBossHpPct = undefined;
     this.diceRevealRunning = false;
+    this._victoryHandled = false;
+    this._victoryTimeout = null;
+    this.preloadPartyPortraits();
     this.render();
 
     // Ambush encounters: show splash then auto-start
@@ -3352,7 +3390,10 @@ class GameUI {
   // ================================================================
 
   onVictory() {
+    if (this._victoryHandled) return;
+    this._victoryHandled = true;
     const isBoss = this.engine.hasBossEnemy();
+    if (isBoss && window.game) window.game.trackBossFlawless();
     const bossEnemy = isBoss ? this.engine.enemies.find(e => e.isBoss) : null;
     const bossVictoryText = {
       'arminius_champion': { title: 'THE WARLORD FALLS', text: 'The Germanic warlord lies broken. His warriors scatter into the trees.' },

@@ -59,6 +59,7 @@ const CURSE_DEFS = [
   { id: 'deaths_whisper', name: "Death's Whisper", achievement: 'boss_bone_speaker_x3', description: "Start each encounter at -5 morale.", renown: 20 },
   { id: 'rare_collector', name: "Rare Collector", achievement: 'hero_three_rares', description: "Uncommon/rare items drop 30% less.", renown: 10 },
   { id: 'golden_challenge', name: "Golden Challenge", achievement: 'hero_only_rares', description: "Start with 1 fewer die (3 instead of 4).", renown: 30 },
+  { id: 'victors_burden', name: "Victor's Burden", achievement: 'class_vestalis', description: "Enemies gain +1 Block at the start of each turn.", renown: 15 },
   { id: 'ultimate_test', name: "Ultimate Test", achievement: 'party_all_rares', description: "All curses active simultaneously.", renown: 50 },
 ];
 
@@ -69,6 +70,8 @@ const BOON_DEFS = [
   { id: 'spirits_peace', name: "Spirit's Peace", achievement: 'boss_spirits_defeated', description: "Start each march at 60 morale instead of 50.", renown: -15 },
   { id: 'varus_lesson', name: "Varus's Lesson", achievement: 'boss_corpse_varus', description: "+1 bonus die on the first turn of each combat.", renown: -10 },
   { id: 'arminius_defiance', name: "Arminius's Defiance", achievement: 'boss_corpse_arminius', description: "Downed units revive with 20% more HP after fights.", renown: -20 },
+  { id: 'fresh_recruits', name: "Fresh Recruits", achievement: 'first_boss_kill', description: "+2 max HP to all units at the start of each run.", renown: -10 },
+  { id: 'scouts_blessing', name: "Scout's Blessing", achievement: 'first_elite_kill', description: "See enemy intents one turn earlier.", renown: -10 },
   { id: 'kings_hoard', name: "King's Hoard", achievement: 'boss_ariovistus', description: "Start each run with a random uncommon item.", renown: -10 },
   { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+1 damage to all units for the first 2 turns of combat.", renown: -10 },
   { id: 'epic_fortune', name: "Epic Fortune", achievement: 'hero_three_epics', description: "Item drops have +10% chance to upgrade rarity.", renown: -15 },
@@ -480,40 +483,48 @@ class Game {
     const continueBtn = document.getElementById('btn-party-continue');
     const countLabel = document.getElementById('party-select-count');
 
-    // Render class cards
+    // Render class cards — locked classes show limited info
     let html = '';
     for (const [classId, data] of Object.entries(CLASS_DATA)) {
-      // Hidden classes require unlock conditions
-      if (data.hidden) {
-        if (classId === 'praetorian' && (this.stats.highestDifficulty || 1) < 5) continue;
-        if (classId === 'cataphract' && !(this.stats.enemiesKilled && this.stats.enemiesKilled['corpse_of_arminius'])) continue;
-      }
+      const unlockKey = data.unlockKey || classId;
+      const isUnlocked = !data.hidden || !!this.achievements[unlockKey];
       const selected = this.selectedPartyClasses.includes(classId);
-      const primaryTag = data.tags.find(t => t !== 'roman') || 'roman';
+      const primaryTag = data.tags.find(t => t !== 'roman' && t !== 'germanic') || 'roman';
       const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
-      const complexity = data.complexity || 1;
-      const complexityLabel = ['Simple', 'Moderate', 'Complex'][complexity - 1];
-      const complexityPips = Array.from({ length: 3 }, (_, i) =>
-        `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
-      ).join('');
-      html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
-        <div class="ps-class-header">
-          <span class="ps-class-name" style="color:var(--class-${primaryTag})">${data.name}</span>
-          <span class="ps-class-title">${data.title}</span>
-          <span class="ps-class-tags">${tagPips}</span>
-        </div>
-        <div class="ps-class-desc">${data.description}</div>
-        <div class="ps-class-meta">
-          <span class="ps-class-hp">HP: ${data.maxHp}</span>
-          <span class="ps-class-complexity">${complexityPips} <span class="complexity-label">${complexityLabel}</span></span>
-        </div>
-        <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
-      </div>`;
+
+      if (isUnlocked) {
+        const complexity = data.complexity || 1;
+        const complexityLabel = ['Simple', 'Moderate', 'Complex'][complexity - 1];
+        const complexityPips = Array.from({ length: 3 }, (_, i) =>
+          `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
+        ).join('');
+        html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
+          <div class="ps-class-header">
+            <span class="ps-class-name">${renderClassName(classId, data.name)}</span>
+            <span class="ps-class-title">${data.title}</span>
+            <span class="ps-class-tags">${tagPips}</span>
+          </div>
+          <div class="ps-class-desc">${data.description}</div>
+          <div class="ps-class-meta">
+            <span class="ps-class-hp">HP: ${data.maxHp}</span>
+            <span class="ps-class-complexity">${complexityPips} <span class="complexity-label">${complexityLabel}</span></span>
+          </div>
+          <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
+        </div>`;
+      } else {
+        html += `<div class="ps-class-card locked class-${primaryTag}">
+          <div class="ps-class-header">
+            <span class="ps-class-name" style="opacity:0.5">${data.name}</span>
+            <span class="ps-class-tags">${tagPips}</span>
+          </div>
+          <div class="ps-class-unlock"><span style="color:var(--text-dim)">🔒 ${data.unlockCondition}</span></div>
+        </div>`;
+      }
     }
     container.innerHTML = html;
 
-    // Bind class card clicks
-    container.querySelectorAll('.ps-class-card').forEach(card => {
+    // Bind class card clicks (only unlocked)
+    container.querySelectorAll('.ps-class-card:not(.locked)').forEach(card => {
       card.addEventListener('click', () => {
         const cid = card.dataset.classId;
         const idx = this.selectedPartyClasses.indexOf(cid);
@@ -800,6 +811,7 @@ class Game {
         pendingSkillPicks: this.engine.pendingSkillPicks,
         encounterXP: this.engine.encounterXP || 0,
         skillUsageStats: { ...(this.engine.skillUsageStats || {}) },
+        runKilledBosses: [...(this.engine.runKilledBosses || [])],
         party: this.engine.party.map(u => ({
           index: u.index, classId: u.classId, name: u.name, title: u.title,
           hp: u.hp, maxHp: u.maxHp, baseMaxHp: u.baseMaxHp, downed: u.downed,
@@ -849,6 +861,7 @@ class Game {
       this.engine.pendingSkillPicks = data.pendingSkillPicks;
       this.engine.encounterXP = data.encounterXP || 0;
       this.engine.skillUsageStats = data.skillUsageStats || {};
+      this.engine.runKilledBosses = data.runKilledBosses || [];
       this.engine.difficulty = this.difficulty;
 
       this.engine.party = data.party.map(saved => {
@@ -1360,12 +1373,94 @@ class Game {
       }
     }
 
+    // First boss/elite kill milestones
+    if (!a.first_boss_kill && (s.bossesKilled || 0) >= 1) {
+      a.first_boss_kill = true;
+      this.addNotification('Achievement: First Boss Defeated!');
+    }
+    if (!a.first_elite_kill && s.enemiesKilled) {
+      const eliteIds = ['oak_shield', 'wicker_man', 'ironbound_champion'];
+      if (eliteIds.some(eid => (s.enemiesKilled[eid] || 0) >= 1)) {
+        a.first_elite_kill = true;
+        this.addNotification('Achievement: First Elite Defeated!');
+      }
+    }
+
+    // Class unlock achievements
+    // First boss kill → Sagittarius
+    if (!a.class_sagittarius && (s.bossesKilled || 0) >= 1) {
+      a.class_sagittarius = true;
+      this.addNotification('Class Unlocked: Sagittarius!');
+    }
+    // First elite kill → Cornicen
+    if (!a.class_cornicen && s.enemiesKilled) {
+      const eliteIds = ['oak_shield', 'wicker_man', 'ironbound_champion'];
+      const hasEliteKill = eliteIds.some(eid => (s.enemiesKilled[eid] || 0) >= 1);
+      if (hasEliteKill) { a.class_cornicen = true; this.addNotification('Class Unlocked: Cornicen!'); }
+    }
+    // Reach march 3 → Signifer
+    if (!a.class_signifer && (s.highestDifficulty || 1) >= 3) {
+      a.class_signifer = true;
+      this.addNotification('Class Unlocked: Signifer!');
+    }
+    // Reach march 5 → Equites
+    if (!a.class_equites && (s.highestDifficulty || 1) >= 5) {
+      a.class_equites = true;
+      this.addNotification('Class Unlocked: Equites!');
+    }
+    // Reach march 7 → Ballistarius
+    if (!a.class_ballistarius && (s.highestDifficulty || 1) >= 7) {
+      a.class_ballistarius = true;
+      this.addNotification('Class Unlocked: Ballistarius!');
+    }
+    // Reach march 8 → Cataphract
+    if (!a.class_cataphract && (s.highestDifficulty || 1) >= 8) {
+      a.class_cataphract = true;
+      this.addNotification('Class Unlocked: Cataphract!');
+    }
+    // Defeat Fog Weaver → Arcania
+    if (!a.class_arcania && (s.enemiesKilled && (s.enemiesKilled['fog_weaver'] || 0) >= 1)) {
+      a.class_arcania = true;
+      this.addNotification('Class Unlocked: Arcania!');
+    }
+    // Defeat Thusnelda → Wulfswestr
+    if (!a.class_wulfswestr && (s.enemiesKilled && (s.enemiesKilled['thusnelda'] || 0) >= 1)) {
+      a.class_wulfswestr = true;
+      this.addNotification('Class Unlocked: Wulfswestr!');
+    }
+    // Win a boss fight with no downed → Praetorian
+    if (!a.class_praetorian && a._bossFlawless) {
+      a.class_praetorian = true;
+      this.addNotification('Class Unlocked: Praetorian!');
+    }
+    // Win full run → Vestalis
+    if (!a.class_vestalis && (s.runsCompleted || 0) >= 1) {
+      a.class_vestalis = true;
+      this.addNotification('Class Unlocked: Vestalis!');
+    }
+
     this.saveAchievements();
   }
 
+  // Track flawless boss kill (no units downed during boss fight)
+  trackBossFlawless() {
+    if (this.engine.hasBossEnemy() && !this.engine.party.some(u => u.downed)) {
+      this.achievements._bossFlawless = true;
+    }
+  }
+
   addNotification(text) {
-    // Simple log for now — could be a toast popup later
     console.log('[ACHIEVEMENT] ' + text);
+    // Show toast popup
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = `<span class="achievement-toast-icon">★</span> ${text}`;
+    document.getElementById('game').appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 600);
+    }, 3000);
   }
 
   showAchievementsScreen() {
@@ -1446,6 +1541,7 @@ class Game {
     this.engine.totalRenownEarned = 0;
     this.engine.pendingSkillPicks = 0;
     this.engine.skillUsageStats = {};
+    this.engine.runKilledBosses = [];
     this.engine.difficulty = this.difficulty;
 
     // Use selected party or fallback to defaults

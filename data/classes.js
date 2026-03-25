@@ -278,6 +278,9 @@ const RAW_CLASSES = {
     "maxHp": 22,
     "tags": ["ranged", "roman"],
     "complexity": 2,
+    "hidden": true,
+    "unlockCondition": "Defeat your first boss",
+    "unlockKey": "class_sagittarius",
     "equipSlots": { "weapon": 3, "armor": 1, "trinket": 3 },
     "description": "Roman archer. Fragile but strikes any row with precision.",
     "passive": {
@@ -372,6 +375,7 @@ const RAW_CLASSES = {
     "maxHp": 25,
     "tags": ["command", "roman"],
     "complexity": 3,
+    "hidden": true, "unlockCondition": "Reach March 3", "unlockKey": "class_signifer",
     "equipSlots": { "weapon": 1, "armor": 3, "trinket": 3 },
     "description": "Standard Bearer. Rallies the cohort with morale and buffs.",
     "passive": {
@@ -461,6 +465,7 @@ const RAW_CLASSES = {
     "maxHp": 23,
     "tags": ["support", "roman"],
     "complexity": 3,
+    "hidden": true, "unlockCondition": "Defeat your first elite enemy", "unlockKey": "class_cornicen",
     "equipSlots": { "weapon": 1, "armor": 2, "trinket": 4 },
     "description": "Trumpeter. Debuffs enemies and supports allies with sound.",
     "passive": {
@@ -551,6 +556,9 @@ const RAW_CLASSES = {
     "maxHp": 25,
     "tags": ["melee", "roman"],
     "complexity": 2,
+    "hidden": true,
+    "unlockCondition": "Reach March 5",
+    "unlockKey": "class_equites",
     "equipSlots": { "weapon": 3, "armor": 2, "trinket": 2 },
     "description": "Roman cavalry. Devastating charge openers that can strike any target.",
     "passive": {
@@ -646,6 +654,7 @@ const RAW_CLASSES = {
     "maxHp": 20,
     "tags": ["ranged", "roman"],
     "complexity": 3,
+    "hidden": true, "unlockCondition": "Reach March 7", "unlockKey": "class_ballistarius",
     "equipSlots": { "weapon": 2, "armor": 1, "trinket": 4 },
     "description": "Roman siege crossbowman. Every hit weakens the enemy, reducing their damage.",
     "passive": {
@@ -742,7 +751,7 @@ const RAW_CLASSES = {
     "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
-    "unlockCondition": "Beat March 5",
+    "unlockCondition": "Win a boss fight with no units downed", "unlockKey": "class_praetorian",
     "description": "Imperial bodyguard. The Emperor's finest, forged in blood and loyalty.",
     "passive": {
       "name": "Unyielding",
@@ -836,6 +845,9 @@ const RAW_CLASSES = {
     "maxHp": 25,
     "tags": ["melee", "support", "germanic"],
     "complexity": 2,
+    "hidden": true,
+    "unlockCondition": "Defeat Thusnelda",
+    "unlockKey": "class_wulfswestr",
     "equipSlots": { "weapon": 2, "armor": 2, "trinket": 3 },
     "description": "Germanic forest fighter. Heals and fights with equal ferocity. No Roman gear.",
     "passive": {
@@ -926,6 +938,9 @@ const RAW_CLASSES = {
     "maxHp": 22,
     "tags": ["command", "support", "roman"],
     "complexity": 3,
+    "hidden": true,
+    "unlockCondition": "Win a full run (March 10)",
+    "unlockKey": "class_vestalis",
     "equipSlots": { "weapon": 1, "armor": 2, "trinket": 4 },
     "description": "Vestal priestess. Morale engine, healer, and divine protector.",
     "passive": {
@@ -1015,6 +1030,7 @@ const RAW_CLASSES = {
     "maxHp": 19,
     "tags": ["ranged", "roman"],
     "complexity": 3,
+    "hidden": true, "unlockCondition": "Defeat the Fog Weaver", "unlockKey": "class_arcania",
     "equipSlots": { "weapon": 2, "armor": 1, "trinket": 4 },
     "description": "Roman frontier scout. Intelligence, poison, and battlefield control.",
     "passive": {
@@ -1108,7 +1124,7 @@ const RAW_CLASSES = {
     "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
-    "unlockCondition": "Defeat the Corpse of Arminius",
+    "unlockCondition": "Reach March 8", "unlockKey": "class_cataphract",
     "description": "Heavy cavalry officer. Mobile fortress that commands from the saddle.",
     "passive": {
       "name": "Iron Vanguard",
