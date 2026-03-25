@@ -1854,9 +1854,9 @@ class CombatEngine {
         parts.push(`${result.target.name} is knocked to the back row!`);
       }
 
-      // Split damage: apply same halved damage to second target (bonuses already included in split)
-      if (result.splitDamage && result.secondTarget && result.secondTarget.hp !== undefined) {
-        let total2 = Math.floor((result.damage + bonusDmg) / 2);
+      // Dual target: apply damage to second target
+      if (result.secondTarget && result.secondTarget.hp !== undefined) {
+        let total2 = result.splitDamage ? Math.floor((result.damage + bonusDmg) / 2) : (scaledDamage + effectiveBonusDmg);
         const aura2 = this.getAuraDamageReduction(result.secondTarget);
         if (aura2 > 0) total2 = Math.max(1, total2 - aura2);
         if (result.secondTarget.block && result.secondTarget.block > 0) {
@@ -1868,7 +1868,7 @@ class CombatEngine {
         unit.stats.damageDealt += total2;
         parts.push(`${unit.name} strikes ${result.secondTarget.name} for ${total2} damage.`);
         if (this.onVisual && result.secondTarget.index !== undefined) {
-          this.onVisual('enemyAttack', { enemyIndex: result.secondTarget.index });
+          this.onVisual('enemyHit', { enemyIndex: result.secondTarget.index, damage: total2 });
         }
       }
     }
@@ -3596,14 +3596,14 @@ class CombatEngine {
           this.executeEnemySingleAction(enemy);
           this.checkPartyDowned();
           this.update();
-          setTimeout(() => this.executeEnemySequence(enemies, index + 1), fast ? 200 : 1200);
-        }, fast ? 150 : 800);
+          setTimeout(() => this.executeEnemySequence(enemies, index + 1), fast ? 250 : 1500);
+        }, fast ? 200 : 1000);
       } else {
         this.checkPartyDowned();
         this.update();
-        setTimeout(() => this.executeEnemySequence(enemies, index + 1), fast ? 200 : 1200);
+        setTimeout(() => this.executeEnemySequence(enemies, index + 1), fast ? 250 : 1500);
       }
-    }, fast ? 50 : 400);
+    }, fast ? 80 : 550);
   }
 
   executeEnemyAction(enemy) {

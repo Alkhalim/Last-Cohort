@@ -100,12 +100,12 @@ function buildSkillExecute(skillData) {
       result._dieScaleFactor = dieTotal / 3;
     }
 
-    // Damage (single target or split across dual targets)
+    // Damage (single target or dual targets)
     if (effects.damage !== undefined) {
       const dmg = effects.damage + (effects.dieScaleDamage ? dieTotal : 0);
-      if (effects.splitDamage && targets.length >= 2) {
-        result.splitDamage = true;
-        result.damage = dmg; // full base damage — will be split after bonuses in applySkillResult
+      if (targets.length >= 2) {
+        if (effects.splitDamage) result.splitDamage = true;
+        result.damage = dmg;
         result.baseDamage = dmg;
         result.target = targets[0];
         result.secondTarget = targets[1];

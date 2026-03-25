@@ -52,7 +52,7 @@ const RAW_CLASSES = {
         "id": "twin_slash", "name": "Twin Slash", "cooldown": 1,
         "cost": { "type": "pairOdd" }, "target": "dual_enemy",
         "description": "Deals 5 damage to each of two targets.",
-        "effects": { "damage": 10, "splitDamage": true }
+        "effects": { "damage": 5 }
       },
       {
         "id": "shield_wall", "name": "Shield Wall", "cooldown": 2,
