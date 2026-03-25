@@ -1411,8 +1411,13 @@ class Game {
       a.class_ballistarius = true;
       this.addNotification('Class Unlocked: Ballistarius!');
     }
-    // Reach march 8 → Cataphract
-    if (!a.class_cataphract && (s.highestDifficulty || 1) >= 8) {
+    // Reach march 8 → Praetorian
+    if (!a.class_praetorian && (s.highestDifficulty || 1) >= 8) {
+      a.class_praetorian = true;
+      this.addNotification('Class Unlocked: Praetorian!');
+    }
+    // Reach march 9 → Cataphract
+    if (!a.class_cataphract && (s.highestDifficulty || 1) >= 9) {
       a.class_cataphract = true;
       this.addNotification('Class Unlocked: Cataphract!');
     }
@@ -1426,10 +1431,9 @@ class Game {
       a.class_wulfswestr = true;
       this.addNotification('Class Unlocked: Wulfswestr!');
     }
-    // Win a boss fight with no downed → Praetorian
-    if (!a.class_praetorian && a._bossFlawless) {
-      a.class_praetorian = true;
-      this.addNotification('Class Unlocked: Praetorian!');
+    // Flawless boss win — tracked for achievements but no longer unlocks Praetorian
+    if (!a._bossFlawless && this._pendingBossFlawless) {
+      a._bossFlawless = true;
     }
     // Win full run → Vestalis
     if (!a.class_vestalis && (s.runsCompleted || 0) >= 1) {
@@ -1449,7 +1453,18 @@ class Game {
 
   addNotification(text) {
     console.log('[ACHIEVEMENT] ' + text);
-    // Show toast popup
+    if (!this._notificationQueue) this._notificationQueue = [];
+    this._notificationQueue.push(text);
+    if (!this._notificationRunning) this._showNextNotification();
+  }
+
+  _showNextNotification() {
+    if (!this._notificationQueue || this._notificationQueue.length === 0) {
+      this._notificationRunning = false;
+      return;
+    }
+    this._notificationRunning = true;
+    const text = this._notificationQueue.shift();
     const toast = document.createElement('div');
     toast.className = 'achievement-toast';
     toast.innerHTML = `<span class="achievement-toast-icon">★</span> ${text}`;
@@ -1457,8 +1472,11 @@ class Game {
     requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {
       toast.classList.add('fade-out');
-      setTimeout(() => toast.remove(), 600);
-    }, 3000);
+      setTimeout(() => {
+        toast.remove();
+        this._showNextNotification();
+      }, 600);
+    }, 2500);
   }
 
   showAchievementsScreen() {
@@ -1527,8 +1545,8 @@ class Game {
       { key: 'class_arcania', name: "Through The Fog", desc: "Defeat the Fog Weaver.", progress: () => (s.enemiesKilled['fog_weaver']||0) >= 1 ? 'Done' : '0/1' },
       // Mid progression
       { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 7.", progress: () => (s.highestDifficulty||1) >= 7 ? 'Done' : `March ${s.highestDifficulty||1}/7` },
-      { key: 'class_cataphract', name: "Into The Darkness", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
-      { key: 'class_praetorian', name: "Flawless Victory", desc: "Win a boss fight with no units downed.", progress: () => a._bossFlawless ? 'Done' : 'Not yet' },
+      { key: 'class_cataphract', name: "Into The Darkness", desc: "Reach March 9.", progress: () => (s.highestDifficulty||1) >= 9 ? 'Done' : `March ${s.highestDifficulty||1}/9` },
+      { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
       { key: 'class_wulfswestr', name: "Thusnelda's Defeat", desc: "Defeat Thusnelda.", progress: () => (s.enemiesKilled['thusnelda']||0) >= 1 ? 'Done' : '0/1' },
       { key: 'class_vestalis', name: "The Last March", desc: "Complete a full run (March 10).", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : '0/1' },
       // Boss kill x3 (curses)

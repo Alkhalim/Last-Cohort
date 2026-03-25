@@ -331,10 +331,9 @@ const RAW_ENEMIES = {
     "isBoss": true, "ai": "boss",
     "description": "A painted shaman who dances between the lines, swapping places with her serpents. Fen vipers obey her call. Her venom weakens the body while her chants shatter the mind. Pin her down — if you can.",
     "actions": [
-      { "name": "Venom Spit", "damage": 5, "poisonTarget": 3, "chance": 0.25, "text": "spits a stream of dark venom", "ignoreRow": true },
-      { "name": "Serpent Dance", "damage": 0, "chance": 0.3, "text": "dances — swapping rows and gaining block", "blockSelf": 5 },
-      { "name": "Fang Strike", "damage": 7, "poisonTarget": 4, "chance": 0.2, "text": "lunges with a fanged staff" },
-      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 2, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 }
+      { "name": "Venom Spit", "damage": 5, "poisonTarget": 3, "chance": 0.3, "text": "spits a stream of dark venom", "ignoreRow": true },
+      { "name": "Fang Strike", "damage": 7, "poisonTarget": 4, "chance": 0.35, "text": "lunges with a fanged staff" },
+      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 2, "chance": 0.35, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 }
     ]
   },
   "serpent_shade": {

@@ -837,6 +837,30 @@ class CombatEngine {
       }
     }
 
+    // Serpent Shaman: passive dance — swap with a snake and heal each turn
+    const shaman = this.enemies.find(e => e.id === 'serpent_shaman' && !e.dead);
+    if (shaman) {
+      const snakes = this.enemies.filter(e => !e.dead && e !== shaman && (e.id === 'fen_viper' || e.id === 'serpent_shade'));
+      if (snakes.length > 0) {
+        const oppositeRow = shaman.row === 'front' ? 'back' : 'front';
+        let swapTarget = snakes.find(s => s.row === oppositeRow);
+        if (!swapTarget) swapTarget = snakes[Math.floor(Math.random() * snakes.length)];
+        const oldRow = shaman.row;
+        shaman.row = swapTarget.row;
+        swapTarget.row = oldRow;
+        const heal = Math.min(3, shaman.maxHp - shaman.hp);
+        if (heal > 0) shaman.hp += heal;
+        this.addLog(`${shaman.name} dances — swaps with ${swapTarget.name} and heals ${heal} HP!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: shaman.index, text: 'Dance!', color: '#8a4' });
+      } else {
+        // No snakes — just swap row and heal
+        shaman.row = shaman.row === 'front' ? 'back' : 'front';
+        const heal = Math.min(2, shaman.maxHp - shaman.hp);
+        if (heal > 0) shaman.hp += heal;
+        this.addLog(`${shaman.name} dances to the ${shaman.row} row! (+${heal} HP)`);
+      }
+    }
+
     // Fog Weaver: decrease the value of 1-2 random dice each turn
     const fogWeaver = this.enemies.find(e => e.id === 'fog_weaver' && !e.dead);
     if (fogWeaver) {
@@ -4014,24 +4038,6 @@ class CombatEngine {
       } else {
         // Already spawned, do a basic attack instead
         this.addLog(`${enemy.name} writhes but cannot spawn again.`);
-      }
-    }
-
-    // Serpent Shaman: Serpent Dance — swap position with a snake/shade ally (no spawn)
-    if (enemy.id === 'serpent_shaman' && action.name === 'Serpent Dance') {
-      const snakes = this.enemies.filter(e => !e.dead && e !== enemy &&
-        (e.id === 'fen_viper' || e.id === 'serpent_shade'));
-      if (snakes.length > 0) {
-        const oppositeRow = enemy.row === 'front' ? 'back' : 'front';
-        let swapTarget = snakes.find(s => s.row === oppositeRow);
-        if (!swapTarget) swapTarget = snakes[Math.floor(Math.random() * snakes.length)];
-        const shamanRow = enemy.row;
-        enemy.row = swapTarget.row;
-        swapTarget.row = shamanRow;
-        this.addLog(`${enemy.name} dances — swapping places with ${swapTarget.name}!`);
-      } else {
-        enemy.row = enemy.row === 'front' ? 'back' : 'front';
-        this.addLog(`${enemy.name} dances to the ${enemy.row} row!`);
       }
     }
 

@@ -21,7 +21,7 @@ const RAW_CLASSES = {
         "id": "strike", "name": "Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Basic sword strike. Deals 3 damage.",
-        "effects": { "damage": 3 }
+        "effects": { "damage": 3, "bonusDmgScale": 1.1 }
       },
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
@@ -32,8 +32,8 @@ const RAW_CLASSES = {
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
         "cost": { "type": "odd" }, "target": "single_enemy",
-        "description": "Precise thrust. Deals 2 + die value damage. +50% damage vs targets with Block, stun, or mark.",
-        "effects": { "damage": 2, "dieScaleDamage": true, "gladiusThrust": true }
+        "description": "Precise thrust. Deals 1 + die value damage. +50% damage vs targets with Block, stun, or mark.",
+        "effects": { "damage": 1, "dieScaleDamage": true, "gladiusThrust": true }
       },
       {
         "id": "hold_fast", "name": "Hold Fast", "cooldown": 1,
@@ -164,7 +164,8 @@ const RAW_CLASSES = {
       {
         "id": "press_advantage", "name": "Press the Advantage", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 6+. Suppress target: deals 40% less damage for 2 turns.",
+        "ignoreRow": true,
+        "description": "Ranged. 2 dice totaling 6+. Suppress target: deals 40% less damage for 2 turns.",
         "effects": { "suppress": 2 }
       },
       {
@@ -751,7 +752,7 @@ const RAW_CLASSES = {
     "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
-    "unlockCondition": "Win a boss fight with no units downed", "unlockKey": "class_praetorian",
+    "unlockCondition": "Reach March 8", "unlockKey": "class_praetorian",
     "description": "Imperial bodyguard. The Emperor's finest, forged in blood and loyalty.",
     "passive": {
       "name": "Unyielding",
@@ -1124,7 +1125,7 @@ const RAW_CLASSES = {
     "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
-    "unlockCondition": "Reach March 8", "unlockKey": "class_cataphract",
+    "unlockCondition": "Reach March 9", "unlockKey": "class_cataphract",
     "description": "Heavy cavalry officer. Mobile fortress that commands from the saddle.",
     "passive": {
       "name": "Iron Vanguard",

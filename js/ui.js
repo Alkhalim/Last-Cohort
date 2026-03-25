@@ -431,6 +431,7 @@ class GameUI {
         if (enemy.canSpawn) passives.push('Passive: can spawn copies of itself.');
         if (enemy.id === 'arminius_champion') passives.push('Passive: Iron Discipline — all enemies gain 7 Block every 3 turns.');
         if (enemy.id === 'thusnelda') passives.push('Passive: gains Block per living ally each turn.');
+        if (enemy.id === 'serpent_shaman') passives.push('Passive: dances each turn — swaps position with a snake and heals 3 HP.');
         if (enemy.id === 'blood_stag') passives.push('Passive: channels charge from back row. Double damage vs targets without Block.');
         if (enemy.id === 'fog_weaver') passives.push('Passive: warps 1-2 dice each turn, reducing their values.');
         if (enemy.id === 'corpse_of_varus') passives.push('Passive: learns your soldiers\' techniques.');
@@ -1131,11 +1132,41 @@ class GameUI {
         }
       }
 
-      // Replace "die value" with actual value when dice are staged (non-scaling contexts)
+      // Replace "die value" contexts — staged shows exact, unstaged shows range with bonuses
       if (isStaged && this.stagedSkill.diceIds.length >= 1) {
         const stagedDie = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[0]);
         if (stagedDie) {
-          desc = desc.replace(/die value x(\d+)/g, (m, mult) => `<span class="stat-block">${stagedDie.value * parseInt(mult)}</span> <span class="stat-breakdown">(${stagedDie.value}×${mult})</span>`);
+          const dv = stagedDie.value;
+          desc = desc.replace(/die value x(\d+)/g, (m, mult) => `<span class="stat-block">${dv * parseInt(mult)}</span> <span class="stat-breakdown">(${dv}×${mult})</span>`);
+          desc = desc.replace(/Poison equal to die value used/g, `<span class="stat-poison">${dv + (unit.equipPoison || 0)}</span>${(unit.equipPoison || 0) > 0 ? ` <span class="stat-breakdown">(${dv}+${unit.equipPoison})</span>` : ''} Poison`);
+          desc = desc.replace(/die value/g, `<span class="stat-block">${dv}</span>`);
+        }
+        // Breakneck Charge: show sum of 2 staged dice
+        if (this.stagedSkill.diceIds.length >= 2 && skill.effects && skill.effects.breakneckCharge) {
+          const bd1 = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[0]);
+          const bd2 = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[1]);
+          if (bd1 && bd2) {
+            const sum = bd1.value + bd2.value;
+            const scaledBonus = Math.floor(effectiveBonusDmg * 1.3);
+            const total = sum + scaledBonus;
+            desc = desc.replace(/their sum as damage/g, `<span class="stat-dmg">${total}</span>${scaledBonus !== 0 ? ` <span class="stat-breakdown">(${bd1.value}+${bd2.value}+${scaledBonus})</span>` : ` <span class="stat-breakdown">(${bd1.value}+${bd2.value})</span>`} damage`);
+          }
+        }
+      } else {
+        // Not staged — show ranges with equipment bonuses
+        desc = desc.replace(/die value x(\d+)/g, (m, mult) => {
+          const mi = parseInt(mult);
+          return `<span class="stat-block">${mi}-${6 * mi}</span>`;
+        });
+        desc = desc.replace(/Poison equal to die value used/g, () => {
+          const lo = 1 + (unit.equipPoison || 0);
+          const hi = 6 + (unit.equipPoison || 0);
+          return `<span class="stat-poison">${lo}-${hi}</span>${(unit.equipPoison || 0) > 0 ? ` <span class="stat-breakdown">(die+${unit.equipPoison})</span>` : ''} Poison`;
+        });
+        if (skill.effects && skill.effects.breakneckCharge) {
+          const lo = 2 + Math.floor(effectiveBonusDmg * 1.3);
+          const hi = 12 + Math.floor(effectiveBonusDmg * 1.3);
+          desc = desc.replace(/their sum as damage/g, `<span class="stat-dmg">${lo}-${hi}</span>${effectiveBonusDmg !== 0 ? ` <span class="stat-breakdown">(dice+${Math.floor(effectiveBonusDmg * 1.3)})</span>` : ''} damage`);
         }
       }
 
@@ -1330,9 +1361,16 @@ class GameUI {
     const unitIndex = this.selectedUnitIndex;
     this.stagedSkill = null;
 
-    // For self/all-target skills and dual-target skills, route through beginSkillTarget
-    if (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES || skill.target === TARGET.DUAL_ENEMY) {
+    // For self/all-target skills, route through beginSkillTarget
+    if (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES) {
       this.engine.beginSkillTarget(unitIndex, skill.id, diceIds);
+    } else if (skill.target === TARGET.DUAL_ENEMY) {
+      // First target already selected — enter dual targeting with it pre-filled
+      this.engine.beginSkillTarget(unitIndex, skill.id, diceIds);
+      if (this.engine.targetMode && this.engine.targetMode.targetType === 'dual_enemy') {
+        this.engine.targetMode.selectedTargets.push(target);
+        this.engine.update();
+      }
     } else {
       this.engine.executeSkill(unitIndex, skill.id, diceIds, [target]);
     }
@@ -1581,7 +1619,7 @@ class GameUI {
       const items = unit.equipment[slot].filter(Boolean).map(id => {
         const item = getItemData(id);
         if (!item) return '';
-        return `<div class="profile-item rarity-${item.rarity}"><span class="profile-item-name">${item.name}${item.level > 1 ? ` Lv${item.level}` : ''}</span> <span class="profile-item-stats">${formatItemStats(item.stats)}</span>${item.special ? `<div class="profile-item-special">${item.special}</div>` : ''}</div>`;
+        return `<div class="profile-item rarity-${item.rarity}"><span class="profile-item-name">${item.name}${item.level > 1 ? ` Lv${item.level}` : ''}</span> <span class="profile-item-stats">${formatItemStats(item.stats)}</span>${item.special ? `<div class="profile-item-special">${formatItemSpecial(item)}</div>` : ''}</div>`;
       }).filter(Boolean).join('');
       return items || '';
     }).join('');
@@ -3288,6 +3326,28 @@ class GameUI {
   startRestNode(node) {
     this.campActionsLeft = 2;
     this.campLog = [];
+
+    // 30% chance of a small positive camp event (scales with difficulty)
+    if (Math.random() < 0.3) {
+      const diff = window.game ? window.game.difficulty : 1;
+      const hpBonus = Math.floor(diff / 3); // +1 per 3 difficulty
+      const moraleBonus = Math.floor(diff / 4); // +1 per 4 difficulty
+      const campEvents = [
+        { text: "A soldier pulls out a carved flute and plays a melody from home. The men gather close, lost in memory.", effect: () => { this.engine.morale = Math.min(100, this.engine.morale + 3 + moraleBonus); }, result: `+${3 + moraleBonus} Morale` },
+        { text: "One of your men catches a fat rabbit in a snare. Fresh meat lifts everyone's spirits.", effect: () => { const h = 2 + hpBonus; this.engine.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + h); }); }, result: `All soldiers heal ${2 + hpBonus} HP` },
+        { text: "A young soldier tells a joke so bad it circles back to being funny. Genuine laughter fills the camp for the first time in days.", effect: () => { const m = 2 + moraleBonus; const h = 1 + hpBonus; this.engine.morale = Math.min(100, this.engine.morale + m); this.engine.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + h); }); }, result: `+${2 + moraleBonus} Morale, heal ${1 + hpBonus} HP` },
+        { text: "An old veteran shares hard-won wisdom about the forest. The others listen and learn.", effect: () => { const amt = 1 + Math.floor(diff / 4); const alive = this.engine.party.filter(u => !u.downed); if (alive.length > 0) { const u = alive[Math.floor(Math.random() * alive.length)]; u.equipDamage = (u.equipDamage || 0) + amt; this._campEventUnit = u.name; this._campEventAmt = amt; } }, result: () => `${this._campEventUnit || 'A soldier'} gains +${this._campEventAmt || 1} permanent damage` },
+        { text: "You find wild herbs growing by the stream. Your healer gathers them eagerly.", effect: () => { const amt = 1 + Math.floor(diff / 4); const healers = this.engine.party.filter(u => !u.downed && CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes('support')); if (healers.length > 0) { healers[0].equipHeal = (healers[0].equipHeal || 0) + amt; this._campEventUnit = healers[0].name; this._campEventAmt = amt; } else { const h = 3 + hpBonus; this.engine.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + h); }); this._campEventUnit = null; this._campEventAmt = h; } }, result: () => this._campEventUnit ? `${this._campEventUnit} gains +${this._campEventAmt} permanent healing` : `All soldiers heal ${this._campEventAmt} HP` },
+        { text: "The night passes without incident. For once, everyone sleeps deeply.", effect: () => { const h = 3 + hpBonus; const m = 2 + moraleBonus; this.engine.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + h); }); this.engine.morale = Math.min(100, this.engine.morale + m); }, result: `All heal ${3 + hpBonus} HP, +${2 + moraleBonus} Morale` },
+        { text: "A soldier finds a lucky coin in the mud. He swears it's a sign from the gods.", effect: () => { this.engine.morale = Math.min(100, this.engine.morale + 4 + moraleBonus); }, result: `+${4 + moraleBonus} Morale` },
+        { text: "Two rivals in the cohort settle their differences over the fire. The tension lifts.", effect: () => { const m = 3 + moraleBonus; const h = 2 + hpBonus; this.engine.morale = Math.min(100, this.engine.morale + m); const alive = this.engine.party.filter(u => !u.downed); if (alive.length >= 2) { alive[0].hp = Math.min(alive[0].maxHp, alive[0].hp + h); alive[1].hp = Math.min(alive[1].maxHp, alive[1].hp + h); } }, result: `+${3 + moraleBonus} Morale, 2 soldiers heal ${2 + hpBonus} HP` },
+      ];
+      const evt = campEvents[Math.floor(Math.random() * campEvents.length)];
+      evt.effect();
+      const resultText = typeof evt.result === 'function' ? evt.result() : evt.result;
+      this.campLog.push(`★ ${evt.text} (${resultText})`);
+    }
+
     this.showCampScreen();
   }
 
@@ -3727,7 +3787,7 @@ class GameUI {
       return `<div class="loot-slot-item ${selected ? 'selected-replace' : ''} rarity-${eq.rarity}" data-slot-idx="${si}">
         <span class="loot-slot-name">${eq.name}${eq.level > 1 ? ` Lv${eq.level}` : ''}</span>
         <span class="loot-slot-stats">${formatItemStats(eq.stats)}</span>
-        ${eq.special ? `<span class="loot-slot-special">${eq.special}</span>` : ''}
+        ${eq.special ? `<span class="loot-slot-special">${formatItemSpecial(eq)}</span>` : ''}
         ${diffHtml}
       </div>`;
     }).join('');
@@ -3923,6 +3983,24 @@ class GameUI {
       }
       return `<span class="stat-heal">${b}</span> HP`;
     });
+
+    // Die value ranges (non-combat context — always show ranges with bonuses)
+    desc = desc.replace(/die value x(\d+)/g, (m, mult) => {
+      const mi = parseInt(mult);
+      return `<span class="stat-block">${mi}-${6 * mi}</span>`;
+    });
+    desc = desc.replace(/Poison equal to die value used/g, () => {
+      const lo = 1 + equipPoison;
+      const hi = 6 + equipPoison;
+      return `<span class="stat-poison">${lo}-${hi}</span>${equipPoison > 0 ? ` <span class="stat-breakdown">(die+${equipPoison})</span>` : ''} Poison`;
+    });
+    if (skill.effects && skill.effects.breakneckCharge) {
+      const lo = 2 + Math.floor(scaledBonusDmg * 1.3);
+      const hi = 12 + Math.floor(scaledBonusDmg * 1.3);
+      desc = desc.replace(/their sum as damage/g, `<span class="stat-dmg">${lo}-${hi}</span> damage`);
+    }
+    desc = desc.replace(/pair value x(\d+)/g, (m, mult) => `<span class="stat-block">${mult}-${6 * parseInt(mult)}</span>`);
+    desc = desc.replace(/pair value/g, `<span class="stat-block">1-6</span>`);
 
     // Poison values
     desc = desc.replace(/(\d+) Poison/g, (match, base) => {

@@ -4032,8 +4032,8 @@ html, body {
 }
 
 .ps-curses {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
@@ -4135,6 +4135,7 @@ html, body {
   letter-spacing: 0.1em;
   margin-bottom: 6px;
   text-align: center;
+  grid-column: 1 / -1;
 }
 
 .ps-curse-name {
@@ -4145,9 +4146,9 @@ html, body {
 }
 
 .ps-curse-desc {
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   color: var(--text-dim);
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .ps-curse-none {
