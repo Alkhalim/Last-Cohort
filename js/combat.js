@@ -90,6 +90,7 @@ class CombatEngine {
     this._eagleUsed = false;
     this._marsSkillCount = 0;
     this._aquilaCuirassUsed = false;
+    this._totalSkillsUsed = 0;
     this.killedEnemies = [];
     this.party.forEach(u => {
       // Preserve camp-granted block and buffs, only reset combat-specific state
@@ -2569,10 +2570,11 @@ class CombatEngine {
       }
     }
 
-    // Momentum Strike: deal 1 damage per skill used this combat
+    // Momentum Strike: deal 1 damage per skill used this combat (capped at 20, half equipment scaling)
     if (result.momentumStrike && result.target) {
-      const momentum = this._totalSkillsUsed || 1;
-      let dmg = momentum + bonusDmg;
+      const momentum = Math.min(20, this._totalSkillsUsed || 1);
+      const momentumBonus = Math.floor(bonusDmg * 0.5);
+      let dmg = momentum + momentumBonus;
       // Block interaction
       if (result.target.block && result.target.block > 0) {
         const ab = Math.min(result.target.block, dmg);
