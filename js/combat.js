@@ -72,6 +72,7 @@ class CombatEngine {
   }
 
   initEncounter(encounterDef) {
+    this._encounterDef = encounterDef;
     this.enemyDefs = encounterDef.enemies;
     this.enemies = [];
     this.spawnIndex = 0;
@@ -202,6 +203,11 @@ class CombatEngine {
           victim.poison = (victim.poison || 0) + hcPoison;
           this.addLog(`War Hound's spirit strikes — ${victim.name} is poisoned! (+${hcPoison} Poison)`);
         }
+      }
+      // Grove Witch: spawn a healing totem at encounter start
+      if (this._encounterDef && this._encounterDef.spawnHealingTotem) {
+        const witch = this.enemies.find(e => e.id === 'grove_witch' && !e.dead);
+        if (witch) this.spawnHealingTotem(witch);
       }
       // Apply boon effects at combat start
       const boons = this.getActiveBoons();
@@ -474,23 +480,7 @@ class CombatEngine {
       }
     });
 
-    // Morale decay — escalates each turn. Turn 1: -1, Turn 2: -2, etc.
-    // Difficulty adds +1 base decay per level above 1 (diff 2 = +1, diff 3 = +2, etc.)
-    // Champion's Helm reduces decay by 1 per helm equipped
-    // Curse: Witch's Gaze — morale decay +2 per turn
-    const helmCarrier = this.party.find(u => !u.downed && this.unitHasItem(u, 'champions_helm'));
-    const helmReduction = helmCarrier ? this.getItemLevel(helmCarrier, 'champions_helm') : 0;
-    // Difficulty decay: +1 per level above 1, softcapped at 5+ (half rate)
-    const rawDiff = (this.difficulty || 1) - 1;
-    const diffDecay = rawDiff <= 4 ? rawDiff : 4 + Math.floor((rawDiff - 4) / 2);
-    const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
-    const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
-    this.morale = Math.max(0, this.morale - moraleDecay);
-    this.clampMorale();
-    if (moraleDecay > 0) {
-      this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
-      if (this.onVisual) this.onVisual('morale', { amount: -moraleDecay });
-    }
+    // Morale decay moved to endPlayerTurn
 
     // Special: Wicker Ash — enemies take damage at start of turn (scales with level)
     const wickerAshCarrier = this.party.find(u => !u.downed && this.unitHasItem(u, 'wicker_ash'));
@@ -3426,6 +3416,21 @@ class CombatEngine {
   // --- End player turn ---
   endPlayerTurn() {
     if (this.phase !== PHASE.PLAYER_TURN) return;
+
+    // Morale decay — escalates each turn, applied at end of player turn
+    const helmCarrier = this.party.find(u => !u.downed && this.unitHasItem(u, 'champions_helm'));
+    const helmReduction = helmCarrier ? this.getItemLevel(helmCarrier, 'champions_helm') : 0;
+    const rawDiff = (this.difficulty || 1) - 1;
+    const diffDecay = rawDiff <= 4 ? rawDiff : 4 + Math.floor((rawDiff - 4) / 2);
+    const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
+    const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
+    this.morale = Math.max(0, this.morale - moraleDecay);
+    this.clampMorale();
+    if (moraleDecay > 0) {
+      this.addLog(`The forest weighs on your men. (-${moraleDecay} Morale)`);
+      if (this.onVisual) this.onVisual('morale', { amount: -moraleDecay });
+    }
+
     this.phase = PHASE.ENEMY_TURN;
     this.update();
     const fast = typeof isFastMode === 'function' && isFastMode();

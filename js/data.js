@@ -728,8 +728,8 @@ function createLeveledItem(itemId, bonusLevels) {
     }
   }
 
-  // Update name to show level
-  leveled.name = base.name + ' +' + bonusLevels;
+  // Name stays clean — level shown separately via item.level
+  leveled.name = base.name;
 
   // Register in ITEM_DATA so getItemData works
   ITEM_DATA[instanceId] = leveled;

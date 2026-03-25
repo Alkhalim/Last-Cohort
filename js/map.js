@@ -20,9 +20,16 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   };
   nodes.push(startNode);
 
-  // Depths 1-7: 2-3 nodes each
+  // Depths 1-7: 2-3 nodes each, guaranteed 3 from depth 4+
   for (let depth = 1; depth <= 7; depth++) {
-    const count = 2 + (Math.random() < 0.4 ? 1 : 0); // 2 or 3 nodes
+    let count;
+    if (depth >= 4) {
+      count = 3; // always 3 nodes from depth 4 onward
+    } else if (depth >= 2) {
+      count = 2 + (Math.random() < 0.6 ? 1 : 0); // 60% chance of 3
+    } else {
+      count = 2 + (Math.random() < 0.4 ? 1 : 0); // depth 1: 40% chance of 3
+    }
     const depthNodes = [];
     for (let n = 0; n < count; n++) {
       const roll = Math.random();
@@ -189,6 +196,34 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       } else {
         toChange.threat = 0;
       }
+    }
+  }
+
+  // Enforce: no 4 combat nodes in a row on any path.
+  // Check each combat node: if ALL paths from root to it pass through 3+ consecutive combats,
+  // convert it to an event.
+  for (const node of nodes) {
+    if (node.type !== 'combat' || node.depth < 3) continue;
+    // Check if ANY parent chain has 3 consecutive combats leading to this (making it the 4th)
+    let allPathsLong = true;
+    for (const pid of node.parents) {
+      const p = nodes.find(n => n.id === pid);
+      if (!p || p.type !== 'combat') { allPathsLong = false; break; }
+      let streak = true;
+      for (const gpid of p.parents) {
+        const gp = nodes.find(n => n.id === gpid);
+        if (!gp || gp.type !== 'combat') { streak = false; break; }
+        for (const ggpid of gp.parents) {
+          const ggp = nodes.find(n => n.id === ggpid);
+          if (!ggp || ggp.type !== 'combat') { streak = false; break; }
+        }
+        if (!streak) break;
+      }
+      if (!streak) { allPathsLong = false; break; }
+    }
+    if (allPathsLong) {
+      node.type = Math.random() < 0.6 ? 'event' : 'rest';
+      node.threat = 0;
     }
   }
 
