@@ -536,6 +536,8 @@ class Game {
     continueBtn.disabled = this.selectedPartyClasses.length !== 3;
 
     // Continue button: go to curse select (or straight to run if no curses unlocked)
+    document.getElementById('btn-party-back').onclick = () => this.showHomeScreen();
+
     continueBtn.onclick = () => {
       if (this.selectedPartyClasses.length === 3) {
         const anyUnlocked = CURSE_DEFS.some(c => !!this.achievements[c.achievement]) || BOON_DEFS.some(b => !!this.achievements[b.achievement]);
@@ -766,6 +768,7 @@ class Game {
     if (this.engine.hasBossEnemy()) this.stats.bossesKilled++;
     if (this.difficulty > this.stats.highestDifficulty) this.stats.highestDifficulty = this.difficulty;
     this.saveStats();
+    this.checkAchievements();
   }
 
   trackRunEnd(victory) {
@@ -1657,6 +1660,11 @@ class Game {
     this.difficulty++;
     this.marchCount++;
     this.engine.difficulty = this.difficulty;
+    if (this.difficulty > this.stats.highestDifficulty) {
+      this.stats.highestDifficulty = this.difficulty;
+      this.saveStats();
+    }
+    this.checkAchievements();
 
     this.resumeGameplayMusic();
 

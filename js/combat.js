@@ -138,6 +138,14 @@ class CombatEngine {
       }
     });
 
+    // Special: Gilded Cuirass — start combat with Block equal to training Block bonus
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'gilded_cuirass') && (u.bonusBlock || 0) > 0) {
+        u.block = (u.block || 0) + u.bonusBlock;
+        this.addLog(`${u.name}'s Gilded Cuirass grants ${u.bonusBlock} Block from training.`);
+      }
+    });
+
     // Special: War Hound Collar — apply 2 poison to a random enemy at combat start
     if (this.partyHasItem('hound_collar')) {
       // Deferred — enemies aren't spawned yet during initEncounter
@@ -250,7 +258,7 @@ class CombatEngine {
     const data = ENEMY_DATA[eid];
     // Difficulty scaling: HP, damage, poison, and block scale per difficulty above 1
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    let scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.65));
+    let scaledMaxHp = Math.round(data.maxHp * this.getHpScale(diffBonus));
     // Curse: Champion's Mark — bosses have +20% HP
     if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
       scaledMaxHp = Math.round(scaledMaxHp * 1.2);
@@ -405,6 +413,14 @@ class CombatEngine {
         if (e.hp <= 0) {
           e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
           this.addLog(`${e.name} falls to poison!`);
+          // Morale restore on poison kill
+          const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
+          const diffBonusKill = Math.floor((this.difficulty || 1) / 3);
+          let moraleRestore = (baseHp > 10 ? 3 : 2) + diffBonusKill;
+          if (e.deathMoraleMultiplier) moraleRestore *= e.deathMoraleMultiplier;
+          this.morale = Math.min(100, this.morale + moraleRestore);
+          this.addLog(`Your men rally! (+${moraleRestore} Morale)`);
+          if (this.onVisual) this.onVisual('morale', { amount: moraleRestore });
           // Serpent's Coil: spread 2 poison to all other enemies on poison kill
           if (this.partyHasItem('serpents_coil')) {
             this.enemies.forEach(other => {
@@ -911,7 +927,7 @@ class CombatEngine {
         const data = ENEMY_DATA[nextId];
         if (data && this.enemies.filter(e => !e.dead).length < 6) {
           const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-          const spectralHp = Math.round(data.maxHp * (1 + diffBonus * 0.65) / 3);
+          const spectralHp = Math.round(data.maxHp * this.getHpScale(diffBonus) / 3);
           const spectralActions = data.actions.map(a => ({
             ...a,
             damage: a.damage > 0 ? Math.max(1, Math.round(a.damage * (1 + diffBonus * 0.35) / 3)) : 0,
@@ -2053,10 +2069,14 @@ class CombatEngine {
         }
       }
       // Thusnelda's Standard: block-granting skills also restore 2 Morale
-      if (this.unitHasItem(unit, 'thusneldas_standard')) {
-        this.morale = Math.min(100, this.morale + 2);
-        parts.push('+2 Morale (Standard)');
-        if (this.onVisual) this.onVisual('morale', { amount: 2 });
+      // Battle Standard Cord / Thusnelda's Standard: block skills restore morale
+      let blockMorale = 0;
+      if (this.unitHasItem(unit, 'thusneldas_standard')) blockMorale += 2;
+      if (this.unitHasItem(unit, 'battle_standard_cord')) blockMorale += 1;
+      if (blockMorale > 0) {
+        this.morale = Math.min(100, this.morale + blockMorale);
+        parts.push(`+${blockMorale} Morale`);
+        if (this.onVisual) this.onVisual('morale', { amount: blockMorale });
       }
       const bonusStr = bonusBlock > 0 ? ` (${result.blockAll}+${bonusBlock})` : '';
       if (!result.damage && !result.heal && !result.block) {
@@ -4018,7 +4038,7 @@ class CombatEngine {
         const data = ENEMY_DATA[action.spawn];
         if (data) {
           const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-          const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.65));
+          const scaledMaxHp = Math.round(data.maxHp * this.getHpScale(diffBonus));
           const scaledActions = data.actions.map(a => ({
             ...a,
             damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.23)) : 0,
@@ -4650,7 +4670,7 @@ class CombatEngine {
     if (!data) return;
     if (this.enemies.filter(e => !e.dead).length >= 6) return;
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-    const scaledMaxHp = Math.round(data.maxHp * (1 + diffBonus * 0.65));
+    const scaledMaxHp = Math.round(data.maxHp * this.getHpScale(diffBonus));
     const scaledActions = data.actions.map(a => ({
       ...a,
       damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.35)) : 0,
@@ -4727,6 +4747,12 @@ class CombatEngine {
       this.enemies.forEach(e => { if (!e.dead) e.hp = Math.max(0, e.hp - cotDmg); });
       this.addLog(`Crown of Thorns — ${cotDmg} damage to all enemies!`);
     }
+  }
+
+  // HP scaling: 0.65 per difficulty up to D6, 0.55 per difficulty at D7+
+  getHpScale(diffBonus) {
+    if (diffBonus <= 5) return 1 + diffBonus * 0.65;
+    return 1 + 5 * 0.65 + (diffBonus - 5) * 0.55;
   }
 
   getActiveCurses() {

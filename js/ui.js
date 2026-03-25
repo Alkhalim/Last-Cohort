@@ -2982,21 +2982,25 @@ class GameUI {
     }
 
     shuffled.forEach(({ unit, skill, baseDef }) => {
-      // Gather all upgradeable stats for this skill, then pick one randomly
+      // Gather all upgradeable stats — scales with difficulty like event grants
       const effects = baseDef.effects || {};
+      const diff = window.game ? window.game.difficulty : 1;
+      const upgradeBonus = Math.floor((diff - 1) / 4); // +1 at D5, +2 at D9
+      const amt = 1 + upgradeBonus;
+      const moraleAmt = 3 + upgradeBonus;
       const friendlyNames = { counterStance: 'counter damage', overwatch: 'overwatch damage', snareTrap: 'trap damage', suppress: 'suppress duration', cripple: 'cripple duration', deafen: 'deafen duration', condemn: 'condemn duration', transfusion: 'transfer HP' };
       const candidates = [];
-      if (effects.damage) candidates.push({ key: 'damage', text: `+1 damage (${effects.damage} → ${effects.damage + 1})`, apply: () => baseDef.effects.damage++ });
-      if (effects.heal) candidates.push({ key: 'heal', text: `+1 healing (${effects.heal} → ${effects.heal + 1})`, apply: () => baseDef.effects.heal++ });
-      if (effects.healAll) candidates.push({ key: 'healAll', text: `+1 healing to all (${effects.healAll} → ${effects.healAll + 1})`, apply: () => baseDef.effects.healAll++ });
-      if (effects.block) candidates.push({ key: 'block', text: `+1 block (${effects.block} → ${effects.block + 1})`, apply: () => baseDef.effects.block++ });
-      if (effects.blockAll) candidates.push({ key: 'blockAll', text: `+1 block to all (${effects.blockAll} → ${effects.blockAll + 1})`, apply: () => baseDef.effects.blockAll++ });
-      if (effects.poison) candidates.push({ key: 'poison', text: `+1 poison (${effects.poison} → ${effects.poison + 1})`, apply: () => baseDef.effects.poison++ });
-      if (effects.poisonAll) candidates.push({ key: 'poisonAll', text: `+1 poison to all (${effects.poisonAll} → ${effects.poisonAll + 1})`, apply: () => baseDef.effects.poisonAll++ });
-      if (effects.morale) candidates.push({ key: 'morale', text: `+3 morale (${effects.morale} → ${effects.morale + 3})`, apply: () => baseDef.effects.morale += 3 });
-      if (effects.damageAll) candidates.push({ key: 'damageAll', text: `+1 damage to all (${effects.damageAll} → ${effects.damageAll + 1})`, apply: () => baseDef.effects.damageAll++ });
-      if (effects.selfDamage) candidates.push({ key: 'selfDamage', text: `-1 self damage (${effects.selfDamage} → ${effects.selfDamage - 1})`, apply: () => baseDef.effects.selfDamage-- });
-      if (effects.buffAllies) candidates.push({ key: 'buffAllies', text: `+1 buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + 1})`, apply: () => baseDef.effects.buffAllies.bonusDamage++ });
+      if (effects.damage) candidates.push({ key: 'damage', text: `+${amt} damage (${effects.damage} → ${effects.damage + amt})`, apply: () => baseDef.effects.damage += amt });
+      if (effects.heal) candidates.push({ key: 'heal', text: `+${amt} healing (${effects.heal} → ${effects.heal + amt})`, apply: () => baseDef.effects.heal += amt });
+      if (effects.healAll) candidates.push({ key: 'healAll', text: `+${amt} healing to all (${effects.healAll} → ${effects.healAll + amt})`, apply: () => baseDef.effects.healAll += amt });
+      if (effects.block) candidates.push({ key: 'block', text: `+${amt} block (${effects.block} → ${effects.block + amt})`, apply: () => baseDef.effects.block += amt });
+      if (effects.blockAll) candidates.push({ key: 'blockAll', text: `+${amt} block to all (${effects.blockAll} → ${effects.blockAll + amt})`, apply: () => baseDef.effects.blockAll += amt });
+      if (effects.poison) candidates.push({ key: 'poison', text: `+${amt} poison (${effects.poison} → ${effects.poison + amt})`, apply: () => baseDef.effects.poison += amt });
+      if (effects.poisonAll) candidates.push({ key: 'poisonAll', text: `+${amt} poison to all (${effects.poisonAll} → ${effects.poisonAll + amt})`, apply: () => baseDef.effects.poisonAll += amt });
+      if (effects.morale) candidates.push({ key: 'morale', text: `+${moraleAmt} morale (${effects.morale} → ${effects.morale + moraleAmt})`, apply: () => baseDef.effects.morale += moraleAmt });
+      if (effects.damageAll) candidates.push({ key: 'damageAll', text: `+${amt} damage to all (${effects.damageAll} → ${effects.damageAll + amt})`, apply: () => baseDef.effects.damageAll += amt });
+      if (effects.selfDamage) candidates.push({ key: 'selfDamage', text: `-${amt} self damage (${effects.selfDamage} → ${effects.selfDamage - amt})`, apply: () => baseDef.effects.selfDamage -= amt });
+      if (effects.buffAllies) candidates.push({ key: 'buffAllies', text: `+${amt} buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + amt})`, apply: () => baseDef.effects.buffAllies.bonusDamage += amt });
       // Fallback numeric effects — exclude non-upgradeable mechanics
       const excludeFromUpgrade = new Set([
         'pierceBlock', 'moraleCost', 'bonusDmgScale', 'caltrops', 'splashAdjacentPct', 'momentumStrike', 'breakneckCharge', 'allInCharge', 'gladiusThrust', 'aimedShot',
@@ -4558,36 +4562,41 @@ class GameUI {
     titleEl.textContent = `Choose ${this._marchRestUpgradesLeft} skills to upgrade:`;
     choicesEl.appendChild(titleEl);
 
+    const diff = window.game ? window.game.difficulty : 1;
+    const upgradeBonus = Math.floor((diff - 1) / 4);
+    const amt = 1 + upgradeBonus;
+    const moraleAmt = 3 + upgradeBonus;
+
     selected.forEach(({ unit, skill, baseDef }) => {
       const eff = baseDef.effects;
       let upgradeText = '';
-      if (eff.damage) upgradeText = `+1 damage (${eff.damage} → ${eff.damage + 1})`;
-      else if (eff.heal) upgradeText = `+1 healing (${eff.heal} → ${eff.heal + 1})`;
-      else if (eff.healAll) upgradeText = `+1 healing to all (${eff.healAll} → ${eff.healAll + 1})`;
-      else if (eff.block) upgradeText = `+1 block (${eff.block} → ${eff.block + 1})`;
-      else if (eff.blockAll) upgradeText = `+1 block to all (${eff.blockAll} → ${eff.blockAll + 1})`;
-      else if (eff.poison) upgradeText = `+1 poison (${eff.poison} → ${eff.poison + 1})`;
-      else if (eff.poisonAll) upgradeText = `+1 poison to all (${eff.poisonAll} → ${eff.poisonAll + 1})`;
-      else if (eff.morale) upgradeText = `+3 morale (${eff.morale} → ${eff.morale + 3})`;
-      else if (eff.damageAll) upgradeText = `+1 damage to all (${eff.damageAll} → ${eff.damageAll + 1})`;
-      else if (eff.buffAllies) upgradeText = `+1 buff damage (${eff.buffAllies.bonusDamage} → ${eff.buffAllies.bonusDamage + 1})`;
-      else { const key = Object.keys(eff).find(k => typeof eff[k] === 'number'); if (key) upgradeText = `+1 ${key} (${eff[key]} → ${eff[key] + 1})`; }
+      if (eff.damage) upgradeText = `+${amt} damage (${eff.damage} → ${eff.damage + amt})`;
+      else if (eff.heal) upgradeText = `+${amt} healing (${eff.heal} → ${eff.heal + amt})`;
+      else if (eff.healAll) upgradeText = `+${amt} healing to all (${eff.healAll} → ${eff.healAll + amt})`;
+      else if (eff.block) upgradeText = `+${amt} block (${eff.block} → ${eff.block + amt})`;
+      else if (eff.blockAll) upgradeText = `+${amt} block to all (${eff.blockAll} → ${eff.blockAll + amt})`;
+      else if (eff.poison) upgradeText = `+${amt} poison (${eff.poison} → ${eff.poison + amt})`;
+      else if (eff.poisonAll) upgradeText = `+${amt} poison to all (${eff.poisonAll} → ${eff.poisonAll + amt})`;
+      else if (eff.morale) upgradeText = `+${moraleAmt} morale (${eff.morale} → ${eff.morale + moraleAmt})`;
+      else if (eff.damageAll) upgradeText = `+${amt} damage to all (${eff.damageAll} → ${eff.damageAll + amt})`;
+      else if (eff.buffAllies) upgradeText = `+${amt} buff damage (${eff.buffAllies.bonusDamage} → ${eff.buffAllies.bonusDamage + amt})`;
+      else { const key = Object.keys(eff).find(k => typeof eff[k] === 'number'); if (key) upgradeText = `+${amt} ${key} (${eff[key]} → ${eff[key] + amt})`; }
 
       const tag = getPrimaryTag(unit.classId);
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
       btn.addEventListener('click', () => {
-        if (eff.damage) baseDef.effects.damage++;
-        else if (eff.heal) baseDef.effects.heal++;
-        else if (eff.healAll) baseDef.effects.healAll++;
-        else if (eff.block) baseDef.effects.block++;
-        else if (eff.blockAll) baseDef.effects.blockAll++;
-        else if (eff.poison) baseDef.effects.poison++;
-        else if (eff.poisonAll) baseDef.effects.poisonAll++;
-        else if (eff.morale) baseDef.effects.morale += 3;
-        else if (eff.damageAll) baseDef.effects.damageAll++;
-        else if (eff.buffAllies) baseDef.effects.buffAllies.bonusDamage++;
+        if (eff.damage) baseDef.effects.damage += amt;
+        else if (eff.heal) baseDef.effects.heal += amt;
+        else if (eff.healAll) baseDef.effects.healAll += amt;
+        else if (eff.block) baseDef.effects.block += amt;
+        else if (eff.blockAll) baseDef.effects.blockAll += amt;
+        else if (eff.poison) baseDef.effects.poison += amt;
+        else if (eff.poisonAll) baseDef.effects.poisonAll += amt;
+        else if (eff.morale) baseDef.effects.morale += moraleAmt;
+        else if (eff.damageAll) baseDef.effects.damageAll += amt;
+        else if (eff.buffAllies) baseDef.effects.buffAllies.bonusDamage += amt;
 
         // Update description numbers to match new effects
         const descKey = Object.keys(eff).find(k => typeof eff[k] === 'number');

@@ -66,8 +66,8 @@ const RAW_ITEMS = {
 
   // --- March 4 new items ---
   "boar_tusk_pauldron": { "id": "boar_tusk_pauldron", "name": "Boar Tusk Pauldron", "slot": "armor", "rarity": "rare", "classTags": ["melee"], "stats": { "block": 4, "maxHp": 3 }, "minDifficulty": 4, "description": "A shoulder guard carved from boar tusk and bound with iron wire. It turns blades and bolsters resolve." },
-  "aquila_spearhead": { "id": "aquila_spearhead", "name": "Aquila Spearhead", "slot": "weapon", "rarity": "rare", "classTags": ["command"], "stats": { "damage": 3, "maxHp": 2 }, "minDifficulty": 4, "description": "The broken tip of a legionary eagle-standard, reforged into a spearhead. It carries the weight of Rome." },
-  "battle_standard_cord": { "id": "battle_standard_cord", "name": "Battle Standard Cord", "slot": "trinket", "rarity": "rare", "classTags": ["command"], "stats": { "damage": 2, "block": 1, "maxHp": 2 }, "minDifficulty": 4, "description": "A braided cord cut from a legion battle standard. It hums with the memory of ten thousand marches." },
+  "aquila_spearhead": { "id": "aquila_spearhead", "name": "Aquila Spearhead", "slot": "weapon", "rarity": "rare", "classTags": ["command"], "stats": { "damage": 4, "maxHp": 3 }, "minDifficulty": 4, "description": "The broken tip of a legionary eagle-standard, reforged into a spearhead. It carries the weight of Rome." },
+  "battle_standard_cord": { "id": "battle_standard_cord", "name": "Battle Standard Cord", "slot": "trinket", "rarity": "rare", "classTags": ["command"], "stats": { "damage": 2, "block": 1, "maxHp": 2 }, "minDifficulty": 4, "special": "Block-granting skills also restore 1 Morale.", "description": "A braided cord cut from a legion battle standard. It hums with the memory of ten thousand marches." },
   "herbalists_robe": { "id": "herbalists_robe", "name": "Herbalist's Robe", "slot": "armor", "rarity": "rare", "classTags": ["support"], "stats": { "maxHp": 5, "heal": 2 }, "minDifficulty": 4, "description": "A Germanic healer's robe, woven with dried herbs. It smells of life even in this place of death." },
 
   // --- Difficulty 4+ unique drops ---
@@ -76,8 +76,8 @@ const RAW_ITEMS = {
 
   // --- March 5 new items ---
   "bloodstone_pendant": { "id": "bloodstone_pendant", "name": "Bloodstone Pendant", "slot": "trinket", "rarity": "rare", "classTags": ["melee"], "stats": { "damage": 3, "block": 2 }, "minDifficulty": 5, "description": "A dark red stone veined with black. It pulses in time with the wearer's heartbeat — faster in battle." },
-  "gilded_cuirass": { "id": "gilded_cuirass", "name": "Gilded Cuirass", "slot": "armor", "rarity": "rare", "classTags": ["command"], "stats": { "block": 2, "maxHp": 5 }, "minDifficulty": 5, "description": "A ceremonial breastplate plated in gold. Too heavy for parades, perfect for war." },
-  "windreaders_charm": { "id": "windreaders_charm", "name": "Windreader's Charm", "slot": "trinket", "rarity": "rare", "classTags": ["ranged"], "stats": { "damage": 3, "maxHp": 2 }, "minDifficulty": 5, "description": "A hollow bone that whistles when the wind shifts. The archer who carries it reads the air like scripture." },
+  "gilded_cuirass": { "id": "gilded_cuirass", "name": "Gilded Cuirass", "slot": "armor", "rarity": "rare", "classTags": ["command"], "stats": { "block": 3, "maxHp": 5 }, "minDifficulty": 5, "special": "Start each combat with Block equal to this unit's level-up Block bonus.", "description": "A ceremonial breastplate plated in gold. Too heavy for parades, perfect for war. The more seasoned the wearer, the harder the gold shines." },
+  "windreaders_charm": { "id": "windreaders_charm", "name": "Windreader's Charm", "slot": "trinket", "rarity": "rare", "classTags": ["ranged"], "stats": { "damage": 4, "maxHp": 3 }, "minDifficulty": 5, "description": "A hollow bone that whistles when the wind shifts. The archer who carries it reads the air like scripture." },
 
   // --- Epic items (March 4-7) ---
   "varus_shield": { "id": "varus_shield", "name": "Varus's Last Shield", "slot": "armor", "rarity": "epic", "classTags": ["roman"], "stats": { "block": 3, "maxHp": 6 }, "minDifficulty": 4, "special": "Retain up to 5 block between turns.", "description": "The shield of the doomed general. It never stopped protecting, even after he fell." },

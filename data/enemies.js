@@ -372,7 +372,7 @@ const RAW_ENEMIES = {
 
   "blood_stag": {
     "id": "blood_stag", "name": "The Blood Stag",
-    "maxHp": 58, "row": "front", "damage": [7, 14], "speed": 2, "xpValue": 28,
+    "maxHp": 52, "row": "front", "damage": [7, 14], "speed": 2, "xpValue": 28,
     "minDifficulty": 6,
     "isBoss": true, "ai": "boss",
     "description": "A monstrous stag wreathed in dripping crimson. Worshipped as a forest god by the tribes. It charges, gores, and tramples — then retreats to the back line to regenerate. Its antlers leave wounds that never stop bleeding.",
@@ -630,7 +630,7 @@ const RAW_ENEMIES = {
 
   "corpse_of_arminius": {
     "id": "corpse_of_arminius", "name": "Corpse of Arminius",
-    "maxHp": 55, "row": "front", "damage": [6, 11], "speed": 2, "xpValue": 30,
+    "maxHp": 50, "row": "front", "damage": [6, 11], "speed": 2, "xpValue": 30,
     "minDifficulty": 6,
     "isBoss": true, "ai": "boss",
     "description": "The reanimated corpse of the Germanic chieftain who destroyed three Roman legions at Teutoburg. He wears Roman training armor, corrupted by death. His discipline is inhuman.",
