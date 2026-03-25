@@ -4109,6 +4109,26 @@ html, body {
   margin-right: 6px;
 }
 
+.achieves-counter { text-align: center; color: var(--gold); font-size: 0.7rem; margin-bottom: 8px; }
+.achievement-rewards { font-size: 0.6rem; margin-top: 2px; }
+
+/* Classes screen */
+.classes-counter { text-align: center; color: var(--gold); font-size: 0.7rem; margin-bottom: 8px; }
+.classes-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;
+  padding: 8px 10px; margin-bottom: 6px;
+}
+.classes-card.locked { opacity: 0.5; }
+.classes-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; }
+.classes-name { font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 700; }
+.classes-title { font-size: 0.6rem; color: var(--text-dim); }
+.classes-desc { font-size: 0.6rem; color: var(--text-dim); margin-bottom: 3px; }
+.classes-meta { font-size: 0.6rem; color: var(--text-dim); margin-bottom: 3px; }
+.classes-hp { color: var(--red-bright); margin-right: 8px; }
+.classes-passive { font-size: 0.6rem; color: var(--gold); margin-bottom: 2px; }
+.classes-slots { font-size: 0.55rem; color: var(--text-dim); }
+.classes-unlock { font-size: 0.65rem; color: var(--text-dim); padding: 2px 0; }
+
 .ps-modifier-section-title {
   font-family: 'Cinzel', serif;
   font-size: 0.7rem;

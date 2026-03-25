@@ -64,16 +64,19 @@ const CURSE_DEFS = [
 ];
 
 const BOON_DEFS = [
-  { id: 'serpent_blessing', name: "Serpent's Blessing", achievement: 'boss_serpent_shaman_x3', description: "Start each combat with 1 Poison on all enemies.", renown: -10 },
+  { id: 'serpent_blessing', name: "Serpent's Blessing", achievement: 'boss_serpent_shaman_x3', description: "Start each combat with 2 Poison on all enemies.", renown: -10 },
   { id: 'fog_sight', name: "Fog Sight", achievement: 'boss_fog_weaver_x3', description: "Enemy intents always show exact damage numbers.", renown: -10 },
   { id: 'stag_vigor', name: "Stag's Vigor", achievement: 'boss_blood_stag_x3', description: "Heal 2 HP per unit at the start of each combat.", renown: -15 },
   { id: 'spirits_peace', name: "Spirit's Peace", achievement: 'boss_spirits_defeated', description: "Start each march at 60 morale instead of 50.", renown: -15 },
   { id: 'varus_lesson', name: "Varus's Lesson", achievement: 'boss_corpse_varus', description: "+1 bonus die on the first turn of each combat.", renown: -10 },
   { id: 'arminius_defiance', name: "Arminius's Defiance", achievement: 'boss_corpse_arminius', description: "Downed units revive with 20% more HP after fights.", renown: -20 },
-  { id: 'fresh_recruits', name: "Fresh Recruits", achievement: 'first_boss_kill', description: "+2 max HP to all units at the start of each run.", renown: -10 },
-  { id: 'scouts_blessing', name: "Scout's Blessing", achievement: 'first_elite_kill', description: "See enemy intents one turn earlier.", renown: -10 },
+  { id: 'fresh_recruits', name: "Fresh Recruits", achievement: 'first_boss_kill', description: "+5 max HP to all units at the start of each run.", renown: -10 },
+  { id: 'scouts_blessing', name: "Scout's Blessing", achievement: 'first_elite_kill', description: "Heal 2 HP per unit at the start of each combat.", renown: -10 },
+  { id: 'standard_march', name: "Standard Bearer's March", achievement: 'class_signifer', description: "Start each combat with +3 morale.", renown: -10 },
+  { id: 'cavalry_speed', name: "Cavalry Speed", achievement: 'class_equites', description: "+1 bonus die on the first turn of each combat.", renown: -10 },
+  { id: 'fog_piercer', name: "Fog Piercer", achievement: 'class_arcania', description: "All units start combat with 3 Block.", renown: -10 },
   { id: 'kings_hoard', name: "King's Hoard", achievement: 'boss_ariovistus', description: "Start each run with a random uncommon item.", renown: -10 },
-  { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+1 damage to all units for the first 2 turns of combat.", renown: -10 },
+  { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+2 damage to all units for the first 2 turns of combat.", renown: -10 },
   { id: 'epic_fortune', name: "Epic Fortune", achievement: 'hero_three_epics', description: "Item drops have +10% chance to upgrade rarity.", renown: -15 },
   { id: 'demigods_shield', name: "Demigod's Shield", achievement: 'hero_only_epics', description: "All units start combat with 3 Block.", renown: -15 },
   { id: 'pantheons_grace', name: "Pantheon's Grace", achievement: 'party_all_epics', description: "All boons active simultaneously.", renown: -50 },
@@ -492,34 +495,25 @@ class Game {
       const primaryTag = data.tags.find(t => t !== 'roman' && t !== 'germanic') || 'roman';
       const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
 
-      if (isUnlocked) {
-        const complexity = data.complexity || 1;
-        const complexityLabel = ['Simple', 'Moderate', 'Complex'][complexity - 1];
-        const complexityPips = Array.from({ length: 3 }, (_, i) =>
-          `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
-        ).join('');
-        html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
-          <div class="ps-class-header">
-            <span class="ps-class-name">${renderClassName(classId, data.name)}</span>
-            <span class="ps-class-title">${data.title}</span>
-            <span class="ps-class-tags">${tagPips}</span>
-          </div>
-          <div class="ps-class-desc">${data.description}</div>
-          <div class="ps-class-meta">
-            <span class="ps-class-hp">HP: ${data.maxHp}</span>
-            <span class="ps-class-complexity">${complexityPips} <span class="complexity-label">${complexityLabel}</span></span>
-          </div>
-          <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
-        </div>`;
-      } else {
-        html += `<div class="ps-class-card locked class-${primaryTag}">
-          <div class="ps-class-header">
-            <span class="ps-class-name" style="opacity:0.5">${data.name}</span>
-            <span class="ps-class-tags">${tagPips}</span>
-          </div>
-          <div class="ps-class-unlock"><span style="color:var(--text-dim)">🔒 ${data.unlockCondition}</span></div>
-        </div>`;
-      }
+      if (!isUnlocked) continue; // hide locked classes from party select
+      const complexity = data.complexity || 1;
+      const complexityLabel = ['Simple', 'Moderate', 'Complex'][complexity - 1];
+      const complexityPips = Array.from({ length: 3 }, (_, i) =>
+        `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
+      ).join('');
+      html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
+        <div class="ps-class-header">
+          <span class="ps-class-name">${renderClassName(classId, data.name)}</span>
+          <span class="ps-class-title">${data.title}</span>
+          <span class="ps-class-tags">${tagPips}</span>
+        </div>
+        <div class="ps-class-desc">${data.description}</div>
+        <div class="ps-class-meta">
+          <span class="ps-class-hp">HP: ${data.maxHp}</span>
+          <span class="ps-class-complexity">${complexityPips} <span class="complexity-label">${complexityLabel}</span></span>
+        </div>
+        <div class="ps-class-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
+      </div>`;
     }
     container.innerHTML = html;
 
@@ -661,12 +655,14 @@ class Game {
   }
 
   bindMenuButtons() {
-    document.getElementById('btn-unlocks').addEventListener('click', () => {
+    const unlocksBtn = document.getElementById('btn-unlocks');
+    if (unlocksBtn) unlocksBtn.addEventListener('click', () => {
       this.ui.showScreen('unlocks-screen');
       const el = document.getElementById('unlocks-renown-value');
       if (el) el.textContent = this.lifetimeRenown;
     });
-    document.getElementById('btn-unlocks-back').addEventListener('click', () => this.showHomeScreen());
+    const unlocksBackBtn = document.getElementById('btn-unlocks-back');
+    if (unlocksBackBtn) unlocksBackBtn.addEventListener('click', () => this.showHomeScreen());
 
     document.getElementById('btn-options').addEventListener('click', () => {
       this.previousScreen = 'title-screen';
@@ -732,6 +728,8 @@ class Game {
     document.getElementById('btn-stats-back').addEventListener('click', () => this.showHomeScreen());
     document.getElementById('btn-achievements').addEventListener('click', () => this.showAchievementsScreen());
     document.getElementById('btn-achievements-back').addEventListener('click', () => this.showHomeScreen());
+    document.getElementById('btn-achieves').addEventListener('click', () => this.showAchievesScreen());
+    document.getElementById('btn-achieves-back').addEventListener('click', () => this.showHomeScreen());
 
     // Run History
     document.getElementById('btn-run-history').addEventListener('click', () => this.showRunHistoryScreen());
@@ -1467,57 +1465,118 @@ class Game {
     this.ui.showScreen('achievements-screen');
     const content = document.getElementById('achievements-content');
     const a = this.achievements;
-    const s = this.stats;
-
-    const ACHIEVEMENT_DEFS = [
-      // Regular bosses (3 kills)
-      { key: 'boss_arminius_champion_x3', name: "Warlord Slayer", desc: "Defeat the Germanic Warlord 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion'] || 0) + '/3' },
-      { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch'] || 0) + '/3' },
-      { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman'] || 0) + '/3' },
-      { key: 'boss_serpent_shaman_x3', name: "Serpent Slayer", desc: "Defeat the Serpent Shaman 3 times.", progress: () => Math.min(3, s.enemiesKilled['serpent_shaman'] || 0) + '/3' },
-      { key: 'boss_mire_mother_x3', name: "Beast Tamer", desc: "Defeat the Mire Mother 3 times.", progress: () => Math.min(3, s.enemiesKilled['mire_mother'] || 0) + '/3' },
-      { key: 'boss_bone_speaker_x3', name: "Silence the Dead", desc: "Defeat the Bone Speaker 3 times.", progress: () => Math.min(3, s.enemiesKilled['bone_speaker'] || 0) + '/3' },
-      { key: 'boss_fog_weaver_x3', name: "Fog Cutter", desc: "Defeat the Fog Weaver 3 times.", progress: () => Math.min(3, s.enemiesKilled['fog_weaver'] || 0) + '/3' },
-      { key: 'boss_blood_stag_x3', name: "Stag Hunter", desc: "Defeat the Blood Stag 3 times.", progress: () => Math.min(3, s.enemiesKilled['blood_stag'] || 0) + '/3' },
-      // Story bosses (1 kill, hidden)
-      { key: 'boss_corpse_arminius', name: "The Betrayer Falls", desc: "Defeat the Corpse of Arminius.", hidden: true, progress: () => a.boss_corpse_arminius ? 'Done' : '0/1' },
-      { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
-      { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits of Arminius and Varus.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
-      { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat the Revenant of Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
-      // Equipment achievements — Rare
-      { key: 'hero_three_rares', name: "Collector", desc: "Have one hero equipped with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
-      { key: 'hero_only_rares', name: "Gilded Warrior", desc: "Have one hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },
-      { key: 'party_all_rares', name: "Legion of Gold", desc: "Entire party equipped with only rare items.", progress: () => a.party_all_rares ? 'Done' : 'Not yet' },
-      // Equipment achievements — Epic
-      { key: 'hero_first_epic', name: "Relic Hunter", desc: "Equip your first epic item.", progress: () => a.hero_first_epic ? 'Done' : 'Not yet' },
-      { key: 'hero_three_epics', name: "Relic Hoarder", desc: "Have one hero equipped with 3 epic items.", progress: () => a.hero_three_epics ? 'Done' : 'Not yet' },
-      { key: 'hero_only_epics', name: "Demigod", desc: "Have one hero with only epic equipment.", progress: () => a.hero_only_epics ? 'Done' : 'Not yet' },
-      { key: 'party_all_epics', name: "Pantheon", desc: "Entire party equipped with only epic items.", progress: () => a.party_all_epics ? 'Done' : 'Not yet' },
-    ];
 
     let html = '';
-    ACHIEVEMENT_DEFS.forEach(def => {
-      const unlocked = !!a[def.key];
-      // Hidden achievements: don't show until unlocked
-      if (def.hidden && !unlocked) {
-        html += `<div class="achievement-slot locked hidden-achievement">
-          <div class="achievement-name">???</div>
-          <div class="achievement-desc">Hidden achievement</div>
-          <div class="achievement-progress">???</div>
+    const unlockedCount = Object.entries(CLASS_DATA).filter(([id, d]) => !d.hidden || !!a[d.unlockKey || id]).length;
+    const totalCount = Object.keys(CLASS_DATA).length;
+    html += `<div class="classes-counter">${unlockedCount}/${totalCount} unlocked</div>`;
+
+    for (const [classId, data] of Object.entries(CLASS_DATA)) {
+      const unlockKey = data.unlockKey || classId;
+      const isUnlocked = !data.hidden || !!a[unlockKey];
+      const primaryTag = data.tags.find(t => t !== 'roman' && t !== 'germanic') || 'roman';
+      const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
+
+      if (isUnlocked) {
+        const complexity = data.complexity || 1;
+        const complexityLabel = ['Simple', 'Moderate', 'Complex'][complexity - 1];
+        const complexityPips = Array.from({ length: 3 }, (_, i) =>
+          `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
+        ).join('');
+        html += `<div class="classes-card unlocked class-${primaryTag}">
+          <div class="classes-header">
+            <span class="classes-name">${renderClassName(classId, data.name)}</span>
+            <span class="classes-title">${data.title}</span>
+            <span class="classes-tags">${tagPips}</span>
+          </div>
+          <div class="classes-desc">${data.description}</div>
+          <div class="classes-meta">
+            <span class="classes-hp">HP: ${data.maxHp}</span>
+            <span class="classes-complexity">${complexityPips} ${complexityLabel}</span>
+          </div>
+          <div class="classes-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
+          <div class="classes-slots">Slots: ${data.equipSlots.weapon}W / ${data.equipSlots.armor}A / ${data.equipSlots.trinket}T</div>
         </div>`;
+      } else {
+        html += `<div class="classes-card locked">
+          <div class="classes-header">
+            <span class="classes-name" style="opacity:0.5">${data.name}</span>
+            <span class="classes-tags">${tagPips}</span>
+          </div>
+          <div class="classes-unlock">🔒 ${data.unlockCondition}</div>
+        </div>`;
+      }
+    }
+
+    content.innerHTML = html;
+  }
+
+  showAchievesScreen() {
+    this.ui.showScreen('achieves-screen');
+    const content = document.getElementById('achieves-content');
+    const a = this.achievements;
+    const s = this.stats;
+
+    // Build full achievement list with rewards
+    const ACCOLADE_DEFS = [
+      // Early progression (all have boons + class unlocks)
+      { key: 'first_boss_kill', name: "First Blood", desc: "Defeat your first boss.", progress: () => (s.bossesKilled || 0) >= 1 ? 'Done' : '0/1' },
+      { key: 'first_elite_kill', name: "Elite Slayer", desc: "Defeat your first elite enemy.", progress: () => { const ids = ['oak_shield','wicker_man','ironbound_champion']; return ids.some(id => (s.enemiesKilled[id]||0)>=1) ? 'Done' : '0/1'; } },
+      { key: 'class_signifer', name: "Deeper Into The Forest", desc: "Reach March 3.", progress: () => (s.highestDifficulty||1) >= 3 ? 'Done' : `March ${s.highestDifficulty||1}/3` },
+      { key: 'class_equites', name: "Veteran's March", desc: "Reach March 5.", progress: () => (s.highestDifficulty||1) >= 5 ? 'Done' : `March ${s.highestDifficulty||1}/5` },
+      { key: 'class_arcania', name: "Through The Fog", desc: "Defeat the Fog Weaver.", progress: () => (s.enemiesKilled['fog_weaver']||0) >= 1 ? 'Done' : '0/1' },
+      // Mid progression
+      { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 7.", progress: () => (s.highestDifficulty||1) >= 7 ? 'Done' : `March ${s.highestDifficulty||1}/7` },
+      { key: 'class_cataphract', name: "Into The Darkness", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
+      { key: 'class_praetorian', name: "Flawless Victory", desc: "Win a boss fight with no units downed.", progress: () => a._bossFlawless ? 'Done' : 'Not yet' },
+      { key: 'class_wulfswestr', name: "Thusnelda's Defeat", desc: "Defeat Thusnelda.", progress: () => (s.enemiesKilled['thusnelda']||0) >= 1 ? 'Done' : '0/1' },
+      { key: 'class_vestalis', name: "The Last March", desc: "Complete a full run (March 10).", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : '0/1' },
+      // Boss kill x3 (curses)
+      { key: 'boss_arminius_champion_x3', name: "Warlord Slayer", desc: "Defeat the Germanic Warlord 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion']||0) + '/3' },
+      { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch']||0) + '/3' },
+      { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman']||0) + '/3' },
+      { key: 'boss_serpent_shaman_x3', name: "Serpent Slayer", desc: "Defeat the Serpent Shaman 3 times.", progress: () => Math.min(3, s.enemiesKilled['serpent_shaman']||0) + '/3' },
+      { key: 'boss_mire_mother_x3', name: "Beast Tamer", desc: "Defeat the Mire Mother 3 times.", progress: () => Math.min(3, s.enemiesKilled['mire_mother']||0) + '/3' },
+      { key: 'boss_bone_speaker_x3', name: "Silence the Dead", desc: "Defeat the Bone Speaker 3 times.", progress: () => Math.min(3, s.enemiesKilled['bone_speaker']||0) + '/3' },
+      { key: 'boss_fog_weaver_x3', name: "Fog Cutter", desc: "Defeat the Fog Weaver 3 times.", progress: () => Math.min(3, s.enemiesKilled['fog_weaver']||0) + '/3' },
+      { key: 'boss_blood_stag_x3', name: "Stag Hunter", desc: "Defeat the Blood Stag 3 times.", progress: () => Math.min(3, s.enemiesKilled['blood_stag']||0) + '/3' },
+      // Story bosses (hidden until done)
+      { key: 'boss_corpse_arminius', name: "The Betrayer Falls", desc: "Defeat the Corpse of Arminius.", hidden: true, progress: () => a.boss_corpse_arminius ? 'Done' : '0/1' },
+      { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
+      { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
+      { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
+      // Equipment
+      { key: 'hero_three_rares', name: "Collector", desc: "One hero with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
+      { key: 'hero_only_rares', name: "Gilded Warrior", desc: "One hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },
+      { key: 'party_all_rares', name: "Legion of Gold", desc: "Entire party with only rare items.", progress: () => a.party_all_rares ? 'Done' : 'Not yet' },
+      { key: 'hero_first_epic', name: "Relic Hunter", desc: "Equip your first epic item.", progress: () => a.hero_first_epic ? 'Done' : 'Not yet' },
+      { key: 'hero_three_epics', name: "Relic Hoarder", desc: "One hero with 3 epic items.", progress: () => a.hero_three_epics ? 'Done' : 'Not yet' },
+      { key: 'hero_only_epics', name: "Demigod", desc: "One hero with only epic equipment.", progress: () => a.hero_only_epics ? 'Done' : 'Not yet' },
+      { key: 'party_all_epics', name: "Pantheon", desc: "Entire party with only epic items.", progress: () => a.party_all_epics ? 'Done' : 'Not yet' },
+    ];
+
+    const unlockedCount = ACCOLADE_DEFS.filter(d => !!a[d.key]).length;
+    let html = `<div class="achieves-counter">${unlockedCount}/${ACCOLADE_DEFS.length} earned</div>`;
+
+    ACCOLADE_DEFS.forEach(def => {
+      const unlocked = !!a[def.key];
+      if (def.hidden && !unlocked) {
+        html += `<div class="achievement-slot locked hidden-achievement"><div class="achievement-name">???</div><div class="achievement-desc">Hidden</div></div>`;
         return;
       }
+      // Find rewards
+      const rewards = [];
       const curse = CURSE_DEFS.find(c => c.achievement === def.key);
       const boon = BOON_DEFS.find(b => b.achievement === def.key);
-      const unlockText = curse
-        ? `<div class="achievement-unlock" style="color:var(--red-bright)">Unlocks curse: ${curse.name}</div>`
-        : boon
-        ? `<div class="achievement-unlock" style="color:var(--green-bright)">Unlocks boon: ${boon.name}</div>`
-        : '';
+      const classUnlock = Object.entries(CLASS_DATA).find(([id, d]) => d.unlockKey === def.key);
+      if (classUnlock) rewards.push(`<span style="color:var(--class-${classUnlock[1].tags.find(t=>t!=='roman'&&t!=='germanic')||'roman'})">Class: ${classUnlock[1].name}</span>`);
+      if (boon) rewards.push(`<span style="color:var(--green-bright)">Boon: ${boon.name}</span>`);
+      if (curse) rewards.push(`<span style="color:var(--red-bright)">Curse: ${curse.name}</span>`);
+
       html += `<div class="achievement-slot ${unlocked ? 'unlocked' : 'locked'}">
-        <div class="achievement-name">${unlocked ? '&#9733; ' : ''}${def.name}</div>
+        <div class="achievement-name">${unlocked ? '★ ' : ''}${def.name}</div>
         <div class="achievement-desc">${def.desc}</div>
-        ${unlockText}
+        ${rewards.length > 0 ? `<div class="achievement-rewards">${rewards.join(' · ')}</div>` : ''}
         <div class="achievement-progress">${def.progress()}</div>
       </div>`;
     });
@@ -1549,6 +1608,11 @@ class Game {
       ? [...this.selectedPartyClasses]
       : ['legionary', 'centurion', 'medicus'];
     this.engine.initParty(partyClasses);
+
+    // Boon: Fresh Recruits — +5 max HP to all
+    if (this.activeBoons.includes('fresh_recruits')) {
+      this.engine.party.forEach(u => { u.maxHp += 5; u.baseMaxHp += 5; u.hp += 5; });
+    }
 
     // Boon: King's Hoard — start with a random uncommon item
     if (this.activeBoons.includes('kings_hoard')) {

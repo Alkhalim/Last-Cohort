@@ -24,12 +24,12 @@
           <button id="btn-continue" class="btn-primary home-start-btn" style="display:none">Continue Run</button>
           <button id="btn-start" class="btn-primary home-start-btn">Begin March</button>
           <div class="home-nav-row">
-            <button id="btn-unlocks" class="btn-secondary home-nav-btn">Unlocks</button>
-            <button id="btn-options" class="btn-secondary home-nav-btn">Options</button>
+            <button id="btn-achievements" class="btn-secondary home-nav-btn">Classes</button>
+            <button id="btn-achieves" class="btn-secondary home-nav-btn">Achievements</button>
           </div>
           <div class="home-nav-row">
             <button id="btn-stats" class="btn-secondary home-nav-btn">Stats</button>
-            <button id="btn-achievements" class="btn-secondary home-nav-btn">Achievements</button>
+            <button id="btn-options" class="btn-secondary home-nav-btn">Options</button>
           </div>
           <div class="home-nav-row">
             <button id="btn-run-history" class="btn-secondary home-nav-btn" style="width:100%">Leaderboard</button>
@@ -124,9 +124,17 @@
     <!-- Achievements Screen -->
     <div id="achievements-screen" class="screen">
       <div class="submenu-content">
-        <h2 class="submenu-title">ACHIEVEMENTS</h2>
+        <h2 class="submenu-title">CLASSES</h2>
         <div id="achievements-content"></div>
         <button id="btn-achievements-back" class="btn-secondary submenu-back">Back</button>
+      </div>
+    </div>
+
+    <div id="achieves-screen" class="screen">
+      <div class="submenu-content" style="overflow-y:auto;max-height:100vh;">
+        <h2 class="submenu-title">ACHIEVEMENTS</h2>
+        <div id="achieves-content"></div>
+        <button id="btn-achieves-back" class="btn-secondary submenu-back">Back</button>
       </div>
     </div>
 
@@ -159,9 +167,9 @@
       </div>
     </div>
     <div id="curse-select-screen" class="screen">
-      <div class="ps-content">
-        <h2 class="ps-title">CURSES</h2>
-        <p class="ps-subtitle">Toggle curses for increased challenge and bonus renown.</p>
+      <div class="ps-content" style="overflow-y:auto;max-height:100vh;padding-bottom:20px;">
+        <h2 class="ps-title">MODIFIERS</h2>
+        <p class="ps-subtitle">Toggle curses and boons to adjust difficulty and renown.</p>
         <div id="curse-select-curses" class="ps-curses"></div>
         <p id="curse-renown-total" class="ps-count"></p>
         <button id="btn-march" class="btn-primary ps-march-btn">March!</button>

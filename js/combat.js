@@ -206,7 +206,7 @@ class CombatEngine {
       // Apply boon effects at combat start
       const boons = this.getActiveBoons();
       if (boons.includes('serpent_blessing')) {
-        this.enemies.forEach(e => { if (!e.dead) e.poison = (e.poison || 0) + 1; });
+        this.enemies.forEach(e => { if (!e.dead) e.poison = (e.poison || 0) + 2; });
         this.addLog("Serpent's Blessing — all enemies start poisoned!");
       }
       if (boons.includes('stag_vigor')) {
@@ -218,11 +218,23 @@ class CombatEngine {
         this.addLog("Demigod's Shield — all soldiers gain 3 Block!");
       }
       if (boons.includes('first_blood')) {
-        this.party.forEach(u => { if (!u.downed) u.buffs.push({ damage: 1, attacksLeft: 99 }); });
+        this.party.forEach(u => { if (!u.downed) u.buffs.push({ damage: 2, attacksLeft: 99 }); });
         this._firstBloodTurn = 2; // remove after 2 turns
       }
-      if (boons.includes('varus_lesson')) {
-        this._boonBonusDice = 1;
+      if (boons.includes('varus_lesson') || boons.includes('cavalry_speed')) {
+        this._boonBonusDice = (this._boonBonusDice || 0) + 1;
+      }
+      if (boons.includes('scouts_blessing')) {
+        this.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + 2); });
+        this.addLog("Scout's Blessing — all soldiers heal 2 HP!");
+      }
+      if (boons.includes('standard_march')) {
+        this.morale = Math.min(100, this.morale + 3);
+        this.addLog("Standard Bearer's March — +3 Morale!");
+      }
+      if (boons.includes('fog_piercer')) {
+        this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + 3; });
+        this.addLog("Fog Piercer — all soldiers gain 3 Block!");
       }
       this.addLog('Prepare yourselves!');
       this.startRollPhase();
