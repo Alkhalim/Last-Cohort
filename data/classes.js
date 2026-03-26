@@ -108,7 +108,7 @@ const RAW_CLASSES = {
     },
     "skills": [
       {
-        "id": "strike", "name": "Strike", "starter": true,
+        "id": "slash", "name": "Slash", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 4 damage.",
         "effects": { "damage": 4 }
@@ -298,7 +298,7 @@ const RAW_CLASSES = {
       },
       {
         "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 1, "starter": true,
-        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Ranged. Deal 4 damage. Ignores Block. +3 vs back row.",
         "effects": { "damage": 4, "pierceBlock": 99, "aimedShot": true }
@@ -394,7 +394,7 @@ const RAW_CLASSES = {
       },
       {
         "id": "raise_the_eagle", "name": "Raise the Eagle", "starter": true,
-        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
+        "cost": { "type": "range", "min": 1, "max": 3 }, "target": "all_allies",
         "description": "+6 Morale. Gain 6 Block.",
         "effects": { "morale": 3, "block": 6, "blockScale": 0.8 }
       },
@@ -482,10 +482,10 @@ const RAW_CLASSES = {
         "effects": { "damage": 2, "splashBackRow": true }
       },
       {
-        "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 1,
-        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
+        "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 2,
+        "cost": { "type": "range", "min": 1, "max": 3 }, "target": "all_allies",
         "description": "Heal all allies 1 HP. +1 Block all.",
-        "effects": { "healAll": 1, "blockAll": 1 }
+        "effects": { "healAll": 1, "blockAll": 1, "bonusHealScale": 0.75, "blockScale": 1.1 }
       },
       {
         "id": "war_drums", "name": "War Drums", "cooldown": 3, "starter": true,
@@ -672,7 +672,7 @@ const RAW_CLASSES = {
       },
       {
         "id": "pinning_shot", "name": "Pinning Shot", "starter": true, "cooldown": 3,
-        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Ranged. Deal 4 damage. Target deals 30% less damage for next 2 actions.",
         "effects": { "damage": 4, "cripple": 2 }
@@ -767,13 +767,13 @@ const RAW_CLASSES = {
       },
       {
         "id": "shield_of_rome", "name": "Shield of Rome", "starter": true,
-        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
+        "cost": { "type": "range", "min": 1, "max": 3 }, "target": "self",
         "description": "Gain 6 Block.",
         "effects": { "block": 6 }
       },
       {
         "id": "shield_slam", "name": "Shield Slam", "starter": true, "cooldown": 3,
-        "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
+        "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_enemy",
         "description": "Deal 4 damage. Stun target.",
         "effects": { "damage": 4, "stun": true }
       },
@@ -1140,7 +1140,7 @@ const RAW_CLASSES = {
       },
       {
         "id": "formation_command", "name": "Formation Command", "starter": true, "cooldown": 1,
-        "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
+        "cost": { "type": "range", "min": 1, "max": 3 }, "target": "all_allies",
         "description": "Other allies gain 3 Block. +4 Morale.",
         "effects": { "blockAll": 3, "blockOthersOnly": true, "morale": 2 }
       },

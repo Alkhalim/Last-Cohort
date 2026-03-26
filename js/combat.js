@@ -3574,6 +3574,7 @@ class CombatEngine {
     }
 
     // Poison tick on allies at end of player turn
+    this._lastAttackerName = 'Poison';
     this.party.forEach(u => {
       if (!u.downed && u.poison > 0) {
         const poisonDmg = u.poison;
@@ -3773,6 +3774,8 @@ class CombatEngine {
   }
 
   executeEnemySingleAction(enemy) {
+    this._lastAttackerName = enemy.name;
+
     // Pending spawn: boss uses their turn to summon instead of attacking
     if (enemy._pendingSpawn && enemy._pendingSpawn.length > 0) {
       const spawns = enemy._pendingSpawn;
@@ -4480,6 +4483,7 @@ class CombatEngine {
         }
         u.downed = true;
         u.hp = 0;
+        u._killedBy = this._lastAttackerName || 'Poison';
         this.addLog(`${u.name} is downed!`);
         this.morale = Math.max(0, this.morale - 10);
         this.clampMorale();

@@ -3833,7 +3833,7 @@ class GameUI {
           <div class="summary-unit-header">
             <span class="summary-unit-title" style="color:var(--class-${tag})">${u.title}</span>
             <span class="summary-unit-name">${u.name}</span>
-            <span class="summary-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp}`}</span>
+            <span class="summary-unit-hp">${u.downed ? `<span style="color:var(--red-bright)">Killed by ${u._killedBy || 'unknown'}</span>` : `${u.hp}/${u.maxHp}`}</span>
             <span class="summary-expand-hint">tap to expand</span>
           </div>
           <div class="summary-unit-stats">
@@ -4673,10 +4673,12 @@ class GameUI {
     html += '</div>';
 
     html += this.engine.party.map(u => {
+      const status = u.downed
+        ? `<span style="color:var(--red-bright)">Killed by ${u._killedBy || 'unknown'}</span>`
+        : `<span>${u.hp}/${u.maxHp} HP</span>`;
       return `<div class="run-complete-unit">
         <span class="run-complete-unit-name">${renderClassName(u.classId, u.title)} ${u.name}</span>
-        <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
-        <span class="run-complete-unit-level">${u.skills.length} skills</span>
+        <span class="run-complete-unit-hp">${status}</span>
       </div>`;
     }).join('');
 
@@ -5078,10 +5080,12 @@ class GameUI {
     html += '</div>';
 
     html += this.engine.party.map(u => {
+      const status = u.downed
+        ? `<span style="color:var(--red-bright)">Killed by ${u._killedBy || 'unknown'}</span>`
+        : `<span>${u.hp}/${u.maxHp} HP</span>`;
       return `<div class="run-complete-unit">
         <span class="run-complete-unit-name">${renderClassName(u.classId, u.title)} ${u.name}</span>
-        <span class="run-complete-unit-hp">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp} HP`}</span>
-        <span class="run-complete-unit-level">${u.skills.length} skills</span>
+        <span class="run-complete-unit-hp">${status}</span>
       </div>`;
     }).join('');
 
