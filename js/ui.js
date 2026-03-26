@@ -300,6 +300,16 @@ class GameUI {
 
   // --- Auto-select first alive unit if none selected ---
   ensureUnitSelected() {
+    // Restore preserved selection at start of new turn
+    if (this._preservedUnitIdx != null) {
+      const preserved = this.engine.party[this._preservedUnitIdx];
+      if (preserved && !preserved.downed && !preserved.actedThisTurn) {
+        this.selectedUnitIndex = this._preservedUnitIdx;
+        this._preservedUnitIdx = null;
+        return;
+      }
+      this._preservedUnitIdx = null;
+    }
     if (this.selectedUnitIndex !== null) {
       const u = this.engine.party[this.selectedUnitIndex];
       if (u && !u.downed && !u.actedThisTurn) return;
@@ -886,7 +896,7 @@ class GameUI {
     if (this.engine.phase === PHASE.PLAYER_TURN && !this.engine.targetMode) {
       endBtn.classList.remove('hidden');
       endBtn.textContent = 'End Turn';
-      endBtn.onclick = () => { this.stagedSkill = null; this.engine.endPlayerTurn(); };
+      endBtn.onclick = () => { this.stagedSkill = null; this._preservedUnitIdx = this.selectedUnitIndex; this.engine.endPlayerTurn(); };
     } else if (this.engine.phase === PHASE.PLAYER_TURN && this.engine.targetMode) {
       endBtn.classList.remove('hidden');
       endBtn.textContent = 'Cancel';

@@ -20,7 +20,7 @@ const RAW_CLASSES = {
       {
         "id": "strike", "name": "Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Basic sword strike. Deals 3 damage.",
+        "description": "Deal 3 damage.",
         "effects": { "damage": 3, "bonusDmgScale": 1.1 }
       },
       {
@@ -32,7 +32,7 @@ const RAW_CLASSES = {
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
         "cost": { "type": "odd" }, "target": "single_enemy",
-        "description": "Precise thrust. Deals 1 + die value damage. +50% damage vs targets with Block, stun, or mark.",
+        "description": "Deal 1 + die value damage. +50% vs targets with Block, stun, or mark.",
         "effects": { "damage": 1, "dieScaleDamage": true, "gladiusThrust": true }
       },
       {
@@ -45,13 +45,13 @@ const RAW_CLASSES = {
         "id": "pilum_cast", "name": "Pilum Cast", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Throw pilum at any row. Deals 6 damage.",
+        "description": "Ranged. Deal 6 damage.",
         "effects": { "damage": 6, "ignoreRow": true }
       },
       {
         "id": "twin_slash", "name": "Twin Slash", "cooldown": 1,
         "cost": { "type": "pairOdd" }, "target": "dual_enemy",
-        "description": "Deals 9 damage to each of two targets.",
+        "description": "Deal 9 damage to each of two targets.",
         "effects": { "damage": 9, "bonusDmgScale": 0.75 }
       },
       {
@@ -63,13 +63,13 @@ const RAW_CLASSES = {
       {
         "id": "counter_stance", "name": "Counter Stance", "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "self",
-        "description": "Enter counter stance. If hit this enemy turn, reflect the damage back +2.",
+        "description": "If hit this enemy turn, reflect the damage back +2.",
         "effects": { "counterStance": true }
       },
       {
         "id": "sunder", "name": "Sunder",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "Smash through defenses. Remove all block from target and deal 2 damage. If block was removed, weaken target (-40% damage, 2 turns).",
+        "description": "Remove all Block from target, deal 2 damage. If Block removed, -40% damage for 2 turns.",
         "effects": { "damage": 2, "shieldbreak": true, "bonusDmgScale": 0.5 }
       },
       {
@@ -110,7 +110,7 @@ const RAW_CLASSES = {
       {
         "id": "strike", "name": "Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Basic strike. Deals 4 damage.",
+        "description": "Deal 4 damage.",
         "effects": { "damage": 4 }
       },
       {
@@ -134,7 +134,7 @@ const RAW_CLASSES = {
       {
         "id": "measured_advance", "name": "Measured Advance", "cooldown": 2,
         "cost": { "type": "consecutive" }, "target": "single_enemy",
-        "description": "Deals 8 damage and other allies gain 3 Block.",
+        "description": "Deal 8 damage. Other allies gain 3 Block.",
         "effects": { "damage": 8, "blockAll": 3, "blockOthersOnly": true }
       },
       {
@@ -152,13 +152,13 @@ const RAW_CLASSES = {
       {
         "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 2,
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling exactly 7. Deals 17 damage. -5 Morale.",
+        "description": "2 dice totaling exactly 7. Deal 17 damage. -5 Morale.",
         "effects": { "damage": 17, "morale": -3, "bonusDmgScale": 1.5 }
       },
       {
         "id": "overwatch", "name": "Overwatch", "cooldown": 1,
         "cost": { "type": "exact", "val": 5 }, "target": "self",
-        "description": "Free action. Set a watch. The next enemy to deal damage this turn takes 5 damage.",
+        "description": "Free action. Next enemy to deal damage this turn takes 5 damage.",
         "effects": { "overwatch": 5, "freeAction": true }
       },
       {
@@ -171,7 +171,7 @@ const RAW_CLASSES = {
       {
         "id": "tactical_preparation", "name": "Tactical Preparation", "cooldown": 3,
         "cost": { "type": "range", "min": 3, "max": 5 }, "target": "all_allies",
-        "description": "Prepare the cohort. Gain +2 bonus dice next turn. +5 Morale.",
+        "description": "Gain +2 bonus dice next turn. +5 Morale.",
         "effects": { "bonusDiceNext": 2, "morale": 3 }
       },
       {
@@ -205,7 +205,7 @@ const RAW_CLASSES = {
         "id": "aconitum", "name": "Aconitum", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Applies 3 Poison to any enemy.",
+        "description": "Ranged. Apply 3 Poison.",
         "effects": { "poison": 3 }
       },
       {
@@ -224,7 +224,7 @@ const RAW_CLASSES = {
         "id": "plague_flask", "name": "Plague Flask", "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Hurl a flask of plague. 4 Poison to target, 2 Poison to adjacent enemies.",
+        "description": "Ranged. 4 Poison to target, 2 Poison to adjacent enemies.",
         "effects": { "poison": 4, "poisonSplash": 2, "bonusPoisonScale": 1.15, "splashPoisonScale": 0.5 }
       },
       {
@@ -242,13 +242,13 @@ const RAW_CLASSES = {
       {
         "id": "venom_strike", "name": "Venom Strike", "cooldown": 1,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 5+. Deals 4 damage and applies 4 Poison.",
+        "description": "2 dice totaling 5+. Deal 4 damage, apply 4 Poison.",
         "effects": { "damage": 4, "poison": 4 }
       },
       {
         "id": "stimulant", "name": "Stimulant", "cooldown": 2,
         "cost": { "type": "exact", "val": 6 }, "target": "single_ally",
-        "description": "Inject a stimulant. Target ally can act again this turn. Costs 3 HP.",
+        "description": "Target ally can act again this turn. Costs 3 HP.",
         "effects": { "stimulant": true, "selfDamage": 3 }
       },
       {
@@ -293,54 +293,54 @@ const RAW_CLASSES = {
         "id": "loose_arrow", "name": "Loose Arrow", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Loose an arrow at any target. Deal 1-6 damage (scales with die).",
+        "description": "Ranged. Deal 1-6 damage (scales with die).",
         "effects": { "damage": 0, "dieScaleDamage": true, "bonusDmgScale": 0.85 }
       },
       {
         "id": "aimed_shot", "name": "Aimed Shot", "cooldown": 1, "starter": true,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Carefully aimed shot. Deals 4 damage. Ignores block. +3 bonus damage vs back row.",
+        "description": "Ranged. Deal 4 damage. Ignores Block. +3 vs back row.",
         "effects": { "damage": 4, "pierceBlock": 99, "aimedShot": true }
       },
       {
         "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A treated arrowhead. Deals 3 damage and applies 1 Poison. Triples poison if target is already poisoned.",
+        "description": "Ranged. Deal 3 damage, apply 1 Poison. Triples poison if target already poisoned.",
         "effects": { "damage": 3, "poison": 1, "triplePoison": true, "bonusDmgScale": 0.85 }
       },
       {
         "id": "kill_shot", "name": "Kill Shot", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A lethal shot. Deals 5 damage, ignores block. Double damage to marked or poisoned targets.",
+        "description": "Ranged. Deal 5 damage, ignores Block. Double damage to marked or poisoned targets.",
         "effects": { "damage": 5, "pierceBlock": 99, "killShot": true }
       },
       {
         "id": "arrow_volley", "name": "Arrow Volley", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_enemies",
-        "description": "2 dice totaling 6+. Deals 3 damage to all enemies (light volley).",
+        "description": "2 dice totaling 6+. Deal 3 damage to all enemies.",
         "effects": { "damageAll": 3, "halfBonusDmg": true }
       },
       {
         "id": "mark_target", "name": "Mark Target",
         "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Mark and poison a target. Applies 3 Poison and marks for +20% damage next turn.",
+        "description": "Ranged. Apply 3 Poison. Mark target (+20% damage next turn).",
         "effects": { "poison": 3, "markTarget": true }
       },
       {
         "id": "flaming_arrow", "name": "Flaming Arrow", "cooldown": 3,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. 2 dice totaling 8+. Deals 7 damage and applies 3 Poison. Poison splashes to adjacent enemies.",
+        "description": "Ranged. 2 dice totaling 8+. Deal 7 damage, apply 3 Poison. Splash to adjacent.",
         "effects": { "damage": 7, "poison": 3, "poisonSplash": 3 }
       },
       {
         "id": "caltrops", "name": "Caltrops", "cooldown": 2,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "Scatter caltrops across the front line. Target and adjacent enemies are marked (+20% damage). They take 3 damage if they attack.",
+        "description": "Target and adjacent enemies are marked (+20% damage). They take 3 damage if they attack.",
         "effects": { "caltrops": 3, "bonusDmgScale": 0.3 }
       },
       {
@@ -352,20 +352,20 @@ const RAW_CLASSES = {
       {
         "id": "disengage", "name": "Disengage", "cooldown": 1,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Shoot and brace. Deal 2 damage and gain 4 Block.",
+        "description": "Deal 2 damage. Gain 4 Block.",
         "effects": { "damage": 2, "block": 4 }
       },
       {
         "id": "trick_shot", "name": "Trick Shot",
         "cost": { "type": "exact", "val": 1 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Ricochet arrow. Deal 2 damage, bouncing to a new target for each additional 1 in your dice pool.",
+        "description": "Ranged. Deal 2 damage, bouncing to a new target for each additional 1 in your dice pool.",
         "effects": { "damage": 2, "trickShot": true, "bonusDmgScale": 0.35 }
       },
       {
         "id": "wilderness_instinct", "name": "Wilderness Instinct", "cooldown": 3,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
-        "description": "Take cover. Take 50% less damage this enemy turn. Next turn, heal 4 HP and gain 4 Block.",
+        "description": "Take 50% less damage this enemy turn. Next turn, heal 4 HP and gain 4 Block.",
         "effects": { "wildernessInstinct": true }
       }
     ]
@@ -389,19 +389,19 @@ const RAW_CLASSES = {
       {
         "id": "standard_strike", "name": "Standard Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Strike with the standard. Deals 2 damage. +2 Morale.",
+        "description": "Deal 2 damage. +2 Morale.",
         "effects": { "damage": 2, "morale": 1 }
       },
       {
         "id": "raise_the_eagle", "name": "Raise the Eagle", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "Raise the eagle standard. +11 Morale. Gain 3 Block.",
-        "effects": { "morale": 6, "block": 3 }
+        "description": "+6 Morale. Gain 6 Block.",
+        "effects": { "morale": 3, "block": 6, "blockScale": 0.8 }
       },
       {
         "id": "inspire", "name": "Inspire", "starter": true, "cooldown": 5,
         "cost": { "type": "exact", "val": 3 }, "target": "all_allies",
-        "description": "Inspire the troops. All allies gain +1 damage for next 4 attacks.",
+        "description": "All allies gain +1 damage for next 4 attacks.",
         "effects": { "buffAllies": { "bonusDamage": 1, "attacks": 4 } }
       },
       {
@@ -425,7 +425,7 @@ const RAW_CLASSES = {
       {
         "id": "standard_charge", "name": "Standard Charge", "cooldown": 1,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 5+. Deals 9 damage. Deals up to 2.5x damage at full morale.",
+        "description": "2 dice totaling 5+. Deal 9 damage. Up to 2.5x at full morale.",
         "effects": { "damage": 9, "moraleScaling": true }
       },
       {
@@ -437,8 +437,8 @@ const RAW_CLASSES = {
       {
         "id": "sacrifice_standard", "name": "Sacrifice the Standard", "cooldown": 5,
         "cost": { "type": "any" }, "target": "all_enemies",
-        "description": "Spend 50 Morale to deal 8 damage to all enemies. Consumes all damage buffs.",
-        "effects": { "damageAll": 8, "moraleCost": 25, "consumeAllBuffs": true }
+        "description": "Spend 50 Morale to deal 8 damage to all enemies. Consumes all damage buffs. No morale from kills.",
+        "effects": { "damageAll": 8, "moraleCost": 50, "consumeAllBuffs": true, "noKillMorale": true }
       },
       {
         "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 3,
@@ -478,26 +478,26 @@ const RAW_CLASSES = {
       {
         "id": "horn_blast", "name": "Horn Blast", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Blast a disorienting note. Deals 2 damage, half reverberates to back row.",
+        "description": "Deal 2 damage, half to back row.",
         "effects": { "damage": 2, "splashBackRow": true }
       },
       {
         "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "all_allies",
-        "description": "Sound the battle horn. Heal all allies for 1 HP and grant 1 Block.",
+        "description": "Heal all allies 1 HP. +1 Block all.",
         "effects": { "healAll": 1, "blockAll": 1 }
       },
       {
         "id": "war_drums", "name": "War Drums", "cooldown": 3, "starter": true,
         "cost": { "type": "exact", "val": 5 }, "target": "all_allies",
-        "description": "Beat the war drums. All allies gain +3 damage for next attack. Shatters all enemy block.",
+        "description": "All allies +3 damage for next attack. Shatter all enemy Block.",
         "effects": { "buffAllies": { "bonusDamage": 3, "attacks": 1 }, "shieldbreakAll": true }
       },
       {
         "id": "shrieking_note", "name": "Shrieking Note",
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A piercing shriek. Deals 4 damage to target. Applies 1 Poison to adjacent enemies.",
+        "description": "Ranged. Deal 4 damage. Apply 1 Poison to adjacent enemies.",
         "effects": { "damage": 4, "poisonSplash": 1 }
       },
       {
@@ -509,20 +509,20 @@ const RAW_CLASSES = {
       {
         "id": "cacophony", "name": "Cacophony", "cooldown": 2,
         "cost": { "type": "range", "min": 1, "max": 2 }, "target": "all_enemies",
-        "description": "A cacophony of noise. Deals 1 damage and applies 1 Poison to all enemies.",
+        "description": "Deal 1 damage and apply 1 Poison to all enemies.",
         "effects": { "damageAll": 1, "poisonAll": 1, "bonusDmgScale": 0.8 }
       },
       {
         "id": "dissonant_blast", "name": "Dissonant Blast", "cooldown": 2,
         "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
-        "description": "A jarring horn note. Deals 2 damage and stuns the target.",
+        "description": "Deal 2 damage. Stun target.",
         "effects": { "damage": 2, "stun": true }
       },
       {
         "id": "deafening_blast", "name": "Deafening Blast", "cooldown": 3,
         "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "A deafening blast at any target. Deals 4 damage, half to adjacent enemies. All enemies' morale attacks nullified for 2 turns.",
+        "description": "Ranged. Deal 4 damage, half to adjacent. Nullify enemy morale attacks for 2 turns.",
         "effects": { "damage": 4, "splashAdjacentPct": 0.5, "deafenAll": 2 }
       },
       {
@@ -571,7 +571,7 @@ const RAW_CLASSES = {
         "id": "momentum_strike", "name": "Momentum Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Deal 1 damage per skill used this combat. Grows stronger each action.",
+        "description": "Ranged. Deal 1 damage per skill used this combat.",
         "effects": { "momentumStrike": true }
       },
       {
@@ -584,14 +584,14 @@ const RAW_CLASSES = {
       {
         "id": "trample", "name": "Trample", "starter": true,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Trample a front-line enemy. Deals 4 damage and 25% trample damage to enemies beside it.",
+        "description": "Deal 4 damage. 25% splash to adjacent enemies.",
         "effects": { "damage": 4, "splashAdjacentPct": 0.25 }
       },
       {
         "id": "hit_and_run", "name": "Hit and Run", "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Strike and wheel away. Deals 3 damage and gain 3 Block.",
+        "description": "Ranged. Deal 3 damage. Gain 3 Block.",
         "effects": { "damage": 3, "block": 3 }
       },
       {
@@ -605,21 +605,21 @@ const RAW_CLASSES = {
         "id": "overrun", "name": "Overrun",
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ride down a target. Deals 3 damage. Deals bonus damage for each other die matching the one used.",
+        "description": "Ranged. Deal 3 damage. Bonus damage per matching die.",
         "effects": { "damage": 3, "overrun": true }
       },
       {
         "id": "rally_charge", "name": "Rally Charge", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "2 dice totaling 8+. Deals 8 damage. +10 Morale.",
+        "description": "2 dice totaling 8+. Deal 8 damage. +10 Morale.",
         "effects": { "damage": 8, "morale": 5 }
       },
       {
         "id": "drag_down", "name": "Drag Down", "cooldown": 1,
         "cost": { "type": "exact", "val": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Drag a back-row enemy to the front row. Deal 2 damage.",
+        "description": "Ranged. Deal 2 damage. Pull back-row enemy to front.",
         "effects": { "damage": 2, "pullToFront": true }
       },
       {
@@ -667,58 +667,58 @@ const RAW_CLASSES = {
         "id": "ballista_bolt", "name": "Ballista Bolt", "starter": true, "cooldown": 1,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Fire a heavy bolt at any target. Deals 6 damage.",
+        "description": "Ranged. Deal 6 damage.",
         "effects": { "damage": 6 }
       },
       {
         "id": "pinning_shot", "name": "Pinning Shot", "starter": true, "cooldown": 3,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. A heavy bolt that pins the target. Deals 4 damage. Target deals 30% less damage for next 2 actions.",
+        "description": "Ranged. Deal 4 damage. Target deals 30% less damage for next 2 actions.",
         "effects": { "damage": 4, "cripple": 2 }
       },
       {
         "id": "suppressive_volley", "name": "Suppressive Volley", "starter": true,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "Rain of bolts. Deals 2 damage to target and all enemies in the same row.",
+        "description": "Deal 2 damage to target and all enemies in same row.",
         "effects": { "damage": 2, "splashRow": true }
       },
       {
         "id": "burning_pitch", "name": "Burning Pitch", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Hurl burning pitch. Deals 4 damage and applies 3 Poison.",
+        "description": "Ranged. Deal 4 damage, apply 3 Poison.",
         "effects": { "damage": 4, "poison": 3 }
       },
       {
         "id": "brace_position", "name": "Brace Position", "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
-        "description": "Hunker behind the siege weapon. Gain 5 Block and +2 damage on next attack.",
+        "description": "Gain 5 Block. +2 damage on next attack.",
         "effects": { "block": 5, "buffSelf": { "bonusDamage": 2, "attacks": 1 } }
       },
       {
         "id": "scorpio", "name": "Scorpio", "cooldown": 1,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 6+. A siege shot that pierces the line. Deals 5 damage to target and the enemy directly behind.",
+        "description": "2 dice totaling 6+. Deal 5 damage to target and the enemy behind.",
         "effects": { "damage": 5, "pierceRow": true }
       },
       {
         "id": "concussive_shot", "name": "Concussive Shot", "cooldown": 1,
         "cost": { "type": "exact", "val": 6 }, "target": "single_enemy",
-        "description": "A blunt-tipped bolt. Deals 3 damage and knocks front-row enemy to back row.",
+        "description": "Deal 3 damage. Knock front-row enemy to back row.",
         "effects": { "damage": 3, "knockback": true }
       },
       {
         "id": "siege_shot", "name": "Siege Shot", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. 2 dice totaling 8+. A devastating siege bolt. Deals 12 damage.",
+        "description": "Ranged. 2 dice totaling 8+. Deal 12 damage.",
         "effects": { "damage": 12 }
       },
       {
         "id": "staggering_shot", "name": "Staggering Shot", "cooldown": 1,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
-        "description": "A heavy impact that dazes. Deals 3 damage and stuns the target next turn.",
+        "description": "Deal 3 damage. Stun target next turn.",
         "effects": { "damage": 3, "stun": true }
       },
       {
@@ -739,7 +739,7 @@ const RAW_CLASSES = {
         "id": "devastator_volley", "name": "Devastator Volley", "cooldown": 3,
         "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. 3 dice totaling 10+. Fire a massive bolt. Deals 10 damage to target and pierces to the enemy behind. Both take splash damage to adjacent enemies. Skip your next turn.",
+        "description": "Ranged. 3 dice totaling 10+. Deal 10 damage, pierce to enemy behind. Splash to adjacent. Skip next turn.",
         "effects": { "damage": 10, "pierceRow": true, "splashAdjacentPct": 0.5, "skipNextTurn": true }
       }
     ]
@@ -762,19 +762,19 @@ const RAW_CLASSES = {
       {
         "id": "gladius_imperialis", "name": "Gladius Imperialis", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Strike with the imperial blade. Deals 4 damage.",
+        "description": "Deal 4 damage.",
         "effects": { "damage": 4 }
       },
       {
         "id": "shield_of_rome", "name": "Shield of Rome", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
-        "description": "Raise the praetorian shield. Gain 6 Block.",
+        "description": "Gain 6 Block.",
         "effects": { "block": 6 }
       },
       {
         "id": "shield_slam", "name": "Shield Slam", "starter": true, "cooldown": 3,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "Bash with the praetorian shield. Deals 4 damage and stuns the target.",
+        "description": "Deal 4 damage. Stun target.",
         "effects": { "damage": 4, "stun": true }
       },
       {
@@ -787,7 +787,7 @@ const RAW_CLASSES = {
         "id": "execute", "name": "Execute", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Execute a weakened foe. Deals 6 damage, ignores block. Double damage to enemies below 25% HP.",
+        "description": "Ranged. Deal 6 damage, ignores Block. Double damage to enemies below 25% HP.",
         "effects": { "damage": 6, "pierceBlock": 99, "execute": true }
       },
       {
@@ -800,7 +800,7 @@ const RAW_CLASSES = {
         "id": "wrath_of_rome", "name": "Wrath of Rome", "cooldown": 2,
         "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "2 dice totaling 9+. The full fury of Rome. Deals 14 damage. Ignores block.",
+        "description": "Ranged. 2 dice totaling 9+. Deal 14 damage. Ignores Block.",
         "effects": { "damage": 14, "pierceBlock": 99 }
       },
       {
@@ -859,8 +859,8 @@ const RAW_CLASSES = {
       {
         "id": "wild_swing", "name": "Wild Swing", "starter": true,
         "cost": { "type": "any" }, "target": "random_enemy",
-        "description": "Swing wildly at a random enemy. Deals 5 damage.",
-        "effects": { "damage": 5, "bonusDmgScale": 1.2 }
+        "description": "Deal 5 damage to a random enemy.",
+        "effects": { "damage": 5, "bonusDmgScale": 1.1 }
       },
       {
         "id": "herb_poultice", "name": "Herb Poultice", "starter": true,
@@ -872,7 +872,7 @@ const RAW_CLASSES = {
         "id": "shield_bash_wlf", "name": "Shield Bash", "starter": true,
         "cost": { "type": "odd" }, "target": "single_enemy",
         "description": "Deal 2 + die value damage. Gain 2 Block.",
-        "effects": { "damage": 2, "dieScaleDamage": true, "block": 2 }
+        "effects": { "damage": 2, "dieScaleDamage": true, "block": 2, "bonusDmgScale": 0.8 }
       },
       {
         "id": "wild_roots", "name": "Wild Roots",
@@ -896,7 +896,7 @@ const RAW_CLASSES = {
         "id": "axe_throw", "name": "Axe Throw", "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Throw axe at any target. Deals 5 damage.",
+        "description": "Ranged. Deal 5 damage.",
         "effects": { "damage": 5 }
       },
       {
@@ -953,13 +953,13 @@ const RAW_CLASSES = {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +1 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.35, "bonusHealScale": 0.60 }
+        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.35, "bonusHealScale": 0.9 }
       },
       {
         "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal ally for 3 HP. +1 Morale.",
-        "effects": { "heal": 3, "morale": 1, "bonusHealScale": 1.1 }
+        "description": "Heal ally for 4 HP. +1 Morale.",
+        "effects": { "heal": 4, "morale": 1, "bonusHealScale": 1.1 }
       },
       {
         "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 2,

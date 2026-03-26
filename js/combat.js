@@ -1447,7 +1447,9 @@ class CombatEngine {
       unit.actedThisTurn = true;
     }
 
+    if (result.noKillMorale) this._noKillMorale = true;
     this.checkEnemyDeaths();
+    this._noKillMorale = false;
     this.processBossPhases();
     if (this.enemies.every(e => e.dead)) {
       this.triggerVictory();
@@ -3289,7 +3291,10 @@ class CombatEngine {
           // Morale restored on kill — based on enemy base maxHp, doubled for seers
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
           let moraleRestore;
-          if (e.isBoss && !e._isSpectral) {
+          // Sacrifice the Standard: suppress morale from kills
+          if (this._noKillMorale) {
+            moraleRestore = 0;
+          } else if (e.isBoss && !e._isSpectral) {
             // Track boss kills for final boss spectral images
             if (!this.runKilledBosses.includes(e.id)) this.runKilledBosses.push(e.id);
             // Boss: restore to 75, or +12 if already above 75
@@ -4497,9 +4502,11 @@ class CombatEngine {
   // --- Skills / Leveling (party-wide XP) ---
   initSkills(unit) {
     const starters = unit.allSkills.filter(s => s.starter);
-    // Start with 2 starter skills — shuffle and pick 2
-    const shuffled = starters.sort(() => Math.random() - 0.5);
-    unit.skills = shuffled.slice(0, 2).map(s => ({ ...s }));
+    // Always include the "any" cost skill first (base attack), then pick 1 more
+    const anySkill = starters.find(s => s.cost && s.cost.type === 'any');
+    const others = starters.filter(s => s !== anySkill).sort(() => Math.random() - 0.5);
+    const picked = anySkill ? [anySkill, ...others.slice(0, 1)] : starters.slice(0, 2);
+    unit.skills = picked.map(s => ({ ...s }));
   }
 
   getUnlearnedSkills(unit) {

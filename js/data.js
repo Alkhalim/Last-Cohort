@@ -418,6 +418,7 @@ function buildSkillExecute(skillData) {
     if (effects.blockScale) result.blockScale = effects.blockScale;
     if (effects.shieldBrace) result.shieldBrace = true;
     if (effects.rallyingTrumpet) result.rallyingTrumpet = effects.rallyingTrumpet;
+    if (effects.noKillMorale) result.noKillMorale = true;
 
     // New class mechanics
     if (effects.herbPoulticePoison) result.herbPoulticePoison = true;
