@@ -480,9 +480,10 @@ class Game {
 
     // Scale party to appropriate march level
     const diff = test.difficulty;
-    const skillCount = Math.min(6, 2 + Math.floor(diff * 0.6)); // ~2 at M1, ~5 at M6, ~7 at M10
-    const itemLevel = Math.max(0, diff - 1); // bonus levels on items
-    const hpBonus = Math.floor(diff * 2); // simulated HP growth from training
+    const skillCount = 5;
+    const itemLevel = Math.max(0, Math.floor(diff * 0.4)); // bonus levels on items (conservative)
+    const hpBonus = Math.floor(diff * 4); // simulated HP growth from training
+    this._testEpicBudget = diff >= 7 ? 3 : diff >= 5 ? 1 : 0;
 
     this.engine.party.forEach(u => {
       // Learn skills (starters + random unlocks)
@@ -492,29 +493,42 @@ class Game {
       const toLearn = [...starters, ...shuffledSkills.slice(0, Math.max(0, skillCount - starters.length))];
       u.skills = toLearn.map(s => ({ ...s }));
 
-      // Add HP from training
-      u.maxHp += hpBonus;
-      u.baseMaxHp += hpBonus;
+      // Add HP from training + 35% bonus
+      const extraHp = hpBonus + Math.floor(u.maxHp * 0.35);
+      u.maxHp += extraHp;
+      u.baseMaxHp += extraHp;
       u.hp = u.maxHp;
 
-      // Add training bonuses
-      u.bonusDamage = Math.floor(diff * 0.5);
-      u.bonusBlock = Math.floor(diff * 0.3);
-      u.bonusHeal = Math.floor(diff * 0.3);
+      // Add training bonuses scaled to class role
+      const tags = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags : [];
+      const isMelee = tags.includes('melee');
+      const isRanged = tags.includes('ranged');
+      const isSupport = tags.includes('support');
+      const isCommand = tags.includes('command');
+      const isElite = tags.includes('elite');
+      u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 4.9 : isRanged ? 3.85 : 2.1));
+      u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 2.6 : isMelee ? 2.08 : 1.04));
+      u.bonusHeal = Math.floor(diff * (isSupport ? 3.36 : 0.84));
+      u.bonusPoison = Math.floor(diff * (isRanged ? 1.05 : isSupport ? 0.7 : 0));
 
-      // Equip items — fill all slots with appropriate rarity
-      const rarities = diff >= 7 ? ['rare', 'epic'] : diff >= 4 ? ['uncommon', 'rare'] : ['common', 'uncommon'];
+      // Equip items — fill all slots with appropriate rarity (tuned down for testing)
+      // Epic budget: march 8 = 3 epics per team, march 6 = 1 per team
+      const rarities = diff >= 7 ? ['uncommon', 'rare'] : diff >= 4 ? ['common', 'uncommon'] : ['common'];
       for (const slot of ['weapon', 'armor', 'trinket']) {
         for (let si = 0; si < u.equipment[slot].length; si++) {
+          // Check if this slot should get an epic
+          const useEpic = this._testEpicBudget > 0 && Math.random() < 0.3;
+          const slotRarities = useEpic ? ['epic'] : rarities;
           const eligible = Object.values(ITEM_DATA).filter(item => {
             if (item.slot !== slot) return false;
             if (item.baseId) return false; // skip leveled instances
             if (item.minDifficulty && item.minDifficulty > diff) return false;
-            if (!rarities.includes(item.rarity)) return false;
+            if (!slotRarities.includes(item.rarity)) return false;
             return canEquipItem(u, item);
           });
           if (eligible.length > 0) {
             const pick = eligible[Math.floor(Math.random() * eligible.length)];
+            if (useEpic && pick.rarity === 'epic') this._testEpicBudget--;
             const id = itemLevel > 0 ? createLeveledItem(pick.id, itemLevel) : pick.id;
             u.equipment[slot][si] = id;
           }

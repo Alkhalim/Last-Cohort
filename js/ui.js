@@ -548,7 +548,7 @@ class GameUI {
       if (!unit) return false;
       const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
       if (!skill) return false;
-      if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES && skill.target !== TARGET.DUAL_ENEMY) return false;
+      if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES && skill.target !== TARGET.DUAL_ENEMY && skill.target !== TARGET.RANDOM_ENEMY) return false;
       const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
       if (!canPay) return false;
       if (skill.target === TARGET.ALL_ENEMIES) return true;
@@ -561,8 +561,8 @@ class GameUI {
     if (enemy.dead) return false;
     const skill = this.getPreviewSkill();
     if (!skill) return false;
-    if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES) return false;
-    if (skill.target === TARGET.ALL_ENEMIES) return true;
+    if (skill.target !== TARGET.SINGLE_ENEMY && skill.target !== TARGET.ALL_ENEMIES && skill.target !== TARGET.RANDOM_ENEMY) return false;
+    if (skill.target === TARGET.ALL_ENEMIES || skill.target === TARGET.RANDOM_ENEMY) return true;
     const unit = this.selectedUnitIndex !== null ? this.engine.party[this.selectedUnitIndex] : null;
     return this.engine.getValidEnemyTargets(skill, unit).includes(enemy);
   }
@@ -1533,8 +1533,8 @@ class GameUI {
     const unitIndex = this.selectedUnitIndex;
     this.stagedSkill = null;
 
-    // For self/all-target skills, route through beginSkillTarget
-    if (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES) {
+    // For self/all-target/random skills, route through beginSkillTarget
+    if (skill.target === TARGET.SELF || skill.target === TARGET.ALL_ALLIES || skill.target === TARGET.ALL_ENEMIES || skill.target === TARGET.RANDOM_ENEMY) {
       this.engine.beginSkillTarget(unitIndex, skill.id, diceIds);
     } else if (skill.target === TARGET.DUAL_ENEMY) {
       // First target already selected — enter dual targeting with it pre-filled
