@@ -475,6 +475,19 @@ function generateHiddenMarch(options = {}) {
     bossNode.parents.push(n.id);
   }
 
+  // Unique events for hidden marches (shuffled, no repeats)
+  const hiddenEvents = options.events || [];
+  const shuffledEvents = [...hiddenEvents].sort(() => Math.random() - 0.5);
+  let eventIdx = 0;
+
+  // Combat encounter names for variety
+  const combatIntros = [
+    { name: 'Tunnel Ambush', intro: 'Shapes lunge from the dark. The lair is guarded.' },
+    { name: 'Lair Guardians', intro: 'The tunnel twists deeper. More creatures block the way.' },
+    { name: 'Bone Pile Awakening', intro: 'A pile of bones rattles to life. The dead defend this place.' },
+    { name: 'The Deep Watch', intro: 'Eyes gleam in the torchlight. Something has been waiting.' },
+  ];
+
   // Assign encounters
   for (const node of nodes) {
     if (node.type === 'combat') {
@@ -484,10 +497,11 @@ function generateHiddenMarch(options = {}) {
       for (let i = 0; i < count; i++) {
         enemies.push(enemyPool[Math.floor(Math.random() * enemyPool.length)]);
       }
+      const ci = combatIntros[Math.floor(Math.random() * combatIntros.length)];
       node.encounter = {
-        name: 'Lair Guardians',
+        name: ci.name,
         enemies: enemies,
-        intro: 'The tunnel twists deeper. More creatures block the way.'
+        intro: ci.intro
       };
     } else if (node.type === 'boss' && bossData) {
       node.encounter = {
@@ -497,10 +511,15 @@ function generateHiddenMarch(options = {}) {
         loot: bossData.loot || [],
         lootCount: bossData.lootCount
       };
-    } else if (node.type === 'event') {
-      // Simple rest/loot event for hidden marches
-      node.type = 'rest';
-      node.threat = 0;
+    } else if (node.type === 'event' || node.type === 'rest') {
+      // Use unique hidden march events if available
+      if (eventIdx < shuffledEvents.length) {
+        node.type = 'event';
+        node.encounter = shuffledEvents[eventIdx++];
+      } else {
+        node.type = 'rest';
+        node.threat = 0;
+      }
     }
   }
 

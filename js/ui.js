@@ -4621,6 +4621,7 @@ class GameUI {
       difficulty: this.difficulty,
       enemies: data.enemies || [],
       boss: data.boss || null,
+      events: data.events || [],
     });
     this.currentNodeId = null;
     this._mapTerrainSeed = Math.floor(Math.random() * 100000);

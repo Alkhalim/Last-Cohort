@@ -430,6 +430,119 @@ class Game {
     this.showHomeScreen();
   }
 
+  showTestFeaturesScreen() {
+    this.ui.showScreen('test-features-screen');
+    const list = document.getElementById('test-features-list');
+    list.innerHTML = '';
+
+    const tests = [
+      { name: 'Barrow of Ariovistus (March 4)', desc: 'Fight the Revenant of Ariovistus', difficulty: 4, encounter: 'grave_of_ariovistus' },
+      { name: "Thusnelda's Ambush (March 6)", desc: 'Face the Chieftain\'s Wife', difficulty: 6, encounter: 'thusneldas_ambush' },
+      { name: "The Dragon's Lair (March 8)", desc: 'Enter the hidden march', difficulty: 8, encounter: 'dragons_lair' },
+    ];
+
+    tests.forEach(test => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary';
+      btn.style.textAlign = 'left';
+      btn.style.padding = '12px 16px';
+      btn.innerHTML = `<strong>${test.name}</strong><br><span style="font-size:0.75rem;color:var(--text-dim)">${test.desc}</span>`;
+      btn.addEventListener('click', () => this.startTestEncounter(test));
+      list.appendChild(btn);
+    });
+  }
+
+  startTestEncounter(test) {
+    this.clearSavedRun();
+    this.difficulty = test.difficulty;
+    this.marchCount = test.difficulty - 1;
+    this.recentBosses = [];
+    this.usedRunEventIds = new Set();
+    this._leaderboardSaved = false;
+    this.currentRunRenown = 0;
+    this.activeCurses = [];
+    this.activeBoons = [];
+    this.engine.morale = 65;
+    this.engine.totalEnemiesKilled = 0;
+    this.engine.encountersCompleted = 0;
+    this.engine.totalRenownEarned = 0;
+    this.engine.pendingSkillPicks = 0;
+    this.engine.skillUsageStats = {};
+    this.engine.runKilledBosses = [];
+    this.engine.difficulty = this.difficulty;
+
+    // Pick 3 random classes (all classes available in test mode)
+    const allClasses = Object.keys(CLASS_DATA);
+    const shuffled = allClasses.sort(() => Math.random() - 0.5);
+    const partyClasses = shuffled.slice(0, 3);
+    this.selectedPartyClasses = partyClasses;
+    this.engine.initParty(partyClasses);
+
+    // Scale party to appropriate march level
+    const diff = test.difficulty;
+    const skillCount = Math.min(6, 2 + Math.floor(diff * 0.6)); // ~2 at M1, ~5 at M6, ~7 at M10
+    const itemLevel = Math.max(0, diff - 1); // bonus levels on items
+    const hpBonus = Math.floor(diff * 2); // simulated HP growth from training
+
+    this.engine.party.forEach(u => {
+      // Learn skills (starters + random unlocks)
+      const starters = u.allSkills.filter(s => s.starter);
+      const nonStarters = u.allSkills.filter(s => !s.starter);
+      const shuffledSkills = nonStarters.sort(() => Math.random() - 0.5);
+      const toLearn = [...starters, ...shuffledSkills.slice(0, Math.max(0, skillCount - starters.length))];
+      u.skills = toLearn.map(s => ({ ...s }));
+
+      // Add HP from training
+      u.maxHp += hpBonus;
+      u.baseMaxHp += hpBonus;
+      u.hp = u.maxHp;
+
+      // Add training bonuses
+      u.bonusDamage = Math.floor(diff * 0.5);
+      u.bonusBlock = Math.floor(diff * 0.3);
+      u.bonusHeal = Math.floor(diff * 0.3);
+
+      // Equip items — fill all slots with appropriate rarity
+      const rarities = diff >= 7 ? ['rare', 'epic'] : diff >= 4 ? ['uncommon', 'rare'] : ['common', 'uncommon'];
+      for (const slot of ['weapon', 'armor', 'trinket']) {
+        for (let si = 0; si < u.equipment[slot].length; si++) {
+          const eligible = Object.values(ITEM_DATA).filter(item => {
+            if (item.slot !== slot) return false;
+            if (item.baseId) return false; // skip leveled instances
+            if (item.minDifficulty && item.minDifficulty > diff) return false;
+            if (!rarities.includes(item.rarity)) return false;
+            return canEquipItem(u, item);
+          });
+          if (eligible.length > 0) {
+            const pick = eligible[Math.floor(Math.random() * eligible.length)];
+            const id = itemLevel > 0 ? createLeveledItem(pick.id, itemLevel) : pick.id;
+            u.equipment[slot][si] = id;
+          }
+        }
+      }
+      this.engine.computeEquipmentStats(u);
+    });
+
+    this.startGameplayMusic();
+
+    // Find the event and trigger it
+    const event = EVENT_DATA.find(e => e.id === test.encounter);
+    if (event) {
+      // Set up minimal map state so we can return to map after event
+      this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
+      this.ui.currentNodeId = null;
+      this.ui.difficulty = this.difficulty;
+      this.ui._mapTerrainSeed = Math.floor(Math.random() * 100000);
+
+      const mapScreen = document.getElementById('map-screen');
+      const theme = MARCH_THEMES[this.difficulty] || { theme: 'forest' };
+      mapScreen.dataset.theme = theme.theme;
+
+      // Directly show the event
+      this.ui.startEventNode({ type: 'event', encounter: event });
+    }
+  }
+
   showOptionsScreen() {
     // Track which screen we came from so Back returns there
     const active = document.querySelector('.screen.active');
@@ -743,6 +856,10 @@ class Game {
     document.getElementById('btn-run-history').addEventListener('click', () => this.showRunHistoryScreen());
     document.getElementById('btn-run-history-back').addEventListener('click', () => this.showHomeScreen());
     document.getElementById('btn-run-detail-back').addEventListener('click', () => this.showRunHistoryScreen());
+
+    // Test Features
+    document.getElementById('btn-test-features').addEventListener('click', () => this.showTestFeaturesScreen());
+    document.getElementById('btn-test-back').addEventListener('click', () => this.showHomeScreen());
   }
 
   // --- Stats ---
@@ -1293,7 +1410,7 @@ class Game {
       this.addNotification('Achievement: The dead king falls!');
     }
     // Lindwurm secret boss
-    if (!a.boss_lindwurm && (s.enemiesKilled['lindwurm'] || 0) >= 1) {
+    if (!a.boss_lindwurm && ((s.enemiesKilled['lindwurm_lord'] || 0) >= 1 || (s.enemiesKilled['lord_of_lies'] || 0) >= 1 || (s.enemiesKilled['lord_of_future_sight'] || 0) >= 1 || (s.enemiesKilled['undefeated_lord'] || 0) >= 1)) {
       a.boss_lindwurm = true;
       this.addNotification('Achievement: The wyrm is slain!');
     }
@@ -1599,7 +1716,7 @@ class Game {
       { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
       { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
       { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
-      { key: 'boss_lindwurm', name: "Dragon Slayer", desc: "Slay the Lindwurm.", hidden: true, progress: () => a.boss_lindwurm ? 'Done' : '0/1' },
+      { key: 'boss_lindwurm', name: "Dragon Slayer", desc: "Slay the Lindwurm Lord.", hidden: true, progress: () => a.boss_lindwurm ? 'Done' : '0/1' },
       // Equipment
       { key: 'hero_three_rares', name: "Collector", desc: "One hero with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
       { key: 'hero_only_rares', name: "Gilded Warrior", desc: "One hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },

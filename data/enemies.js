@@ -629,37 +629,102 @@ const RAW_ENEMIES = {
 
   // === DRAGON'S LAIR ENEMIES ===
 
-  "lindwurm": {
-    "id": "lindwurm", "name": "The Lindwurm",
-    "maxHp": 70, "row": "front", "damage": [10, 16], "speed": 1, "xpValue": 40,
+  "lindwurm_lord": {
+    "id": "lindwurm_lord", "name": "Lindwurm Lord",
+    "maxHp": 75, "row": "front", "damage": [10, 16], "speed": 1, "xpValue": 45,
     "isBoss": true, "ai": "boss",
-    "description": "An ancient serpent-dragon of Germanic legend, coiled in a cavern of gold and bones. Its breath chars flesh and its scales turn blades. It grows more frenzied as it bleeds.",
+    "description": "The ancient lord of the lair. A serpent-dragon of immense size, coiled atop a throne of gold and bones. It summons sheep to devour — each meal restores its strength. Kill them before it feeds.",
     "actions": [
-      { "name": "Dragon Fire", "damage": 6, "chance": 0.25, "text": "unleashes a torrent of flame", "aoe": true, "cooldown": 2 },
-      { "name": "Tail Sweep", "damage": 8, "chance": 0.25, "text": "sweeps its massive tail across the front line", "aoe": true },
-      { "name": "Rending Bite", "damage": 14, "chance": 0.25, "text": "lunges with bone-crushing jaws" },
+      { "name": "Dragon Fire", "damage": 6, "chance": 0.2, "text": "unleashes a torrent of flame", "aoe": true, "cooldown": 2 },
+      { "name": "Tail Sweep", "damage": 8, "chance": 0.2, "text": "sweeps its massive tail across the front line", "aoe": true },
+      { "name": "Rending Bite", "damage": 14, "chance": 0.2, "text": "lunges with bone-crushing jaws" },
       { "name": "Terrifying Roar", "damage": 0, "morale": -8, "chance": 0.15, "text": "roars — the cavern shakes and your men falter", "cooldown": 1 },
+      { "name": "Summon Sheep", "damage": 0, "chance": 0.15, "text": "bellows — a terrified sheep stumbles from the shadows", "spawn": "lair_sheep", "cooldown": 2 },
       { "name": "Coil and Strike", "damage": 0, "chance": 0.1, "text": "coils tighter, scales hardening", "blockSelf": 8 }
     ]
   },
-  "dragon_hatchling": {
-    "id": "dragon_hatchling", "name": "Dragon Hatchling",
-    "maxHp": 16, "row": "front", "damage": [4, 7], "speed": 3, "xpValue": 8,
-    "description": "A young wyrm, barely the size of a hound. Fast and vicious, it spits embers and snaps with needle teeth.",
+  "lord_of_lies": {
+    "id": "lord_of_lies", "name": "The Lord of Lies",
+    "maxHp": 50, "row": "back", "damage": [6, 12], "speed": 2, "xpValue": 30,
+    "isBoss": true, "ai": "boss",
+    "description": "The Lindwurm's second form — a whispering deceiver. It hides behind illusions, poisons the mind, and turns your own doubt against you.",
     "actions": [
-      { "name": "Ember Spit", "damage": 4, "poisonTarget": 1, "chance": 0.4, "text": "spits burning embers", "ignoreRow": true },
-      { "name": "Needle Fangs", "damage": 6, "chance": 0.35, "text": "bites with needle-sharp teeth" },
-      { "name": "Frenzied Snap", "damage": 3, "chance": 0.25, "text": "snaps wildly at anything nearby" }
+      { "name": "Whispered Lie", "damage": 4, "morale": -6, "chance": 0.3, "text": "whispers a lie so convincing your men believe it", "ignoreRow": true },
+      { "name": "Phantom Swarm", "damage": 0, "chance": 0.2, "text": "conjures illusory wyrms from thin air", "spawn": "lair_sheep" },
+      { "name": "Venomous Word", "damage": 3, "poisonTarget": 3, "chance": 0.25, "text": "speaks — and the words burn like venom", "ignoreRow": true },
+      { "name": "Mirror Scales", "damage": 0, "chance": 0.15, "text": "shimmers — its scales reflect attacks", "blockSelf": 6 },
+      { "name": "Devouring Doubt", "damage": 8, "morale": -4, "chance": 0.1, "text": "feeds on your fear — the stronger your doubt, the harder it hits", "ignoreRow": true, "cooldown": 1 }
     ]
   },
-  "wyrm_cultist": {
-    "id": "wyrm_cultist", "name": "Wyrm Cultist",
-    "maxHp": 18, "row": "back", "damage": [3, 6], "speed": 1, "xpValue": 6,
-    "description": "A Germanic priest who worships the dragon as a god. Chants strengthen the wyrm and weaken intruders.",
+  "lord_of_future_sight": {
+    "id": "lord_of_future_sight", "name": "The Lord of Future Sight",
+    "maxHp": 50, "row": "back", "damage": [7, 14], "speed": 1, "xpValue": 30,
+    "isBoss": true, "ai": "boss",
+    "description": "The Lindwurm's second form — an oracle of ruin. It sees every strike before it lands. Your dice betray you in its presence.",
     "actions": [
-      { "name": "Dragon's Blessing", "damage": 0, "chance": 0.35, "text": "chants — the dragon's scales harden", "blockAllEnemies": 3 },
-      { "name": "Wyrm Curse", "damage": 3, "morale": -3, "chance": 0.35, "text": "curses in the dragon's tongue", "ignoreRow": true },
-      { "name": "Sacrificial Flame", "damage": 5, "chance": 0.3, "text": "hurls alchemical fire", "ignoreRow": true }
+      { "name": "Foreseen Strike", "damage": 10, "chance": 0.25, "text": "strikes exactly where you'll be", "ignoreRow": true },
+      { "name": "Fate Unraveled", "damage": 0, "chance": 0.2, "text": "unweaves a soldier's fortune", "runeBinding": true, "cooldown": 1 },
+      { "name": "Predestined Doom", "damage": 6, "chance": 0.2, "text": "declares your doom — and it comes true", "aoe": true, "cooldown": 2 },
+      { "name": "Temporal Scales", "damage": 0, "chance": 0.2, "text": "shifts between moments — attacks slide past", "blockSelf": 5, "blockAllEnemies": 2 },
+      { "name": "Vision of Death", "damage": 0, "morale": -10, "chance": 0.15, "text": "shows each soldier exactly how they will die", "cooldown": 2 }
+    ]
+  },
+  "undefeated_lord": {
+    "id": "undefeated_lord", "name": "The Undefeated Lord",
+    "maxHp": 55, "row": "front", "damage": [8, 16], "speed": 2, "xpValue": 30,
+    "isBoss": true, "ai": "boss",
+    "description": "The Lindwurm's second form — pure rage made flesh. Faster, stronger, relentless. Every wound makes it angrier. It cannot be stopped — only outlasted.",
+    "woundedDoubleAttack": true,
+    "actions": [
+      { "name": "Unstoppable Charge", "damage": 12, "chance": 0.25, "text": "charges with the force of an avalanche" },
+      { "name": "Frenzy", "damage": 7, "chance": 0.25, "text": "attacks twice in rapid succession", "aoe": true },
+      { "name": "Iron Hide", "damage": 0, "chance": 0.15, "text": "its wounds close — scales thicken with rage", "blockSelf": 6 },
+      { "name": "Earthshatter", "damage": 5, "morale": -5, "chance": 0.2, "text": "slams the ground — rocks fall, men stumble", "aoe": true, "cooldown": 1 },
+      { "name": "Deathless Roar", "damage": 0, "morale": -6, "chance": 0.15, "text": "roars defiance — it will not fall", "blockSelf": 4, "cooldown": 1 }
+    ]
+  },
+  "lair_sheep": {
+    "id": "lair_sheep", "name": "Terrified Sheep",
+    "maxHp": 8, "row": "front", "damage": [0, 0], "speed": 1, "xpValue": 1,
+    "description": "A bleating, panicked sheep trapped in the lair. The Lindwurm Lord will devour it to heal if left alive. Kill it quickly.",
+    "ai": "passive",
+    "actions": [
+      { "name": "Cower", "damage": 0, "chance": 0.7, "text": "cowers and bleats in terror" },
+      { "name": "Panicked Kick", "damage": 1, "chance": 0.3, "text": "kicks wildly in panic" }
+    ]
+  },
+  "hate_mage": {
+    "id": "hate_mage", "name": "Hate-Mage",
+    "maxHp": 22, "row": "back", "damage": [5, 9], "speed": 1, "xpValue": 8,
+    "description": "A sorcerer consumed by rage, channeling hatred into raw fire and curses. The hate burns in their eyes — literally.",
+    "actions": [
+      { "name": "Hatebolt", "damage": 7, "chance": 0.35, "text": "hurls a bolt of concentrated hatred", "ignoreRow": true },
+      { "name": "Curse of Fury", "damage": 0, "morale": -5, "chance": 0.25, "text": "screams a curse that fills your men with doubt", "cooldown": 1 },
+      { "name": "Rage Shield", "damage": 0, "chance": 0.2, "text": "wraps allies in burning hatred", "blockAllEnemies": 3 },
+      { "name": "Immolate", "damage": 4, "poisonTarget": 2, "chance": 0.2, "text": "sets a soldier ablaze with sorcerous fire", "ignoreRow": true }
+    ]
+  },
+  "lair_troll": {
+    "id": "lair_troll", "name": "Cave Troll",
+    "maxHp": 35, "row": "front", "damage": [6, 10], "speed": 1, "xpValue": 10,
+    "description": "A massive, lumbering brute that dwells in the deepest tunnels. Thick-skinned and slow-witted, but devastating when it connects.",
+    "actions": [
+      { "name": "Club Smash", "damage": 10, "chance": 0.35, "text": "brings down a massive stone club" },
+      { "name": "Boulder Toss", "damage": 7, "chance": 0.25, "text": "hurls a chunk of rock", "ignoreRow": true },
+      { "name": "Regenerate", "damage": 0, "chance": 0.2, "text": "its wounds knit together with sickening speed", "healSelf": 6 },
+      { "name": "Ground Pound", "damage": 5, "morale": -3, "chance": 0.2, "text": "pounds the ground — stalactites rain down", "aoe": true, "cooldown": 2 }
+    ]
+  },
+  "clinking_bones": {
+    "id": "clinking_bones", "name": "Clinking Bones",
+    "maxHp": 12, "row": "front", "damage": [3, 6], "speed": 3, "xpValue": 5,
+    "description": "A skeleton held together by spite and sorcery. It moves with a dry rattling sound, each step a clatter of bone on stone. Fragile but unnervingly fast.",
+    "woundedDoubleAttack": true,
+    "actions": [
+      { "name": "Bone Slash", "damage": 5, "chance": 0.4, "text": "slashes with a sharpened rib" },
+      { "name": "Skull Throw", "damage": 4, "chance": 0.3, "text": "tears off its own skull and hurls it", "ignoreRow": true },
+      { "name": "Reassemble", "damage": 0, "chance": 0.2, "text": "collapses into a pile and reforms", "blockSelf": 4 },
+      { "name": "Death Rattle", "damage": 0, "morale": -3, "chance": 0.1, "text": "its jaw clacks open — an unearthly shriek" }
     ]
   },
 

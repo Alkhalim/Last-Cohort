@@ -796,7 +796,74 @@ const RAW_EVENTS = [
     "intro": "Your scouts return pale-faced. They found a cave mouth in the hillside, half-hidden by ancient roots. The stone around it is scorched black. From deep within comes a sound like a forge bellows — rhythmic, immense. The air tastes of sulfur. Bones litter the entrance — human, animal, and things older than both. Runes carved into the rock read: 'Here sleeps the Lindwurm. Do not wake what Rome cannot kill.'",
     "choices": [
       { "text": "Enter the lair. Glory waits in the dark.", "outcomes": [
-        { "weight": 1.0, "text": "Your men light torches and descend. The tunnel narrows, then opens into a vast cavern. Gold glitters. Bones crunch underfoot. Something stirs in the dark.", "effects": { "triggerHiddenMarch": { "name": "The Dragon's Lair", "subtitle": "Slay the Lindwurm.", "theme": "dragon", "depth": 4, "enemies": ["dragon_hatchling", "wyrm_cultist"], "boss": { "name": "The Lindwurm", "enemies": ["lindwurm", "dragon_hatchling", "dragon_hatchling"], "intro": "The cavern opens into a vast chamber of gold and bone. The Lindwurm uncoils — ancient, enormous, furious. Its young scurry to its side.", "loot": ["lindwurm_fang", "dragonscale_lorica", "wyrms_hoard_ring"], "lootCount": 2 } } } }
+        { "weight": 1.0, "text": "Your men light torches and descend. The tunnel narrows, then opens into a vast cavern. Gold glitters. Bones crunch underfoot. Something stirs in the dark.", "effects": { "triggerHiddenMarch": {
+          "name": "The Dragon's Lair",
+          "subtitle": "Slay the Lindwurm Lord.",
+          "theme": "dragon",
+          "depth": 4,
+          "enemies": ["lair_sheep", "hate_mage", "lair_troll", "clinking_bones"],
+          "boss": {
+            "name": "The Lindwurm Lord",
+            "enemies": ["lindwurm_lord", "lair_sheep", "lair_sheep"],
+            "intro": "The cavern opens into a vast chamber of gold and bone. The Lindwurm Lord uncoils from its throne — ancient, enormous, hungry. Sheep bleat in terror at its feet.",
+            "loot": ["lindwurm_fang", "dragonscale_lorica", "wyrms_hoard_ring", "dragon_banner", "throwing_aklys"],
+            "lootCount": 2
+          },
+          "events": [
+            {
+              "id": "lair_creepy_mountain", "name": "The Creepy Mountain",
+              "intro": "Through a crack in the tunnel wall you glimpse the outside — a creepy mountain looms in the distance, half-shrouded in unnatural fog. Leaning against its flank is an abandoned castle, once formidable, now crumbling. Tattered dragon banners hang from its towers, snapping in a wind that doesn't reach you down here.",
+              "choices": [
+                { "text": "Search the castle ruins from here.", "outcomes": [
+                  { "weight": 0.5, "text": "Your scouts squeeze through the crack and return with a battered chest. Inside: old provisions and a solid blade.", "effects": { "grantDamage": 1, "healAll": 4, "morale": 3 } },
+                  { "weight": 0.5, "text": "The ruins hold nothing but dust and dragon bones. But the view steadies your men.", "effects": { "morale": 6 } }
+                ]},
+                { "text": "Press on. That castle is a tomb.", "outcomes": [
+                  { "weight": 1.0, "text": "You seal the crack with loose stone and move deeper. Better not to linger near whatever claimed that fortress.", "effects": { "morale": 3 } }
+                ]}
+              ]
+            },
+            {
+              "id": "lair_eerie_drums", "name": "The Drums Below",
+              "intro": "Strange and eerie music drifts from deeper in the tunnels — heavy with drums, rhythmic and relentless. It echoes off the stone walls until you cannot tell where it comes from. Your men grip their weapons tighter. The beat matches your heartbeat. Or perhaps your heartbeat matches it.",
+              "choices": [
+                { "text": "Follow the drums.", "outcomes": [
+                  { "weight": 0.4, "text": "You find a circle of hate-mages around a bone drum, chanting. They scatter when they see you, leaving offerings behind.", "effects": { "grantBlock": { "amount": 2, "count": 4 }, "morale": 5 } },
+                  { "weight": 0.6, "text": "The drumming grows louder, then stops. Silence. Then they come from the dark.", "effects": { "triggerCombat": { "enemies": ["hate_mage", "hate_mage", "clinking_bones", "clinking_bones"], "name": "The Drummers", "intro": "The music was a summons. Hate-mages and their skeletal servants emerge from the shadows." } } }
+                ]},
+                { "text": "Stuff cloth in your ears and press on.", "outcomes": [
+                  { "weight": 1.0, "text": "The drums fade behind you. Your men breathe easier, though the rhythm lingers in their bones.", "effects": { "morale": 4 } }
+                ]}
+              ]
+            },
+            {
+              "id": "lair_wedding_massacre", "name": "The Failed Wedding",
+              "intro": "You enter a wide cavern decorated with rotting garlands and shattered pottery. Two long tables face each other across a central aisle, still set with cups and plates. Skeletons sit in the chairs — some slumped forward, some sprawled on the ground. The remains of a wedding ritual between two tribes, you realize. Something went terribly wrong. The bride and groom still sit at the head table, skeletal hands clasped together. Between them, a blade driven through both their joined hands.",
+              "choices": [
+                { "text": "Take the wedding blade.", "outcomes": [
+                  { "weight": 0.6, "text": "You pull the blade free. The skeletons shudder but do not rise. The blade is old but sharp — and warm to the touch.", "effects": { "grantDamage": 2, "morale": -3 } },
+                  { "weight": 0.4, "text": "As the blade comes free, the dead stir. The wedding guests rise, furious at the intrusion.", "effects": { "triggerCombat": { "enemies": ["clinking_bones", "clinking_bones", "clinking_bones", "clinking_bones"], "name": "The Wedding Guests", "intro": "The skeletons lurch to their feet. The wedding celebration resumes — in violence." } } }
+                ]},
+                { "text": "Leave them in peace. They've earned it.", "outcomes": [
+                  { "weight": 1.0, "text": "You pass through quietly. One soldier crosses himself. Another whispers a prayer in a language older than Rome.", "effects": { "morale": 5, "healAll": 3 } }
+                ]}
+              ]
+            },
+            {
+              "id": "lair_crimson_heart", "name": "The Crimson Heart Thermopolium",
+              "intro": "Impossibly, you find what appears to be an ancient thermopolium — a Roman tavern — carved into the cavern wall. A painted sign hangs outside: a crimson heart, dripping. The interior is warm and lit by an unseen source. Cups line the counter, still full. The wine is dark and smells faintly of iron. There is no one here. There has not been anyone here for a very long time. And yet the wine is fresh.",
+              "choices": [
+                { "text": "Drink the wine. Your men need courage.", "outcomes": [
+                  { "weight": 0.5, "text": "The wine burns going down but fills you with unnatural warmth. Your wounds close. Your fear fades. The crimson heart pulses once, then is still.", "effects": { "healAll": 8, "morale": 8 } },
+                  { "weight": 0.5, "text": "The wine is sweet — too sweet. Your men feel strange. Stronger, but different. Something was in that wine.", "effects": { "healAll": 5, "morale": 5, "grantDamage": 1, "damageAll": 3 } }
+                ]},
+                { "text": "Leave. Nothing free in a dragon's lair comes without cost.", "outcomes": [
+                  { "weight": 1.0, "text": "As you leave, you hear the faintest clink of a cup being set down behind you. You do not look back.", "effects": { "morale": 4 } }
+                ]}
+              ]
+            }
+          ]
+        } } }
       ]},
       { "text": "Seal the entrance and move on. Some legends are best left sleeping.", "outcomes": [
         { "weight": 1.0, "text": "Your engineers collapse the entrance with logs and stone. The breathing stops. Your men march on, relieved — but some look back, wondering what treasures lie buried.", "effects": { "morale": 6 } }

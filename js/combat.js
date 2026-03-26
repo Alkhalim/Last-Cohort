@@ -3415,6 +3415,44 @@ class CombatEngine {
             }
           }
 
+          // Lindwurm Lord: on death, transform into a random second form
+          if (e.id === 'lindwurm_lord' && !e._transformedAlready) {
+            e._transformedAlready = true;
+            const forms = ['lord_of_lies', 'lord_of_future_sight', 'undefeated_lord'];
+            const chosenId = forms[Math.floor(Math.random() * forms.length)];
+            const formDef = ENEMY_DATA[chosenId];
+            if (formDef) {
+              const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+              const startBlock = Math.floor(diffBonus * 1.5);
+              const form = {
+                index: this.enemies.length,
+                id: chosenId,
+                name: formDef.name,
+                maxHp: formDef.maxHp,
+                hp: formDef.maxHp,
+                row: formDef.row,
+                damage: [...formDef.damage],
+                speed: formDef.speed,
+                xpValue: formDef.xpValue,
+                isBoss: true,
+                ai: formDef.ai,
+                description: formDef.description,
+                actions: formDef.actions.map(a => ({ ...a })),
+                dead: false,
+                poison: 0,
+                block: startBlock,
+                justSpawned: true,
+                woundedDoubleAttack: formDef.woundedDoubleAttack || false,
+                _turnsAlive: 0,
+              };
+              this.enemies.push(form);
+              this.addLog(`The Lindwurm Lord convulses — its flesh tears apart and reforms! ${form.name} rises!`);
+              if (this.onVisual) this.onVisual('screenShake', {});
+              if (this.onVisual) this.onVisual('statusText', { enemyIndex: form.index, text: 'Transformed!', color: 'var(--red-bright)' });
+              setTimeout(() => { form.justSpawned = false; this.update(); }, 500);
+            }
+          }
+
           // Bone Totem: destroying it stuns the killer (skip next turn) — anti-stunlock
           if (e.stunOnDeath) {
             const partyStunned = this.party.filter(u => !u.downed && u._stunNextTurn).length;
@@ -3518,6 +3556,24 @@ class CombatEngine {
     });
     const alive = this.enemies.filter(e => !e.dead);
     if (alive.length === 0) return;
+
+    // Lindwurm Lord: devour sheep to heal at start of enemy turn
+    const lindwurmLord = alive.find(e => e.id === 'lindwurm_lord');
+    if (lindwurmLord) {
+      const sheep = alive.filter(e => e.id === 'lair_sheep');
+      for (const s of sheep) {
+        const healAmt = Math.min(12, lindwurmLord.maxHp - lindwurmLord.hp);
+        if (healAmt > 0) {
+          lindwurmLord.hp += healAmt;
+          this.addLog(`${lindwurmLord.name} devours ${s.name}! (+${healAmt} HP)`);
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: lindwurmLord.index, text: `+${healAmt} HP`, color: 'var(--green-bright)' });
+        }
+        s.hp = 0;
+        s.dead = true;
+        this.killedEnemies.push(s.id);
+        this.addLog(`${s.name} is consumed!`);
+      }
+    }
 
     // Thusnelda passive: gains block per living ally at start of enemy turn
     const thusnelda = alive.find(e => e.id === 'thusnelda');
