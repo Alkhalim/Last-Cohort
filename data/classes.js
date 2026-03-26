@@ -775,7 +775,7 @@ const RAW_CLASSES = {
         "id": "shield_slam", "name": "Shield Slam", "starter": true, "cooldown": 3,
         "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_enemy",
         "description": "Deal 4 damage. Stun target.",
-        "effects": { "damage": 4, "stun": true }
+        "effects": { "damage": 4, "stun": true, "bonusDmgScale": 0.9 }
       },
       {
         "id": "praetorian_guard", "name": "Praetorian Guard", "cooldown": 1,

@@ -437,10 +437,24 @@ function generateHiddenMarch(options = {}) {
   // Depth 0: Start combat (single)
   const start = makeNode(0, 'combat', 0.5, 2);
 
-  // Depths 1-5: Two parallel paths, each path = 2 combats + 3 events (shuffled order)
-  const pathTypes = ['combat', 'combat', 'event', 'event', 'event'];
-  const leftTypes = [...pathTypes].sort(() => Math.random() - 0.5);
-  const rightTypes = [...pathTypes].sort(() => Math.random() - 0.5);
+  // Depths 1-5: Two parallel paths, each path = 2 combats + 3 events
+  // Constraint: no more than 2 events in a row
+  const shufflePath = () => {
+    const types = ['combat', 'combat', 'event', 'event', 'event'];
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const shuffled = types.sort(() => Math.random() - 0.5);
+      let eventStreak = 0;
+      let valid = true;
+      for (const t of shuffled) {
+        eventStreak = t === 'event' ? eventStreak + 1 : 0;
+        if (eventStreak > 2) { valid = false; break; }
+      }
+      if (valid) return [...shuffled];
+    }
+    return ['combat', 'event', 'event', 'combat', 'event']; // fallback
+  };
+  const leftTypes = shufflePath();
+  const rightTypes = shufflePath();
 
   let leftPrev = start;
   let rightPrev = start;
@@ -464,9 +478,15 @@ function generateHiddenMarch(options = {}) {
   const boss = makeNode(7, 'boss', 0.5, 3);
   link(feast, boss);
 
-  // Shuffle and assign unique events to event nodes (3 per path = 6 total, we have 4 events so some repeat)
-  const shuffledEvents = [...hiddenEvents].sort(() => Math.random() - 0.5);
-  let eventIdx = 0;
+  // Assign unique events per path (no repeats within a path)
+  const leftEventsPool = [...hiddenEvents].sort(() => Math.random() - 0.5);
+  const rightEventsPool = [...hiddenEvents].sort(() => Math.random() - 0.5);
+  let leftEventIdx = 0;
+  let rightEventIdx = 0;
+
+  // Collect left/right path nodes by x position
+  const leftNodes = nodes.filter(n => n.x < 0.5 && n.depth > 0 && n.depth <= 5);
+  const rightNodes = nodes.filter(n => n.x > 0.5 && n.depth > 0 && n.depth <= 5);
 
   // Combat encounter variety
   const combatIntros = [
@@ -489,12 +509,17 @@ function generateHiddenMarch(options = {}) {
     } else if (node.type === 'boss' && bossData) {
       node.encounter = { name: bossData.name, enemies: bossData.enemies, intro: bossData.intro, loot: bossData.loot || [], lootCount: bossData.lootCount };
     } else if (node.type === 'event') {
-      if (eventIdx < shuffledEvents.length) {
-        node.encounter = shuffledEvents[eventIdx++];
+      // Assign from the path-specific pool to avoid repeats within a path
+      const isLeft = node.x < 0.5;
+      const pool = isLeft ? leftEventsPool : rightEventsPool;
+      const idx = isLeft ? leftEventIdx : rightEventIdx;
+      if (idx < pool.length) {
+        node.encounter = pool[idx];
+        if (isLeft) leftEventIdx++; else rightEventIdx++;
       } else {
-        // Recycle events if we need more than available
-        eventIdx = 0;
-        node.encounter = shuffledEvents[eventIdx++];
+        // Fallback: convert to rest if no events left
+        node.type = 'rest';
+        node.threat = 0;
       }
     }
     // Rest nodes (Lair Feast) don't need encounter data — handled by rest screen
