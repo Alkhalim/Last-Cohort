@@ -485,7 +485,7 @@ const RAW_ENEMIES = {
   "death_champion": {
     "id": "death_champion", "name": "Wiedergangr",
     "maxHp": 32, "row": "front", "damage": [8, 14], "speed": 2, "xpValue": 10,
-    "minDifficulty": 9,
+    "minDifficulty": 7,
     "description": "An undead Germanic warrior risen from a shallow grave. It fights with the skill of a veteran and the relentlessness of the dead.",
     "ai": "aggressive",
     "woundedDoubleAttack": true,
@@ -559,7 +559,7 @@ const RAW_ENEMIES = {
   "rot_spawn": {
     "id": "rot_spawn", "name": "Rot Spawn",
     "maxHp": 20, "row": "front", "damage": [5, 9], "speed": 1, "xpValue": 8,
-    "minDifficulty": 9,
+    "minDifficulty": 7,
     "description": "A mass of fungal growth shaped into a shambling form. It explodes on death, spreading poison to all soldiers.",
     "ai": "aggressive",
     "deathPoison": 3,
@@ -572,7 +572,7 @@ const RAW_ENEMIES = {
   "heartwood_sentinel": {
     "id": "heartwood_sentinel", "name": "Heartwood Sentinel",
     "maxHp": 35, "row": "front", "damage": [6, 11], "speed": 1, "xpValue": 10,
-    "minDifficulty": 9,
+    "minDifficulty": 7,
     "description": "A massive tree guardian, ancient beyond reckoning. Its bark is iron, its roots are chains. It shields the forest's heart with its own body.",
     "ai": "defensive",
     "aura": { "damageReduction": 3 },
@@ -605,7 +605,7 @@ const RAW_ENEMIES = {
   "fate_weaver": {
     "id": "fate_weaver", "name": "Fate Weaver",
     "maxHp": 18, "row": "back", "damage": [4, 7], "speed": 1, "xpValue": 10,
-    "minDifficulty": 10,
+    "minDifficulty": 8,
     "description": "A spectral seer who unravels the threads of fate. Her presence corrupts dice and twists probability against you.",
     "actions": [
       { "name": "Fate Twist", "damage": 5, "morale": -4, "chance": 0.3, "text": "twists the threads of fate — a soldier staggers", "ignoreRow": true },
@@ -617,7 +617,7 @@ const RAW_ENEMIES = {
   "spirit_wolf": {
     "id": "spirit_wolf", "name": "Spirit Wolf",
     "maxHp": 14, "row": "front", "damage": [5, 9], "speed": 4, "xpValue": 7,
-    "minDifficulty": 10,
+    "minDifficulty": 8,
     "description": "A ghostly wolf that hunts between worlds. Impossibly fast, it strikes and vanishes. Its howl drains the will to fight.",
     "woundedDoubleAttack": true,
     "actions": [
@@ -761,7 +761,7 @@ const RAW_ENEMIES = {
   "spirit_of_arminius": {
     "id": "spirit_of_arminius", "name": "Spirit of Arminius",
     "maxHp": 38, "row": "front", "damage": [6, 11], "speed": 2, "xpValue": 40,
-    "minDifficulty": 10,
+    "minDifficulty": 8,
     "isBoss": true, "ai": "boss",
     "description": "The defiant spirit of Arminius, bound to Varus in death. They cannot be separated — damaging one heals the other. Both must fall.",
     "actions": [
@@ -775,7 +775,7 @@ const RAW_ENEMIES = {
   "spirit_of_varus": {
     "id": "spirit_of_varus", "name": "Spirit of Varus",
     "maxHp": 34, "row": "back", "damage": [4, 8], "speed": 1, "xpValue": 40,
-    "minDifficulty": 10,
+    "minDifficulty": 8,
     "isBoss": true, "ai": "boss",
     "description": "The guilt-wracked spirit of Varus, bound to Arminius in death. They cannot be separated — damaging one heals the other. Both must fall.",
     "actions": [

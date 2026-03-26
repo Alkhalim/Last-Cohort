@@ -19,9 +19,9 @@ const RAW_ENCOUNTERS = {
     { "name": "Serpent Shaman", "minDifficulty": 2, "enemies": ["serpent_shaman", "fen_viper", "fen_viper"], "intro": "A painted figure sways between the trees. The ground writhes with snakes." },
     { "name": "The Fog Weaver", "minDifficulty": 4, "enemies": ["fog_weaver", "fog_illusion", "fog_illusion"], "intro": "The fog thickens until you cannot see your own hands. Shapes move within it. A voice whispers." },
     { "name": "The Blood Stag", "minDifficulty": 5, "enemies": ["blood_stag", "marsh_wolf", "marsh_wolf"], "intro": "Crimson antlers rise above the mist. A god of the forest stands before you, wreathed in blood." },
-    { "name": "Corpse of Arminius", "minDifficulty": 6, "enemies": ["corpse_of_arminius", "cursed_warrior", "cursed_warrior"], "intro": "The earth splits. A figure in Roman armor claws from the battlefield mud — Arminius, the Betrayer, risen from death." },
-    { "name": "Corpse of Varus", "minDifficulty": 8, "enemies": ["corpse_of_varus", "cheruscan_guardian", "cursed_warrior", "bog_seer"], "intro": "A spectral figure in a Roman general's cloak materializes. Varus speaks — and the dead obey." },
-    { "name": "Spirits of Arminius & Varus", "minDifficulty": 10, "enemies": ["spirit_of_arminius", "spirit_of_varus"], "intro": "Two ghosts rise from the blood-soaked earth — Arminius and Varus, bound in death, enemies and mirrors of each other. Both must fall." }
+    { "name": "Corpse of Arminius", "minDifficulty": 4, "enemies": ["corpse_of_arminius", "cursed_warrior", "cursed_warrior"], "intro": "The earth splits. A figure in Roman armor claws from the battlefield mud — Arminius, the Betrayer, risen from death." },
+    { "name": "Corpse of Varus", "minDifficulty": 6, "enemies": ["corpse_of_varus", "cheruscan_guardian", "cursed_warrior", "bog_seer"], "intro": "A spectral figure in a Roman general's cloak materializes. Varus speaks — and the dead obey." },
+    { "name": "Spirits of Arminius & Varus", "minDifficulty": 8, "enemies": ["spirit_of_arminius", "spirit_of_varus"], "intro": "Two ghosts rise from the blood-soaked earth — Arminius and Varus, bound in death, enemies and mirrors of each other. Both must fall." }
   ],
   "threatLevels": {
     "easy": [
@@ -75,7 +75,7 @@ const RAW_ENCOUNTERS = {
       { "name": "Blood Circle", "minDifficulty": 6, "enemies": ["blood_druid", "ironhide_boar", "cursed_warrior"], "intro": "A druid chants in a circle of blood. A monstrous boar guards the ritual." },
       { "name": "Iron Stampede", "minDifficulty": 6, "enemies": ["ironhide_boar", "ironhide_boar", "war_hound"], "intro": "The ground trembles. Two ironhide boars crash through the undergrowth." },
       { "name": "The Haunted Trail", "minDifficulty": 7, "enemies": ["forest_wraith", "hollow_legionary", "hollow_legionary"], "intro": "The air turns cold. Forest spirits guide hollow legionaries through the mist." },
-      { "name": "Dead Legion", "minDifficulty": 9, "enemies": ["death_champion", "death_champion", "cursed_warrior", "cursed_warrior"], "intro": "The dead walk in formation — ancient warriors risen from shallow graves. They still remember how to fight." },
+      { "name": "Dead Legion", "minDifficulty": 7, "enemies": ["death_champion", "death_champion", "cursed_warrior", "cursed_warrior"], "intro": "The dead walk in formation — ancient warriors risen from shallow graves. They still remember how to fight." },
       { "name": "The Thorn Canopy", "minDifficulty": 7, "enemies": ["dryad_huntress", "dryad_huntress", "forest_wraith"], "intro": "Arrows rain from the canopy. Twisted nymphs lurk in the branches, thorns nocked and ready." },
       { "name": "The Elder's Court", "minDifficulty": 8, "enemies": ["elder_seer", "death_champion", "blood_druid", "shadow_stalker"], "intro": "An elder seer holds court among the dead. Her word is law, her curse is absolute." },
       { "name": "Warden's Stand", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "blood_druid"], "intro": "Two ancient wardens block the path, healed endlessly by a blood druid behind them." },
@@ -91,14 +91,14 @@ const RAW_ENCOUNTERS = {
       { "name": "The Officer's Grave", "minDifficulty": 7, "enemies": ["hollow_centurion", "hollow_equites", "hollow_legionary", "dryad_huntress"], "intro": "An entire Roman command — centurion, cavalryman, legionary — risen from a mass grave. A huntress drives them forward." },
       { "name": "Sunken Court", "minDifficulty": 8, "enemies": ["elder_seer", "warden_of_the_deep", "shadow_stalker", "plague_bearer"], "intro": "In the ruins of a sunken hall, an elder seer holds court among wardens and assassins." },
       { "name": "Drowned Wardens", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "plague_bearer", "plague_bearer", "bog_seer"], "intro": "Wardens draped in algae guard the flooded passages. Plague bearers shamble from the water." },
-      { "name": "Heart Guardians", "minDifficulty": 9, "enemies": ["death_champion", "forest_wraith", "dryad_huntress", "blood_druid"], "intro": "The forest's inner sanctum is defended by its most terrible servants — the dead, the spirits, and the druids who feed them." },
-      { "name": "The Living Wall", "minDifficulty": 9, "enemies": ["heartwood_sentinel", "dryad_huntress", "dryad_huntress"], "intro": "A massive sentinel of living wood blocks the path. Huntresses lurk in its branches." },
-      { "name": "Fungal Bloom", "minDifficulty": 9, "enemies": ["rot_spawn", "rot_spawn", "heartwood_sentinel"], "intro": "The ground pulses with fungal growth. Rot spawns shamble forward, shielded by a sentinel of heartwood." },
-      { "name": "The Rotting Core", "minDifficulty": 9, "enemies": ["rot_spawn", "death_champion", "blood_druid", "dryad_huntress"], "intro": "At the forest's pulsing core, rot and death intertwine. A druid feeds the corruption." },
-      { "name": "Threshold Guardians", "minDifficulty": 10, "enemies": ["fate_weaver", "death_champion", "spirit_wolf", "spirit_wolf"], "intro": "At the boundary between worlds, a fate weaver twists destiny while spectral wolves circle." },
-      { "name": "The Last Veil", "minDifficulty": 10, "enemies": ["fate_weaver", "fate_weaver", "elder_seer", "heartwood_sentinel"], "intro": "Two fate weavers unravel the threads of reality. An elder seer and a sentinel guard the final threshold." },
-      { "name": "Ghost Pack", "minDifficulty": 10, "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "forest_wraith"], "intro": "A pack of spectral wolves hunts between worlds. A forest spirit drives them forward." },
-      { "name": "Woven Doom", "minDifficulty": 10, "enemies": ["fate_weaver", "spirit_wolf", "death_champion", "blood_druid"], "intro": "Fate itself conspires against you. The threshold's guardians are woven from death and prophecy." }
+      { "name": "Heart Guardians", "minDifficulty": 7, "enemies": ["death_champion", "forest_wraith", "dryad_huntress", "blood_druid"], "intro": "The forest's inner sanctum is defended by its most terrible servants — the dead, the spirits, and the druids who feed them." },
+      { "name": "The Living Wall", "minDifficulty": 7, "enemies": ["heartwood_sentinel", "dryad_huntress", "dryad_huntress"], "intro": "A massive sentinel of living wood blocks the path. Huntresses lurk in its branches." },
+      { "name": "Fungal Bloom", "minDifficulty": 7, "enemies": ["rot_spawn", "rot_spawn", "heartwood_sentinel"], "intro": "The ground pulses with fungal growth. Rot spawns shamble forward, shielded by a sentinel of heartwood." },
+      { "name": "The Rotting Core", "minDifficulty": 7, "enemies": ["rot_spawn", "death_champion", "blood_druid", "dryad_huntress"], "intro": "At the forest's pulsing core, rot and death intertwine. A druid feeds the corruption." },
+      { "name": "Threshold Guardians", "minDifficulty": 8, "enemies": ["fate_weaver", "death_champion", "spirit_wolf", "spirit_wolf"], "intro": "At the boundary between worlds, a fate weaver twists destiny while spectral wolves circle." },
+      { "name": "The Last Veil", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "elder_seer", "heartwood_sentinel"], "intro": "Two fate weavers unravel the threads of reality. An elder seer and a sentinel guard the final threshold." },
+      { "name": "Ghost Pack", "minDifficulty": 8, "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "forest_wraith"], "intro": "A pack of spectral wolves hunts between worlds. A forest spirit drives them forward." },
+      { "name": "Woven Doom", "minDifficulty": 8, "enemies": ["fate_weaver", "spirit_wolf", "death_champion", "blood_druid"], "intro": "Fate itself conspires against you. The threshold's guardians are woven from death and prophecy." }
     ]
   },
   "marchIntroEncounters": {

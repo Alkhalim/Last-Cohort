@@ -416,6 +416,8 @@ function buildSkillExecute(skillData) {
     if (effects.imperialDecree) result.imperialDecree = true;
     if (effects.lastStand) result.lastStand = true;
     if (effects.blockScale) result.blockScale = effects.blockScale;
+    if (effects.shieldBrace) result.shieldBrace = true;
+    if (effects.rallyingTrumpet) result.rallyingTrumpet = effects.rallyingTrumpet;
 
     // New class mechanics
     if (effects.herbPoulticePoison) result.herbPoulticePoison = true;

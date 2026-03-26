@@ -26,8 +26,8 @@ const RAW_CLASSES = {
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
         "cost": { "type": "even" }, "target": "self",
-        "description": "Gain 3 + die value Block.",
-        "effects": { "block": 3, "dieScaleBlock": true }
+        "description": "Gain 3 + die value Block this turn and next.",
+        "effects": { "block": 3, "dieScaleBlock": true, "blockScale": 0.8, "shieldBrace": true }
       },
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
@@ -503,8 +503,8 @@ const RAW_CLASSES = {
       {
         "id": "rallying_trumpet", "name": "Rallying Trumpet", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 6+. Heal all allies for 6 HP. +11 Morale.",
-        "effects": { "healAll": 6, "morale": 6 }
+        "description": "2 dice totaling 6+. Heal 2 random allies for 6 HP. +11 Morale.",
+        "effects": { "rallyingTrumpet": 6, "morale": 6, "bonusHealScale": 0.9 }
       },
       {
         "id": "cacophony", "name": "Cacophony", "cooldown": 2,

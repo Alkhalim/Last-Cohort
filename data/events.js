@@ -510,8 +510,8 @@ const RAW_EVENTS = [
   {
     "id": "grave_of_ariovistus",
     "name": "The Barrow of Ariovistus",
-    "minDifficulty": 4,
-    "maxDifficulty": 4,
+    "minDifficulty": 3,
+    "maxDifficulty": 3,
     "oncePerRun": true,
     "weight": 1,
     "intro": "Deep in the forest, your men stumble upon a mound of ancient stone half-swallowed by roots. Runes older than Rome are carved into the entrance. The air is cold and still. Your scouts recognize the markings — this is the barrow of Ariovistus, the great Germanic king who defied Caesar himself. His grave was never found... until now.",
@@ -712,7 +712,7 @@ const RAW_EVENTS = [
   {
     "id": "the_sunken_shrine",
     "name": "The Sunken Shrine",
-    "minDifficulty": 8, "maxDifficulty": 8,
+    "minDifficulty": 6, "maxDifficulty": 6,
     "weight": 2,
     "intro": "Half-submerged in the swamp, a stone shrine older than any tribe. Water flows from a carved face, crystal clear despite the murk around it. Runes you cannot read line the walls.",
     "choices": [
@@ -739,7 +739,7 @@ const RAW_EVENTS = [
   {
     "id": "the_dryad_mother",
     "name": "The Dryad Mother",
-    "minDifficulty": 9, "maxDifficulty": 9,
+    "minDifficulty": 7, "maxDifficulty": 7,
     "weight": 2,
     "intro": "A figure steps from a tree — not an enemy, but a dryad, ancient and vast. Her bark-skin is covered in flowers. She studies you with amber eyes and speaks in broken Latin: 'You are not the forest's enemy. Not yet.'",
     "choices": [
@@ -766,7 +766,7 @@ const RAW_EVENTS = [
   {
     "id": "the_last_campfire",
     "name": "The Last Campfire",
-    "minDifficulty": 10,
+    "minDifficulty": 7,
     "weight": 2,
     "intro": "You find a campfire still burning — impossible, since no one lives here. Around it, ghostly impressions of Roman soldiers. Not hostile. Waiting. One gestures for you to sit.",
     "choices": [
@@ -788,9 +788,145 @@ const RAW_EVENTS = [
   },
 
   {
+    "id": "threshold_voices",
+    "name": "Voices Between Worlds",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 3,
+    "intro": "The air thickens. Your men hear whispers — not Germanic, not Latin. Something older. The trees here are white as bone, and the ground hums beneath your feet. Between the pale trunks, you see shapes — not ghosts, but memories. Battles that haven't happened yet. Deaths that haven't been chosen.",
+    "choices": [
+      { "text": "Listen to the voices. Learn what is to come.", "outcomes": [
+        { "weight": 0.5, "text": "The whispers show you the spirits' weaknesses — where they falter, where they flinch. Knowledge is the sharpest weapon.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "morale": 5 } },
+        { "weight": 0.5, "text": "The voices show you your own deaths. Every possible end. Your men stagger — but those who recover are hardened beyond breaking.", "effects": { "morale": -6, "grantMaxHp": { "amount": 3, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 } } }
+      ]},
+      { "text": "Silence your minds. March through.", "outcomes": [
+        { "weight": 1.0, "text": "You stuff wax in your ears and press on. The voices fade. Your men's resolve holds — barely.", "effects": { "morale": 3 } }
+      ]}
+    ]
+  },
+
+  {
+    "id": "threshold_altar",
+    "name": "The Broken Altar",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 3,
+    "intro": "You find a stone altar split in two — half carved with Roman eagles, half with Germanic runes. Blood, old and new, stains both halves. A sword is wedged in the crack between them. The inscription reads: 'Who mends this altar chooses which world survives.'",
+    "choices": [
+      { "text": "Mend the Roman half. Rome endures.", "outcomes": [
+        { "weight": 1.0, "text": "You press the eagle half together. Light pulses through the stone. Your men feel the weight of Rome behind them — distant, but real.", "effects": { "healAll": 10, "morale": 10 } }
+      ]},
+      { "text": "Take the sword. Leave both halves broken.", "outcomes": [
+        { "weight": 0.6, "text": "The blade slides free — ancient, heavy, thirsty. The altar crumbles. Both worlds tremble.", "effects": { "grantDamage": { "amount": 3, "count": 1 }, "morale": -4 } },
+        { "weight": 0.4, "text": "The blade resists — then snaps. A shockwave throws your men back. The altar was not meant to be disturbed.", "effects": { "damageAll": 8, "morale": -5, "grantBlock": { "amount": 4, "count": 3 } } }
+      ]},
+      { "text": "Pray at the altar. Both halves.", "outcomes": [
+        { "weight": 1.0, "text": "You kneel between two worlds and speak to both. The altar hums. Your wounds close. The spirits ahead seem... less certain.", "effects": { "healAll": 8, "morale": 6, "grantDamage": { "amount": 1, "count": 3 } } }
+      ]}
+    ]
+  },
+
+  {
+    "id": "threshold_roman_dead",
+    "name": "The Roman Dead",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 3,
+    "intro": "You stumble upon a clearing filled with Roman dead. Not skeletons — bodies. Fresh, as if they fell yesterday, though the armor is from Varus's time. Their eyes are open. Some of them look like your men. One of them looks like you.",
+    "choices": [
+      { "text": "Bury them. They deserve that much.", "outcomes": [
+        { "weight": 1.0, "text": "Your men dig graves in silence. When the last body is laid to rest, the air lightens. The dead do not stir again.", "effects": { "morale": 12, "healAll": 5 } }
+      ]},
+      { "text": "Strip them for supplies. The living need it more.", "outcomes": [
+        { "weight": 0.6, "text": "You take what you can — bandages, blades, a flask of good wine. Your men won't meet your eyes.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "morale": -6 } },
+        { "weight": 0.4, "text": "As the first man reaches for a gladius, the corpse grabs his wrist. They weren't dead. They were waiting.", "effects": { "triggerCombat": { "enemies": ["hollow_legionary", "hollow_legionary", "hollow_centurion", "hollow_equites"], "name": "The Fallen Century", "intro": "The Roman dead rise in perfect formation. They still remember their training." } } }
+      ]},
+      { "text": "March on. Don't look at their faces.", "outcomes": [
+        { "weight": 1.0, "text": "You avert your eyes and press forward. The dead watch you go. You feel their judgment on your back.", "effects": { "morale": 3 } }
+      ]}
+    ]
+  },
+
+  {
+    "id": "threshold_mirror_pool",
+    "name": "The Mirror Pool",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 3,
+    "intro": "A perfectly still pool of black water sits between the bone-white trees. Its surface reflects nothing — not the sky, not the trees, not you. But when you look closely, you see figures moving beneath. Your cohort, marching. Winning. Losing. Dying. Living. Every possible future, playing out in silence.",
+    "choices": [
+      { "text": "Drink from the pool.", "outcomes": [
+        { "weight": 0.5, "text": "The water is ice-cold and tastes of iron. Visions flood your mind — you see the spirits' patterns, their weaknesses. When the visions stop, you are bleeding from the nose but wiser.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "grantBlock": { "amount": 2, "count": 3 }, "damageAll": 5 } },
+        { "weight": 0.5, "text": "The water burns. Your men scream. When the pain stops, each soldier's wounds have closed — but something else has opened.", "effects": { "healAll": 15, "morale": -8 } }
+      ]},
+      { "text": "Shatter the surface with a stone.", "outcomes": [
+        { "weight": 1.0, "text": "The stone hits the water and the reflections scatter. For a moment, every future is visible at once. Then nothing. The pool is just water now. Your men feel lighter.", "effects": { "morale": 8 } }
+      ]}
+    ]
+  },
+
+  {
+    "id": "threshold_eagle_grove",
+    "name": "The Eagle Grove",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 3,
+    "intro": "Three aquila standards stand upright in the earth, planted in a circle. The eagle standards of Varus's three lost legions — XVII, XVIII, XIX. They should have been taken by the tribes. They should have rotted. But here they stand, gleaming as if just polished, waiting for Romans to claim them.",
+    "choices": [
+      { "text": "Raise the standards. Remember who you are.", "outcomes": [
+        { "weight": 1.0, "text": "Your men raise the eagles. Light breaks through the canopy for the first time in days. Every soldier stands taller. Rome is not dead. Not yet.", "effects": { "morale": 15, "grantBlock": { "amount": 3, "count": 3 } } }
+      ]},
+      { "text": "Kneel before them. Swear an oath to carry them home.", "outcomes": [
+        { "weight": 1.0, "text": "Every man kneels. The oath is simple: 'We will not fall here.' The eagles seem to pulse with warmth. Your wounds mend. Your fear lifts.", "effects": { "healAll": 10, "morale": 10, "grantDamage": { "amount": 1, "count": 3 } } }
+      ]},
+      { "text": "Leave them. They belong to the dead now.", "outcomes": [
+        { "weight": 1.0, "text": "You turn away. The eagles darken. Perhaps they were always just metal. But your men look haunted.", "effects": { "morale": -3 } }
+      ]}
+    ]
+  },
+
+  {
+    "id": "threshold_deserter",
+    "name": "The Deserter",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 3,
+    "intro": "A Roman soldier sits against a tree, very much alive. His armor is from Varus's time — seventeen years ago. He should be old, or dead. He is neither. 'I ran,' he says simply. 'At Teutoburg. I ran into the forest and I never stopped. The forest wouldn't let me die. It wouldn't let me leave. It just... kept me.' He looks at your cohort. 'You're the first Romans I've seen in seventeen years.'",
+    "choices": [
+      { "text": "Welcome him. Every sword counts.", "outcomes": [
+        { "weight": 0.6, "text": "He weeps. Then he picks up his gladius. He knows these woods better than anyone alive. His knowledge is worth a legion.", "effects": { "grantDamage": { "amount": 2, "count": 1 }, "grantMaxHp": { "amount": 3, "count": 3 }, "morale": 8 } },
+        { "weight": 0.4, "text": "He joins your ranks — then at night, you find him talking to the trees. Whatever he is now, it isn't entirely Roman.", "effects": { "grantDamage": { "amount": 3, "count": 1 }, "morale": -4 } }
+      ]},
+      { "text": "A deserter is a deserter. Leave him.", "outcomes": [
+        { "weight": 1.0, "text": "'I understand,' he says. 'Tell Rome I'm sorry.' You march on. Behind you, you hear weeping — then silence.", "effects": { "morale": 4 } }
+      ]}
+    ]
+  },
+
+  {
+    "id": "threshold_final_prayer",
+    "name": "The Shrine of Mars",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 3,
+    "intro": "Carved into a cliff face — unmistakably Roman work — a shrine to Mars, god of war. It should not exist this deep in Germanic territory. Candles burn at its base, impossibly. An inscription reads: 'Mars Ultor — the Avenger. Leave your fear here. Take only iron.'",
+    "choices": [
+      { "text": "Pray for strength.", "outcomes": [
+        { "weight": 1.0, "text": "Your men kneel. The shrine flares with light. When they rise, their hands are steady and their eyes are hard. Whatever comes next, they are ready.", "effects": { "grantDamage": { "amount": 2, "count": 3 }, "morale": 8 } }
+      ]},
+      { "text": "Pray for protection.", "outcomes": [
+        { "weight": 1.0, "text": "The candlelight wraps around your men like armor. The stone seems to breathe. Mars guards his own.", "effects": { "grantBlock": { "amount": 3, "count": 3 }, "healAll": 8, "morale": 5 } }
+      ]},
+      { "text": "Leave your fear. Take nothing.", "outcomes": [
+        { "weight": 1.0, "text": "Each man touches the stone and whispers something private. Fear drains from them like water from a cracked vessel. They march on, empty of doubt.", "effects": { "morale": 15 } }
+      ]}
+    ]
+  },
+
+  {
     "id": "dragons_lair",
     "name": "The Dragon's Lair",
-    "minDifficulty": 8, "maxDifficulty": 8,
+    "minDifficulty": 7, "maxDifficulty": 7,
     "oncePerRun": true,
     "weight": 1,
     "intro": "Your scouts return pale-faced. They found a cave mouth in the hillside, half-hidden by ancient roots. The stone around it is scorched black. From deep within comes a sound like a forge bellows — rhythmic, immense. The air tastes of sulfur. Bones litter the entrance — human, animal, and things older than both. Runes carved into the rock read: 'Here sleeps the Lindwurm. Do not wake what Rome cannot kill.'",
@@ -874,7 +1010,7 @@ const RAW_EVENTS = [
   {
     "id": "thusneldas_ambush",
     "name": "The Chieftain's Wife",
-    "minDifficulty": 6, "maxDifficulty": 6,
+    "minDifficulty": 5, "maxDifficulty": 5,
     "oncePerRun": true,
     "intro": "A woman's voice rings out from the trees — clear, commanding, furious. 'Romans! You took me from my husband. You paraded me through your streets. But the forest remembers, and so do I.' Your scouts report movement on all sides. Wolves. Warriors. And at their center, a woman in war paint, holding a spear.",
     "choices": [

@@ -3532,6 +3532,27 @@ class GameUI {
 
   startRestNode(node) {
     this._isLairFeast = node._lairFeast || false;
+    this._isThresholdRest = false;
+
+    // Threshold rest: special final march rest before the spirits
+    if (node._thresholdRest) {
+      this._isThresholdRest = true;
+      this.campActionsLeft = 2;
+      this.campLog = [];
+      this.campLog.push('★ The veil between worlds is thin here. Your men can feel the spirits waiting beyond. Some pray. Some sharpen their blades. No one speaks of going home.');
+      this.engine.morale = Math.max(0, this.engine.morale - 5);
+      this.campLog.push('The weight of what lies ahead settles on every shoulder. (-5 Morale)');
+      // Grant a small buff to compensate
+      this.engine.party.forEach(u => {
+        if (!u.downed) {
+          const healAmt = Math.floor(u.maxHp * 0.1);
+          u.hp = Math.min(u.maxHp, u.hp + healAmt);
+        }
+      });
+      this.campLog.push('Wounds are tended one last time. (All healed 10% HP)');
+      this.showCampScreen();
+      return;
+    }
 
     if (this._isLairFeast) {
       this.campActionsLeft = 2;
@@ -3574,14 +3595,19 @@ class GameUI {
   showCampScreen() {
     this.showScreen('event-screen');
     const isLairFeastTitle = this._isLairFeast;
-    document.getElementById('event-title').textContent = isLairFeastTitle
-      ? `LAIR FEAST (${this.campActionsLeft} actions left)`
-      : `CAMP (${this.campActionsLeft} actions left)`;
+    const isThreshold = this._isThresholdRest;
+    document.getElementById('event-title').textContent = isThreshold
+      ? `THE LAST CAMP (${this.campActionsLeft} actions left)`
+      : isLairFeastTitle
+        ? `LAIR FEAST (${this.campActionsLeft} actions left)`
+        : `CAMP (${this.campActionsLeft} actions left)`;
 
     // Build intro with camp log
-    let introText = isLairFeastTitle
-      ? 'Your men huddle in a cavern alcove. The dragon\'s breathing echoes from deeper within. No one speaks of morale — only survival.'
-      : 'Your cohort finds a sheltered spot among the trees. The fire crackles low.';
+    let introText = isThreshold
+      ? 'The boundary between worlds. The air shimmers. Your cohort makes its last camp before the spirits.'
+      : isLairFeastTitle
+        ? 'Your men huddle in a cavern alcove. The dragon\'s breathing echoes from deeper within. No one speaks of morale — only survival.'
+        : 'Your cohort finds a sheltered spot among the trees. The fire crackles low.';
     if (this.campLog.length > 0) {
       introText += '\n\n' + this.campLog.join('\n');
     }
@@ -3951,9 +3977,30 @@ class GameUI {
 
     const eligible = this.engine.party.filter(u => canEquipItem(u, item));
     if (this._lootUnitIdx === undefined || this._lootUnitIdx === null || this._lootUnitIdx >= eligible.length) {
-      // Default to first unit with a free slot for this item type
+      // Priority 1: unit with an empty slot for this item type
       const freeIdx = eligible.findIndex(u => u.equipment[item.slot].some(s => s === null));
-      this._lootUnitIdx = freeIdx >= 0 ? freeIdx : 0;
+      if (freeIdx >= 0) {
+        this._lootUnitIdx = freeIdx;
+      } else {
+        // Priority 2: unit currently holding a weaker version in the same slot (obvious upgrade)
+        let bestIdx = 0;
+        let bestScore = -1;
+        eligible.forEach((u, idx) => {
+          u.equipment[item.slot].forEach(existingId => {
+            if (!existingId) return;
+            const existing = getItemData(existingId);
+            if (!existing) return;
+            // Same slot — compare total stats
+            const existingTotal = Object.values(existing.stats).reduce((s, v) => s + Math.max(0, v), 0);
+            const newTotal = Object.values(item.stats).reduce((s, v) => s + Math.max(0, v), 0);
+            if (newTotal > existingTotal && (newTotal - existingTotal) > bestScore) {
+              bestScore = newTotal - existingTotal;
+              bestIdx = idx;
+            }
+          });
+        });
+        this._lootUnitIdx = bestIdx;
+      }
     }
 
     const remaining = this.pendingLoot.length - this._currentLootIdx;
@@ -4598,8 +4645,8 @@ class GameUI {
     const diff = window.game.difficulty || 1;
     const marchLabel = diff === 1 ? 'First March' : `March ${diff}`;
 
-    // Check if this was the final boss (march 10 - spirits defeated)
-    const isFinalVictory = diff >= 10 && this.engine.enemies &&
+    // Check if this was the final boss (march 8 - spirits defeated)
+    const isFinalVictory = diff >= 8 && this.engine.enemies &&
       this.engine.enemies.some(e => e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus');
 
     document.getElementById('run-complete-title').textContent = isFinalVictory ? 'THE FOREST IS SILENCED' : 'VICTORY';

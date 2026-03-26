@@ -534,6 +534,14 @@ class CombatEngine {
         } else {
           u.block = 0;
         }
+        // Shield Brace: grant fresh block at the start of this turn
+        if (u._blockNextTurn && u._blockNextTurn > 0) {
+          u.block = (u.block || 0) + u._blockNextTurn;
+          u.stats.blockGenerated += u._blockNextTurn;
+          this.addLog(`${u.name}'s Shield Brace holds! (+${u._blockNextTurn} Block)`);
+          if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: u._blockNextTurn });
+          u._blockNextTurn = 0;
+        }
       }
       u.taunt = false;
       u._counterStance = 0;
@@ -1128,29 +1136,44 @@ class CombatEngine {
         const exact = available.find(d => d.value === cost.val);
         return exact ? [exact.id] : [];
       case 'combined': {
+        const numDice = cost.dice || 2;
         const hasDieScaleC = skill.effects && (skill.effects.dieScaleDamage || skill.effects.dieScaleBlock || skill.effects.dieScaleHeal);
-        let bestPair = null;
+        // Find the best N-dice combination that meets the minimum
+        let bestCombo = null;
         let bestSum = hasDieScaleC ? -Infinity : Infinity;
-        for (let i = 0; i < available.length; i++) {
-          for (let j = i + 1; j < available.length; j++) {
-            const sum = available[i].value + available[j].value;
+        const findCombo = (start, picked) => {
+          if (picked.length === numDice) {
+            const sum = picked.reduce((s, d) => s + d.value, 0);
             if (sum >= cost.min && (hasDieScaleC ? sum > bestSum : sum < bestSum)) {
               bestSum = sum;
-              bestPair = [available[i].id, available[j].id];
+              bestCombo = picked.map(d => d.id);
             }
+            return;
           }
-        }
-        return bestPair || [];
+          for (let i = start; i < available.length; i++) {
+            findCombo(i + 1, [...picked, available[i]]);
+          }
+        };
+        findCombo(0, []);
+        return bestCombo || [];
       }
       case 'combinedExact': {
-        for (let i = 0; i < available.length; i++) {
-          for (let j = i + 1; j < available.length; j++) {
-            if (available[i].value + available[j].value === cost.val) {
-              return [available[i].id, available[j].id];
+        const numDiceE = cost.dice || 2;
+        let exactCombo = null;
+        const findExact = (start, picked) => {
+          if (exactCombo) return;
+          if (picked.length === numDiceE) {
+            if (picked.reduce((s, d) => s + d.value, 0) === cost.val) {
+              exactCombo = picked.map(d => d.id);
             }
+            return;
           }
-        }
-        return [];
+          for (let i = start; i < available.length; i++) {
+            findExact(i + 1, [...picked, available[i]]);
+          }
+        };
+        findExact(0, []);
+        return exactCombo || [];
       }
       case 'even': {
         // Pick highest even die (more block/damage from die value scaling)
@@ -1984,6 +2007,10 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: blockTarget.index, amount: totalBlock });
+      // Shield Brace: store block to also apply next turn
+      if (result.shieldBrace) {
+        blockTarget._blockNextTurn = (blockTarget._blockNextTurn || 0) + totalBlock;
+      }
       // Shieldbearer's Grip: grant block to a random other ally (scales with level)
       if (this.unitHasItem(unit, 'shieldbearers_grip')) {
         const sgLv = this.getItemLevel(unit, 'shieldbearers_grip');
@@ -2313,6 +2340,33 @@ class CombatEngine {
       const bonusStr = bonusHeal > 0 ? ` (${result.healAll}+${bonusHeal})` : '';
       parts.push(`${unit.name} uses ${skill.name} \u2014 heals all allies for ${baseHealAll}${bonusStr} HP.`);
     }
+    // Rallying Trumpet: heal 2 random allies, prioritizing those with enough missing HP
+    if (result.rallyingTrumpet) {
+      const healScale = result.bonusHealScale != null ? result.bonusHealScale : 1;
+      const baseHeal = result.rallyingTrumpet + Math.floor(bonusHeal * healScale);
+      const damaged = this.party.filter(u => !u.downed && u.hp < u.maxHp);
+      if (damaged.length > 0) {
+        // Prioritize allies who wouldn't overheal
+        const worthy = damaged.filter(u => (u.maxHp - u.hp) >= baseHeal);
+        const pool = worthy.length >= 2 ? worthy : damaged;
+        const shuffled = pool.sort(() => Math.random() - 0.5);
+        const targets = shuffled.slice(0, 2);
+        targets.forEach(u => {
+          let totalHeal = baseHeal;
+          if (u._resonance) { totalHeal *= 2; u._resonance = false; parts.push(`Resonance doubles healing on ${u.name}!`); }
+          const before = u.hp;
+          u.hp = Math.min(u.maxHp, u.hp + totalHeal);
+          const actual = u.hp - before;
+          unit.stats.healingDone += actual;
+          if (actual > 0) {
+            parts.push(`Rallying Trumpet heals ${u.name} for ${actual} HP.`);
+            if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: actual });
+            this.triggerOnHealEffects(u, actual);
+          }
+        });
+      }
+    }
+
     // Cleanse poison from target
     if (result.cleanse && result.target && result.target.poison > 0) {
       result.target.poison = 0;
@@ -4442,10 +4496,14 @@ class CombatEngine {
 
   // --- Skills / Leveling (party-wide XP) ---
   initSkills(unit) {
-    unit.skills = unit.allSkills.filter(s => s.starter).map(s => ({ ...s }));
+    const starters = unit.allSkills.filter(s => s.starter);
+    // Start with 2 starter skills — shuffle and pick 2
+    const shuffled = starters.sort(() => Math.random() - 0.5);
+    unit.skills = shuffled.slice(0, 2).map(s => ({ ...s }));
   }
 
   getUnlearnedSkills(unit) {
+    if (unit.skills.length >= 5) return []; // Max 5 skills per unit
     const learnedIds = unit.skills.map(s => s.id);
     return unit.allSkills.filter(s => !learnedIds.includes(s.id));
   }

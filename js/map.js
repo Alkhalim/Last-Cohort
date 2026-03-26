@@ -5,13 +5,15 @@
 function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Set()) {
   const nodes = [];
   let idCounter = 0;
+  const isFinalMarch = difficulty >= 8;
+  const maxMidDepth = isFinalMarch ? 4 : 6; // Standard: 7 layers (0-6) + boss, Final: 5 (0-4) + rest + boss
 
   // Depth 0: start node (easy combat)
   const startNode = {
     id: idCounter++,
     depth: 0,
     type: 'combat',
-    threat: 1,
+    threat: isFinalMarch ? 2 : 1,
     children: [],
     parents: [],
     visited: false,
@@ -20,8 +22,8 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   };
   nodes.push(startNode);
 
-  // Depths 1-7: 2-3 nodes each, guaranteed 3 from depth 4+
-  for (let depth = 1; depth <= 7; depth++) {
+  // Middle depths: 2-3 nodes each
+  for (let depth = 1; depth <= maxMidDepth; depth++) {
     let count;
     if (depth >= 4) {
       count = 3; // always 3 nodes from depth 4 onward
@@ -34,7 +36,9 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
     for (let n = 0; n < count; n++) {
       const roll = Math.random();
       let type;
-      if (roll < 0.5) {
+      if (isFinalMarch) {
+        type = 'combat'; // Gauntlet: mostly combat, events assigned below
+      } else if (roll < 0.5) {
         type = 'combat';
       } else if (roll < 0.8) {
         type = 'event';
@@ -108,10 +112,47 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
     }
   }
 
-  // Depth 8: boss node
+  // Final march: insert special rest before boss, convert 2 random mid-nodes to events
+  let bossDepth;
+  if (isFinalMarch) {
+    // Convert 2 random non-depth-0 combat nodes to events
+    const midCombats = nodes.filter(n => n.type === 'combat' && n.depth > 0);
+    const shuffledMid = midCombats.sort(() => Math.random() - 0.5);
+    for (let i = 0; i < Math.min(2, shuffledMid.length); i++) {
+      shuffledMid[i].type = 'event';
+      shuffledMid[i].threat = 0;
+      shuffledMid[i]._thresholdEvent = true;
+    }
+
+    // Add special rest node "The Last Stand" before boss
+    const restDepth = maxMidDepth + 1;
+    const thresholdRest = {
+      id: idCounter++,
+      depth: restDepth,
+      type: 'rest',
+      threat: 0,
+      children: [],
+      parents: [],
+      visited: false,
+      x: 0.5,
+      encounter: null,
+      _thresholdRest: true,
+    };
+    nodes.push(thresholdRest);
+    const lastMid = nodes.filter(n => n.depth === maxMidDepth);
+    for (const n of lastMid) {
+      n.children.push(thresholdRest.id);
+      thresholdRest.parents.push(n.id);
+    }
+
+    bossDepth = restDepth + 1;
+  } else {
+    bossDepth = maxMidDepth + 1;
+  }
+
   const bossNode = {
     id: idCounter++,
-    depth: 8,
+    depth: bossDepth,
     type: 'boss',
     threat: 3,
     children: [],
@@ -122,11 +163,17 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   };
   nodes.push(bossNode);
 
-  // Connect all depth 7 nodes to boss
-  const depth7 = nodes.filter(n => n.depth === 7);
-  for (const n of depth7) {
-    n.children.push(bossNode.id);
-    bossNode.parents.push(n.id);
+  // Connect to boss
+  if (isFinalMarch) {
+    const restNode = nodes.find(n => n._thresholdRest);
+    restNode.children.push(bossNode.id);
+    bossNode.parents.push(restNode.id);
+  } else {
+    const depth7 = nodes.filter(n => n.depth === maxMidDepth);
+    for (const n of depth7) {
+      n.children.push(bossNode.id);
+      bossNode.parents.push(n.id);
+    }
   }
 
   // Enforce: no more than 2 non-combat nodes in a row on ANY possible path.
@@ -267,7 +314,7 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       }
     } else if (node.type === 'boss') {
       // Story bosses are forced at specific marches
-      const storyBosses = { 6: 'Corpse of Arminius', 8: 'Corpse of Varus', 10: 'Spirits of Arminius & Varus' };
+      const storyBosses = { 4: 'Corpse of Arminius', 6: 'Corpse of Varus', 8: 'Spirits of Arminius & Varus' };
       const forcedBossName = storyBosses[difficulty];
       if (forcedBossName) {
         const forcedBoss = BOSS_ENCOUNTERS.find(b => b.name === forcedBossName);
@@ -279,7 +326,7 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
         const eligibleBosses = BOSS_ENCOUNTERS.filter(b => {
           if (b.minDifficulty && b.minDifficulty > difficulty) return false;
           // Exclude story bosses from random pool
-          if (b.minDifficulty >= 6 && Object.values(storyBosses).includes(b.name)) return false;
+          if (Object.values(storyBosses).includes(b.name)) return false;
           return true;
         });
         // Avoid repeating bosses until all eligible have been fought
