@@ -27,7 +27,12 @@
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/hardEncounter.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/mediumEncounter.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/icons/\")",
       "Bash(wc -l js/*.js data/*.js css/game.css index.html)",
-      "Bash(cat js/*.js data/*.js css/game.css index.html)"
+      "Bash(cat js/*.js data/*.js css/game.css index.html)",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/lindwurmLord.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_lindwurm_lord.png\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/bowSheep.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_lair_sheep.png\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/troll.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_lair_troll.png\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/hateMage.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_hate_mage.png\")",
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/bones.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_clinking_bones.png\")"
     ]
   }
 }

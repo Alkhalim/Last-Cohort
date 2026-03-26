@@ -493,14 +493,16 @@ class Game {
       const toLearn = [...starters, ...shuffledSkills.slice(0, Math.max(0, skillCount - starters.length))];
       u.skills = toLearn.map(s => ({ ...s }));
 
-      // Add HP from training + 35% bonus
-      const extraHp = hpBonus + Math.floor(u.maxHp * 0.35);
+      // Add HP from training + 35% bonus, then reduce by class squishiness
+      const tags = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags : [];
+      const isSquishy = tags.includes('support') || tags.includes('ranged');
+      const hpReduction = isSquishy ? 10 : 5;
+      const extraHp = Math.max(0, hpBonus + Math.floor(u.maxHp * 0.35) - hpReduction);
       u.maxHp += extraHp;
       u.baseMaxHp += extraHp;
       u.hp = u.maxHp;
 
       // Add training bonuses scaled to class role
-      const tags = CLASS_DATA[u.classId] ? CLASS_DATA[u.classId].tags : [];
       const isMelee = tags.includes('melee');
       const isRanged = tags.includes('ranged');
       const isSupport = tags.includes('support');
@@ -1925,6 +1927,12 @@ const REDUCED_ART_ENEMY_CATEGORY = {
   fog_weaver: 'boss', blood_stag: 'boss', corpse_of_arminius: 'boss',
   corpse_of_varus: 'boss', spirit_of_arminius: 'boss', spirit_of_varus: 'boss',
   revenant_of_ariovistus: 'boss', healing_totem: 'monster', bone_totem: 'monster',
+  // Dragon's Lair
+  lindwurm_lord: 'boss', lord_of_lies: 'boss', lord_of_future_sight: 'boss',
+  undefeated_lord: 'boss', lair_sheep: 'monster', hate_mage: 'caster',
+  lair_troll: 'monster', clinking_bones: 'melee',
+  // Legacy (removed enemies)
+  lindwurm: 'boss', dragon_hatchling: 'monster', wyrm_cultist: 'caster',
 };
 const REDUCED_ART_ENEMY = {
   melee: 'assets/enemy_cheruscan_raider.png',

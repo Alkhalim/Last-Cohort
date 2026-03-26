@@ -2726,13 +2726,22 @@ class GameUI {
     const bossFlavorText = node.encounter.intro || (bossData ? bossData.description : '');
 
     // If boss encounter has specific loot (e.g. hidden march bosses), set it
+    // Prioritize items the party can actually equip
     if (node.encounter.loot && node.encounter.loot.length > 0) {
-      let eventLoot = [...node.encounter.loot];
-      if (node.encounter.lootCount && node.encounter.lootCount < eventLoot.length) {
-        const shuffled = eventLoot.sort(() => Math.random() - 0.5);
-        eventLoot = shuffled.slice(0, node.encounter.lootCount);
+      let pool = [...node.encounter.loot];
+      const count = node.encounter.lootCount || pool.length;
+      if (count < pool.length) {
+        // Prioritize equippable items
+        const equippable = pool.filter(id => {
+          const item = getItemData(id);
+          return item && this.engine.party.some(u => canEquipItem(u, item));
+        });
+        const unequippable = pool.filter(id => !equippable.includes(id));
+        const shuffledE = equippable.sort(() => Math.random() - 0.5);
+        const shuffledU = unequippable.sort(() => Math.random() - 0.5);
+        pool = [...shuffledE, ...shuffledU].slice(0, count);
       }
-      this.pendingEventCombatLoot = eventLoot;
+      this.pendingEventCombatLoot = pool;
     }
 
     // Switch to combat screen (hidden until splash fades)
@@ -3090,10 +3099,16 @@ class GameUI {
         // Start combat encounter from event
         const combatData = effects.triggerCombat;
         let eventLoot = combatData.loot || [];
-        // lootCount: pick N random items from the pool
+        // lootCount: pick N random items, prioritizing equippable ones
         if (combatData.lootCount && combatData.lootCount < eventLoot.length) {
-          const shuffled = [...eventLoot].sort(() => Math.random() - 0.5);
-          eventLoot = shuffled.slice(0, combatData.lootCount);
+          const equippable = eventLoot.filter(id => {
+            const item = getItemData(id);
+            return item && this.engine.party.some(u => canEquipItem(u, item));
+          });
+          const unequippable = eventLoot.filter(id => !equippable.includes(id));
+          const shuffledE = [...equippable].sort(() => Math.random() - 0.5);
+          const shuffledU = [...unequippable].sort(() => Math.random() - 0.5);
+          eventLoot = [...shuffledE, ...shuffledU].slice(0, combatData.lootCount);
         }
         this.pendingEventCombatLoot = eventLoot;
         const encounter = { name: combatData.name, enemies: combatData.enemies, intro: combatData.intro };
@@ -3507,6 +3522,19 @@ class GameUI {
   // ================================================================
 
   startRestNode(node) {
+    this._isLairFeast = node._lairFeast || false;
+
+    if (this._isLairFeast) {
+      this.campActionsLeft = 2;
+      this.campLog = [];
+      // Lair Feast: morale penalty, no morale camp event
+      const moraleLoss = 8;
+      this.engine.morale = Math.max(0, this.engine.morale - moraleLoss);
+      this.campLog.push(`★ Your men argue bitterly. "What good could ever come from this place?" Doubt spreads like poison. (-${moraleLoss} Morale)`);
+      this.showCampScreen();
+      return;
+    }
+
     this.campActionsLeft = 2;
     this.campLog = [];
 
@@ -3536,10 +3564,15 @@ class GameUI {
 
   showCampScreen() {
     this.showScreen('event-screen');
-    document.getElementById('event-title').textContent = `CAMP (${this.campActionsLeft} actions left)`;
+    const isLairFeastTitle = this._isLairFeast;
+    document.getElementById('event-title').textContent = isLairFeastTitle
+      ? `LAIR FEAST (${this.campActionsLeft} actions left)`
+      : `CAMP (${this.campActionsLeft} actions left)`;
 
     // Build intro with camp log
-    let introText = 'Your cohort finds a sheltered spot among the trees. The fire crackles low.';
+    let introText = isLairFeastTitle
+      ? 'Your men huddle in a cavern alcove. The dragon\'s breathing echoes from deeper within. No one speaks of morale — only survival.'
+      : 'Your cohort finds a sheltered spot among the trees. The fire crackles low.';
     if (this.campLog.length > 0) {
       introText += '\n\n' + this.campLog.join('\n');
     }
@@ -3586,49 +3619,55 @@ class GameUI {
     }
 
     const diff = window.game ? window.game.difficulty : 1;
+    const isLairFeast = this._isLairFeast;
+    const ampMult = isLairFeast ? 2.0 : 1.0; // Lair Feast amplifies combat actions
+
+    const healPct = isLairFeast ? 0.30 : 0.15;
+    const healLabel = isLairFeast ? '30%' : '15%';
+    const bonusDmg = Math.floor((1 + Math.floor(diff / 3)) * ampMult);
+    const bonusAtk = 2 + Math.floor(diff / 4);
+    const blockAmt = Math.floor((4 + diff) * ampMult);
+
     const campActions = [
       {
-        name: 'Tend Wounds',
-        desc: 'Heal all soldiers for 15% max HP.',
+        name: isLairFeast ? 'Desperate Surgery' : 'Tend Wounds',
+        desc: `Heal all soldiers for ${healLabel} max HP.`,
         action: () => {
           this.engine.party.forEach(u => {
             if (!u.downed) {
-              const amt = Math.floor(u.maxHp * 0.15);
+              const amt = Math.floor(u.maxHp * healPct);
               u.hp = Math.min(u.maxHp, u.hp + amt);
             }
           });
-          this.campLog.push('Wounds were tended. (All healed 15% max HP)');
+          this.campLog.push(`${isLairFeast ? 'Frantic hands stitch wounds by torchlight.' : 'Wounds were tended.'} (All healed ${healLabel} max HP)`);
         }
       },
-      {
+      ...(!isLairFeast ? [{
         name: 'Rally the Men',
         desc: 'Restore 8 Morale.',
         action: () => {
           this.engine.morale = Math.min(100, this.engine.morale + 8);
           this.campLog.push('Words of courage by the fire. (+8 Morale)');
         }
-      },
+      }] : []),
       {
-        name: 'Sharpen Weapons',
-        desc: `All soldiers gain +${1 + Math.floor(diff / 3)} damage for next ${2 + Math.floor(diff / 4)} attacks.`,
+        name: isLairFeast ? 'Furious Sharpening' : 'Sharpen Weapons',
+        desc: `All soldiers gain +${bonusDmg} damage for next ${bonusAtk} attacks.`,
         action: () => {
-          const bonusDmg = 1 + Math.floor(diff / 3);
-          const bonusAtk = 2 + Math.floor(diff / 4);
           this.engine.party.forEach(u => {
             if (!u.downed) u.buffs.push({ damage: bonusDmg, attacksLeft: bonusAtk });
           });
-          this.campLog.push(`Blades sharpened to a fine edge. (+${bonusDmg} damage, ${bonusAtk} attacks)`);
+          this.campLog.push(`${isLairFeast ? 'Rage becomes a whetstone.' : 'Blades sharpened to a fine edge.'} (+${bonusDmg} damage, ${bonusAtk} attacks)`);
         }
       },
       {
-        name: 'Fortify Position',
-        desc: `All soldiers start the next fight with ${4 + diff} Block.`,
+        name: isLairFeast ? 'Barricade the Tunnel' : 'Fortify Position',
+        desc: `All soldiers start the next fight with ${blockAmt} Block.`,
         action: () => {
-          const blockAmt = 4 + diff;
           this.engine.party.forEach(u => {
             if (!u.downed) u.block = (u.block || 0) + blockAmt;
           });
-          this.campLog.push(`Makeshift barricades built. (+${blockAmt} Block each)`);
+          this.campLog.push(`${isLairFeast ? 'Bones and rocks piled into a desperate wall.' : 'Makeshift barricades built.'} (+${blockAmt} Block each)`);
         }
       }
     ];
@@ -3656,7 +3695,7 @@ class GameUI {
     this._victoryHandled = true;
     const isBoss = this.engine.hasBossEnemy();
     if (isBoss && window.game) window.game.trackBossFlawless();
-    const bossEnemy = isBoss ? this.engine.enemies.find(e => e.isBoss) : null;
+    const bossEnemy = isBoss ? this.engine.enemies.filter(e => e.isBoss && e.dead).pop() : null;
     const bossVictoryText = {
       'arminius_champion': { title: 'THE WARLORD FALLS', text: 'The Germanic warlord lies broken. His warriors scatter into the trees.' },
       'grove_witch': { title: 'THE WITCH BURNS', text: 'The grove witch crumbles into ash and root. The forest exhales.' },
@@ -3671,6 +3710,10 @@ class GameUI {
       'spirit_of_arminius': { title: 'THE SPIRITS PART', text: 'Arminius and Varus — bound in death — are finally unbound. The forest sighs.' },
       'thusnelda': { title: 'THUSNELDA RETREATS', text: 'The chieftain\'s wife vanishes into the treeline, wolves at her heels. She will not forget.' },
       'revenant_of_ariovistus': { title: 'THE KING FALLS', text: 'The dead king sinks back into his barrow. The crown rolls free.' },
+      'lord_of_lies': { title: 'THE LIES END', text: 'The whispering stops. The illusions shatter like glass. The Lindwurm Lord is truly dead.' },
+      'lord_of_future_sight': { title: 'THE FUTURE DIES', text: 'The oracle\'s eyes go dark. The future it promised was its own death. The lair falls silent.' },
+      'undefeated_lord': { title: 'THE UNDEFEATED FALLS', text: 'At last, the beast that could not be stopped — stops. The cavern shakes with its final breath.' },
+      'lindwurm_lord': { title: 'THE WYRM STIRS', text: 'The Lindwurm Lord collapses... but something writhes within the carcass.' },
     };
     const bossText = bossEnemy && bossVictoryText[bossEnemy.id]
       ? bossVictoryText[bossEnemy.id]

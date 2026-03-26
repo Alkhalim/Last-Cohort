@@ -3423,21 +3423,30 @@ class CombatEngine {
             const formDef = ENEMY_DATA[chosenId];
             if (formDef) {
               const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+              const scaledMaxHp = Math.round(formDef.maxHp * this.getHpScale(diffBonus));
+              const scaledActions = formDef.actions.map(a => ({
+                ...a,
+                damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.35)) : 0,
+                morale: a.morale ? Math.round(a.morale * (1 + diffBonus * 0.15)) : undefined,
+                poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus * 0.5) : undefined,
+                blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
+                blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
+              }));
               const startBlock = Math.floor(diffBonus * 1.5);
               const form = {
                 index: this.enemies.length,
                 id: chosenId,
                 name: formDef.name,
-                maxHp: formDef.maxHp,
-                hp: formDef.maxHp,
+                maxHp: scaledMaxHp,
+                hp: scaledMaxHp,
                 row: formDef.row,
-                damage: [...formDef.damage],
+                damage: formDef.damage.map(d => Math.round(d * (1 + diffBonus * 0.35))),
                 speed: formDef.speed,
                 xpValue: formDef.xpValue,
                 isBoss: true,
                 ai: formDef.ai,
                 description: formDef.description,
-                actions: formDef.actions.map(a => ({ ...a })),
+                actions: scaledActions,
                 dead: false,
                 poison: 0,
                 block: startBlock,

@@ -371,116 +371,57 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   return nodes;
 }
 
-// Generate a small hidden march map (e.g. Dragon's Lair)
-// options: { depth, difficulty, enemies, boss }
+// Generate a hidden march map (e.g. Dragon's Lair)
+// Layout: start combat → two parallel paths (2 fights + 3 events each) → Lair Feast rest → boss
 function generateHiddenMarch(options = {}) {
-  const maxDepth = options.depth || 4;
-  const difficulty = options.difficulty || 8;
   const enemyPool = options.enemies || [];
   const bossData = options.boss || null;
+  const hiddenEvents = options.events || [];
   const nodes = [];
   let idCounter = 0;
 
-  // Depth 0: start node (combat)
-  const startNode = {
-    id: idCounter++,
-    depth: 0,
-    type: 'combat',
-    threat: 2,
-    children: [],
-    parents: [],
-    visited: false,
-    x: 0.5,
-    encounter: null,
+  const makeNode = (depth, type, x, threat) => {
+    const node = { id: idCounter++, depth, type, threat: type === 'combat' ? (threat || 2) : 0, children: [], parents: [], visited: false, x, encounter: null };
+    nodes.push(node);
+    return node;
   };
-  nodes.push(startNode);
+  const link = (parent, child) => { parent.children.push(child.id); child.parents.push(parent.id); };
 
-  // Depths 1 to maxDepth-1: 2 nodes each, mostly combat with occasional event
-  for (let depth = 1; depth < maxDepth; depth++) {
-    const count = 2;
-    const depthNodes = [];
-    for (let n = 0; n < count; n++) {
-      const roll = Math.random();
-      let type = roll < 0.7 ? 'combat' : (roll < 0.9 ? 'event' : 'rest');
+  // Depth 0: Start combat (single)
+  const start = makeNode(0, 'combat', 0.5, 2);
 
-      let threat = 2;
-      if (depth >= maxDepth - 1) threat = 3;
-      threat = Math.min(3, threat);
+  // Depths 1-5: Two parallel paths, each path = 2 combats + 3 events (shuffled order)
+  const pathTypes = ['combat', 'combat', 'event', 'event', 'event'];
+  const leftTypes = [...pathTypes].sort(() => Math.random() - 0.5);
+  const rightTypes = [...pathTypes].sort(() => Math.random() - 0.5);
 
-      const x = (n + 1) / (count + 1);
-      const node = {
-        id: idCounter++,
-        depth: depth,
-        type: type,
-        threat: type === 'combat' ? threat : 0,
-        children: [],
-        parents: [],
-        visited: false,
-        x: x,
-        encounter: null,
-      };
-      depthNodes.push(node);
-      nodes.push(node);
-    }
-
-    // Connect previous depth to this depth
-    const prevDepthNodes = nodes.filter(n => n.depth === depth - 1);
-    for (const prev of prevDepthNodes) {
-      if (prev.children.length === 0) {
-        const nearest = depthNodes.reduce((best, n) =>
-          Math.abs(n.x - prev.x) < Math.abs(best.x - prev.x) ? n : best, depthNodes[0]);
-        prev.children.push(nearest.id);
-        nearest.parents.push(prev.id);
-      }
-    }
-    for (const curr of depthNodes) {
-      if (curr.parents.length === 0) {
-        const nearest = prevDepthNodes.reduce((best, n) =>
-          Math.abs(n.x - curr.x) < Math.abs(best.x - curr.x) ? n : best, prevDepthNodes[0]);
-        nearest.children.push(curr.id);
-        curr.parents.push(nearest.id);
-      }
-    }
-    // Extra connections
-    for (const prev of prevDepthNodes) {
-      for (const curr of depthNodes) {
-        if (!prev.children.includes(curr.id) && Math.random() < 0.3) {
-          if (Math.abs(prev.x - curr.x) < 0.5) {
-            prev.children.push(curr.id);
-            curr.parents.push(prev.id);
-          }
-        }
-      }
-    }
+  let leftPrev = start;
+  let rightPrev = start;
+  for (let i = 0; i < 5; i++) {
+    const depth = i + 1;
+    const leftNode = makeNode(depth, leftTypes[i], 0.3, depth >= 4 ? 3 : 2);
+    const rightNode = makeNode(depth, rightTypes[i], 0.7, depth >= 4 ? 3 : 2);
+    link(leftPrev, leftNode);
+    link(rightPrev, rightNode);
+    leftPrev = leftNode;
+    rightPrev = rightNode;
   }
 
-  // Final depth: boss node
-  const bossNode = {
-    id: idCounter++,
-    depth: maxDepth,
-    type: 'boss',
-    threat: 3,
-    children: [],
-    parents: [],
-    visited: false,
-    x: 0.5,
-    encounter: null,
-  };
-  nodes.push(bossNode);
+  // Depth 6: Lair Feast (single rest node, both paths converge)
+  const feast = makeNode(6, 'rest', 0.5, 0);
+  feast._lairFeast = true;
+  link(leftPrev, feast);
+  link(rightPrev, feast);
 
-  // Connect last layer to boss
-  const lastLayer = nodes.filter(n => n.depth === maxDepth - 1);
-  for (const n of lastLayer) {
-    n.children.push(bossNode.id);
-    bossNode.parents.push(n.id);
-  }
+  // Depth 7: Boss
+  const boss = makeNode(7, 'boss', 0.5, 3);
+  link(feast, boss);
 
-  // Unique events for hidden marches (shuffled, no repeats)
-  const hiddenEvents = options.events || [];
+  // Shuffle and assign unique events to event nodes (3 per path = 6 total, we have 4 events so some repeat)
   const shuffledEvents = [...hiddenEvents].sort(() => Math.random() - 0.5);
   let eventIdx = 0;
 
-  // Combat encounter names for variety
+  // Combat encounter variety
   const combatIntros = [
     { name: 'Tunnel Ambush', intro: 'Shapes lunge from the dark. The lair is guarded.' },
     { name: 'Lair Guardians', intro: 'The tunnel twists deeper. More creatures block the way.' },
@@ -491,36 +432,25 @@ function generateHiddenMarch(options = {}) {
   // Assign encounters
   for (const node of nodes) {
     if (node.type === 'combat') {
-      // Build encounter from enemy pool
       const count = node.depth === 0 ? 2 : 3;
       const enemies = [];
       for (let i = 0; i < count; i++) {
         enemies.push(enemyPool[Math.floor(Math.random() * enemyPool.length)]);
       }
       const ci = combatIntros[Math.floor(Math.random() * combatIntros.length)];
-      node.encounter = {
-        name: ci.name,
-        enemies: enemies,
-        intro: ci.intro
-      };
+      node.encounter = { name: ci.name, enemies: enemies, intro: ci.intro };
     } else if (node.type === 'boss' && bossData) {
-      node.encounter = {
-        name: bossData.name,
-        enemies: bossData.enemies,
-        intro: bossData.intro,
-        loot: bossData.loot || [],
-        lootCount: bossData.lootCount
-      };
-    } else if (node.type === 'event' || node.type === 'rest') {
-      // Use unique hidden march events if available
+      node.encounter = { name: bossData.name, enemies: bossData.enemies, intro: bossData.intro, loot: bossData.loot || [], lootCount: bossData.lootCount };
+    } else if (node.type === 'event') {
       if (eventIdx < shuffledEvents.length) {
-        node.type = 'event';
         node.encounter = shuffledEvents[eventIdx++];
       } else {
-        node.type = 'rest';
-        node.threat = 0;
+        // Recycle events if we need more than available
+        eventIdx = 0;
+        node.encounter = shuffledEvents[eventIdx++];
       }
     }
+    // Rest nodes (Lair Feast) don't need encounter data — handled by rest screen
   }
 
   return nodes;

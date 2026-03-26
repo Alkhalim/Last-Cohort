@@ -94,10 +94,11 @@ function buildSkillExecute(skillData) {
     // Die value scaling: add die value(s) to base damage or block
     const dieTotal = dice.reduce((s, d) => s + (d ? d.value : 0), 0);
 
-    // Die-scale factor: equipment bonuses scale with die value (dieTotal/3)
-    // A die of 3 is baseline (1x), die of 1 = 0.33x, die of 6 = 2x
+    // Die-scale factor: equipment bonuses scale with die value (softened curve)
+    // A die of 3 is baseline (1x), die of 1 = 0.33x, die of 6 = 1.4x (was 2x)
     if (effects.dieScaleDamage || effects.dieScaleBlock || effects.dieScaleHeal) {
-      result._dieScaleFactor = dieTotal / 3;
+      const rawScale = dieTotal / 3;
+      result._dieScaleFactor = rawScale <= 1 ? rawScale : 1 + (rawScale - 1) * 0.7;
     }
 
     // Damage (single target or dual targets)
