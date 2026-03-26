@@ -371,6 +371,142 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   return nodes;
 }
 
+// Generate a small hidden march map (e.g. Dragon's Lair)
+// options: { depth, difficulty, enemies, boss }
+function generateHiddenMarch(options = {}) {
+  const maxDepth = options.depth || 4;
+  const difficulty = options.difficulty || 8;
+  const enemyPool = options.enemies || [];
+  const bossData = options.boss || null;
+  const nodes = [];
+  let idCounter = 0;
+
+  // Depth 0: start node (combat)
+  const startNode = {
+    id: idCounter++,
+    depth: 0,
+    type: 'combat',
+    threat: 2,
+    children: [],
+    parents: [],
+    visited: false,
+    x: 0.5,
+    encounter: null,
+  };
+  nodes.push(startNode);
+
+  // Depths 1 to maxDepth-1: 2 nodes each, mostly combat with occasional event
+  for (let depth = 1; depth < maxDepth; depth++) {
+    const count = 2;
+    const depthNodes = [];
+    for (let n = 0; n < count; n++) {
+      const roll = Math.random();
+      let type = roll < 0.7 ? 'combat' : (roll < 0.9 ? 'event' : 'rest');
+
+      let threat = 2;
+      if (depth >= maxDepth - 1) threat = 3;
+      threat = Math.min(3, threat);
+
+      const x = (n + 1) / (count + 1);
+      const node = {
+        id: idCounter++,
+        depth: depth,
+        type: type,
+        threat: type === 'combat' ? threat : 0,
+        children: [],
+        parents: [],
+        visited: false,
+        x: x,
+        encounter: null,
+      };
+      depthNodes.push(node);
+      nodes.push(node);
+    }
+
+    // Connect previous depth to this depth
+    const prevDepthNodes = nodes.filter(n => n.depth === depth - 1);
+    for (const prev of prevDepthNodes) {
+      if (prev.children.length === 0) {
+        const nearest = depthNodes.reduce((best, n) =>
+          Math.abs(n.x - prev.x) < Math.abs(best.x - prev.x) ? n : best, depthNodes[0]);
+        prev.children.push(nearest.id);
+        nearest.parents.push(prev.id);
+      }
+    }
+    for (const curr of depthNodes) {
+      if (curr.parents.length === 0) {
+        const nearest = prevDepthNodes.reduce((best, n) =>
+          Math.abs(n.x - curr.x) < Math.abs(best.x - curr.x) ? n : best, prevDepthNodes[0]);
+        nearest.children.push(curr.id);
+        curr.parents.push(nearest.id);
+      }
+    }
+    // Extra connections
+    for (const prev of prevDepthNodes) {
+      for (const curr of depthNodes) {
+        if (!prev.children.includes(curr.id) && Math.random() < 0.3) {
+          if (Math.abs(prev.x - curr.x) < 0.5) {
+            prev.children.push(curr.id);
+            curr.parents.push(prev.id);
+          }
+        }
+      }
+    }
+  }
+
+  // Final depth: boss node
+  const bossNode = {
+    id: idCounter++,
+    depth: maxDepth,
+    type: 'boss',
+    threat: 3,
+    children: [],
+    parents: [],
+    visited: false,
+    x: 0.5,
+    encounter: null,
+  };
+  nodes.push(bossNode);
+
+  // Connect last layer to boss
+  const lastLayer = nodes.filter(n => n.depth === maxDepth - 1);
+  for (const n of lastLayer) {
+    n.children.push(bossNode.id);
+    bossNode.parents.push(n.id);
+  }
+
+  // Assign encounters
+  for (const node of nodes) {
+    if (node.type === 'combat') {
+      // Build encounter from enemy pool
+      const count = node.depth === 0 ? 2 : 3;
+      const enemies = [];
+      for (let i = 0; i < count; i++) {
+        enemies.push(enemyPool[Math.floor(Math.random() * enemyPool.length)]);
+      }
+      node.encounter = {
+        name: 'Lair Guardians',
+        enemies: enemies,
+        intro: 'The tunnel twists deeper. More creatures block the way.'
+      };
+    } else if (node.type === 'boss' && bossData) {
+      node.encounter = {
+        name: bossData.name,
+        enemies: bossData.enemies,
+        intro: bossData.intro,
+        loot: bossData.loot || [],
+        lootCount: bossData.lootCount
+      };
+    } else if (node.type === 'event') {
+      // Simple rest/loot event for hidden marches
+      node.type = 'rest';
+      node.threat = 0;
+    }
+  }
+
+  return nodes;
+}
+
 function getReachableNodes(nodes, currentId) {
   const current = nodes.find(n => n.id === currentId);
   if (!current) return [];

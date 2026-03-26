@@ -831,6 +831,10 @@ class Game {
         mapNodes: this.ui.mapNodes,
         currentNodeId: this.ui.currentNodeId,
         uiDifficulty: this.ui.difficulty,
+        hiddenMarch: this.ui._inHiddenMarch ? {
+          savedMarch: this.ui._savedMarch,
+          data: this.ui._hiddenMarchData,
+        } : null,
         savedAt: new Date().toISOString(),
       };
       localStorage.setItem(SAVED_RUN_STORAGE_KEY, JSON.stringify(data));
@@ -920,9 +924,22 @@ class Game {
       this.ui.currentNodeId = data.currentNodeId;
       this.ui.difficulty = data.uiDifficulty || data.difficulty;
 
+      // Restore hidden march state if saved mid-hidden-march
+      if (data.hiddenMarch) {
+        this.ui._inHiddenMarch = true;
+        this.ui._savedMarch = data.hiddenMarch.savedMarch;
+        this.ui._hiddenMarchData = data.hiddenMarch.data;
+      } else {
+        this.ui._inHiddenMarch = false;
+        this.ui._savedMarch = null;
+        this.ui._hiddenMarchData = null;
+      }
+
       this.startGameplayMusic();
 
-      const theme = MARCH_THEMES[this.difficulty] || { theme: 'forest' };
+      const theme = this.ui._inHiddenMarch && this.ui._hiddenMarchData
+        ? { theme: this.ui._hiddenMarchData.theme || 'forest' }
+        : (MARCH_THEMES[this.difficulty] || { theme: 'forest' });
       document.getElementById('map-screen').dataset.theme = theme.theme;
 
       this.ui.showMapScreen();
@@ -1275,6 +1292,11 @@ class Game {
       a.boss_ariovistus = true;
       this.addNotification('Achievement: The dead king falls!');
     }
+    // Lindwurm secret boss
+    if (!a.boss_lindwurm && (s.enemiesKilled['lindwurm'] || 0) >= 1) {
+      a.boss_lindwurm = true;
+      this.addNotification('Achievement: The wyrm is slain!');
+    }
 
     // Check party equipment for rare achievements (at run end)
     if (this.engine && this.engine.party) {
@@ -1577,6 +1599,7 @@ class Game {
       { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
       { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
       { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
+      { key: 'boss_lindwurm', name: "Dragon Slayer", desc: "Slay the Lindwurm.", hidden: true, progress: () => a.boss_lindwurm ? 'Done' : '0/1' },
       // Equipment
       { key: 'hero_three_rares', name: "Collector", desc: "One hero with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
       { key: 'hero_only_rares', name: "Gilded Warrior", desc: "One hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },

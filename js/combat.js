@@ -2558,7 +2558,8 @@ class CombatEngine {
       if (stunCount < 2) {
         result.target._skipNextAction = true;
         parts.push(`${result.target.name} is stunned!`);
-        const otherFront = this.enemies.filter(e => !e.dead && e.row === 'front' && e !== result.target && !e._skipNextAction);
+        let otherFront = this.enemies.filter(e => !e.dead && e.row === 'front' && e !== result.target && !e._skipNextAction);
+        if (otherFront.length === 0) otherFront = this.enemies.filter(e => !e.dead && e !== result.target && !e._skipNextAction);
         const newStunCount = this.enemies.filter(e => !e.dead && e._skipNextAction).length;
         if (otherFront.length > 0 && newStunCount < 2) {
           const secondTarget = otherFront[Math.floor(Math.random() * otherFront.length)];
@@ -2570,10 +2571,11 @@ class CombatEngine {
       }
     }
 
-    // Momentum Strike: deal 1 damage per skill used this combat (capped at 20, half equipment scaling)
+    // Momentum Strike: deal damage per skill used this combat (scales with difficulty, 0.35 equipment scaling)
     if (result.momentumStrike && result.target) {
-      const momentum = Math.min(20, this._totalSkillsUsed || 1);
-      const momentumBonus = Math.floor(bonusDmg * 0.5);
+      const perAction = 1 + Math.floor((this.difficulty || 1) * 0.2);
+      const momentum = Math.min(30, (this._totalSkillsUsed || 1) * perAction);
+      const momentumBonus = Math.floor(bonusDmg * 0.35);
       let dmg = momentum + momentumBonus;
       // Block interaction
       if (result.target.block && result.target.block > 0) {
@@ -2961,11 +2963,14 @@ class CombatEngine {
     }
 
     // Flame Touch: heal a random wounded ally (1 + heal bonuses, scaled by bonusHealScale)
+    // Prioritize allies with enough missing HP to fully use the heal
     if (result.flameTouch) {
       const damaged = this.party.filter(u => !u.downed && u.hp < u.maxHp);
       if (damaged.length > 0) {
-        const target = damaged[Math.floor(Math.random() * damaged.length)];
         const healAmt = 1 + bonusHeal;
+        const worthyTargets = damaged.filter(u => (u.maxHp - u.hp) >= healAmt);
+        const pool = worthyTargets.length > 0 ? worthyTargets : damaged;
+        const target = pool[Math.floor(Math.random() * pool.length)];
         const heal = Math.min(Math.max(1, healAmt), target.maxHp - target.hp);
         target.hp += heal;
         unit.stats.healingDone += heal;
@@ -2987,7 +2992,7 @@ class CombatEngine {
       }
     }
 
-    // Litany of Courage: morale = die x2, grant ally extra action
+    // Litany of Courage: morale = die x2, grant ally extra action (player chooses)
     if (result.litanyOfCourage) {
       const usedDice = this.dicePool.dice.filter(d => d.used);
       const dieVal = usedDice.length > 0 ? usedDice[usedDice.length - 1].value : 3;
@@ -2995,12 +3000,16 @@ class CombatEngine {
       this.morale = Math.min(100, this.morale + moraleGain);
       parts.push(`+${moraleGain} Morale.`);
       if (this.onVisual) this.onVisual('morale', { amount: moraleGain });
-      // Grant a random other ally an extra action
+      // Let the player choose which acted ally gets the extra action
       const others = this.party.filter(u => !u.downed && u !== unit && u.actedThisTurn);
-      if (others.length > 0) {
-        const target = others[Math.floor(Math.random() * others.length)];
-        target.actedThisTurn = false;
-        parts.push(`${target.name} is inspired to act again!`);
+      if (others.length === 1) {
+        // Only one option — auto-pick
+        others[0].actedThisTurn = false;
+        parts.push(`${others[0].name} is inspired to act again!`);
+      } else if (others.length > 1) {
+        // Multiple options — defer to player choice
+        this._pendingExtraAction = others.map(u => u.index);
+        parts.push(`Choose an ally to inspire.`);
       }
     }
 
@@ -3688,9 +3697,9 @@ class CombatEngine {
     let action, target;
     if (enemy._intent && enemy._intent.action) {
       action = enemy._intent.action;
-      // Validate target is still alive
+      // Validate target is still alive and targetable
       const intendedTarget = this.party[enemy._intent.targetIndex];
-      if (intendedTarget && !intendedTarget.downed) {
+      if (intendedTarget && !intendedTarget.downed && !intendedTarget._untargetable) {
         target = intendedTarget;
       } else {
         target = this.pickEnemyTarget(enemy, action);

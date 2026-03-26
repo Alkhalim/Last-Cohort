@@ -511,6 +511,7 @@ const RAW_EVENTS = [
     "id": "grave_of_ariovistus",
     "name": "The Barrow of Ariovistus",
     "minDifficulty": 4,
+    "maxDifficulty": 4,
     "oncePerRun": true,
     "weight": 1,
     "intro": "Deep in the forest, your men stumble upon a mound of ancient stone half-swallowed by roots. Runes older than Rome are carved into the entrance. The air is cold and still. Your scouts recognize the markings — this is the barrow of Ariovistus, the great Germanic king who defied Caesar himself. His grave was never found... until now.",
@@ -787,9 +788,26 @@ const RAW_EVENTS = [
   },
 
   {
+    "id": "dragons_lair",
+    "name": "The Dragon's Lair",
+    "minDifficulty": 8, "maxDifficulty": 8,
+    "oncePerRun": true,
+    "weight": 1,
+    "intro": "Your scouts return pale-faced. They found a cave mouth in the hillside, half-hidden by ancient roots. The stone around it is scorched black. From deep within comes a sound like a forge bellows — rhythmic, immense. The air tastes of sulfur. Bones litter the entrance — human, animal, and things older than both. Runes carved into the rock read: 'Here sleeps the Lindwurm. Do not wake what Rome cannot kill.'",
+    "choices": [
+      { "text": "Enter the lair. Glory waits in the dark.", "outcomes": [
+        { "weight": 1.0, "text": "Your men light torches and descend. The tunnel narrows, then opens into a vast cavern. Gold glitters. Bones crunch underfoot. Something stirs in the dark.", "effects": { "triggerHiddenMarch": { "name": "The Dragon's Lair", "subtitle": "Slay the Lindwurm.", "theme": "dragon", "depth": 4, "enemies": ["dragon_hatchling", "wyrm_cultist"], "boss": { "name": "The Lindwurm", "enemies": ["lindwurm", "dragon_hatchling", "dragon_hatchling"], "intro": "The cavern opens into a vast chamber of gold and bone. The Lindwurm uncoils — ancient, enormous, furious. Its young scurry to its side.", "loot": ["lindwurm_fang", "dragonscale_lorica", "wyrms_hoard_ring"], "lootCount": 2 } } } }
+      ]},
+      { "text": "Seal the entrance and move on. Some legends are best left sleeping.", "outcomes": [
+        { "weight": 1.0, "text": "Your engineers collapse the entrance with logs and stone. The breathing stops. Your men march on, relieved — but some look back, wondering what treasures lie buried.", "effects": { "morale": 6 } }
+      ]}
+    ]
+  },
+
+  {
     "id": "thusneldas_ambush",
     "name": "The Chieftain's Wife",
-    "minDifficulty": 7, "maxDifficulty": 7,
+    "minDifficulty": 6, "maxDifficulty": 6,
     "oncePerRun": true,
     "intro": "A woman's voice rings out from the trees — clear, commanding, furious. 'Romans! You took me from my husband. You paraded me through your streets. But the forest remembers, and so do I.' Your scouts report movement on all sides. Wolves. Warriors. And at their center, a woman in war paint, holding a spear.",
     "choices": [

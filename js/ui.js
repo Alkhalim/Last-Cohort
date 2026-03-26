@@ -833,7 +833,20 @@ class GameUI {
         });
       }
 
-      if (this.engine.phase === PHASE.PLAYER_TURN) {
+      if (this.engine._pendingExtraAction) {
+        // Pending extra action choice — highlight eligible allies
+        const isEligible = this.engine._pendingExtraAction.includes(i);
+        if (isEligible) {
+          el.classList.add('targetable');
+          el.addEventListener('click', () => {
+            unit.actedThisTurn = false;
+            this.engine.addLog(`${unit.name} is inspired to act again!`);
+            this.engine._pendingExtraAction = null;
+            this.selectedUnitIndex = i;
+            this.render();
+          });
+        }
+      } else if (this.engine.phase === PHASE.PLAYER_TURN) {
         if (isTargetable) {
           el.addEventListener('click', () => {
             if (this.stagedSkill) {
@@ -905,6 +918,16 @@ class GameUI {
     } else {
       endBtn.classList.add('hidden');
       endBtn.textContent = 'End Turn';
+    }
+
+    // Pending extra action choice — show prompt instead of skill panel
+    if (this.engine._pendingExtraAction) {
+      panel.classList.remove('hidden');
+      nameEl.textContent = 'LITANY OF COURAGE';
+      list.innerHTML = '<div class="skill-acted-msg" style="color:var(--gold)">Choose an ally to inspire — tap a highlighted unit.</div>';
+      confirmBtn.classList.add('hidden');
+      endBtn.classList.add('hidden');
+      return;
     }
 
     const isPreCombat = this.engine.phase === PHASE.PRE_COMBAT;
@@ -1036,6 +1059,18 @@ class GameUI {
           }
           return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
         });
+        // "N-M damage (scales with die)" pattern
+        desc = desc.replace(/(\d+)-(\d+) damage \(scales with die\)/g, () => {
+          if (exactDmg != null) {
+            return `<span class="stat-dmg" style="color:var(--gold)">${exactDmg}</span> damage`;
+          }
+          const lo = Math.max(1, baseDmg + vals[0] + loBonusDmg);
+          const hi = Math.max(1, baseDmg + vals[vals.length - 1] + hiBonusDmg);
+          if (rawBonusDmg !== 0) {
+            return `<span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(die scales gear)</span> damage`;
+          }
+          return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
+        });
       }
       if (skill.effects && skill.effects.dieScaleBlock) {
         const baseBlock = skill.effects.block || 0;
@@ -1067,6 +1102,18 @@ class GameUI {
           }
           return `<span class="stat-block">${lo}-${hi}</span> Block`;
         });
+        // "N-M Block (scales with die)" pattern
+        desc = desc.replace(/(\d+)-(\d+) Block \(scales with die\)/g, () => {
+          if (exactBlock != null) {
+            return `<span class="stat-block" style="color:var(--gold)">${exactBlock}</span> Block`;
+          }
+          const lo = baseBlock + vals[0] + loBlockBonus;
+          const hi = baseBlock + vals[vals.length - 1] + hiBlockBonus;
+          if (equipBlock > 0) {
+            return `<span class="stat-block">${lo}-${hi}</span> <span class="stat-breakdown">(die scales gear)</span> Block`;
+          }
+          return `<span class="stat-block">${lo}-${hi}</span> Block`;
+        });
       }
       if (skill.effects && skill.effects.dieScaleHeal) {
         const baseHeal = skill.effects.heal || 0;
@@ -1087,6 +1134,68 @@ class GameUI {
           }
           return `<span class="stat-heal">${lo}-${hi}</span> HP`;
         });
+        // "N-M HP (scales with die)" pattern
+        desc = desc.replace(/(\d+)-(\d+) HP \(scales with die\)/g, () => {
+          if (exactHeal != null) {
+            return `<span class="stat-heal" style="color:var(--gold)">${exactHeal}</span> HP`;
+          }
+          const lo = Math.max(0, baseHeal + vals[0] + loHealBonus);
+          const hi = Math.max(0, baseHeal + vals[vals.length - 1] + hiHealBonus);
+          if (totalBonusHeal !== 0) {
+            return `<span class="stat-heal">${lo}-${hi}</span> <span class="stat-breakdown">(die scales gear)</span> HP`;
+          }
+          return `<span class="stat-heal">${lo}-${hi}</span> HP`;
+        });
+      }
+
+      // Litany of Courage: show morale range or exact value when die staged
+      if (skill.effects && skill.effects.litanyOfCourage) {
+        const vals = dieRange(costType);
+        const exactMorale = stagedDieTotal != null ? stagedDieTotal * 2 : null;
+        desc = desc.replace(/(\d+)-(\d+) Morale \(scales with die x2\)/g, () => {
+          if (exactMorale != null) {
+            return `<span class="stat-morale-text" style="color:var(--gold)">+${exactMorale}</span> Morale`;
+          }
+          return `<span class="stat-morale-text">+${vals[0] * 2}-${vals[vals.length - 1] * 2}</span> Morale`;
+        });
+      }
+
+      // Laced Blade: show poison range or exact value when die staged
+      if (skill.effects && skill.effects.lacedBlade) {
+        const vals = dieRange(costType);
+        const exactPoison = stagedDieTotal != null ? stagedDieTotal + equipPoison : null;
+        desc = desc.replace(/(\d+)-(\d+) Poison \(scales with die\)/g, () => {
+          if (exactPoison != null) {
+            return `<span class="stat-poison" style="color:var(--gold)">${exactPoison}</span> Poison`;
+          }
+          const lo = vals[0] + equipPoison;
+          const hi = vals[vals.length - 1] + equipPoison;
+          if (equipPoison > 0) {
+            return `<span class="stat-poison">${lo}-${hi}</span> <span class="stat-breakdown">(die+${equipPoison})</span> Poison`;
+          }
+          return `<span class="stat-poison">${lo}-${hi}</span> Poison`;
+        });
+      }
+
+      // Overrun: show base + equipment + potential overrun info (must be before generic damage replace)
+      if (skill.effects && skill.effects.overrun) {
+        const dmgScaleOR = (skill.effects.bonusDmgScale) || (skill.effects.halfBonusDmg ? 0.5 : 1);
+        const orBonusDmg = dmgScaleOR !== 1 ? Math.floor(ownBonusDmg * dmgScaleOR) + buffDmg : effectiveBonusDmg;
+        const overrunBase = 3 + orBonusDmg;
+        if (isStaged && this.stagedSkill.diceIds.length >= 1) {
+          const stagedDie = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[0]);
+          if (stagedDie) {
+            const matchVal = stagedDie.value;
+            const matches = this.engine.dicePool.dice.filter(d => d !== stagedDie && d.value === matchVal).length;
+            const overrunBonus = matches * (1 + (this.engine.difficulty || 1));
+            const total = overrunBase + overrunBonus;
+            desc = desc.replace(/Deals 3 damage\. Deals bonus damage for each other die matching the one used\./g,
+              `Deals <span class="stat-dmg" style="color:var(--gold)">${total}</span> damage${matches > 0 ? ` <span class="stat-breakdown">(3+${orBonusDmg}+${overrunBonus} overrun)</span>` : ` <span class="stat-breakdown">(3+${orBonusDmg})</span>`}.`);
+          }
+        } else {
+          desc = desc.replace(/Deals 3 damage\. Deals bonus damage for each other die matching the one used\./g,
+            `Deals <span class="stat-dmg">${overrunBase}+</span> damage <span class="stat-breakdown">(3+${orBonusDmg}+overrun)</span>. Bonus per matching die.`);
+        }
       }
 
       // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
@@ -1122,6 +1231,12 @@ class GameUI {
           const total = b + halfEquipDmg;
           return `+<span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${halfEquipDmg})</span> damage`;
         });
+      }
+      // Trample splash preview: show actual trample damage number
+      if (skill.effects && skill.effects.splashAdjacentPct) {
+        const mainDmg = (skill.effects.damage || 0) + skillBonusDmg + (cavalryCharge ? Math.floor((skill.effects.damage || 0) * 0.5) : 0);
+        const trampleDmg = Math.max(2, Math.round(mainDmg * skill.effects.splashAdjacentPct));
+        desc = desc.replace(/\d+% trample damage/g, `<span class="stat-dmg">${trampleDmg}</span> trample damage`);
       }
       // Color-code remaining "X damage" (that hasn't been wrapped in spans already)
       desc = desc.replace(/(?<!">)(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
@@ -1202,6 +1317,29 @@ class GameUI {
           const hi = 12 + Math.floor(effectiveBonusDmg * 1.3);
           desc = desc.replace(/their sum as damage/g, `<span class="stat-dmg">${lo}-${hi}</span>${effectiveBonusDmg !== 0 ? ` <span class="stat-breakdown">(dice+${Math.floor(effectiveBonusDmg * 1.3)})</span>` : ''} damage`);
         }
+      }
+
+      // Momentum Strike: show current momentum + 0.35 equipment scaling (scales with difficulty)
+      if (skill.effects && skill.effects.momentumStrike) {
+        const perAction = 1 + Math.floor((this.engine.difficulty || 1) * 0.2);
+        const momentum = Math.min(30, (this.engine._totalSkillsUsed || 0) * perAction);
+        const momentumBonus = Math.floor(effectiveBonusDmg * 0.35);
+        const total = momentum + momentumBonus;
+        const nextMomentum = Math.min(30, ((this.engine._totalSkillsUsed || 0) + 1) * perAction);
+        const nextTotal = nextMomentum + momentumBonus;
+        desc = desc.replace(/Deal 1 damage per skill used this combat\. Grows stronger each action\./g,
+          `<span class="stat-dmg">${total}</span> damage now <span class="stat-breakdown">(${momentum} momentum+${momentumBonus})</span>. Next use: <span class="stat-dmg">${nextTotal}</span>.`);
+      }
+
+      // All-In Charge: show base + equipment + expected reroll range
+      if (skill.effects && skill.effects.allInCharge) {
+        const baseDmg = 10 + effectiveBonusDmg;
+        const unusedCount = this.engine.dicePool ? this.engine.dicePool.dice.filter(d => !d.used).length : 0;
+        const actualUnused = isStaged ? Math.max(0, unusedCount - 1) : unusedCount; // exclude the die being used
+        const rerollLo = actualUnused; // all 1s
+        const rerollHi = actualUnused * 6; // all 6s
+        desc = desc.replace(/Deal 10 damage\. All other unused dice are rerolled and added as bonus damage\./g,
+          `Deals <span class="stat-dmg">${baseDmg + rerollLo}-${baseDmg + rerollHi}</span> <span class="stat-breakdown">(10+${effectiveBonusDmg}+${actualUnused} dice)</span> damage.`);
       }
 
       // Replace "higher die"/"lower die" with actual values when consecutive dice are staged
@@ -1653,7 +1791,7 @@ class GameUI {
       const items = unit.equipment[slot].filter(Boolean).map(id => {
         const item = getItemData(id);
         if (!item) return '';
-        return `<div class="profile-item rarity-${item.rarity}"><span class="profile-item-name">${item.name} Lv${item.level || 1}</span> <span class="profile-item-stats">${formatItemStats(item.stats)}</span>${item.special ? `<div class="profile-item-special">${formatItemSpecial(item)}</div>` : ''}</div>`;
+        return `<div class="profile-item rarity-${item.rarity}"><span class="profile-item-name">${getItemDisplayName(id)}</span> <span class="profile-item-stats">${formatItemStats(item.stats)}</span>${item.special ? `<div class="profile-item-special">${formatItemSpecial(item)}</div>` : ''}</div>`;
       }).filter(Boolean).join('');
       return items || '';
     }).join('');
@@ -1699,12 +1837,16 @@ class GameUI {
 
   renderMapMorale() {
     const title = document.getElementById('map-title');
-    const diff = this.difficulty || 1;
-    const theme = typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[diff];
-    if (theme) {
-      title.textContent = theme.name.toUpperCase();
+    if (this._inHiddenMarch && this._hiddenMarchData) {
+      title.textContent = (this._hiddenMarchData.name || 'HIDDEN MARCH').toUpperCase();
     } else {
-      title.textContent = 'TEUTOBURG FOREST';
+      const diff = this.difficulty || 1;
+      const theme = typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[diff];
+      if (theme) {
+        title.textContent = theme.name.toUpperCase();
+      } else {
+        title.textContent = 'TEUTOBURG FOREST';
+      }
     }
 
     const label = document.getElementById('map-morale-label');
@@ -1759,7 +1901,7 @@ class GameUI {
     const container = document.getElementById('map-scroll-container');
 
     // Calculate dimensions
-    const maxDepth = 8;
+    const maxDepth = Math.max(...this.mapNodes.map(n => n.depth));
     const nodeSpacing = 110;
     const topPadding = 60;
     const bottomPadding = 60;
@@ -1823,7 +1965,9 @@ class GameUI {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw terrain decorations based on march theme
-    const marchTheme = (typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) ? MARCH_THEMES[this.difficulty].theme : 'forest';
+    const marchTheme = this._inHiddenMarch && this._hiddenMarchData
+      ? (this._hiddenMarchData.theme || 'forest')
+      : ((typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) ? MARCH_THEMES[this.difficulty].theme : 'forest');
     const terrainSeed = this._mapTerrainSeed || ((this.difficulty || 1) * 7919);
     const tRand = (i) => { let x = Math.sin(terrainSeed + i * 127.1) * 43758.5453; return x - Math.floor(x); };
     const margin = 20;
@@ -1876,6 +2020,7 @@ class GameUI {
       'forest': '#2a5a20', 'forest-dark': '#1a4a18', 'warcamp': '#4a3820',
       'bog': '#1a4a3a', 'ancient': '#3a5a18', 'blood': '#4a1818',
       'haunted': '#2a2a40', 'drowned': '#1a3a4a', 'heart': '#5a2a10', 'threshold': '#3a1a4a',
+      'dragon': '#4a2a10',
     };
     for (let i = 0; i < patchCount; i++) {
       const px = tX(i * 7 + 100);
@@ -1910,6 +2055,7 @@ class GameUI {
       'forest': '#3a6a2a', 'forest-dark': '#2a5a1a', 'warcamp': '#5a4a30',
       'bog': '#2a5a3a', 'ancient': '#4a6a20', 'blood': '#5a2020',
       'haunted': '#3a3a50', 'drowned': '#2a4a5a', 'heart': '#6a3a18', 'threshold': '#4a2a5a',
+      'dragon': '#5a3a18',
     };
     for (let i = 0; i < scatterCount; i++) {
       const sx = tX(i * 11 + 500);
@@ -2579,6 +2725,16 @@ class GameUI {
     // Use the encounter intro as flavor text (not the mechanical description)
     const bossFlavorText = node.encounter.intro || (bossData ? bossData.description : '');
 
+    // If boss encounter has specific loot (e.g. hidden march bosses), set it
+    if (node.encounter.loot && node.encounter.loot.length > 0) {
+      let eventLoot = [...node.encounter.loot];
+      if (node.encounter.lootCount && node.encounter.lootCount < eventLoot.length) {
+        const shuffled = eventLoot.sort(() => Math.random() - 0.5);
+        eventLoot = shuffled.slice(0, node.encounter.lootCount);
+      }
+      this.pendingEventCombatLoot = eventLoot;
+    }
+
     // Switch to combat screen (hidden until splash fades)
     this.currentNodeThreat = node.threat || 1;
     this.engine.initEncounter(node.encounter);
@@ -2951,6 +3107,9 @@ class GameUI {
         this._prevBossHpPct = undefined;
         this.diceRevealRunning = false;
         this.render();
+      } else if (effects.triggerHiddenMarch) {
+        // Enter a hidden sub-march (e.g. Dragon's Lair)
+        this.enterHiddenMarch(effects.triggerHiddenMarch);
       } else if (this.pendingEventItem) {
         this.showEventItemScreen(this.pendingEventItem);
       } else {
@@ -3015,7 +3174,7 @@ class GameUI {
       // Gather all upgradeable stats — scales with difficulty like event grants
       const effects = baseDef.effects || {};
       const diff = window.game ? window.game.difficulty : 1;
-      const upgradeBonus = Math.floor((diff - 1) / 4); // +1 at D5, +2 at D9
+      const upgradeBonus = diff >= 7 ? 2 : diff >= 5 ? 1 : 0;
       const amt = 1 + upgradeBonus;
       const moraleAmt = 3 + upgradeBonus;
       const friendlyNames = { counterStance: 'counter damage', overwatch: 'overwatch damage', snareTrap: 'trap damage', suppress: 'suppress duration', cripple: 'cripple duration', deafen: 'deafen duration', condemn: 'condemn duration', transfusion: 'transfer HP' };
@@ -3149,16 +3308,13 @@ class GameUI {
           u.equipment[slot].forEach(id => {
             if (!id) return;
             const item = getItemData(id);
-            if (item) allItems.push({ unit: u, itemId: id, item });
+            if (item && !item.stats.extraDice) allItems.push({ unit: u, itemId: id, item });
           });
         }
       }
     });
 
-    // Pick up to 3 random items
-    const shuffled = allItems.sort(() => Math.random() - 0.5).slice(0, 3);
-
-    if (shuffled.length === 0) {
+    if (allItems.length === 0) {
       choicesEl.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No equipment to improve.</div>';
       document.getElementById('event-outcome').classList.remove('hidden');
       document.getElementById('event-outcome-text').textContent = 'The smith has nothing to work with.';
@@ -3166,70 +3322,64 @@ class GameUI {
       return;
     }
 
-    shuffled.forEach(({ unit, itemId, item }) => {
-      // Determine which stat will be upgraded (same logic as createLeveledItem)
-      const stats = item.stats;
-      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice' && stats[k] >= 0);
-      const currentLevel = item.level || 1;
-      const newLevel = currentLevel + 1;
+    // Auto-apply 3 random upgrades spread across items
+    const shuffled = allItems.sort(() => Math.random() - 0.5);
+    const picks = [];
+    const usedIds = new Set();
+    for (const entry of shuffled) {
+      if (picks.length >= 3) break;
+      if (!usedIds.has(entry.itemId)) { picks.push(entry); usedIds.add(entry.itemId); }
+    }
+    for (const entry of shuffled) {
+      if (picks.length >= 3) break;
+      if (!picks.includes(entry)) picks.push(entry);
+    }
 
-      // Pre-pick the stat that would be upgraded (only positive stats)
-      let statKey = '';
-      let upgradeText = '';
-      if (statKeys.length > 0) {
-        statKey = statKeys[Math.floor(Math.random() * statKeys.length)];
-        const current = stats[statKey];
-        const next = current + 1;
+    const titleEl = document.createElement('div');
+    titleEl.className = 'march-rest-subtitle';
+    titleEl.textContent = 'The smith improves your equipment:';
+    choicesEl.appendChild(titleEl);
+
+    const diff = window.game ? window.game.difficulty : 1;
+    const SMITH_UPGRADE_LEVELS = diff >= 7 ? 3 : diff >= 5 ? 2 : 1;
+    picks.forEach(({ unit, itemId, item }) => {
+      const stats = item.stats;
+      const allStatKeys = Object.keys(stats).filter(k => k !== 'extraDice');
+      if (allStatKeys.length === 0) return;
+      const startLevel = item.level || 1;
+
+      // Apply multiple levels of upgrades, randomizing stat each level
+      const upgradeDetails = [];
+      for (let lvl = 0; lvl < SMITH_UPGRADE_LEVELS; lvl++) {
+        const curStats = ITEM_DATA[itemId].stats;
+        let eligible = allStatKeys.filter(k => curStats[k] >= 0);
+        if (eligible.length === 0) eligible = allStatKeys.filter(k => curStats[k] < 0);
+        if (eligible.length === 0) break;
+        const statKey = eligible[Math.floor(Math.random() * eligible.length)];
+        ITEM_DATA[itemId].stats[statKey]++;
+        if (statKey === 'maxHp') { unit.maxHp++; unit.baseMaxHp++; unit.hp++; }
         const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
-        upgradeText = `Lv${currentLevel} → ${newLevel}: ${statLabel} ${current} → ${next}`;
-      } else {
-        upgradeText = 'Already at maximum power.';
+        upgradeDetails.push(`${statLabel} +1`);
       }
+      const endLevel = startLevel + SMITH_UPGRADE_LEVELS;
+      ITEM_DATA[itemId].level = endLevel;
+      if (!ITEM_DATA[itemId].baseId) ITEM_DATA[itemId].baseId = itemId;
+      this.engine.computeEquipmentStats(unit);
 
       const tag = getPrimaryTag(unit.classId);
-      const baseName = item.baseId ? ITEM_DATA[item.baseId].name : item.name.replace(/ \+\d+$/, '');
-      const btn = document.createElement('button');
-      btn.className = 'btn-event-choice';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> <span style="font-size:0.65rem;color:var(--text-dim)">(${item.rarity})</span><br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(stats)}</span><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
-
-      if (!statKey) {
-        btn.classList.add('disabled');
-        btn.style.opacity = '0.5';
-      } else {
-        btn.addEventListener('click', () => {
-          // Apply level-up: increment the chosen stat
-          ITEM_DATA[itemId].stats[statKey]++;
-          // Update level and name
-          ITEM_DATA[itemId].level = newLevel;
-          ITEM_DATA[itemId].name = baseName + ' +' + (newLevel - 1);
-          if (!ITEM_DATA[itemId].baseId) ITEM_DATA[itemId].baseId = itemId;
-
-          // Apply maxHp change if that stat was upgraded
-          if (statKey === 'maxHp') {
-            unit.maxHp++;
-            unit.baseMaxHp++;
-            unit.hp++;
-          }
-
-          // Recompute equipment stats
-          this.engine.computeEquipmentStats(unit);
-
-          choicesEl.innerHTML = '';
-          document.getElementById('event-outcome').classList.remove('hidden');
-          document.getElementById('event-outcome-text').textContent = `The smith improves ${item.name}! ${upgradeText}`;
-          document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
-        });
-      }
-
-      choicesEl.appendChild(btn);
+      const displayName = getItemDisplayName(itemId);
+      const upgradeText = `Lv${startLevel} → ${endLevel}: ${upgradeDetails.join(', ')}`;
+      const div = document.createElement('div');
+      div.className = 'btn-event-choice';
+      div.style.pointerEvents = 'none';
+      div.style.opacity = '0.9';
+      div.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${displayName}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      choicesEl.appendChild(div);
     });
 
-    // Skip option
-    const skipBtn = document.createElement('button');
-    skipBtn.className = 'btn-event-choice';
-    skipBtn.innerHTML = '<span style="color:var(--text-dim)">Decline the smith\'s offer.</span>';
-    skipBtn.addEventListener('click', () => this.showMapScreen());
-    choicesEl.appendChild(skipBtn);
+    document.getElementById('event-outcome').classList.remove('hidden');
+    document.getElementById('event-outcome-text').textContent = 'The smith works his craft.';
+    document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
   }
 
   // ================================================================
@@ -3285,7 +3435,7 @@ class GameUI {
       btn.className = 'btn-event-choice';
       const specialLine = item.special ? `<br><span style="font-size:0.7rem;color:var(--gold);font-style:italic">${item.special}</span>` : '';
       const descLine = item.description ? `<br><span style="font-size:0.65rem;color:var(--text-dim);font-style:italic">${item.description}</span>` : '';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span>${specialLine}${descLine}<br><span style="font-size:0.75rem;color:var(--gold)">Trade for ${tradeLabel} ${slot}</span>`;
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${getItemDisplayName(itemId)}</strong> ${renderTagPips(item.classTags)}<br><span style="font-size:0.75rem;color:var(--text-dim)">${formatItemStats(item.stats)} (${item.rarity})</span>${specialLine}${descLine}<br><span style="font-size:0.75rem;color:var(--gold)">Trade for ${tradeLabel} ${slot}</span>`;
 
       btn.addEventListener('click', () => {
         // Find eligible replacement items: same slot, higher rarity, matching class tags
@@ -3337,7 +3487,7 @@ class GameUI {
         choicesEl.innerHTML = '';
         document.getElementById('event-outcome').classList.remove('hidden');
         const specialLine = replacement.special ? `<br><span style="font-size:0.75rem;color:var(--gold)">${formatItemSpecial(replacement)}</span>` : '';
-        document.getElementById('event-outcome-text').innerHTML = `Traded <strong class="rarity-${item.rarity}">${item.name}</strong> for:<br><br><strong class="rarity-${replacement.rarity}">${replacement.name}</strong> <span style="font-size:0.75rem;color:var(--text-dim)">(${replacement.rarity})</span><br><span style="font-size:0.85rem">${formatItemStats(replacement.stats)}</span>${specialLine}`;
+        document.getElementById('event-outcome-text').innerHTML = `Traded <strong class="rarity-${item.rarity}">${getItemDisplayName(itemId)}</strong> for:<br><br><strong class="rarity-${replacement.rarity}">${getItemDisplayName(newId)}</strong> <span style="font-size:0.75rem;color:var(--text-dim)">(${replacement.rarity})</span><br><span style="font-size:0.85rem">${formatItemStats(replacement.stats)}</span>${specialLine}`;
         document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
       });
 
@@ -3582,7 +3732,7 @@ class GameUI {
         u.equipment[slot].forEach(id => {
           if (!id) return;
           const item = getItemData(id);
-          if (item) equipItems.push(`<div class="summary-detail-item"><span class="summary-detail-item-name rarity-${item.rarity}">${item.name}</span> <span class="summary-detail-item-stats">${formatItemStats(item.stats)}</span></div>`);
+          if (item) equipItems.push(`<div class="summary-detail-item"><span class="summary-detail-item-name rarity-${item.rarity}">${getItemDisplayName(id)}</span> <span class="summary-detail-item-stats">${formatItemStats(item.stats)}</span></div>`);
         });
       }
       const equipHtml = equipItems.length > 0 ? equipItems.join('') : '<span class="stat-none">No equipment</span>';
@@ -3762,8 +3912,8 @@ class GameUI {
       ${trainingLine}
       <div class="loot-card rarity-${item.rarity}">
         <div class="loot-card-header">
-          <span class="loot-item-name">${item.name}</span>
-          <span class="loot-rarity">${item.rarity.toUpperCase()} Lv${item.level || 1}</span>
+          <span class="loot-item-name">${getItemDisplayName(this.pendingLoot[this._currentLootIdx])}</span>
+          <span class="loot-rarity">${item.rarity.toUpperCase()}</span>
         </div>
         <div class="loot-item-meta">${item.slot} · ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
         ${item.special ? `<div class="loot-item-special">${formatItemSpecial(item)}</div>` : ''}
@@ -3986,7 +4136,19 @@ class GameUI {
         const hi = Math.max(1, 6 + Math.floor(rawBonusDmg * 2));
         return `<span class="stat-dmg">${lo}-${hi}</span> damage`;
       });
+      desc = desc.replace(/(\d+)-(\d+) damage \(scales with die\)/g, (m, lo, hi) => {
+        const loVal = Math.max(1, parseInt(lo) + Math.floor(rawBonusDmg * (parseInt(lo)/3)));
+        const hiVal = Math.max(1, parseInt(hi) + Math.floor(rawBonusDmg * (parseInt(hi)/3)));
+        return `<span class="stat-dmg">${loVal}-${hiVal}</span> damage`;
+      });
     }
+
+    // Die-scaled Block (must be before generic Block replacement)
+    desc = desc.replace(/(\d+)-(\d+) Block \(scales with die\)/g, (m, lo, hi) => {
+      const loVal = parseInt(lo) + Math.floor(equipBlock * (parseInt(lo)/3));
+      const hiVal = parseInt(hi) + Math.floor(equipBlock * (parseInt(hi)/3));
+      return `<span class="stat-block">${loVal}-${hiVal}</span> Block`;
+    });
 
     // Block values
     desc = desc.replace(/(\d+) Block/g, (match, base) => {
@@ -3995,6 +4157,13 @@ class GameUI {
         return `<span class="stat-block">${b + equipBlock}</span> <span class="stat-breakdown">(${b}+${equipBlock})</span> Block`;
       }
       return `<span class="stat-block">${b}</span> Block`;
+    });
+
+    // Die-scaled HP (must be before generic HP replacement)
+    desc = desc.replace(/(\d+)-(\d+) HP \(scales with die\)/g, (m, lo, hi) => {
+      const loVal = Math.max(0, parseInt(lo) + Math.floor(bonusHeal * (parseInt(lo)/3)));
+      const hiVal = Math.max(0, parseInt(hi) + Math.floor(bonusHeal * (parseInt(hi)/3)));
+      return `<span class="stat-heal">${loVal}-${hiVal}</span> HP`;
     });
 
     // Heal values
@@ -4011,10 +4180,13 @@ class GameUI {
       const mi = parseInt(mult);
       return `<span class="stat-block">${mi}-${6 * mi}</span>`;
     });
-    desc = desc.replace(/Poison equal to die value used/g, () => {
-      const lo = 1 + equipPoison;
-      const hi = 6 + equipPoison;
-      return `<span class="stat-poison">${lo}-${hi}</span>${equipPoison > 0 ? ` <span class="stat-breakdown">(die+${equipPoison})</span>` : ''} Poison`;
+    desc = desc.replace(/(\d+)-(\d+) Morale \(scales with die x2\)/g, (m, lo, hi) => {
+      return `<span class="stat-morale-text">${lo}-${hi}</span> Morale`;
+    });
+    desc = desc.replace(/(\d+)-(\d+) Poison \(scales with die\)/g, (m, lo, hi) => {
+      const loVal = parseInt(lo) + equipPoison;
+      const hiVal = parseInt(hi) + equipPoison;
+      return `<span class="stat-poison">${loVal}-${hiVal}</span>${equipPoison > 0 ? ` <span class="stat-breakdown">(die+${equipPoison})</span>` : ''} Poison`;
     });
     if (skill.effects && skill.effects.breakneckCharge) {
       const lo = 2 + Math.floor(scaledBonusDmg * 1.3);
@@ -4132,8 +4304,8 @@ class GameUI {
     tooltip.id = 'item-tooltip';
     tooltip.className = 'item-tooltip';
     tooltip.innerHTML = `
-      <div class="item-tooltip-name rarity-${item.rarity}">${item.name}</div>
-      <div class="item-tooltip-meta">${item.slot} &middot; ${item.rarity} Lv${item.level || 1} ${renderTagPips(item.classTags)}</div>
+      <div class="item-tooltip-name rarity-${item.rarity}">${getItemDisplayName(itemId)}</div>
+      <div class="item-tooltip-meta">${item.slot} &middot; ${item.rarity} ${renderTagPips(item.classTags)}</div>
       <div class="item-tooltip-stats">${formatItemStats(item.stats)}</div>
       ${item.special ? `<div class="item-tooltip-special">${formatItemSpecial(item)}</div>` : ''}
       <div class="item-tooltip-desc">${item.description}</div>
@@ -4346,6 +4518,28 @@ class GameUI {
   }
 
   showPostBossChoice() {
+    // Hidden march boss defeated — return to main march
+    if (this._inHiddenMarch) {
+      this.showScreen('run-complete-screen');
+      const marchName = (this._hiddenMarchData && this._hiddenMarchData.name) || 'Hidden March';
+      document.getElementById('run-complete-title').textContent = marchName.toUpperCase() + ' CLEARED';
+      document.getElementById('run-complete-text').textContent = 'The lair is conquered. Your cohort gathers their spoils and returns to the march.';
+
+      const statsEl = document.getElementById('run-complete-stats');
+      statsEl.innerHTML = '<div class="run-summary-section"><div class="run-summary-stat"><span class="run-summary-label">Secret March Complete</span></div></div>';
+
+      // Save renown earned during hidden march
+      if (window.game) window.game.addRunRenown(this.engine.totalRenownEarned);
+      this.engine.totalRenownEarned = 0;
+
+      const btnContainer = document.getElementById('btn-run-complete');
+      btnContainer.textContent = 'Return to the March';
+      btnContainer.onclick = () => this.exitHiddenMarch();
+      let homeBtn = document.getElementById('btn-run-home');
+      if (homeBtn) homeBtn.classList.add('hidden');
+      return;
+    }
+
     if (window.game) window.game.trackRunEnd(true);
     this.showScreen('run-complete-screen');
 
@@ -4409,6 +4603,73 @@ class GameUI {
         window.game.returnHome();
       };
     }
+  }
+
+  enterHiddenMarch(data) {
+    // Save current march state
+    this._savedMarch = {
+      mapNodes: this.mapNodes,
+      currentNodeId: this.currentNodeId,
+      difficulty: this.difficulty,
+      terrainSeed: this._mapTerrainSeed,
+    };
+    this._hiddenMarchData = data;
+
+    // Generate the hidden march map
+    this.mapNodes = generateHiddenMarch({
+      depth: data.depth || 4,
+      difficulty: this.difficulty,
+      enemies: data.enemies || [],
+      boss: data.boss || null,
+    });
+    this.currentNodeId = null;
+    this._mapTerrainSeed = Math.floor(Math.random() * 100000);
+    this._inHiddenMarch = true;
+
+    // Show title card for hidden march
+    const mapScreen = document.getElementById('map-screen');
+    mapScreen.dataset.theme = data.theme || 'dragon';
+
+    const splash = document.createElement('div');
+    splash.className = 'march-title-card';
+    splash.innerHTML = `
+      <div class="march-title-content">
+        <div class="march-title-march">SECRET MARCH</div>
+        <div class="march-title-name">${data.name || 'Hidden March'}</div>
+        <div class="march-title-subtitle">${data.subtitle || ''}</div>
+      </div>
+    `;
+    document.body.appendChild(splash);
+    setTimeout(() => {
+      splash.classList.add('visible');
+      setTimeout(() => {
+        splash.classList.add('fading');
+        setTimeout(() => {
+          splash.remove();
+          this.showMapScreen();
+        }, 800);
+      }, 1800);
+    }, 50);
+  }
+
+  exitHiddenMarch() {
+    // Restore saved march state
+    if (this._savedMarch) {
+      this.mapNodes = this._savedMarch.mapNodes;
+      this.currentNodeId = this._savedMarch.currentNodeId;
+      this.difficulty = this._savedMarch.difficulty;
+      this._mapTerrainSeed = this._savedMarch.terrainSeed;
+      this._savedMarch = null;
+    }
+    this._inHiddenMarch = false;
+    this._hiddenMarchData = null;
+
+    // Restore theme
+    const mapScreen = document.getElementById('map-screen');
+    const theme = (typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) || {};
+    mapScreen.dataset.theme = theme.theme || 'forest';
+
+    this.showMapScreen();
   }
 
   showMarchRestScreen() {
@@ -4504,31 +4765,39 @@ class GameUI {
     titleEl.textContent = 'The blacksmith improves your equipment:';
     choicesEl.appendChild(titleEl);
 
+    const restDiff = window.game ? window.game.difficulty : 1;
+    const REST_SMITH_LEVELS = restDiff >= 7 ? 3 : restDiff >= 5 ? 2 : 1;
     picks.forEach(({ unit, itemId, item }) => {
       const stats = item.stats;
-      const statKeys = Object.keys(stats).filter(k => k !== 'extraDice' && stats[k] >= 0);
-      if (statKeys.length === 0) return;
-      const statKey = statKeys[Math.floor(Math.random() * statKeys.length)];
-      const current = stats[statKey];
-      const currentLevel = item.level || 1;
-      const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
-      const baseName = item.baseId ? (ITEM_DATA[item.baseId] ? ITEM_DATA[item.baseId].name : item.name) : item.name.replace(/ \+\d+$/, '');
+      const allStatKeys = Object.keys(stats).filter(k => k !== 'extraDice');
+      if (allStatKeys.length === 0) return;
+      const startLevel = item.level || 1;
 
-      // Apply the upgrade
-      ITEM_DATA[itemId].stats[statKey]++;
-      ITEM_DATA[itemId].level = currentLevel + 1;
-      ITEM_DATA[itemId].name = baseName + ' +' + currentLevel;
+      const upgradeDetails = [];
+      for (let lvl = 0; lvl < REST_SMITH_LEVELS; lvl++) {
+        const curStats = ITEM_DATA[itemId].stats;
+        let eligible = allStatKeys.filter(k => curStats[k] >= 0);
+        if (eligible.length === 0) eligible = allStatKeys.filter(k => curStats[k] < 0);
+        if (eligible.length === 0) break;
+        const statKey = eligible[Math.floor(Math.random() * eligible.length)];
+        ITEM_DATA[itemId].stats[statKey]++;
+        if (statKey === 'maxHp') { unit.maxHp++; unit.baseMaxHp++; unit.hp++; }
+        const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
+        upgradeDetails.push(`${statLabel} +1`);
+      }
+      const endLevel = startLevel + REST_SMITH_LEVELS;
+      ITEM_DATA[itemId].level = endLevel;
       if (!ITEM_DATA[itemId].baseId) ITEM_DATA[itemId].baseId = itemId;
-      if (statKey === 'maxHp') { unit.maxHp++; unit.baseMaxHp++; unit.hp++; }
       this.engine.computeEquipmentStats(unit);
 
       const tag = getPrimaryTag(unit.classId);
-      const upgradeText = `Lv${currentLevel} → ${currentLevel + 1}: ${statLabel} ${current} → ${current + 1}`;
+      const displayName = getItemDisplayName(itemId);
+      const upgradeText = `Lv${startLevel} → ${endLevel}: ${upgradeDetails.join(', ')}`;
       const div = document.createElement('div');
       div.className = 'btn-event-choice';
       div.style.pointerEvents = 'none';
       div.style.opacity = '0.9';
-      div.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${item.name}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      div.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${displayName}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
       choicesEl.appendChild(div);
     });
 
@@ -4578,7 +4847,7 @@ class GameUI {
     choicesEl.appendChild(titleEl);
 
     const diff = window.game ? window.game.difficulty : 1;
-    const upgradeBonus = Math.floor((diff - 1) / 4);
+    const upgradeBonus = diff >= 7 ? 2 : diff >= 5 ? 1 : 0;
     const amt = 1 + upgradeBonus;
     const moraleAmt = 3 + upgradeBonus;
 

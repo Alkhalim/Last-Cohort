@@ -268,7 +268,10 @@ function buildSkillExecute(skillData) {
     if (effects.overwatch) result.overwatch = effects.overwatch;
 
     // Suppress: target deals less damage
-    if (effects.suppress) result.suppress = effects.suppress;
+    if (effects.suppress) {
+      result.suppress = effects.suppress;
+      if (targets[0] && !result.target) result.target = targets[0];
+    }
 
     // Stimulant: target acts again
     if (effects.stimulant) result.stimulant = true;
@@ -280,7 +283,10 @@ function buildSkillExecute(skillData) {
     if (effects.cripple) result.cripple = effects.cripple;
 
     // Snare Trap: trap on enemy
-    if (effects.snareTrap) result.snareTrap = effects.snareTrap;
+    if (effects.snareTrap) {
+      result.snareTrap = effects.snareTrap;
+      if (targets[0] && !result.target) result.target = targets[0];
+    }
 
     // Revive: bring back downed ally
     if (effects.revive) result.revive = true;
@@ -322,7 +328,10 @@ function buildSkillExecute(skillData) {
     if (effects.echoOnKill) result.echoOnKill = effects.echoOnKill;
 
     // Warhorse Kick: stun target + random other front-row enemy
-    if (effects.warhorseKick) result.warhorseKick = true;
+    if (effects.warhorseKick) {
+      result.warhorseKick = true;
+      if (targets[0] && !result.target) result.target = targets[0];
+    }
 
     // Condemn: target takes +30% damage from all sources
     if (effects.condemn) result.condemn = effects.condemn;
@@ -390,7 +399,10 @@ function buildSkillExecute(skillData) {
     if (effects.bonusDiceNext) result.bonusDiceNext = effects.bonusDiceNext;
     if (effects.cleanseAll) result.cleanseAll = true;
     if (effects.triageStrike) result.triageStrike = effects.triageStrike;
-    if (effects.calculatedDosage) result.calculatedDosage = true;
+    if (effects.calculatedDosage) {
+      result.calculatedDosage = true;
+      if (targets[0] && !result.target) result.target = targets[0];
+    }
     if (effects.trickShot) result.trickShot = true;
     if (effects.wildernessInstinct) result.wildernessInstinct = true;
     if (effects.fortunesFavor) result.fortunesFavor = true;
@@ -679,6 +691,22 @@ function getItemData(itemId) {
   return ITEM_DATA[itemId] || null;
 }
 
+// Returns display name for an item: base name + Lv suffix if leveled
+function getItemDisplayName(itemId) {
+  const item = ITEM_DATA[itemId];
+  if (!item) return itemId;
+  const level = item.level || 1;
+  // Get the clean base name (from the base item if it exists, otherwise strip any +N suffixes)
+  let baseName = item.name;
+  if (item.baseId && ITEM_DATA[item.baseId]) {
+    baseName = ITEM_DATA[item.baseId].name;
+  }
+  // Strip any existing +N or LvN suffixes from the name
+  baseName = baseName.replace(/\s*(\+\d+\s*)+/g, '').replace(/\s*Lv\d+/g, '').trim();
+  if (level <= 1) return baseName;
+  return baseName + ' Lv' + level;
+}
+
 // Returns the primary (non-roman) tag for a class, for color coding
 function getPrimaryTag(classId) {
   const tags = CLASS_DATA[classId] ? CLASS_DATA[classId].tags : [];
@@ -721,15 +749,15 @@ function createLeveledItem(itemId, bonusLevels) {
   leveled.baseId = itemId;
   leveled.level = 1 + bonusLevels;
 
-  // Apply bonus levels — each level adds +1 to a random positive stat
-  // If no positive stats exist, reduce the least negative stat instead
-  const statKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] >= 0);
+  // Apply bonus levels — each level adds +1 to a random non-negative stat
+  // If no non-negative stats exist, reduce a negative stat (which may become positive)
   for (let i = 0; i < bonusLevels; i++) {
-    if (statKeys.length > 0) {
-      const key = statKeys[Math.floor(Math.random() * statKeys.length)];
+    const positiveKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] >= 0);
+    if (positiveKeys.length > 0) {
+      const key = positiveKeys[Math.floor(Math.random() * positiveKeys.length)];
       leveled.stats[key]++;
     } else {
-      // No positive stats — reduce the penalty on a negative stat
+      // No non-negative stats — reduce a negative stat (can cross into positive)
       const negKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] < 0);
       if (negKeys.length > 0) {
         const key = negKeys[Math.floor(Math.random() * negKeys.length)];

@@ -198,7 +198,7 @@ const RAW_CLASSES = {
       {
         "id": "bind_wounds", "name": "Bind Wounds", "starter": true,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal an ally for HP equal to die value.",
+        "description": "Heal an ally for 2-4 HP (scales with die).",
         "effects": { "heal": 0, "dieScaleHeal": true }
       },
       {
@@ -293,7 +293,7 @@ const RAW_CLASSES = {
         "id": "loose_arrow", "name": "Loose Arrow", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Loose an arrow at any target. Deals damage equal to die value.",
+        "description": "Loose an arrow at any target. Deal 1-6 damage (scales with die).",
         "effects": { "damage": 0, "dieScaleDamage": true, "bonusDmgScale": 0.85 }
       },
       {
@@ -528,7 +528,7 @@ const RAW_CLASSES = {
       {
         "id": "resonance", "name": "Resonance", "cooldown": 1,
         "cost": { "type": "range", "min": 4, "max": 6 }, "target": "single_ally",
-        "description": "Mark an ally. The next heal they receive is doubled. Grant Block equal to die value.",
+        "description": "Mark an ally. The next heal they receive is doubled. Grant 4-6 Block (scales with die).",
         "effects": { "resonance": true, "block": 0, "dieScaleBlock": true }
       },
       {
@@ -877,7 +877,7 @@ const RAW_CLASSES = {
       {
         "id": "wild_roots", "name": "Wild Roots",
         "cost": { "type": "exact", "val": 2 }, "target": "single_ally", "cooldown": 1,
-        "description": "Heal ally for HP equal to die value. Grant Block equal to die value.",
+        "description": "Heal ally for 2 HP. Grant 2 Block.",
         "effects": { "heal": 0, "dieScaleHeal": true, "block": 0, "dieScaleBlock": true, "bonusHealScale": 0.65 }
       },
       {
@@ -953,13 +953,13 @@ const RAW_CLASSES = {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +1 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.2, "bonusHealScale": 0.70 }
+        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.35, "bonusHealScale": 0.60 }
       },
       {
         "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
         "description": "Heal ally for 3 HP. +1 Morale.",
-        "effects": { "heal": 3, "morale": 1 }
+        "effects": { "heal": 3, "morale": 1, "bonusHealScale": 1.1 }
       },
       {
         "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 2,
@@ -971,7 +971,7 @@ const RAW_CLASSES = {
         "id": "vestas_judgment", "name": "Vesta's Judgment", "cooldown": 1,
         "cost": { "type": "exact", "val": 5 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Deal 4 damage. +66% at 70+ Morale. Another +66% at 85+ Morale.",
+        "description": "Ranged. Deal 4 damage. Grows much stronger at high Morale.",
         "effects": { "damage": 4, "vestasJudgment": true }
       },
       {
@@ -989,7 +989,7 @@ const RAW_CLASSES = {
       {
         "id": "litany_of_courage", "name": "Litany of Courage",
         "cost": { "type": "odd" }, "target": "all_allies",
-        "description": "+Morale equal to die value x2. Grant an ally an extra action.",
+        "description": "+2-12 Morale (scales with die x2). Grant an ally an extra action.",
         "effects": { "litanyOfCourage": true }
       },
       {
@@ -1007,7 +1007,7 @@ const RAW_CLASSES = {
       {
         "id": "wrath_of_vesta", "name": "Wrath of Vesta", "cooldown": 2,
         "cost": { "type": "exact", "val": 6 }, "target": "all_enemies",
-        "description": "2 random enemies take 2 Poison. +50% at 50+ Morale, +50% at 75+ Morale.",
+        "description": "2 random enemies take 2 Poison. Grows stronger at high Morale.",
         "effects": { "wrathOfVesta": true }
       },
       {
@@ -1044,7 +1044,7 @@ const RAW_CLASSES = {
         "cost": { "type": "any" }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Ranged. Deal 1 damage. Apply 1 Poison.",
-        "effects": { "damage": 1, "poison": 1, "bonusDmgScale": 0.75 }
+        "effects": { "damage": 1, "poison": 1, "bonusDmgScale": 0.6 }
       },
       {
         "id": "reconnaissance", "name": "Reconnaissance", "starter": true, "cooldown": 1,
@@ -1056,7 +1056,7 @@ const RAW_CLASSES = {
         "id": "nerve_strike", "name": "Nerve Strike", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
         "description": "Deal 3 damage. Target deals 30% less damage for 1 turn.",
-        "effects": { "damage": 3, "cripple": 1, "bonusDmgScale": 0.5 }
+        "effects": { "damage": 3, "cripple": 1, "bonusDmgScale": 0.75 }
       },
       {
         "id": "misdirection", "name": "Misdirection", "cooldown": 2,
@@ -1067,7 +1067,7 @@ const RAW_CLASSES = {
       {
         "id": "laced_blade", "name": "Laced Blade", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
-        "description": "Deal 3 damage. Apply Poison equal to die value used.",
+        "description": "Deal 3 damage. Apply 5-6 Poison (scales with die).",
         "effects": { "damage": 3, "lacedBlade": true }
       },
       {

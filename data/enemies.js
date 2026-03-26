@@ -627,6 +627,42 @@ const RAW_ENEMIES = {
     ]
   },
 
+  // === DRAGON'S LAIR ENEMIES ===
+
+  "lindwurm": {
+    "id": "lindwurm", "name": "The Lindwurm",
+    "maxHp": 70, "row": "front", "damage": [10, 16], "speed": 1, "xpValue": 40,
+    "isBoss": true, "ai": "boss",
+    "description": "An ancient serpent-dragon of Germanic legend, coiled in a cavern of gold and bones. Its breath chars flesh and its scales turn blades. It grows more frenzied as it bleeds.",
+    "actions": [
+      { "name": "Dragon Fire", "damage": 6, "chance": 0.25, "text": "unleashes a torrent of flame", "aoe": true, "cooldown": 2 },
+      { "name": "Tail Sweep", "damage": 8, "chance": 0.25, "text": "sweeps its massive tail across the front line", "aoe": true },
+      { "name": "Rending Bite", "damage": 14, "chance": 0.25, "text": "lunges with bone-crushing jaws" },
+      { "name": "Terrifying Roar", "damage": 0, "morale": -8, "chance": 0.15, "text": "roars — the cavern shakes and your men falter", "cooldown": 1 },
+      { "name": "Coil and Strike", "damage": 0, "chance": 0.1, "text": "coils tighter, scales hardening", "blockSelf": 8 }
+    ]
+  },
+  "dragon_hatchling": {
+    "id": "dragon_hatchling", "name": "Dragon Hatchling",
+    "maxHp": 16, "row": "front", "damage": [4, 7], "speed": 3, "xpValue": 8,
+    "description": "A young wyrm, barely the size of a hound. Fast and vicious, it spits embers and snaps with needle teeth.",
+    "actions": [
+      { "name": "Ember Spit", "damage": 4, "poisonTarget": 1, "chance": 0.4, "text": "spits burning embers", "ignoreRow": true },
+      { "name": "Needle Fangs", "damage": 6, "chance": 0.35, "text": "bites with needle-sharp teeth" },
+      { "name": "Frenzied Snap", "damage": 3, "chance": 0.25, "text": "snaps wildly at anything nearby" }
+    ]
+  },
+  "wyrm_cultist": {
+    "id": "wyrm_cultist", "name": "Wyrm Cultist",
+    "maxHp": 18, "row": "back", "damage": [3, 6], "speed": 1, "xpValue": 6,
+    "description": "A Germanic priest who worships the dragon as a god. Chants strengthen the wyrm and weaken intruders.",
+    "actions": [
+      { "name": "Dragon's Blessing", "damage": 0, "chance": 0.35, "text": "chants — the dragon's scales harden", "blockAllEnemies": 3 },
+      { "name": "Wyrm Curse", "damage": 3, "morale": -3, "chance": 0.35, "text": "curses in the dragon's tongue", "ignoreRow": true },
+      { "name": "Sacrificial Flame", "damage": 5, "chance": 0.3, "text": "hurls alchemical fire", "ignoreRow": true }
+    ]
+  },
+
   // === STORY BOSSES ===
 
   "corpse_of_arminius": {
