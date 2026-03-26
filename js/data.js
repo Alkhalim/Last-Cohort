@@ -750,20 +750,36 @@ function createLeveledItem(itemId, bonusLevels) {
   leveled.baseId = itemId;
   leveled.level = 1 + bonusLevels;
 
-  // Apply bonus levels — each level adds +1 to a random non-negative stat
-  // If no non-negative stats exist, reduce a negative stat (which may become positive)
-  for (let i = 0; i < bonusLevels; i++) {
-    const positiveKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] >= 0);
-    if (positiveKeys.length > 0) {
-      const key = positiveKeys[Math.floor(Math.random() * positiveKeys.length)];
-      leveled.stats[key]++;
-    } else {
-      // No non-negative stats — reduce a negative stat (can cross into positive)
-      const negKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] < 0);
-      if (negKeys.length > 0) {
-        const key = negKeys[Math.floor(Math.random() * negKeys.length)];
-        leveled.stats[key]++;
+  // Apply bonus levels — distribute proportionally to preserve item identity
+  // Each level goes to the stat with the highest original weight (with randomness for ties)
+  const positiveKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] > 0);
+  const negKeys = Object.keys(leveled.stats).filter(k => k !== 'extraDice' && leveled.stats[k] < 0);
+
+  if (positiveKeys.length > 0) {
+    // Build weighted pool from original stat values (higher base = more upgrades)
+    const baseWeights = {};
+    let totalWeight = 0;
+    for (const k of positiveKeys) {
+      baseWeights[k] = Math.max(1, base.stats[k] || 0);
+      totalWeight += baseWeights[k];
+    }
+
+    for (let i = 0; i < bonusLevels; i++) {
+      // Weighted random pick — stats with higher base values get more upgrades
+      let roll = Math.random() * totalWeight;
+      let chosen = positiveKeys[0];
+      for (const k of positiveKeys) {
+        roll -= baseWeights[k];
+        if (roll <= 0) { chosen = k; break; }
       }
+      leveled.stats[chosen]++;
+    }
+  } else if (negKeys.length > 0) {
+    // No positive stats — reduce negative stats
+    for (let i = 0; i < bonusLevels; i++) {
+      // Pick the least negative stat
+      const key = negKeys.reduce((best, k) => leveled.stats[k] > leveled.stats[best] ? k : best, negKeys[0]);
+      leveled.stats[key]++;
     }
   }
 

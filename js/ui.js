@@ -3363,14 +3363,23 @@ class GameUI {
       if (allStatKeys.length === 0) return;
       const startLevel = item.level || 1;
 
-      // Apply multiple levels of upgrades, randomizing stat each level
+      // Apply multiple levels — weighted by original stat proportions to preserve identity
+      const baseItem = ITEM_DATA[item.baseId || itemId] || item;
       const upgradeDetails = [];
       for (let lvl = 0; lvl < SMITH_UPGRADE_LEVELS; lvl++) {
         const curStats = ITEM_DATA[itemId].stats;
         let eligible = allStatKeys.filter(k => curStats[k] >= 0);
         if (eligible.length === 0) eligible = allStatKeys.filter(k => curStats[k] < 0);
         if (eligible.length === 0) break;
-        const statKey = eligible[Math.floor(Math.random() * eligible.length)];
+        // Weighted pick based on original base stats
+        let totalW = 0;
+        const weights = eligible.map(k => { const w = Math.max(1, Math.abs(baseItem.stats[k] || 0)); totalW += w; return w; });
+        let roll = Math.random() * totalW;
+        let statKey = eligible[0];
+        for (let ei = 0; ei < eligible.length; ei++) {
+          roll -= weights[ei];
+          if (roll <= 0) { statKey = eligible[ei]; break; }
+        }
         ITEM_DATA[itemId].stats[statKey]++;
         if (statKey === 'maxHp') { unit.maxHp++; unit.baseMaxHp++; unit.hp++; }
         const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;
@@ -4817,13 +4826,22 @@ class GameUI {
       if (allStatKeys.length === 0) return;
       const startLevel = item.level || 1;
 
+      const baseItem = ITEM_DATA[item.baseId || itemId] || item;
       const upgradeDetails = [];
       for (let lvl = 0; lvl < REST_SMITH_LEVELS; lvl++) {
         const curStats = ITEM_DATA[itemId].stats;
         let eligible = allStatKeys.filter(k => curStats[k] >= 0);
         if (eligible.length === 0) eligible = allStatKeys.filter(k => curStats[k] < 0);
         if (eligible.length === 0) break;
-        const statKey = eligible[Math.floor(Math.random() * eligible.length)];
+        // Weighted pick based on original base stats
+        let totalW = 0;
+        const weights = eligible.map(k => { const w = Math.max(1, Math.abs(baseItem.stats[k] || 0)); totalW += w; return w; });
+        let roll = Math.random() * totalW;
+        let statKey = eligible[0];
+        for (let ei = 0; ei < eligible.length; ei++) {
+          roll -= weights[ei];
+          if (roll <= 0) { statKey = eligible[ei]; break; }
+        }
         ITEM_DATA[itemId].stats[statKey]++;
         if (statKey === 'maxHp') { unit.maxHp++; unit.baseMaxHp++; unit.hp++; }
         const statLabel = { damage: 'Damage', block: 'Block', maxHp: 'HP', heal: 'Heal', poison: 'Poison' }[statKey] || statKey;

@@ -3566,32 +3566,25 @@ class CombatEngine {
     const alive = this.enemies.filter(e => !e.dead);
     if (alive.length === 0) return;
 
-    // Lindwurm Lord: devour sheep to heal at start of enemy turn
+    // Lindwurm Lord: devour sheep to heal and gain damage at start of enemy turn
     const lindwurmLord = alive.find(e => e.id === 'lindwurm_lord');
     if (lindwurmLord) {
       const sheep = alive.filter(e => e.id === 'lair_sheep');
       for (const s of sheep) {
         const healAmt = Math.min(12, lindwurmLord.maxHp - lindwurmLord.hp);
+        lindwurmLord.actions.forEach(a => { if (a.damage > 0) a.damage += 2; });
         if (healAmt > 0) {
           lindwurmLord.hp += healAmt;
-          this.addLog(`${lindwurmLord.name} devours ${s.name}! (+${healAmt} HP)`);
-          if (this.onVisual) this.onVisual('statusText', { enemyIndex: lindwurmLord.index, text: `+${healAmt} HP`, color: 'var(--green-bright)' });
+          this.addLog(`${lindwurmLord.name} devours ${s.name}! (+${healAmt} HP, +2 damage)`);
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: lindwurmLord.index, text: `Fed! +2 dmg`, color: 'var(--red-bright)' });
+        } else {
+          this.addLog(`${lindwurmLord.name} devours ${s.name}! (+2 damage)`);
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: lindwurmLord.index, text: `Fed! +2 dmg`, color: 'var(--red-bright)' });
         }
         s.hp = 0;
         s.dead = true;
         this.killedEnemies.push(s.id);
         this.addLog(`${s.name} is consumed!`);
-      }
-    }
-
-    // Thusnelda passive: gains block per living ally at start of enemy turn
-    const thusnelda = alive.find(e => e.id === 'thusnelda');
-    if (thusnelda) {
-      const allyCount = alive.filter(e => e !== thusnelda).length;
-      if (allyCount > 0) {
-        const blk = allyCount * 2;
-        thusnelda.block = (thusnelda.block || 0) + blk;
-        this.addLog(`Thusnelda's allies shield her. (+${blk} Block from ${allyCount} allies)`);
       }
     }
 
@@ -3602,6 +3595,17 @@ class CombatEngine {
     if (index >= enemies.length || this.phase === PHASE.VICTORY || this.phase === PHASE.DEFEAT) {
       this.checkPartyDowned();
       if (this.phase !== PHASE.DEFEAT && this.phase !== PHASE.VICTORY) {
+        // Thusnelda passive: gains 12 block per living ally at end of enemy turn (before poison)
+        const thusnelda = this.enemies.find(e => e.id === 'thusnelda' && !e.dead);
+        if (thusnelda) {
+          const allyCount = this.enemies.filter(e => !e.dead && e !== thusnelda).length;
+          if (allyCount > 0) {
+            const blk = allyCount * 12;
+            thusnelda.block = (thusnelda.block || 0) + blk;
+            this.addLog(`Thusnelda's allies shield her. (+${blk} Block from ${allyCount} allies)`);
+          }
+        }
+
         // Poison tick on enemies at end of enemy turn
         this.enemies.forEach(e => {
           if (!e.dead && e.poison > 0) {
