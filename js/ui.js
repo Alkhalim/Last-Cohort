@@ -1038,13 +1038,16 @@ class GameUI {
         const rawBonusDmg = dieScale !== 1 ? Math.floor(ownBonusDmg * dieScale) + buffDmg : effectiveBonusDmg;
         const baseDmg = skill.effects.damage || 0;
         const vals = dieRange(costType);
-        // Die-scale: equipment bonus scales with die value (die/3)
-        const loDieScale = vals[0] / 3;
-        const hiDieScale = vals[vals.length - 1] / 3;
-        const loBonusDmg = Math.floor(rawBonusDmg * loDieScale);
-        const hiBonusDmg = Math.floor(rawBonusDmg * hiDieScale);
-        // If dice are staged, show exact value
-        const exactDmg = stagedDieTotal != null ? Math.max(1, baseDmg + stagedDieTotal + Math.floor(rawBonusDmg * (stagedDieTotal / 3))) : null;
+        // Die-scale: equipment bonus scales with die value (softened curve)
+        const soften = (v) => { const r = v / 3; return r <= 1 ? r : 1 + (r - 1) * 0.7; };
+        const loBonusDmg = Math.floor(rawBonusDmg * soften(vals[0]));
+        const hiBonusDmg = Math.floor(rawBonusDmg * soften(vals[vals.length - 1]));
+        // If dice are staged, show exact value (uses softened die-scale curve)
+        const exactDmg = stagedDieTotal != null ? (() => {
+          const rawScale = stagedDieTotal / 3;
+          const softScale = rawScale <= 1 ? rawScale : 1 + (rawScale - 1) * 0.7;
+          return Math.max(1, baseDmg + stagedDieTotal + Math.floor(rawBonusDmg * softScale));
+        })() : null;
         // "X + die value damage" pattern
         desc = desc.replace(/(\d+) \+ die value damage/g, () => {
           if (exactDmg != null) {
@@ -3199,7 +3202,7 @@ class GameUI {
       // Gather all upgradeable stats — scales with difficulty like event grants
       const effects = baseDef.effects || {};
       const diff = window.game ? window.game.difficulty : 1;
-      const upgradeBonus = diff >= 7 ? 2 : diff >= 5 ? 1 : 0;
+      const upgradeBonus = diff >= 7 ? 3 : diff >= 5 ? 2 : diff >= 3 ? 1 : 0;
       const amt = 1 + upgradeBonus;
       const moraleAmt = 3 + upgradeBonus;
       const friendlyNames = { counterStance: 'counter damage', overwatch: 'overwatch damage', snareTrap: 'trap damage', suppress: 'suppress duration', cripple: 'cripple duration', deafen: 'deafen duration', condemn: 'condemn duration', transfusion: 'transfer HP' };
@@ -4502,9 +4505,10 @@ class GameUI {
       const card = document.createElement('div');
       card.className = 'levelup-skill-card';
       const cdText = skill.cooldown ? `<span style="color:var(--text-dim);font-size:0.7rem;"> CD: ${skill.cooldown}</span>` : `<span style="color:var(--green-bright);font-size:0.7rem;"> No CD</span>`;
+      const enhancedDesc = this._enhanceSkillDesc(skill, unit);
       card.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${cdText}</div>
-        <div class="skill-desc">${skill.description}</div>
+        <div class="skill-desc">${enhancedDesc}</div>
       `;
       card.addEventListener('click', () => {
         this._cachedSkillChoicesMap = null;
@@ -4968,7 +4972,7 @@ class GameUI {
     choicesEl.appendChild(titleEl);
 
     const diff = window.game ? window.game.difficulty : 1;
-    const upgradeBonus = diff >= 7 ? 2 : diff >= 5 ? 1 : 0;
+    const upgradeBonus = diff >= 7 ? 3 : diff >= 5 ? 2 : diff >= 3 ? 1 : 0;
     const amt = 1 + upgradeBonus;
     const moraleAmt = 3 + upgradeBonus;
 

@@ -91,6 +91,8 @@ class CombatEngine {
     this._marsSkillCount = 0;
     this._aquilaCuirassUsed = false;
     this._totalSkillsUsed = 0;
+    this._spectralQueue = null; // Reset per-fight, but _runSpectralDefeated persists
+    this._spectralSpawnedThisFight = 0;
     this.killedEnemies = [];
     this.party.forEach(u => {
       // Preserve camp-granted block and buffs, only reset combat-specific state
@@ -219,6 +221,26 @@ class CombatEngine {
         const witch = this.enemies.find(e => e.id === 'grove_witch' && !e.dead);
         if (witch) this.spawnHealingTotem(witch);
       }
+      // Germanic Warlord: starts with block equal to highest equipBlock in party
+      const warlordStart = this.enemies.find(e => e.id === 'arminius_champion' && !e.dead);
+      if (warlordStart) {
+        const highestBlock = Math.max(...this.party.map(u => u.equipBlock || 0));
+        if (highestBlock > 0) {
+          warlordStart.block = (warlordStart.block || 0) + highestBlock;
+          this.addLog(`${warlordStart.name} wears stolen Roman armor! (+${highestBlock} Block)`);
+        }
+      }
+
+      // Serpent Shaman: starts with block equal to highest equipPoison in party
+      const shamanStart = this.enemies.find(e => e.id === 'serpent_shaman' && !e.dead);
+      if (shamanStart) {
+        const highestPoison = Math.max(...this.party.map(u => u.equipPoison || 0));
+        if (highestPoison > 0) {
+          shamanStart.block = (shamanStart.block || 0) + highestPoison;
+          this.addLog(`${shamanStart.name}'s scales shimmer with stolen venom! (+${highestPoison} Block)`);
+        }
+      }
+
       // Apply boon effects at combat start
       const boons = this.getActiveBoons();
       if (boons.includes('serpent_blessing')) {
@@ -265,16 +287,20 @@ class CombatEngine {
     if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
       scaledMaxHp = Math.round(scaledMaxHp * 1.2);
     }
+    const blockScale = 1.25;
     const scaledActions = data.actions.map(a => ({
       ...a,
       damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.35)) : 0,
       poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
-      blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
-      blockFrontRow: a.blockFrontRow ? a.blockFrontRow + diffBonus : undefined,
-      blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
+      blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + diffBonus) * blockScale) : undefined,
+      blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + diffBonus) * blockScale) : undefined,
+      blockSelf: a.blockSelf ? Math.round((a.blockSelf + diffBonus) * blockScale) : undefined,
+      healSelf: a.healSelf ? Math.round(a.healSelf * (1 + diffBonus * 0.25)) : undefined,
+      healAlly: a.healAlly ? Math.round(a.healAlly * (1 + diffBonus * 0.25)) : undefined,
+      healBoss: a.healBoss ? Math.round(a.healBoss * (1 + diffBonus * 0.25)) : undefined,
     }));
-    // Determine starting block from blockSelf action (e.g., Cheruscan Guardian)
-    let startBlock = 0;
+    // Determine starting block from blockSelf action (e.g., Cheruscan Guardian) or flat startBlock
+    let startBlock = data.startBlock ? Math.round((data.startBlock + diffBonus) * blockScale) : 0;
     if (data.startWithSelfBlock) {
       const selfBlockAction = scaledActions.find(a => a.blockSelf);
       if (selfBlockAction) startBlock = selfBlockAction.blockSelf;
@@ -795,25 +821,32 @@ class CombatEngine {
       }
     }
 
-    // Serpent Shaman: passive dance — swap with a snake and heal each turn
+    // Serpent Shaman: passive dance — swap with a snake and heal 6 each turn
     const shaman = this.enemies.find(e => e.id === 'serpent_shaman' && !e.dead);
     if (shaman) {
       const snakes = this.enemies.filter(e => !e.dead && e !== shaman && (e.id === 'fen_viper' || e.id === 'serpent_shade'));
       if (snakes.length > 0) {
+        // Prefer a snake in the opposite row; if all in same row, swap forces row change
         const oppositeRow = shaman.row === 'front' ? 'back' : 'front';
         let swapTarget = snakes.find(s => s.row === oppositeRow);
-        if (!swapTarget) swapTarget = snakes[Math.floor(Math.random() * snakes.length)];
-        const oldRow = shaman.row;
-        shaman.row = swapTarget.row;
-        swapTarget.row = oldRow;
-        const heal = Math.min(3, shaman.maxHp - shaman.hp);
+        if (swapTarget) {
+          // Normal swap — they trade rows
+          const oldRow = shaman.row;
+          shaman.row = swapTarget.row;
+          swapTarget.row = oldRow;
+        } else {
+          // All in same row — shaman moves to opposite, snake stays
+          shaman.row = oppositeRow;
+          swapTarget = snakes[Math.floor(Math.random() * snakes.length)];
+        }
+        const heal = Math.min(6, shaman.maxHp - shaman.hp);
         if (heal > 0) shaman.hp += heal;
         this.addLog(`${shaman.name} dances — swaps with ${swapTarget.name} and heals ${heal} HP!`);
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: shaman.index, text: 'Dance!', color: '#8a4' });
       } else {
-        // No snakes — just swap row and heal
+        // No snakes — just swap row and heal (reduced)
         shaman.row = shaman.row === 'front' ? 'back' : 'front';
-        const heal = Math.min(2, shaman.maxHp - shaman.hp);
+        const heal = Math.min(4, shaman.maxHp - shaman.hp);
         if (heal > 0) shaman.hp += heal;
         this.addLog(`${shaman.name} dances to the ${shaman.row} row! (+${heal} HP)`);
       }
@@ -860,24 +893,29 @@ class CombatEngine {
     }
 
     // Story bosses: spawn spectral images of previously killed bosses
+    // Spectrals killed in any story fight are permanently gone for the rest of the run
     const storyBossIds = ['corpse_of_arminius', 'corpse_of_varus', 'spirit_of_arminius', 'spirit_of_varus'];
     const hasStoryBoss = this.enemies.some(e => storyBossIds.includes(e.id) && !e.dead);
-    if (hasStoryBoss && this.turn >= 2 && this.runKilledBosses && this.runKilledBosses.length > 0) {
+    const isSpirits = this.enemies.some(e => (e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus') && !e.dead);
+    const spectralTurnThreshold = isSpirits ? 2 : 3;
+    if (hasStoryBoss && this.turn >= spectralTurnThreshold && this.runKilledBosses && this.runKilledBosses.length > 0) {
+      // Run-wide defeated spectrals persist across all story boss fights
+      if (!this._runSpectralDefeated) this._runSpectralDefeated = new Set();
       if (!this._spectralQueue) {
-        // Build queue: exclude all arminius/varus variants
         const excludeIds = ['corpse_of_arminius', 'corpse_of_varus', 'spirit_of_arminius', 'spirit_of_varus'];
-        this._spectralQueue = this.runKilledBosses.filter(id => !excludeIds.includes(id));
-        this._spectralDefeated = new Set();
+        this._spectralQueue = this.runKilledBosses.filter(id => !excludeIds.includes(id) && !this._runSpectralDefeated.has(id));
+        this._spectralSpawnedThisFight = 0;
       }
-      // Corpse fights: max 1 spectral. Spirits fight: max 2.
-      const isSpirits = this.enemies.some(e => (e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus') && !e.dead);
+      // Corpse fights: max 1 spectral total. Spirits fight: up to 2 at a time.
       const maxSpectrals = isSpirits ? 2 : 1;
+      const maxThisFight = isSpirits ? 99 : 1;
       const livingSpectrals = this.enemies.filter(e => !e.dead && e._isSpectral).length;
-      const remaining = this._spectralQueue.filter(id => !this._spectralDefeated.has(id));
-      if (livingSpectrals < maxSpectrals && remaining.length > 0) {
+      const remaining = this._spectralQueue.filter(id => !this._runSpectralDefeated.has(id));
+      if (livingSpectrals < maxSpectrals && remaining.length > 0 && this._spectralSpawnedThisFight < maxThisFight) {
         const nextId = remaining[0];
         const data = ENEMY_DATA[nextId];
         if (data && this.enemies.filter(e => !e.dead).length < 6) {
+          this._spectralSpawnedThisFight++;
           const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
           const spectralHp = Math.round(data.maxHp * this.getHpScale(diffBonus) / 3);
           const spectralActions = data.actions.map(a => ({
@@ -899,7 +937,6 @@ class CombatEngine {
             _spectralOf: nextId,
           };
           this.enemies.push(spectral);
-          this._spectralDefeated.add(nextId);
           this.addLog(`A spectral image of ${data.name} materializes from the void!`);
           if (this.onVisual) this.onVisual('statusText', { enemyIndex: spectral.index, text: 'Spectral!', color: '#7a4aaa' });
           setTimeout(() => { spectral.justSpawned = false; this.update(); }, 500);
@@ -1535,6 +1572,11 @@ class CombatEngine {
         parts.push(`${result.target.name} is weakened! (-40% damage for 2 turns)`);
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Sundered!', color: 'var(--blue-bright)' });
       }
+    }
+
+    // Wolfbite: snapshot block state before damage removes it
+    if (result.wolfbite && result.target) {
+      result._targetHadBlock = (result.target.block || 0) > 0;
     }
 
     if (result.damage && result.target && result.target.hp !== undefined) {
@@ -2771,6 +2813,10 @@ class CombatEngine {
         if (!u.downed) {
           u.poison = 0;
           u._stunNextTurn = false;
+          if (u._stunnedThisTurn) {
+            u._stunnedThisTurn = false;
+            u.actedThisTurn = false;
+          }
         }
       });
       parts.push(`All allies cleansed of poison and stun.`);
@@ -2988,14 +3034,12 @@ class CombatEngine {
       }
     }
 
-    // Wolfbite: if target has block, apply 5 poison instead of dealing bonus damage
-    if (result.wolfbite && result.target) {
-      if ((result.target.block || 0) > 0) {
-        const poisonAmt = 5 + (unit.equipPoison || 0);
-        result.target.poison = (result.target.poison || 0) + poisonAmt;
-        unit.stats.poisonInflicted += poisonAmt;
-        parts.push(`Target has Block — Wolfbite applies ${poisonAmt} Poison!`);
-      }
+    // Wolfbite: if target had block before damage, apply 6 poison
+    if (result.wolfbite && result.target && result._targetHadBlock) {
+      const poisonAmt = 7 + (unit.equipPoison || 0);
+      result.target.poison = (result.target.poison || 0) + poisonAmt;
+      unit.stats.poisonInflicted += poisonAmt;
+      parts.push(`Target had Block — Wolfbite applies ${poisonAmt} Poison!`);
     }
 
     // Shield Wall Dance: gain block = pair value x2
@@ -3288,6 +3332,11 @@ class CombatEngine {
           this.totalEnemiesKilled++;
           this.addLog(`${e.name} falls!`);
 
+          // Spectral killed — permanently remove from future story boss fights
+          if (e._isSpectral && e._spectralOf && this._runSpectralDefeated) {
+            this._runSpectralDefeated.add(e._spectralOf);
+          }
+
           // Morale restored on kill — based on enemy base maxHp, doubled for seers
           const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
           let moraleRestore;
@@ -3380,7 +3429,7 @@ class CombatEngine {
 
           // --- Boss-specific death reactions ---
 
-          // Arminius's Champion: revenge — deal 5 damage to whoever killed his ally
+          // Arminius's Champion: revenge — deal 7 damage when any ally dies
           const champion = this.enemies.find(b => b.id === 'arminius_champion' && !b.dead && b !== e);
           if (champion && !e.isBoss) {
             champion.row = 'front';
@@ -3388,10 +3437,10 @@ class CombatEngine {
             const aliveParty = this.party.filter(u => !u.downed);
             if (aliveParty.length > 0) {
               const victim = aliveParty[Math.floor(Math.random() * aliveParty.length)];
-              victim.hp = Math.max(1, victim.hp - 5);
-              victim.stats.damageTaken += 5;
-              this.addLog(`${champion.name} charges forward in rage and strikes ${victim.name} for 5 damage!`);
-              if (this.onVisual) this.onVisual('unitHit', { unitIndex: victim.index, damage: 5 });
+              victim.hp = Math.max(1, victim.hp - 7);
+              victim.stats.damageTaken += 7;
+              this.addLog(`${champion.name} charges forward in rage and strikes ${victim.name} for 7 damage!`);
+              if (this.onVisual) this.onVisual('unitHit', { unitIndex: victim.index, damage: 7 });
             }
           }
 
@@ -3405,6 +3454,19 @@ class CombatEngine {
                 this.addLog(`${t.name} withers and crumbles!`);
               }
             });
+          }
+
+          // Serpent Shaman: when a snake dies, poison a random player unit (3)
+          const shamanAlive = this.enemies.find(b => b.id === 'serpent_shaman' && !b.dead);
+          if (shamanAlive && (e.id === 'fen_viper' || e.id === 'serpent_shade')) {
+            const aliveParty = this.party.filter(u => !u.downed);
+            if (aliveParty.length > 0) {
+              const victim = aliveParty[Math.floor(Math.random() * aliveParty.length)];
+              const poisonAmt = 3;
+              victim.poison = (victim.poison || 0) + poisonAmt;
+              this.addLog(`${shamanAlive.name} hisses — ${victim.name} is poisoned in revenge! (+${poisonAmt} Poison)`);
+              if (this.onVisual) this.onVisual('unitPoison', { unitIndex: victim.index, amount: poisonAmt });
+            }
           }
 
           // Mire Mother: gains +2 damage per action when a boar dies
@@ -4918,13 +4980,17 @@ class CombatEngine {
     if (this.enemies.filter(e => !e.dead).length >= 6) return;
     const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
     const scaledMaxHp = Math.round(data.maxHp * this.getHpScale(diffBonus));
+    const blockScale = 1.25;
     const scaledActions = data.actions.map(a => ({
       ...a,
       damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.35)) : 0,
       poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
-      blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
-      blockFrontRow: a.blockFrontRow ? a.blockFrontRow + diffBonus : undefined,
-      blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
+      blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + diffBonus) * blockScale) : undefined,
+      blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + diffBonus) * blockScale) : undefined,
+      blockSelf: a.blockSelf ? Math.round((a.blockSelf + diffBonus) * blockScale) : undefined,
+      healSelf: a.healSelf ? Math.round(a.healSelf * (1 + diffBonus * 0.25)) : undefined,
+      healAlly: a.healAlly ? Math.round(a.healAlly * (1 + diffBonus * 0.25)) : undefined,
+      healBoss: a.healBoss ? Math.round(a.healBoss * (1 + diffBonus * 0.25)) : undefined,
     }));
     const enemy = {
       index: this.enemies.length,

@@ -6,7 +6,7 @@
 const RAW_ENEMIES = {
   "cheruscan_raider": {
     "id": "cheruscan_raider", "name": "Cheruscan Raider",
-    "maxHp": 18, "row": "front", "damage": [4, 7], "speed": 1, "xpValue": 5,
+    "maxHp": 17, "row": "front", "damage": [6, 9], "speed": 1, "xpValue": 5, "maxDifficulty": 4,
     "description": "Germanic warrior. Aggressive melee fighter.", "ai": "aggressive",
     "actions": [
       { "name": "Spear Thrust", "damage": 4, "chance": 0.6, "text": "thrusts spear" },
@@ -16,7 +16,7 @@ const RAW_ENEMIES = {
   },
   "sling_hunter": {
     "id": "sling_hunter", "name": "Sling Hunter",
-    "maxHp": 12, "row": "back", "damage": [3, 5], "speed": 2, "xpValue": 4,
+    "maxHp": 10, "row": "back", "damage": [5, 7], "speed": 2, "xpValue": 4, "maxDifficulty": 4,
     "description": "Ranged skirmisher. Targets the strongest unit.", "ai": "bully",
     "actions": [
       { "name": "Sling Stone", "damage": 3, "chance": 0.7, "text": "hurls a sling stone", "ignoreRow": true },
@@ -26,7 +26,7 @@ const RAW_ENEMIES = {
   },
   "marsh_wolf": {
     "id": "marsh_wolf", "name": "Marsh Wolf",
-    "maxHp": 14, "row": "front", "damage": [3, 6], "speed": 3, "xpValue": 4,
+    "maxHp": 16, "row": "front", "damage": [5, 8], "speed": 3, "xpValue": 4, "maxDifficulty": 4,
     "description": "Fast predator. Attacks twice when wounded.", "ai": "aggressive",
     "woundedDoubleAttack": true,
     "actions": [
@@ -37,7 +37,7 @@ const RAW_ENEMIES = {
   },
   "fen_viper": {
     "id": "fen_viper", "name": "Fen Viper",
-    "maxHp": 11, "row": "front", "damage": [2, 4], "speed": 4, "xpValue": 4,
+    "maxHp": 13, "row": "front", "damage": [2, 4], "speed": 4, "xpValue": 4, "maxDifficulty": 4,
     "description": "A venomous marsh snake. Its bite festers.", "ai": "aggressive",
     "actions": [
       { "name": "Venomous Bite", "damage": 2, "poisonTarget": 3, "chance": 0.5, "text": "sinks venomous fangs" },
@@ -47,7 +47,7 @@ const RAW_ENEMIES = {
   },
   "bog_seer": {
     "id": "bog_seer", "name": "Bog Seer",
-    "maxHp": 10, "row": "back", "damage": [2, 3], "speed": 1, "xpValue": 5,
+    "maxHp": 14, "row": "back", "damage": [2, 3], "speed": 1, "xpValue": 5, "maxDifficulty": 5,
     "description": "A hunched figure draped in moss, chanting from the treeline. Attacks the mind. Killing one lifts a great weight.",
     "deathMoraleMultiplier": 2,
     "actions": [
@@ -59,7 +59,7 @@ const RAW_ENEMIES = {
   },
   "oak_shield": {
     "id": "oak_shield", "name": "Oak Shield",
-    "maxHp": 35, "row": "front", "damage": [6, 10], "speed": 1, "xpValue": 10,
+    "maxHp": 39, "row": "front", "damage": [7, 11], "speed": 1, "xpValue": 10, "maxDifficulty": 5,
     "isElite": true,
     "description": "A massive warrior carrying a shield hewn from a single oak. Commands respect and fear.", "ai": "aggressive",
     "actions": [
@@ -71,7 +71,8 @@ const RAW_ENEMIES = {
   },
   "cheruscan_shieldbearer": {
     "id": "cheruscan_shieldbearer", "name": "Cheruscan Shieldbearer",
-    "maxHp": 20, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 6,
+    "maxHp": 24, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 6, "maxDifficulty": 5,
+    "startBlock": 5,
     "description": "A broad-shouldered warrior crouching behind an oversized wicker-and-hide shield, covering those behind him.", "ai": "aggressive",
     "actions": [
       { "name": "Wall of Shields", "damage": 0, "chance": 0.4, "text": "raises the great shield, protecting nearby warriors", "blockAllEnemies": 3 },
@@ -81,7 +82,7 @@ const RAW_ENEMIES = {
   },
   "mire_leech": {
     "id": "mire_leech", "name": "Mire Leech",
-    "maxHp": 8, "row": "front", "damage": [2, 4], "speed": 2, "xpValue": 3,
+    "maxHp": 10, "row": "front", "damage": [2, 4], "speed": 2, "xpValue": 3, "maxDifficulty": 3,
     "description": "A bloated, arm-length parasite from the black swamp water. The men have heard stories about these crawling into the wounded.", "ai": "aggressive",
     "canSpawn": true, "deathPoison": 2,
     "actions": [
@@ -132,6 +133,7 @@ const RAW_ENEMIES = {
     "id": "arminius_champion", "name": "Germanic Warlord",
     "maxHp": 55, "row": "front", "damage": [6, 10], "speed": 2, "xpValue": 20,
     "isBoss": true, "ai": "boss",
+    "description": "A hulking war leader clad in stolen Roman armor. Starts with Block equal to your best. When an ally falls, he charges forward and strikes for 7 damage.",
     "actions": [
       { "name": "Crushing Blow", "damage": 7, "chance": 0.4, "text": "brings down a crushing blow" },
       { "name": "Shield Bash", "damage": 4, "chance": 0.25, "text": "bashes with iron shield" },
@@ -154,10 +156,10 @@ const RAW_ENEMIES = {
 
   "cheruscan_guardian": {
     "id": "cheruscan_guardian", "name": "Cheruscan Guardian",
-    "maxHp": 14, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 5,
+    "maxHp": 17, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 5, "maxDifficulty": 5,
     "description": "A disciplined warrior who fights defensively, shielding his brothers. Only strikes when cornered alone. Enters battle braced.",
     "ai": "defensive",
-    "startWithSelfBlock": true,
+    "startBlock": 3,
     "actions": [
       { "name": "Shield Cover", "damage": 0, "chance": 0.5, "text": "raises his shield, covering nearby warriors", "blockFrontRow": 4 },
       { "name": "Brace", "damage": 0, "chance": 0.3, "text": "braces behind his shield", "blockSelf": 4 },
@@ -218,9 +220,9 @@ const RAW_ENEMIES = {
     "maxHp": 16, "row": "back", "damage": [3, 6], "speed": 1, "xpValue": 6,
     "minDifficulty": 3,
     "description": "A hunched Germanic seer who carves runes of power. Each turn his wards grow stronger — and his curses erode your dice. Kill him fast or his runes will overwhelm you.",
-    "startBlockAllEnemies": 3,
+    "startBlockAllEnemies": 5,
     "actions": [
-      { "name": "Rune Ward", "damage": 0, "chance": 0.35, "text": "carves a protective rune — all warriors brace", "blockAllEnemies": 3 },
+      { "name": "Rune Ward", "damage": 0, "chance": 0.35, "text": "carves a protective rune — all warriors brace", "blockAllEnemies": 5 },
       { "name": "Rune Bolt", "damage": 5, "chance": 0.25, "text": "hurls a rune-charged bolt of energy", "ignoreRow": true },
       { "name": "Curse Rune", "damage": 2, "morale": -4, "poisonTarget": 2, "chance": 0.2, "text": "traces a curse rune — dread and poison seep in", "ignoreRow": true },
       { "name": "Rune of Binding", "damage": 0, "chance": 0.2, "text": "carves a binding rune — all dice weaken", "cooldown": 2, "runeBinding": true }
@@ -329,11 +331,12 @@ const RAW_ENEMIES = {
     "maxHp": 42, "row": "back", "damage": [5, 10], "speed": 2, "xpValue": 25,
     "minDifficulty": 3,
     "isBoss": true, "ai": "boss",
-    "description": "A painted shaman who dances between the lines, swapping places with her serpents. Fen vipers obey her call. Her venom weakens the body while her chants shatter the mind. Pin her down — if you can.",
+    "description": "A painted shaman who dances between the lines. Starts with Block equal to your highest poison stat. Heals 6 HP each turn by dancing with her snakes. When a snake dies, poisons a random soldier (3).",
     "actions": [
-      { "name": "Venom Spit", "damage": 5, "poisonTarget": 3, "chance": 0.3, "text": "spits a stream of dark venom", "ignoreRow": true },
-      { "name": "Fang Strike", "damage": 7, "poisonTarget": 4, "chance": 0.35, "text": "lunges with a fanged staff" },
-      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 2, "chance": 0.35, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 }
+      { "name": "Venom Spit", "damage": 5, "poisonTarget": 3, "chance": 0.25, "text": "spits a stream of dark venom", "ignoreRow": true },
+      { "name": "Fang Strike", "damage": 7, "poisonTarget": 4, "chance": 0.3, "text": "lunges with a fanged staff" },
+      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 2, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 },
+      { "name": "Call Serpent", "damage": 0, "chance": 0.2, "text": "whistles — a serpent slithers from the shadows. The shaman's wounds close.", "spawn": "serpent_shade", "cooldown": 2 }
     ]
   },
   "serpent_shade": {

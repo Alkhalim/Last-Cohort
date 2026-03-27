@@ -883,7 +883,7 @@ const RAW_CLASSES = {
       {
         "id": "wolfbite", "name": "Wolfbite", "cooldown": 1,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_enemy",
-        "description": "Deal 5 damage. If target has Block, apply 5 Poison.",
+        "description": "Deal 5 damage. If target has Block, apply 7 Poison.",
         "effects": { "damage": 5, "wolfbite": true }
       },
       {
@@ -903,7 +903,7 @@ const RAW_CLASSES = {
         "id": "twinned_herbs", "name": "Twinned Herbs", "cooldown": 2,
         "cost": { "type": "even" }, "target": "all_allies",
         "description": "Heal all allies for 3 HP. Cleanse all poison.",
-        "effects": { "healAll": 3, "cleanseAll": true, "bonusHealScale": 0.45 }
+        "effects": { "healAll": 3, "cleanseAll": true, "bonusHealScale": 0.3 }
       },
       {
         "id": "berserkers_howl", "name": "Berserker's Howl", "cooldown": 3,
@@ -927,8 +927,8 @@ const RAW_CLASSES = {
         "id": "predators_pounce", "name": "Predator's Pounce", "cooldown": 2,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "2 dice totaling 8+. Deal 11 damage. Bonus damage equal to 50% of your Block.",
-        "effects": { "damage": 11, "predatorsPounce": true }
+        "description": "2 dice totaling 8+. Deal 9 damage. Bonus damage equal to 50% of your Block.",
+        "effects": { "damage": 9, "predatorsPounce": true }
       }
     ]
   },
@@ -953,13 +953,13 @@ const RAW_CLASSES = {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +1 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.35, "bonusHealScale": 0.9 }
+        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.55, "bonusHealScale": 0.9 }
       },
       {
         "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
-        "description": "Heal ally for 4 HP. +1 Morale.",
-        "effects": { "heal": 4, "morale": 1, "bonusHealScale": 1.1 }
+        "description": "Heal ally for 4 HP. +3 Morale.",
+        "effects": { "heal": 4, "morale": 2, "bonusHealScale": 1.2 }
       },
       {
         "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 2,
@@ -1020,7 +1020,7 @@ const RAW_CLASSES = {
         "id": "eternal_flame", "name": "Eternal Flame", "cooldown": 4,
         "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 9+. Free action. Heal all 6 HP, gain 4 Block, +7 Morale. Act again.",
-        "effects": { "healAll": 6, "blockAll": 4, "morale": 7, "freeAction": true }
+        "effects": { "healAll": 6, "blockAll": 4, "morale": 7, "freeAction": true, "bonusHealScale": 0.8, "blockScale": 0.8 }
       }
     ]
   },
