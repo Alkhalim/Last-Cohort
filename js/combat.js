@@ -869,6 +869,18 @@ class CombatEngine {
       }
     }
 
+    // Leech Mound / Lesser: venom 1 die — using it poisons the caster for 2
+    const leechBoss = this.enemies.find(e => (e.id === 'leech_mound' || e.id === 'lesser_leech_mound') && !e.dead);
+    if (leechBoss) {
+      const available = this.dicePool.dice.filter(d => !d.used && !d._venomed);
+      if (available.length > 0) {
+        const victim = available[Math.floor(Math.random() * available.length)];
+        victim._venomed = true;
+        this.addLog(`The ${leechBoss.name} oozes venom onto a die! Using it will poison the caster.`);
+        if (this.onVisual) this.onVisual('dicePassive', { triggers: [{ dieId: victim.id, type: 'damage' }] });
+      }
+    }
+
     // Germanic Warlord: Iron Discipline — every 3 turns, grant all enemies 7 Block
     const warlord = this.enemies.find(e => e.id === 'arminius_champion' && !e.dead);
     if (warlord && this.turn > 0 && this.turn % 3 === 0) {
@@ -1414,6 +1426,16 @@ class CombatEngine {
 
     const usedDice = diceIds.map(id => this.dicePool.dice.find(d => d.id === id));
     diceIds.forEach(id => this.dicePool.useDie(id));
+
+    // Venomed dice: using a venomed die poisons the caster
+    const venomedCount = usedDice.filter(d => d && d._venomed).length;
+    if (venomedCount > 0) {
+      const venomPoison = venomedCount * 2;
+      unit.poison = (unit.poison || 0) + venomPoison;
+      this.addLog(`Venomed dice! ${unit.name} takes ${venomPoison} Poison!`);
+      if (this.onVisual) this.onVisual('unitPoison', { unitIndex: unit.index, amount: venomPoison });
+      usedDice.forEach(d => { if (d && d._venomed) d._venomed = false; });
+    }
 
     // Trigger cut-in portrait for the attacking unit
     if (this.onVisual) this.onVisual('skillCutIn', { classTitle: unit.title, skillName: skill.name });
@@ -3476,6 +3498,32 @@ class CombatEngine {
             this.addLog(`${mireMother.name} howls with rage! Her attacks grow stronger!`);
           }
 
+          // Leech Mound: on death, spawn 5 leeches
+          if (e.id === 'leech_mound') {
+            const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+            for (let li = 0; li < 5 && this.enemies.filter(en => !en.dead).length < 6; li++) {
+              this.spawnBossMinion('mire_leech');
+            }
+            this.addLog('The Leech Mound bursts apart — leeches swarm everywhere!');
+            if (this.onVisual) this.onVisual('screenShake', {});
+          }
+
+          // Lesser Leech Mound: on death, spawn 2 leeches (no reform)
+          if (e.id === 'lesser_leech_mound') {
+            for (let li = 0; li < 2 && this.enemies.filter(en => !en.dead).length < 6; li++) {
+              this.spawnBossMinion('mire_leech');
+            }
+            this.addLog('The lesser mound splits — more leeches crawl free!');
+          }
+
+          // Ursus Ferox: enrages when a cub dies — gains +3 damage permanently
+          const ursus = this.enemies.find(b => b.id === 'ursus_ferox' && !b.dead);
+          if (ursus && e.id === 'bone_gnawer_cub') {
+            ursus.actions.forEach(a => { if (a.damage > 0) a.damage += 3; });
+            this.addLog(`${ursus.name} roars in fury! Its attacks grow deadlier!`);
+            if (this.onVisual) this.onVisual('statusText', { enemyIndex: ursus.index, text: 'ENRAGED!', color: 'var(--red-bright)' });
+          }
+
           // Revenant of Ariovistus: consumes fallen guardians — heals and gains damage
           const revenant = this.enemies.find(b => b.id === 'revenant_of_ariovistus' && !b.dead);
           if (revenant && e.id === 'barrow_guardian') {
@@ -3707,6 +3755,53 @@ class CombatEngine {
         s.dead = true;
         this.killedEnemies.push(s.id);
         this.addLog(`${s.name} is consumed!`);
+      }
+    }
+
+    // Leech recombine: if 3+ leeches alive and no leech_mound/lesser exists, merge 3 into lesser mound
+    const leechMoundAlive = alive.some(e => e.id === 'leech_mound' || e.id === 'lesser_leech_mound');
+    const leeches = alive.filter(e => e.id === 'mire_leech');
+    if (!leechMoundAlive && leeches.length >= 3 && !this._leechReformUsed) {
+      // Kill 3 leeches
+      for (let li = 0; li < 3; li++) {
+        leeches[li].hp = 0;
+        leeches[li].dead = true;
+        this.killedEnemies.push(leeches[li].id);
+      }
+      // Spawn lesser leech mound
+      this._leechReformUsed = true;
+      const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
+      const lesserDef = ENEMY_DATA['lesser_leech_mound'];
+      if (lesserDef && this.enemies.filter(en => !en.dead).length < 6) {
+        const scaledHp = Math.round(lesserDef.maxHp * this.getHpScale(diffBonus));
+        const blockScale = 1.25;
+        const scaledActions = lesserDef.actions.map(a => ({
+          ...a,
+          damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.35)) : 0,
+          poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
+          blockSelf: a.blockSelf ? Math.round((a.blockSelf + diffBonus) * blockScale) : undefined,
+        }));
+        const lesser = {
+          index: this.enemies.length, ...lesserDef,
+          maxHp: scaledHp, hp: scaledHp, actions: scaledActions,
+          dead: false, poison: 0, block: 0, justSpawned: true, isBoss: true,
+        };
+        this.enemies.push(lesser);
+        this.addLog('The leeches writhe and merge — a Lesser Leech Mound reforms!');
+        if (this.onVisual) this.onVisual('screenShake', {});
+        setTimeout(() => { lesser.justSpawned = false; this.update(); }, 500);
+      }
+    }
+
+    // Ursus Ferox: living cubs grant 4 block each turn
+    const ursusAlive = alive.find(e => e.id === 'ursus_ferox');
+    if (ursusAlive) {
+      const livingCubs = alive.filter(e => e.id === 'bone_gnawer_cub').length;
+      if (livingCubs > 0) {
+        const cubBlock = livingCubs * 4;
+        ursusAlive.block = (ursusAlive.block || 0) + cubBlock;
+        this.addLog(`Bone-Gnawer Cubs pile bones — ${ursusAlive.name} gains ${cubBlock} Block!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: ursusAlive.index, text: `+${cubBlock} Block`, color: 'var(--blue-bright)' });
       }
     }
 
@@ -4969,6 +5064,21 @@ class CombatEngine {
           }
           this.addLog(`${boss.name} strides forward! "If Rome must die, I will lead the charge!" He draws a spectral gladius!`);
           if (this.onVisual) this.onVisual('screenShake', {});
+        }
+      }
+
+      // Ursus Ferox: Last Stand below 25% — double attacks, no more block regen
+      if (boss.id === 'ursus_ferox') {
+        if (!boss._lastStand && boss.hp <= boss.maxHp * 0.25) {
+          boss._lastStand = true;
+          boss.woundedDoubleAttack = true;
+          // Remove Hunker action
+          boss.actions = boss.actions.filter(a => a.name !== 'Hunker');
+          // Boost damage
+          boss.actions.forEach(a => { if (a.damage > 0) a.damage += 4; });
+          this.addLog(`${boss.name} drops to all fours — LAST STAND! It attacks with desperate fury!`);
+          if (this.onVisual) this.onVisual('screenShake', {});
+          if (this.onVisual) this.onVisual('statusText', { enemyIndex: boss.index, text: 'LAST STAND!', color: 'var(--red-bright)' });
         }
       }
     }

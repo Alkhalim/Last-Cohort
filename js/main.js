@@ -1929,6 +1929,9 @@ const REDUCED_ART_ENEMY_CATEGORY = {
   lindwurm_lord: 'boss', lord_of_lies: 'boss', lord_of_future_sight: 'boss',
   undefeated_lord: 'boss', lair_sheep: 'monster', hate_mage: 'caster',
   lair_troll: 'monster', clinking_bones: 'melee',
+  // Leech Mound + Ursus Ferox
+  leech_mound: 'boss', lesser_leech_mound: 'boss',
+  ursus_ferox: 'boss', bone_gnawer_cub: 'monster',
   // Legacy (removed enemies)
   lindwurm: 'boss', dragon_hatchling: 'monster', wyrm_cultist: 'caster',
 };

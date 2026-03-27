@@ -349,6 +349,64 @@ const RAW_ENEMIES = {
     ]
   },
 
+  // === LEECH MOUND BOSS ===
+
+  "leech_mound": {
+    "id": "leech_mound", "name": "Leech Mound",
+    "maxHp": 50, "row": "front", "damage": [4, 8], "speed": 1, "xpValue": 25,
+    "minDifficulty": 3,
+    "isBoss": true, "ai": "boss",
+    "description": "A writhing mass of leeches fused into a single monstrous organism. On death it bursts into 5 leeches. If 3+ survive, they reform into a lesser mound. Each turn it venoms one of your dice.",
+    "deathPoison": 3,
+    "actions": [
+      { "name": "Blood Tide", "damage": 4, "poisonTarget": 4, "chance": 0.3, "text": "surges forward, leeches latching onto flesh", "aoe": true, "cooldown": 2 },
+      { "name": "Drain", "damage": 6, "poisonTarget": 3, "chance": 0.3, "text": "engulfs a soldier — draining blood and will" },
+      { "name": "Leech Swarm", "damage": 0, "chance": 0.2, "text": "splits off a cluster of leeches", "spawn": "mire_leech" },
+      { "name": "Fester", "damage": 0, "poisonTarget": 5, "chance": 0.2, "text": "oozes toxic bile across the front line", "ignoreRow": true, "cooldown": 1 }
+    ]
+  },
+  "lesser_leech_mound": {
+    "id": "lesser_leech_mound", "name": "Lesser Leech Mound",
+    "maxHp": 30, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 12,
+    "isBoss": true, "ai": "boss",
+    "description": "A smaller mound reformed from surviving leeches. On death spawns 2 leeches but cannot reform again.",
+    "deathPoison": 2,
+    "actions": [
+      { "name": "Blood Surge", "damage": 4, "poisonTarget": 3, "chance": 0.4, "text": "surges forward with toxic hunger" },
+      { "name": "Drain", "damage": 5, "poisonTarget": 2, "chance": 0.35, "text": "latches on and drains blood" },
+      { "name": "Fester", "damage": 0, "poisonTarget": 4, "chance": 0.25, "text": "oozes toxic bile", "ignoreRow": true, "cooldown": 1 }
+    ]
+  },
+
+  // === URSUS FEROX BOSS ===
+
+  "ursus_ferox": {
+    "id": "ursus_ferox", "name": "Ursus Ferox",
+    "maxHp": 70, "row": "front", "damage": [8, 14], "speed": 1, "xpValue": 28,
+    "minDifficulty": 4,
+    "isBoss": true, "ai": "boss",
+    "startBlock": 10,
+    "description": "A massive bear grown fat on the dead of Teutoburg. Layers of calcified bone armor its hide. Its cubs drag bones to strengthen its shell. Kill the cubs to stop the block — then break through.",
+    "actions": [
+      { "name": "Maul", "damage": 12, "chance": 0.3, "text": "rears up and brings both paws down", "cooldown": 1 },
+      { "name": "Swipe", "damage": 7, "chance": 0.3, "text": "swipes a massive paw across the front line", "aoe": true },
+      { "name": "Roar", "damage": 0, "morale": -6, "chance": 0.15, "text": "roars — the ground shakes and courage falters", "cooldown": 1 },
+      { "name": "Hunker", "damage": 0, "chance": 0.15, "text": "hunkers behind its bone armor", "blockSelf": 8 },
+      { "name": "Charge", "damage": 14, "chance": 0.1, "text": "charges with unstoppable force", "cooldown": 2 }
+    ]
+  },
+  "bone_gnawer_cub": {
+    "id": "bone_gnawer_cub", "name": "Bone-Gnawer Cub",
+    "maxHp": 16, "row": "front", "damage": [3, 5], "speed": 2, "xpValue": 5,
+    "description": "A young bear that drags bones to its mother, hardening her armor. Each turn it lives, Ursus Ferox gains block.",
+    "ai": "aggressive",
+    "actions": [
+      { "name": "Claw", "damage": 4, "chance": 0.5, "text": "slashes with sharp claws" },
+      { "name": "Gnaw", "damage": 3, "chance": 0.3, "text": "gnaws at a soldier's armor" },
+      { "name": "Whimper", "damage": 0, "morale": -2, "chance": 0.2, "text": "whimpers — the mother bear grows angrier" }
+    ]
+  },
+
   "fog_weaver": {
     "id": "fog_weaver", "name": "The Fog Weaver",
     "maxHp": 38, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 27,
