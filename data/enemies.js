@@ -6,55 +6,55 @@
 const RAW_ENEMIES = {
   "cheruscan_raider": {
     "id": "cheruscan_raider", "name": "Cheruscan Raider",
-    "maxHp": 17, "row": "front", "damage": [6, 9], "speed": 1, "xpValue": 5, "maxDifficulty": 4,
+    "maxHp": 17, "row": "front", "damage": [7, 10], "speed": 1, "xpValue": 5, "maxDifficulty": 4,
     "description": "Germanic warrior. Aggressive melee fighter.", "ai": "aggressive",
     "actions": [
-      { "name": "Spear Thrust", "damage": 4, "chance": 0.6, "text": "thrusts spear" },
-      { "name": "Wild Slash", "damage": 6, "chance": 0.3, "text": "slashes wildly", "cooldown": 1 },
-      { "name": "War Cry", "damage": 0, "morale": -3, "chance": 0.1, "text": "lets out a war cry" }
+      { "name": "Spear Thrust", "damage": 5, "chance": 0.6, "text": "thrusts spear" },
+      { "name": "Wild Slash", "damage": 7, "chance": 0.3, "text": "slashes wildly", "cooldown": 1 },
+      { "name": "War Cry", "damage": 0, "morale": -4, "chance": 0.1, "text": "lets out a war cry" }
     ]
   },
   "sling_hunter": {
     "id": "sling_hunter", "name": "Sling Hunter",
-    "maxHp": 10, "row": "back", "damage": [5, 7], "speed": 2, "xpValue": 4, "maxDifficulty": 4,
+    "maxHp": 10, "row": "back", "damage": [6, 8], "speed": 2, "xpValue": 4, "maxDifficulty": 4,
     "description": "Ranged skirmisher. Targets the strongest unit.", "ai": "bully",
     "actions": [
-      { "name": "Sling Stone", "damage": 3, "chance": 0.7, "text": "hurls a sling stone", "ignoreRow": true },
-      { "name": "Aimed Shot", "damage": 5, "chance": 0.2, "text": "takes careful aim", "ignoreRow": true, "cooldown": 2 },
-      { "name": "Scatter Shot", "damage": 3, "chance": 0.1, "text": "fires scatter shot at the line", "aoe": true }
+      { "name": "Sling Stone", "damage": 4, "chance": 0.7, "text": "hurls a sling stone", "ignoreRow": true },
+      { "name": "Aimed Shot", "damage": 6, "chance": 0.2, "text": "takes careful aim", "ignoreRow": true, "cooldown": 2 },
+      { "name": "Scatter Shot", "damage": 4, "chance": 0.1, "text": "fires scatter shot at the line", "aoe": true }
     ]
   },
   "marsh_wolf": {
     "id": "marsh_wolf", "name": "Marsh Wolf",
-    "maxHp": 16, "row": "front", "damage": [5, 8], "speed": 3, "xpValue": 4, "maxDifficulty": 4,
+    "maxHp": 16, "row": "front", "damage": [6, 9], "speed": 3, "xpValue": 4, "maxDifficulty": 4,
     "description": "Fast predator. Attacks twice when wounded.", "ai": "aggressive",
     "woundedDoubleAttack": true,
     "actions": [
-      { "name": "Bite", "damage": 3, "chance": 0.5, "text": "lunges with snapping jaws" },
-      { "name": "Pounce", "damage": 5, "chance": 0.3, "text": "pounces", "cooldown": 2 },
-      { "name": "Howl", "damage": 0, "morale": -3, "chance": 0.2, "text": "howls into the mist" }
+      { "name": "Bite", "damage": 4, "chance": 0.5, "text": "lunges with snapping jaws" },
+      { "name": "Pounce", "damage": 6, "chance": 0.3, "text": "pounces", "cooldown": 2 },
+      { "name": "Howl", "damage": 0, "morale": -4, "chance": 0.2, "text": "howls into the mist" }
     ]
   },
   "fen_viper": {
     "id": "fen_viper", "name": "Fen Viper",
-    "maxHp": 13, "row": "front", "damage": [2, 4], "speed": 4, "xpValue": 4, "maxDifficulty": 4,
+    "maxHp": 13, "row": "front", "damage": [3, 5], "speed": 4, "xpValue": 4, "maxDifficulty": 4,
     "description": "A venomous marsh snake. Its bite festers.", "ai": "aggressive",
     "actions": [
-      { "name": "Venomous Bite", "damage": 2, "poisonTarget": 3, "chance": 0.5, "text": "sinks venomous fangs" },
-      { "name": "Spit Venom", "damage": 1, "poisonTarget": 2, "chance": 0.3, "text": "spits venom", "ignoreRow": true },
-      { "name": "Coil Strike", "damage": 4, "chance": 0.2, "text": "lashes out with a coiled strike", "cooldown": 2 }
+      { "name": "Venomous Bite", "damage": 3, "poisonTarget": 3, "chance": 0.5, "text": "sinks venomous fangs" },
+      { "name": "Spit Venom", "damage": 2, "poisonTarget": 2, "chance": 0.3, "text": "spits venom", "ignoreRow": true },
+      { "name": "Coil Strike", "damage": 5, "chance": 0.2, "text": "lashes out with a coiled strike", "cooldown": 2 }
     ]
   },
   "bog_seer": {
     "id": "bog_seer", "name": "Bog Seer",
-    "maxHp": 14, "row": "back", "damage": [2, 3], "speed": 1, "xpValue": 5, "maxDifficulty": 5,
+    "maxHp": 14, "row": "back", "damage": [3, 4], "speed": 1, "xpValue": 5, "maxDifficulty": 5,
     "description": "A hunched figure draped in moss, chanting from the treeline. Attacks the mind. Killing one lifts a great weight.",
     "deathMoraleMultiplier": 2,
     "actions": [
-      { "name": "Curse of Dread", "damage": 0, "morale": -5, "chance": 0.4, "text": "chants a dreadful curse" },
-      { "name": "Marsh Hex", "damage": 3, "morale": -3, "chance": 0.3, "text": "hurls a hex of swamp fire", "ignoreRow": true },
-      { "name": "Wail of the Dead", "damage": 0, "morale": -6, "chance": 0.2, "text": "screams with the voices of the dead", "cooldown": 2 },
-      { "name": "Bone Shard", "damage": 5, "chance": 0.1, "text": "flings a shard of bone", "ignoreRow": true }
+      { "name": "Curse of Dread", "damage": 0, "morale": -6, "chance": 0.4, "text": "chants a dreadful curse" },
+      { "name": "Marsh Hex", "damage": 4, "morale": -4, "chance": 0.3, "text": "hurls a hex of swamp fire", "ignoreRow": true },
+      { "name": "Wail of the Dead", "damage": 0, "morale": -7, "chance": 0.2, "text": "screams with the voices of the dead", "cooldown": 2 },
+      { "name": "Bone Shard", "damage": 6, "chance": 0.1, "text": "flings a shard of bone", "ignoreRow": true }
     ]
   },
   "oak_shield": {
@@ -65,30 +65,30 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Oak Smash", "damage": 6, "chance": 0.4, "text": "smashes with the great oak shield" },
       { "name": "Shieldwall Charge", "damage": 4, "chance": 0.25, "text": "charges behind the oak shield", "aoe": true, "cooldown": 1 },
-      { "name": "Rallying Roar", "damage": 0, "morale": -4, "chance": 0.15, "text": "roars, rallying nearby warriors" },
+      { "name": "Rallying Roar", "damage": 0, "morale": -5, "chance": 0.15, "text": "roars, rallying nearby warriors" },
       { "name": "Crushing Overhead", "damage": 9, "chance": 0.2, "text": "brings a devastating overhead blow", "cooldown": 2 }
     ]
   },
   "cheruscan_shieldbearer": {
     "id": "cheruscan_shieldbearer", "name": "Cheruscan Shieldbearer",
-    "maxHp": 24, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 6, "maxDifficulty": 5,
+    "maxHp": 24, "row": "front", "damage": [4, 6], "speed": 1, "xpValue": 6, "maxDifficulty": 5,
     "startBlock": 5,
     "description": "A broad-shouldered warrior crouching behind an oversized wicker-and-hide shield, covering those behind him.", "ai": "aggressive",
     "actions": [
       { "name": "Wall of Shields", "damage": 0, "chance": 0.4, "text": "raises the great shield, protecting nearby warriors", "blockAllEnemies": 3 },
-      { "name": "Shield Slam", "damage": 5, "chance": 0.35, "text": "slams forward with the heavy shield" },
-      { "name": "Taunt of Thusnelda", "damage": 0, "morale": -4, "chance": 0.25, "text": "screams the name of Arminius\u2019s wife \u2014 your men flinch" }
+      { "name": "Shield Slam", "damage": 6, "chance": 0.35, "text": "slams forward with the heavy shield" },
+      { "name": "Taunt of Thusnelda", "damage": 0, "morale": -5, "chance": 0.25, "text": "screams the name of Arminius\u2019s wife \u2014 your men flinch" }
     ]
   },
   "mire_leech": {
     "id": "mire_leech", "name": "Mire Leech",
-    "maxHp": 10, "row": "front", "damage": [2, 4], "speed": 2, "xpValue": 3, "maxDifficulty": 3,
+    "maxHp": 10, "row": "front", "damage": [3, 5], "speed": 2, "xpValue": 3, "maxDifficulty": 3,
     "description": "A bloated, arm-length parasite from the black swamp water. The men have heard stories about these crawling into the wounded.", "ai": "aggressive",
     "canSpawn": true, "deathPoison": 2,
     "actions": [
-      { "name": "Latch On", "damage": 2, "poisonTarget": 4, "chance": 0.5, "text": "latches on with burrowing mouthparts" },
+      { "name": "Latch On", "damage": 3, "poisonTarget": 4, "chance": 0.5, "text": "latches on with burrowing mouthparts" },
       { "name": "Multiply", "damage": 0, "chance": 0.3, "text": "splits and spawns another leech", "spawn": "mire_leech" },
-      { "name": "Blood Drain", "damage": 4, "poisonTarget": 2, "chance": 0.2, "text": "drains blood with a sickening pull", "cooldown": 1 }
+      { "name": "Blood Drain", "damage": 5, "poisonTarget": 2, "chance": 0.2, "text": "drains blood with a sickening pull", "cooldown": 1 }
     ]
   },
   "wicker_man": {
@@ -131,39 +131,39 @@ const RAW_ENEMIES = {
   },
   "arminius_champion": {
     "id": "arminius_champion", "name": "Germanic Warlord",
-    "maxHp": 55, "row": "front", "damage": [6, 10], "speed": 2, "xpValue": 20,
+    "maxHp": 55, "row": "front", "damage": [7, 11], "speed": 2, "xpValue": 20,
     "isBoss": true, "ai": "boss",
     "description": "A hulking war leader clad in stolen Roman armor. Starts with Block equal to your best. When an ally falls, he charges forward and strikes for 7 damage.",
     "actions": [
-      { "name": "Crushing Blow", "damage": 7, "chance": 0.4, "text": "brings down a crushing blow" },
-      { "name": "Shield Bash", "damage": 4, "chance": 0.25, "text": "bashes with iron shield" },
+      { "name": "Crushing Blow", "damage": 8, "chance": 0.4, "text": "brings down a crushing blow" },
+      { "name": "Shield Bash", "damage": 5, "chance": 0.25, "text": "bashes with iron shield" },
       { "name": "War Cry", "damage": 0, "morale": -3, "chance": 0.15, "text": "roars a war cry" },
-      { "name": "Frenzy", "damage": 5, "chance": 0.2, "text": "attacks in a frenzy", "aoe": true, "cooldown": 1 }
+      { "name": "Frenzy", "damage": 6, "chance": 0.2, "text": "attacks in a frenzy", "aoe": true, "cooldown": 1 }
     ]
   },
   "grove_witch": {
     "id": "grove_witch", "name": "Grove Witch",
-    "maxHp": 45, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 22,
+    "maxHp": 45, "row": "back", "damage": [6, 11], "speed": 1, "xpValue": 22,
     "isBoss": true, "ai": "boss",
     "description": "A twisted figure wreathed in green flame, half-woman, half-forest. She commands root and thorn, drains the will from soldiers, and summons healing totems from the living earth. The longer she lives, the stronger the forest grows around her.",
     "actions": [
-      { "name": "Thorn Volley", "damage": 5, "chance": 0.3, "text": "sends a volley of blackened thorns", "aoe": true },
-      { "name": "Soul Drain", "damage": 7, "morale": -5, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
+      { "name": "Thorn Volley", "damage": 6, "chance": 0.3, "text": "sends a volley of blackened thorns", "aoe": true },
+      { "name": "Soul Drain", "damage": 8, "morale": -5, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
       { "name": "Swamp Call", "damage": 0, "morale": -8, "chance": 0.2, "text": "calls upon the swamp spirits", "cooldown": 2 },
-      { "name": "Root Grasp", "damage": 9, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true, "cooldown": 1 }
+      { "name": "Root Grasp", "damage": 10, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true, "cooldown": 1 }
     ]
   },
 
   "cheruscan_guardian": {
     "id": "cheruscan_guardian", "name": "Cheruscan Guardian",
-    "maxHp": 17, "row": "front", "damage": [3, 5], "speed": 1, "xpValue": 5, "maxDifficulty": 5,
+    "maxHp": 17, "row": "front", "damage": [4, 6], "speed": 1, "xpValue": 5, "maxDifficulty": 5,
     "description": "A disciplined warrior who fights defensively, shielding his brothers. Only strikes when cornered alone. Enters battle braced.",
     "ai": "defensive",
     "startBlock": 3,
     "actions": [
       { "name": "Shield Cover", "damage": 0, "chance": 0.5, "text": "raises his shield, covering nearby warriors", "blockFrontRow": 4 },
       { "name": "Brace", "damage": 0, "chance": 0.3, "text": "braces behind his shield", "blockSelf": 4 },
-      { "name": "Desperate Strike", "damage": 5, "chance": 0.2, "text": "strikes desperately" }
+      { "name": "Desperate Strike", "damage": 6, "chance": 0.2, "text": "strikes desperately" }
     ]
   },
 
@@ -232,7 +232,7 @@ const RAW_ENEMIES = {
   "ironbound_champion": {
     "id": "ironbound_champion", "name": "Ironbound Champion",
     "maxHp": 24, "row": "front", "damage": [8, 16], "speed": 1, "xpValue": 7,
-    "minDifficulty": 3,
+    "minDifficulty": 3, "isElite": true,
     "description": "A warrior encased in layers of scavenged shields and iron plate. He builds his defenses, then unleashes them in a single devastating charge. Kill him before the shieldbearers make him unstoppable.",
     "ai": "aggressive",
     "actions": [
@@ -328,14 +328,14 @@ const RAW_ENEMIES = {
 
   "serpent_shaman": {
     "id": "serpent_shaman", "name": "Serpent Shaman",
-    "maxHp": 42, "row": "back", "damage": [5, 10], "speed": 2, "xpValue": 25,
+    "maxHp": 42, "row": "back", "damage": [6, 11], "speed": 2, "xpValue": 25,
     "minDifficulty": 3,
     "isBoss": true, "ai": "boss",
     "description": "A painted shaman who dances between the lines. Starts with Block equal to your highest poison stat. Heals 6 HP each turn by dancing with her snakes. When a snake dies, poisons a random soldier (3).",
     "actions": [
-      { "name": "Venom Spit", "damage": 5, "poisonTarget": 3, "chance": 0.25, "text": "spits a stream of dark venom", "ignoreRow": true },
-      { "name": "Fang Strike", "damage": 7, "poisonTarget": 4, "chance": 0.3, "text": "lunges with a fanged staff" },
-      { "name": "Venom Cloud", "damage": 3, "poisonTarget": 2, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 },
+      { "name": "Venom Spit", "damage": 6, "poisonTarget": 3, "chance": 0.25, "text": "spits a stream of dark venom", "ignoreRow": true },
+      { "name": "Fang Strike", "damage": 8, "poisonTarget": 4, "chance": 0.3, "text": "lunges with a fanged staff" },
+      { "name": "Venom Cloud", "damage": 4, "poisonTarget": 2, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 },
       { "name": "Call Serpent", "damage": 0, "chance": 0.2, "text": "whistles — a serpent slithers from the shadows. The shaman's wounds close.", "spawn": "serpent_shade", "cooldown": 2 }
     ]
   },
@@ -382,11 +382,11 @@ const RAW_ENEMIES = {
 
   "ursus_ferox": {
     "id": "ursus_ferox", "name": "Ursus Ferox",
-    "maxHp": 70, "row": "front", "damage": [8, 14], "speed": 1, "xpValue": 28,
+    "maxHp": 84, "row": "front", "damage": [8, 14], "speed": 1, "xpValue": 28,
     "minDifficulty": 3,
     "isBoss": true, "ai": "boss",
-    "startBlock": 10,
-    "description": "A massive bear grown fat on the dead of Teutoburg. Layers of calcified bone armor its hide. Its cubs drag bones to strengthen its shell. Kill the cubs to stop the block — then break through.",
+    "startBlock": 13,
+    "description": "A massive bear grown fat on the dead of Teutoburg. Layers of calcified bone armor its hide. Its cubs drag bones each turn to strengthen its shell — kill them to stop it. Below 25% HP it enters Last Stand: double attacks, no more block.",
     "actions": [
       { "name": "Maul", "damage": 12, "chance": 0.3, "text": "rears up and brings both paws down", "cooldown": 1 },
       { "name": "Swipe", "damage": 7, "chance": 0.3, "text": "swipes a massive paw across the front line", "aoe": true },
@@ -465,7 +465,7 @@ const RAW_ENEMIES = {
     "minDifficulty": 4,
     "description": "A diseased warrior who poisons everything he touches. When he dies, his plague spreads to all soldiers.",
     "ai": "aggressive",
-    "deathPoison": 2,
+    "deathPoison": 3,
     "actions": [
       { "name": "Plague Touch", "damage": 3, "poisonTarget": 3, "chance": 0.5, "text": "grasps with rotting hands" },
       { "name": "Bile Spray", "damage": 2, "poisonTarget": 1, "chance": 0.3, "text": "spews bile across the line", "aoe": true, "cooldown": 2 },

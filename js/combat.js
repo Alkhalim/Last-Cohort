@@ -2027,12 +2027,15 @@ class CombatEngine {
           parts.push(`Herbalist's Satchel poisons ${victim.name}. (+${hsPoison} Poison)`);
         }
       }
-      // Marsh Root Brew: healing grants block to target (scales with level)
-      if (this.unitHasItem(unit, 'marsh_root_brew') && actual > 0 && result.target) {
-        const mrbLv = this.getItemLevel(unit, 'marsh_root_brew');
-        const mrbBlock = 1 * mrbLv;
-        result.target.block = (result.target.block || 0) + mrbBlock;
-        parts.push(`Marsh Root Brew grants ${mrbBlock} Block.`);
+      // Marsh Root Brew: healing grants block to target (scales with level, stacks with copies)
+      if (actual > 0 && result.target) {
+        const mrbItems = this.getItemCopies(unit, 'marsh_root_brew');
+        if (mrbItems.length > 0) {
+          let totalMrbBlock = 0;
+          mrbItems.forEach(id => { const lv = ITEM_DATA[id] ? (ITEM_DATA[id].level || 1) : 1; totalMrbBlock += lv; });
+          result.target.block = (result.target.block || 0) + totalMrbBlock;
+          parts.push(`Marsh Root Brew grants ${totalMrbBlock} Block.`);
+        }
       }
       // Crown of Thorns: when healed, deal damage to all enemies (scales with level)
       if (this.unitHasItem(result.target, 'crown_of_thorns') && actual > 0) {
@@ -2392,16 +2395,17 @@ class CombatEngine {
         }
         if (healedCount > 0) parts.push(`Herbalist's Satchel spreads ${hsPoison} Poison (${healedCount} triggers).`);
       }
-      // Marsh Root Brew: healing grants block to all healed allies (scales with level)
-      if (this.unitHasItem(unit, 'marsh_root_brew')) {
-        const mrbLv = this.getItemLevel(unit, 'marsh_root_brew');
-        const mrbBlock = 1 * mrbLv;
+      // Marsh Root Brew: healing grants block to all healed allies (scales with level, stacks with copies)
+      const mrbItems = this.getItemCopies(unit, 'marsh_root_brew');
+      if (mrbItems.length > 0) {
+        let totalMrbBlock = 0;
+        mrbItems.forEach(id => { const lv = ITEM_DATA[id] ? (ITEM_DATA[id].level || 1) : 1; totalMrbBlock += lv; });
         this.party.forEach(u => {
           if (!u.downed) {
-            u.block = (u.block || 0) + mrbBlock;
+            u.block = (u.block || 0) + totalMrbBlock;
           }
         });
-        parts.push(`Marsh Root Brew grants ${mrbBlock} Block to all allies.`);
+        parts.push(`Marsh Root Brew grants ${totalMrbBlock} Block to all allies.`);
       }
       const bonusStr = bonusHeal > 0 ? ` (${result.healAll}+${bonusHeal})` : '';
       parts.push(`${unit.name} uses ${skill.name} \u2014 heals all allies for ${baseHealAll}${bonusStr} HP.`);
@@ -2869,15 +2873,17 @@ class CombatEngine {
       }
     }
 
-    // Calculated Dosage: poison = unique die values, bonus damage if all unique
+    // Calculated Dosage: poison = unique die values, all unique = double poison + 4 damage
     if (result.calculatedDosage && result.target) {
       const allDice = this.dicePool.dice;
       const uniqueValues = new Set(allDice.map(d => d.value)).size;
-      const poisonAmt = uniqueValues + (unit.equipPoison || 0);
+      const allUnique = uniqueValues === allDice.length;
+      let poisonAmt = uniqueValues + (unit.equipPoison || 0);
+      if (allUnique) poisonAmt *= 2;
       result.target.poison = (result.target.poison || 0) + poisonAmt;
       unit.stats.poisonInflicted += poisonAmt;
-      parts.push(`${result.target.name} takes ${poisonAmt} Poison (${uniqueValues} unique dice).`);
-      if (uniqueValues === allDice.length) {
+      parts.push(`${result.target.name} takes ${poisonAmt} Poison (${uniqueValues} unique${allUnique ? ' — doubled!' : ''}).`);
+      if (allUnique) {
         const bonusDamage = 4 + bonusDmg;
         if (result.target.block > 0) { const ab = Math.min(result.target.block, bonusDamage); result.target.block -= ab; }
         result.target.hp = Math.max(0, result.target.hp - bonusDamage);
@@ -4712,6 +4718,19 @@ class CombatEngine {
   }
 
   // --- Equipment helpers ---
+  getItemCopies(unit, itemId) {
+    const copies = [];
+    for (const slot of ['weapon', 'armor', 'trinket']) {
+      for (const equipped of unit.equipment[slot]) {
+        if (!equipped) continue;
+        if (equipped === itemId || (ITEM_DATA[equipped] && ITEM_DATA[equipped].baseId === itemId)) {
+          copies.push(equipped);
+        }
+      }
+    }
+    return copies;
+  }
+
   unitHasItem(unit, itemId) {
     // Use cache if available
     if (unit._itemCache && unit._itemCache[itemId] !== undefined) return unit._itemCache[itemId];

@@ -308,9 +308,15 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       } else {
         node.encounter = generateEncounterByThreat(node.threat, difficulty);
       }
-      // Ambush: at difficulty 3+, 30% chance for combat nodes to become ambushes (not on intro)
+      // Ambush: at difficulty 3+, 30% chance for combat nodes to become ambushes (not on intro, not after another ambush)
       if (difficulty >= 3 && node.depth > 0 && Math.random() < 0.3) {
-        node.encounter = { ...node.encounter, isAmbush: true };
+        const parentIsAmbush = node.parents.some(pid => {
+          const p = nodes.find(n => n.id === pid);
+          return p && p.encounter && p.encounter.isAmbush;
+        });
+        if (!parentIsAmbush) {
+          node.encounter = { ...node.encounter, isAmbush: true };
+        }
       }
     } else if (node.type === 'boss') {
       // Story bosses are forced at specific marches

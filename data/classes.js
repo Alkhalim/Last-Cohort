@@ -75,7 +75,7 @@ const RAW_CLASSES = {
       {
         "id": "shoulder_charge", "name": "Shoulder Charge", "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
-        "description": "Deal 4 damage and knock target to back row. If already back row, deal 6 instead and stun.",
+        "description": "Deal 4 damage, knock to back row. Back row: deal 6 damage, stun.",
         "effects": { "damage": 4, "shoulderCharge": true }
       },
       {
@@ -265,10 +265,10 @@ const RAW_CLASSES = {
         "effects": { "triageStrike": 5 }
       },
       {
-        "id": "calculated_dosage", "name": "Calculated Dosage",
+        "id": "calculated_dosage", "name": "Calculated Dosage", "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Apply poison equal to the number of different die values in your pool. If all dice are unique, also deal 4 damage.",
+        "description": "Ranged. Apply Poison equal to unique die values in pool. All unique: double poison and deal 4 damage.",
         "effects": { "calculatedDosage": true }
       }
     ]

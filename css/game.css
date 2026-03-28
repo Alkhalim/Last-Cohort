@@ -2785,6 +2785,29 @@ html, body {
   letter-spacing: 0.15em;
 }
 
+#march-progress-bar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.march-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  transition: background 0.3s;
+}
+.march-pip.filled {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+.march-pip.current {
+  background: var(--text-bright);
+  border-color: var(--gold);
+  box-shadow: 0 0 4px var(--gold);
+}
+
 #map-morale-label {
   font-family: 'Cinzel', serif;
   font-size: 0.65rem;

@@ -1190,6 +1190,23 @@ class GameUI {
         });
       }
 
+      // Calculated Dosage: show current unique die count as poison preview
+      if (skill.effects && skill.effects.calculatedDosage) {
+        const allDice = this.engine.dicePool.dice;
+        const uniqueValues = new Set(allDice.map(d => d.value)).size;
+        const allUnique = uniqueValues === allDice.length;
+        let poisonAmt = uniqueValues + equipPoison;
+        if (allUnique) poisonAmt *= 2;
+        desc = desc.replace(/Poison equal to unique die values in pool/g,
+          `<span class="stat-poison">${poisonAmt}</span> <span class="stat-breakdown">(${uniqueValues} unique${equipPoison > 0 ? `+${equipPoison}` : ''}${allUnique ? ' ×2' : ''})</span> Poison`);
+        if (allUnique) {
+          desc = desc.replace(/All unique: double poison and deal (\d+) damage/g, (m, base) => {
+            const dmg = parseInt(base) + effectiveBonusDmg;
+            return `All unique! <span class="stat-dmg">+${dmg}</span> damage`;
+          });
+        }
+      }
+
       // Overrun: show base + equipment + potential overrun info (must be before generic damage replace)
       if (skill.effects && skill.effects.overrun) {
         const dmgScaleOR = (skill.effects.bonusDmgScale) || (skill.effects.halfBonusDmg ? 0.5 : 1);
@@ -1286,10 +1303,12 @@ class GameUI {
         if (pairVal !== null) {
           // Replace "pair value" with the actual number, color-coded
           desc = desc.replace(/pair value x(\d+)/g, (m, mult) => `<span class="stat-block">${pairVal * parseInt(mult)}</span> <span class="stat-breakdown">(${pairVal}×${mult})</span>`);
+          desc = desc.replace(/Morale equal to pair value/g, `<span class="stat-morale-text">${pairVal}</span> Morale`);
           desc = desc.replace(/pair value/g, `<span class="stat-block">${pairVal}</span>`);
         } else {
           // Show range: 1-6 for pair value
           desc = desc.replace(/pair value x(\d+)/g, (m, mult) => `<span class="stat-block">${mult}-${6 * parseInt(mult)}</span>`);
+          desc = desc.replace(/Morale equal to pair value/g, `<span class="stat-morale-text">1-6</span> Morale`);
           desc = desc.replace(/pair value/g, `<span class="stat-block">1-6</span>`);
         }
       }
@@ -1860,6 +1879,21 @@ class GameUI {
       } else {
         title.textContent = 'TEUTOBURG FOREST';
       }
+    }
+
+    // March progress bar
+    const progressBar = document.getElementById('march-progress-bar');
+    if (progressBar && !this._inHiddenMarch) {
+      const totalMarches = 8;
+      const currentMarch = this.difficulty || 1;
+      let pips = '';
+      for (let i = 1; i <= totalMarches; i++) {
+        const filled = i < currentMarch ? 'filled' : i === currentMarch ? 'current' : '';
+        pips += `<span class="march-pip ${filled}"></span>`;
+      }
+      progressBar.innerHTML = pips;
+    } else if (progressBar) {
+      progressBar.innerHTML = '';
     }
 
     const label = document.getElementById('map-morale-label');
@@ -3409,14 +3443,29 @@ class GameUI {
       const div = document.createElement('div');
       div.className = 'btn-event-choice';
       div.style.pointerEvents = 'none';
-      div.style.opacity = '0.9';
+      div.style.opacity = '0';
+      div.style.transform = 'translateY(10px)';
+      div.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
       div.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${displayName}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
       choicesEl.appendChild(div);
     });
 
-    document.getElementById('event-outcome').classList.remove('hidden');
-    document.getElementById('event-outcome-text').textContent = 'The smith works his craft.';
-    document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+    // Pop in items one by one
+    const smithItems = choicesEl.querySelectorAll('.btn-event-choice');
+    smithItems.forEach((el, i) => {
+      setTimeout(() => {
+        el.style.opacity = '0.9';
+        el.style.transform = 'translateY(0)';
+      }, 400 + i * 500);
+    });
+
+    // Show continue after all items revealed
+    const revealTime = 400 + smithItems.length * 500 + 300;
+    setTimeout(() => {
+      document.getElementById('event-outcome').classList.remove('hidden');
+      document.getElementById('event-outcome-text').textContent = 'The smith works his craft.';
+      document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+    }, revealTime);
   }
 
   // ================================================================
@@ -4309,7 +4358,12 @@ class GameUI {
       desc = desc.replace(/their sum as damage/g, `<span class="stat-dmg">${lo}-${hi}</span> damage`);
     }
     desc = desc.replace(/pair value x(\d+)/g, (m, mult) => `<span class="stat-block">${mult}-${6 * parseInt(mult)}</span>`);
+    desc = desc.replace(/Morale equal to pair value/g, `<span class="stat-morale-text">1-6</span> Morale`);
     desc = desc.replace(/pair value/g, `<span class="stat-block">1-6</span>`);
+
+    // Calculated Dosage: show range in static context
+    desc = desc.replace(/Poison equal to unique die values in pool/g,
+      `<span class="stat-poison">?</span> Poison <span class="stat-breakdown">(unique dice${equipPoison > 0 ? `+${equipPoison}` : ''})</span>`);
 
     // Poison values
     desc = desc.replace(/(\d+) Poison/g, (match, base) => {
@@ -4551,7 +4605,7 @@ class GameUI {
 
     // Scaling stat amounts based on difficulty
     const diff = window.game ? window.game.difficulty : 1;
-    const hpAmount = 3 + Math.floor(diff / 2);
+    const hpAmount = 2 + Math.floor(diff / 2);
     const statAmount = 1 + Math.floor(diff / 4);
 
     // Build stat options based on class tags and class identity
