@@ -4745,6 +4745,13 @@ class GameUI {
     this._mapTerrainSeed = Math.floor(Math.random() * 100000);
     this._inHiddenMarch = true;
 
+    // Play hidden march music if specified
+    if (data.music && window.game) {
+      window.game.musicMode = 'gameplay';
+      if (window.game.currentTrack) window.game.stopTrack(window.game.currentTrack, 800);
+      window.game.currentTrack = window.game.playTrack(data.music, true);
+    }
+
     // Show title card for hidden march
     const mapScreen = document.getElementById('map-screen');
     mapScreen.dataset.theme = data.theme || 'dragon';

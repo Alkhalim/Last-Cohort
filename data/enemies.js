@@ -354,7 +354,7 @@ const RAW_ENEMIES = {
   "leech_mound": {
     "id": "leech_mound", "name": "Leech Mound",
     "maxHp": 50, "row": "front", "damage": [4, 8], "speed": 1, "xpValue": 25,
-    "minDifficulty": 3,
+    "minDifficulty": 4,
     "isBoss": true, "ai": "boss",
     "description": "A writhing mass of leeches fused into a single monstrous organism. On death it bursts into 5 leeches. If 3+ survive, they reform into a lesser mound. Each turn it venoms one of your dice.",
     "deathPoison": 3,
@@ -383,7 +383,7 @@ const RAW_ENEMIES = {
   "ursus_ferox": {
     "id": "ursus_ferox", "name": "Ursus Ferox",
     "maxHp": 70, "row": "front", "damage": [8, 14], "speed": 1, "xpValue": 28,
-    "minDifficulty": 4,
+    "minDifficulty": 3,
     "isBoss": true, "ai": "boss",
     "startBlock": 10,
     "description": "A massive bear grown fat on the dead of Teutoburg. Layers of calcified bone armor its hide. Its cubs drag bones to strengthen its shell. Kill the cubs to stop the block — then break through.",

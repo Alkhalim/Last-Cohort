@@ -35,6 +35,14 @@ const MUSIC_BOSS_OVERRIDE = {
   'corpse_of_varus': 'assets/Stahlwall.mp3',
   'spirit_of_varus': 'assets/Stahlwall.mp3',
   'spirit_of_arminius': 'assets/Legion of the Hollow Standard.mp3',
+  'thusnelda': 'assets/Bloodroot Crown.mp3',
+  'leech_mound': 'assets/Bog Wurm Ascendant.mp3',
+  'lesser_leech_mound': 'assets/Bog Wurm Ascendant.mp3',
+  'ursus_ferox': 'assets/Fury of the Rootbound Titan.mp3',
+  'lindwurm_lord': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
+  'lord_of_lies': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
+  'lord_of_future_sight': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
+  'undefeated_lord': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
 };
 
 const MARCH_THEMES = {

@@ -936,6 +936,7 @@ const RAW_EVENTS = [
           "name": "The Dragon's Lair",
           "subtitle": "Slay the Lindwurm Lord.",
           "theme": "dragon",
+          "music": "assets/Dragon Breathes in the Hollow Deep.mp3",
           "depth": 4,
           "enemies": ["lair_sheep", "hate_mage", "lair_troll", "clinking_bones"],
           "boss": {
