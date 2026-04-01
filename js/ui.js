@@ -79,10 +79,12 @@ class GameUI {
       case 'unitBlock':
         this.flashElement(`unit-${data.unitIndex}`, 'blocked', 500);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'block');
+        if (window.game) window.game.triggerHint('first_block');
         break;
       case 'morale':
         this.flashElement('morale-bar', data.amount > 0 ? 'morale-up' : 'morale-down', 600);
         this.showDamagePopup('morale-bar', data.amount, 'morale');
+        if (window.game && data.amount < 0) window.game.triggerHint('first_morale_change');
         break;
       case 'statusText':
         if (data.unitIndex !== undefined) {
@@ -104,6 +106,7 @@ class GameUI {
         break;
       case 'enemyPoison':
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.amount, 'poison');
+        if (window.game) window.game.triggerHint('first_poison');
         break;
       case 'skillCutIn':
         this.showSkillCutIn(data.classTitle, data.skillName);
@@ -765,6 +768,7 @@ class GameUI {
     if (this.diceRevealed >= this.engine.dicePool.count) {
       this.diceRevealRunning = false;
       this.diceRevealed = 0;
+      if (window.game) window.game.triggerHint('first_roll');
       setTimeout(() => this.engine.onDiceRevealed(), 200);
       return;
     }
@@ -1421,8 +1425,9 @@ class GameUI {
         el.classList.add('on-cooldown', 'ready-soon');
         cooldownOverlay = `<div class="skill-cooldown-overlay ready">Ready next turn</div>`;
       }
+      const dicePips = this.getDicePips(skill.cost);
       el.innerHTML = `
-        <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span> ${cdText}</div>
+        <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${dicePips} ${cdText}</div>
         <div class="skill-desc">${desc}</div>
         ${cooldownOverlay}
       `;
@@ -1447,14 +1452,71 @@ class GameUI {
           clearTimeout(holdTimer);
           this.clearPreviewSkill();
         });
-      } else if (skill.cooldownLeft && skill.cooldownLeft > 0) {
-        el.addEventListener('click', () => this.showCooldownPopup(el, skill.cooldownLeft));
+      } else {
+        // Disabled skill: show reason on click
+        el.addEventListener('click', () => {
+          const reason = this.getSkillDisabledReason(skill, unit);
+          if (reason) this.showSkillHint(el, reason);
+        });
       }
 
       list.appendChild(el);
     });
 
     confirmBtn.classList.add('hidden');
+  }
+
+  getDicePips(cost) {
+    let valid = [];
+    switch (cost.type) {
+      case 'any': valid = [1,2,3,4,5,6]; break;
+      case 'threshold': valid = [1,2,3,4,5,6].filter(v => v >= cost.min); break;
+      case 'range': valid = [1,2,3,4,5,6].filter(v => v >= cost.min && v <= cost.max); break;
+      case 'exact': valid = [cost.val]; break;
+      case 'even': valid = [2,4,6]; break;
+      case 'odd': valid = [1,3,5]; break;
+      default: return '';
+    }
+    if (valid.length === 6 || valid.length === 0) return '';
+    return ' <span class="dice-pips">' + [1,2,3,4,5,6].map(v =>
+      `<span class="dice-pip${valid.includes(v) ? ' valid' : ''}">${v}</span>`
+    ).join('') + '</span>';
+  }
+
+  getSkillDisabledReason(skill, unit) {
+    if (skill.cooldownLeft && skill.cooldownLeft > 0) {
+      const left = skill.cooldownLeft - 1;
+      return left > 0 ? `On cooldown (${left} turn${left > 1 ? 's' : ''})` : 'Ready next turn';
+    }
+    if (skill.effects && skill.effects.revive) {
+      if (!this.engine.party.some(u => u.downed && u !== unit)) return 'No downed allies to revive';
+    }
+    if (skill.effects && skill.effects.moraleCost) {
+      if (this.engine.morale < skill.effects.moraleCost) return `Need ${skill.effects.moraleCost} morale (have ${this.engine.morale})`;
+    }
+    const eff = skill.effects || {};
+    const isHealOnly = (eff.heal || eff.healAll) && !eff.damage && !eff.damageAll && !eff.poison && !eff.poisonAll && !eff.block && !eff.blockAll && !eff.morale && !eff.buffAllies;
+    if (isHealOnly && !this.engine.party.some(u => !u.downed && u.hp < u.maxHp)) return 'All allies at full HP';
+    const cost = skill.cost;
+    const labels = {
+      any: 'any die', threshold: `a ${cost.min}+`, range: `a ${cost.min}-${cost.max}`,
+      exact: `a ${cost.val}`, even: 'an even die', odd: 'an odd die',
+      pair: 'a matching pair', pairEven: 'an even pair', pairOdd: 'an odd pair',
+      combined: `${cost.dice} dice totaling ${cost.min}+`, consecutive: 'two consecutive dice',
+      oddEven: 'one odd + one even die'
+    };
+    return `Needs ${labels[cost.type] || 'specific dice'}`;
+  }
+
+  showSkillHint(el, text) {
+    const existing = document.querySelector('.skill-hint-popup');
+    if (existing) existing.remove();
+    const popup = document.createElement('div');
+    popup.className = 'skill-hint-popup';
+    popup.textContent = text;
+    el.appendChild(popup);
+    setTimeout(() => popup.classList.add('show'), 10);
+    setTimeout(() => { popup.classList.add('fade-out'); setTimeout(() => popup.remove(), 400); }, 1800);
   }
 
   showUnitLootTooltip(unitIndex, el) {
@@ -3655,6 +3717,7 @@ class GameUI {
   }
 
   showCampScreen() {
+    if (window.game) window.game.triggerHint('first_camp');
     this.showScreen('event-screen');
     const isLairFeastTitle = this._isLairFeast;
     const isThreshold = this._isThresholdRest;
@@ -3927,6 +3990,7 @@ class GameUI {
   }
 
   showLootScreen(isBossVictory) {
+    if (window.game) window.game.triggerHint('first_item_drop');
     this.engine.afterEncounter();
 
     // XP bar: every encounter adds XP, skill pick granted every 3 encounters (bosses always grant)
@@ -4507,6 +4571,7 @@ class GameUI {
   // ================================================================
 
   showLevelUpScreen() {
+    if (window.game) window.game.triggerHint('first_skill_pick');
     this.showScreen('levelup-screen');
     const content = document.getElementById('levelup-content');
     const title = document.getElementById('levelup-title');

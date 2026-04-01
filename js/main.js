@@ -618,6 +618,14 @@ class Game {
     this.activeBoons = [];
     // Ensure all earned unlocks are granted before showing class selection
     this.checkAchievements();
+    // First run: skip draft, auto-select Legionary + Centurion + Medicus
+    const isFirstRun = (this.stats.encountersWon || 0) === 0 && (this.stats.runsLost || 0) === 0 && (this.stats.runsCompleted || 0) === 0;
+    if (isFirstRun) {
+      this.selectedPartyClasses = ['legionary', 'centurion', 'medicus'];
+      this.showHint('first_party', 'Your first cohort: a Legionary, a Centurion, and a Medicus. Learn the basics — more classes unlock as you progress.');
+      this.startNewRun();
+      return;
+    }
     this.ui.showScreen('party-select-screen');
     this.renderPartySelect();
   }
@@ -878,6 +886,10 @@ class Game {
     document.getElementById('btn-run-history').addEventListener('click', () => this.showRunHistoryScreen());
     document.getElementById('btn-run-history-back').addEventListener('click', () => this.showHomeScreen());
     document.getElementById('btn-run-detail-back').addEventListener('click', () => this.showRunHistoryScreen());
+    document.getElementById('btn-bestiary').addEventListener('click', () => this.showBestiaryScreen());
+    document.getElementById('btn-bestiary-back').addEventListener('click', () => this.showHomeScreen());
+    document.getElementById('btn-codex').addEventListener('click', () => this.showCodexScreen());
+    document.getElementById('btn-codex-back').addEventListener('click', () => this.showHomeScreen());
 
     // Test Features
     document.getElementById('btn-test-features').addEventListener('click', () => this.showTestFeaturesScreen());
@@ -1189,6 +1201,123 @@ class Game {
       popup.classList.add('fade-out');
       setTimeout(() => popup.remove(), 600);
     });
+  }
+
+  showBestiaryScreen() {
+    this.ui.showScreen('bestiary-screen');
+    const content = document.getElementById('bestiary-content');
+    const counter = document.getElementById('bestiary-count');
+    const s = this.stats;
+    const allEnemies = Object.values(ENEMY_DATA).filter(e => !e.canSpawn);
+    const discovered = allEnemies.filter(e => (s.enemiesKilled[e.id] || 0) >= 1);
+    counter.textContent = `${discovered.length} / ${allEnemies.length} discovered`;
+
+    if (discovered.length === 0) {
+      content.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px;">No enemies encountered yet. Begin your march to fill the bestiary.</div>';
+      return;
+    }
+
+    let html = '';
+    // Sort: bosses first, then elites, then by name
+    const sorted = [...discovered].sort((a, b) => {
+      if (a.isBoss !== b.isBoss) return a.isBoss ? -1 : 1;
+      if (a.isElite !== b.isElite) return a.isElite ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    sorted.forEach(enemy => {
+      const kills = s.enemiesKilled[enemy.id] || 0;
+      const tier = kills >= 10 ? 3 : kills >= 3 ? 2 : 1;
+      const tag = enemy.isBoss ? '<span class="bestiary-tag boss">BOSS</span>' : enemy.isElite ? '<span class="bestiary-tag elite">ELITE</span>' : '';
+      const row = enemy.row === 'front' ? 'Front Row' : 'Back Row';
+
+      let details = `<div class="bestiary-stat">HP: ${enemy.maxHp} | ${row} | Killed: ${kills}</div>`;
+      // Tier 2: show actions
+      if (tier >= 2) {
+        const actions = (enemy.actions || []).map(a => {
+          let info = a.name;
+          if (a.damage) info += ` (${a.damage} dmg)`;
+          if (a.poisonTarget) info += ` (+${a.poisonTarget} poison)`;
+          if (a.morale) info += ` (${a.morale} morale)`;
+          if (a.aoe) info += ' [AoE]';
+          return `<span class="bestiary-action">${info}</span>`;
+        }).join('');
+        details += `<div class="bestiary-actions">${actions}</div>`;
+      }
+      // Tier 3: show description/lore
+      if (tier >= 3) {
+        details += `<div class="bestiary-lore">${enemy.description}</div>`;
+      }
+      // Tier < 3: show locked info
+      if (tier < 2) details += `<div class="bestiary-locked">Kill 3 times to reveal abilities.</div>`;
+      else if (tier < 3) details += `<div class="bestiary-locked">Kill 10 times to reveal lore.</div>`;
+
+      html += `<div class="bestiary-entry tier-${tier}">
+        <div class="bestiary-header">${tag}<span class="bestiary-name">${enemy.name}</span></div>
+        ${details}
+      </div>`;
+    });
+
+    // Show undiscovered count
+    const undiscovered = allEnemies.length - discovered.length;
+    if (undiscovered > 0) {
+      html += `<div class="bestiary-entry undiscovered"><div class="bestiary-header"><span class="bestiary-name">??? (${undiscovered} more)</span></div><div class="bestiary-locked">Defeat new enemies to discover them.</div></div>`;
+    }
+
+    content.innerHTML = html;
+  }
+
+  showCodexScreen() {
+    this.ui.showScreen('codex-screen');
+    const content = document.getElementById('codex-content');
+    content.innerHTML = `
+      <div class="codex-section">
+        <h3 class="codex-heading">DICE COSTS</h3>
+        <div class="codex-entry"><b>Any</b> — Use any single die.</div>
+        <div class="codex-entry"><b>X+</b> — Die must be X or higher (e.g. 5+ means 5 or 6).</div>
+        <div class="codex-entry"><b>X-Y</b> — Die must be between X and Y inclusive.</div>
+        <div class="codex-entry"><b>=X</b> — Die must be exactly X.</div>
+        <div class="codex-entry"><b>Even / Odd</b> — Die must be even (2/4/6) or odd (1/3/5).</div>
+        <div class="codex-entry"><b>Pair</b> — Two dice with the same value.</div>
+        <div class="codex-entry"><b>Even/Odd Pair</b> — A pair where both dice are even or odd.</div>
+        <div class="codex-entry"><b>Consecutive</b> — Two dice with adjacent values (e.g. 3+4).</div>
+        <div class="codex-entry"><b>2d X+</b> — Two dice whose sum is X or more.</div>
+      </div>
+      <div class="codex-section">
+        <h3 class="codex-heading">STATUS EFFECTS</h3>
+        <div class="codex-entry"><b style="color:#8a2">Poison</b> — Deals damage equal to its value each turn, then decreases by 1. Stacks additively.</div>
+        <div class="codex-entry"><b style="color:var(--blue-bright)">Block</b> — Absorbs incoming damage before HP. Unused block fades between turns.</div>
+        <div class="codex-entry"><b>Stun</b> — Unit skips their next action.</div>
+        <div class="codex-entry"><b style="color:var(--gold)">Mark</b> — Marked targets take +20% damage from all sources.</div>
+        <div class="codex-entry"><b>Taunt</b> — Forces enemies to target this unit.</div>
+      </div>
+      <div class="codex-section">
+        <h3 class="codex-heading">MORALE</h3>
+        <div class="codex-entry"><b style="color:#c9a227">85+</b> — Inspired: +2 damage/healing. Heals most wounded ally 2 HP/turn.</div>
+        <div class="codex-entry"><b style="color:#c9a227">70-84</b> — Confident: +1 damage/healing. Heals most wounded ally 1 HP/turn.</div>
+        <div class="codex-entry"><b style="color:#6b8f4a">40-69</b> — Steady: No modifiers.</div>
+        <div class="codex-entry"><b style="color:#a0522d">16-30</b> — Distressed: -1 damage/healing. 1 damage to random ally/turn.</div>
+        <div class="codex-entry"><b style="color:#6b1a1a">0-15</b> — Broken: -2 damage/healing. 2 damage to random ally/turn.</div>
+        <div class="codex-entry">Morale decays each turn. Killing enemies and using morale skills restores it.</div>
+      </div>
+      <div class="codex-section">
+        <h3 class="codex-heading">EQUIPMENT</h3>
+        <div class="codex-entry"><b style="color:var(--red-bright)">Damage</b> — Added to all damage-dealing skills.</div>
+        <div class="codex-entry"><b style="color:var(--blue-bright)">Block</b> — Added to all block-granting skills.</div>
+        <div class="codex-entry"><b style="color:var(--green-bright)">Heal</b> — Added to all healing skills.</div>
+        <div class="codex-entry"><b style="color:#8a2">Poison</b> — Added to all poison-applying skills.</div>
+        <div class="codex-entry"><b>Max HP</b> — Increases maximum hit points.</div>
+        <div class="codex-entry"><b>Extra Dice</b> — Adds bonus dice to your pool each turn.</div>
+        <div class="codex-entry">Items have class tags — they can only be equipped by matching classes.</div>
+      </div>
+      <div class="codex-section">
+        <h3 class="codex-heading">COMBAT FLOW</h3>
+        <div class="codex-entry">Each turn: roll dice → assign dice to skills → end turn → enemies act.</div>
+        <div class="codex-entry">Each unit can act once per turn. Skills consume dice from the shared pool.</div>
+        <div class="codex-entry">After combat: standing units heal, downed units revive at 50% HP.</div>
+        <div class="codex-entry">Between marches: brief rest heals all soldiers 15% max HP.</div>
+      </div>
+    `;
   }
 
   showRunHistoryScreen() {
@@ -1652,6 +1781,39 @@ class Game {
         this._showNextNotification();
       }, 600);
     }, 2500);
+  }
+
+  // --- Contextual hints system ---
+  showHint(id, text) {
+    try {
+      const seen = JSON.parse(localStorage.getItem('lc_hints_seen') || '{}');
+      if (seen[id]) return;
+      seen[id] = true;
+      localStorage.setItem('lc_hints_seen', JSON.stringify(seen));
+    } catch (e) { return; }
+    const existing = document.querySelector('.game-hint');
+    if (existing) existing.remove();
+    const hint = document.createElement('div');
+    hint.className = 'game-hint';
+    hint.innerHTML = `<div class="game-hint-icon">?</div><div class="game-hint-text">${text}</div><div class="game-hint-dismiss">TAP TO DISMISS</div>`;
+    hint.addEventListener('click', () => { hint.classList.add('fade-out'); setTimeout(() => hint.remove(), 400); });
+    document.getElementById('game').appendChild(hint);
+    requestAnimationFrame(() => hint.classList.add('show'));
+    setTimeout(() => { if (hint.parentNode) { hint.classList.add('fade-out'); setTimeout(() => hint.remove(), 400); } }, 8000);
+  }
+
+  triggerHint(id) {
+    const hints = {
+      first_roll: 'Drag dice onto skills to use them. Each skill needs specific dice values — check the pips next to the skill name.',
+      first_poison: 'Poison deals its value as damage each turn, then decreases by 1. Stack it for massive damage over time.',
+      first_block: 'Block absorbs incoming damage before HP. Unused block fades between turns.',
+      first_morale_change: 'Morale affects your damage and healing. High morale heals your men each turn — low morale hurts them.',
+      first_camp: 'Choose your camp actions carefully — you only get 2. Rest and prepare for the next fight.',
+      first_unit_downed: 'Downed units revive after combat at 50% HP. Protect your weakest members.',
+      first_skill_pick: 'Choose skills that complement your party. You can\'t take them all — pick what fits your strategy.',
+      first_item_drop: 'Equip items to boost your soldiers. Match items to the right class tags for best results.',
+    };
+    if (hints[id]) this.showHint(id, hints[id]);
   }
 
   showAchievementsScreen() {

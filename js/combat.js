@@ -4788,6 +4788,7 @@ class CombatEngine {
         u.hp = 0;
         u._killedBy = this._lastAttackerName || 'Poison';
         this.addLog(`${u.name} is downed!`);
+        if (window.game) window.game.triggerHint('first_unit_downed');
         this.morale = Math.max(0, this.morale - 10);
         this.clampMorale();
         if (this.onVisual) this.onVisual('morale', { amount: -10 });
