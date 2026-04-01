@@ -3611,7 +3611,7 @@ class GameUI {
           u.hp = Math.min(u.maxHp, u.hp + healAmt);
         }
       });
-      this.campLog.push('Wounds are tended one last time. (All healed 10% HP)');
+      this.campLog.push('Wounds are tended one last time. (All healed 15% HP)');
       this.showCampScreen();
       return;
     }
@@ -4853,10 +4853,10 @@ class GameUI {
   }
 
   showMarchRestScreen() {
-    // Brief rest: heal 10% of all members
+    // Brief rest: heal 15% of all members
     this.engine.party.forEach(u => {
       if (!u.downed) {
-        const healAmt = Math.max(1, Math.floor(u.maxHp * 0.1));
+        const healAmt = Math.max(1, Math.floor(u.maxHp * 0.15));
         u.hp = Math.min(u.maxHp, u.hp + healAmt);
       }
     });
@@ -4876,7 +4876,7 @@ class GameUI {
       introEl.parentNode.insertBefore(statusEl, introEl.nextSibling);
     }
     const moraleBand = getMoraleBand(this.engine.morale);
-    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale} (${moraleBand.label})</span> | All soldiers healed 10%</div>`;
+    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale} (${moraleBand.label})</span> | All soldiers healed 15%</div>`;
     statusHtml += '<div class="camp-units">';
     this.engine.party.forEach(u => {
       const tag = getPrimaryTag(u.classId);

@@ -305,7 +305,7 @@ const RAW_CLASSES = {
       },
       {
         "id": "poisoned_arrow", "name": "Poisoned Arrow", "starter": true, "cooldown": 2,
-        "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
+        "cost": { "type": "range", "min": 1, "max": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Ranged. Deal 3 damage, apply 1 Poison. Triples poison if target already poisoned.",
         "effects": { "damage": 3, "poison": 1, "triplePoison": true, "bonusDmgScale": 0.85 }
@@ -340,8 +340,8 @@ const RAW_CLASSES = {
       {
         "id": "caltrops", "name": "Caltrops", "cooldown": 2,
         "cost": { "type": "range", "min": 4, "max": 5 }, "target": "single_enemy",
-        "description": "Target and adjacent enemies are marked (+20% damage). They take 3 damage if they attack.",
-        "effects": { "caltrops": 3, "bonusDmgScale": 0.3 }
+        "description": "Target and adjacent enemies are marked (+20% damage), take 3 damage if they attack, and receive 2 Poison.",
+        "effects": { "caltrops": 3, "poison": 2, "bonusDmgScale": 0.3 }
       },
       {
         "id": "snare_trap", "name": "Snare Trap", "cooldown": 1,

@@ -507,6 +507,17 @@ class CombatEngine {
       }
     });
 
+    // Legionary Rations: heal wielder 1 HP each turn (scales with level)
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'legionary_rations') && u.hp < u.maxHp) {
+        const lrLv = this.getItemLevel(u, 'legionary_rations');
+        const lrHeal = 1 * lrLv;
+        u.hp = Math.min(u.maxHp, u.hp + lrHeal);
+        this.addLog(`${u.name}'s Rations restore ${lrHeal} HP.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: lrHeal });
+      }
+    });
+
     // Crown of Ariovistus: gain block equal to number of living enemies
     this.party.forEach(u => {
       if (!u.downed && this.unitHasItem(u, 'crown_of_ariovistus')) {
@@ -532,6 +543,16 @@ class CombatEngine {
             if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: healAmt });
           }
         }
+      }
+    });
+
+    // Survivor's Charm: heal 3 HP at start of turn if below 50% HP
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'survivors_charm') && u.hp < u.maxHp * 0.5) {
+        const scHeal = 3;
+        u.hp = Math.min(u.maxHp, u.hp + scHeal);
+        this.addLog(`${u.name}'s Survivor's Charm restores ${scHeal} HP.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: scHeal });
       }
     });
 
@@ -1793,6 +1814,15 @@ class CombatEngine {
         parts.push(`Blood-Iron Gladius heals ${bigHeal} HP.`);
       }
 
+      // Special: Wolf Blood Tonic — attacks heal wielder 1 HP (scales with level)
+      if (this.unitHasItem(unit, 'wolf_blood_tonic') && total > 0 && unit.hp < unit.maxHp) {
+        const wbtLv = this.getItemLevel(unit, 'wolf_blood_tonic');
+        const wbtHeal = 1 * wbtLv;
+        unit.hp = Math.min(unit.maxHp, unit.hp + wbtHeal);
+        unit.stats.healingDone += wbtHeal;
+        parts.push(`Wolf Blood Tonic heals ${wbtHeal} HP.`);
+      }
+
       // Fury of Vulcan: attacks deal 50% splash damage to adjacent enemies
       if (this.unitHasItem(unit, 'fury_of_vulcan') && total > 0 && result.target.row) {
         const vulcanDmg = Math.max(1, Math.round(total * 0.5));
@@ -2192,7 +2222,8 @@ class CombatEngine {
     // Poison (single target — equipment scaling, optionally amplified by bonusPoisonScale)
     if (result.poison && result.target) {
       const poisonScale = result.bonusPoisonScale || 1;
-      let totalPoison = result.poison + Math.floor((unit.equipPoison || 0) * poisonScale);
+      const vfBonus = this.unitHasItem(unit, 'vipers_fletching') ? 2 : 0;
+      let totalPoison = result.poison + Math.floor((unit.equipPoison || 0) * poisonScale) + vfBonus;
       // Double/Triple Poison: multiplies applied poison if target is already poisoned
       const alreadyPoisoned = (result.target.poison || 0) > 0;
       if (result.triplePoison && alreadyPoisoned) totalPoison *= 3;
@@ -2213,7 +2244,8 @@ class CombatEngine {
     // Poison splash: apply to adjacent enemies (scales slower than main target)
     if (result.poisonSplash && result.target) {
       const splashScale = result.splashPoisonScale || 0.5;
-      const splashPoison = result.poisonSplash + Math.floor((unit.equipPoison || 0) * splashScale);
+      const vfSplashBonus = this.unitHasItem(unit, 'vipers_fletching') ? 1 : 0;
+      const splashPoison = result.poisonSplash + Math.floor((unit.equipPoison || 0) * splashScale) + vfSplashBonus;
       // Splash to adjacent enemies (up to 2 closest in same row)
       const sameRow = this.enemies.filter(e => !e.dead && e !== result.target && e.row === result.target.row);
       sameRow.sort((a, b) => Math.abs(a.index - result.target.index) - Math.abs(b.index - result.target.index));
@@ -2233,7 +2265,8 @@ class CombatEngine {
     }
     // Poison all enemies (includes equipment poison)
     if (result.poisonAll) {
-      const totalPoison = result.poisonAll + (unit.equipPoison || 0);
+      const vfAllBonus = this.unitHasItem(unit, 'vipers_fletching') ? 2 : 0;
+      const totalPoison = result.poisonAll + (unit.equipPoison || 0) + vfAllBonus;
       this.enemies.forEach(e => {
         if (!e.dead) {
           e.poison = (e.poison || 0) + totalPoison;
@@ -2304,6 +2337,12 @@ class CombatEngine {
             const bigHeal = 1 * bigLv;
             unit.hp = Math.min(unit.maxHp, unit.hp + bigHeal);
             unit.stats.healingDone += bigHeal;
+          }
+          if (dmg > 0 && this.unitHasItem(unit, 'wolf_blood_tonic') && unit.hp < unit.maxHp) {
+            const wbtLv = this.getItemLevel(unit, 'wolf_blood_tonic');
+            const wbtHeal = 1 * wbtLv;
+            unit.hp = Math.min(unit.maxHp, unit.hp + wbtHeal);
+            unit.stats.healingDone += wbtHeal;
           }
         }
       });
@@ -2530,12 +2569,18 @@ class CombatEngine {
       caltropTargets.push(...adjacent);
       const caltropBonus = Math.floor((unit.equipDamage || 0) * 0.3);
       const caltropDmg = result.caltrops + caltropBonus;
+      const caltropPoison = result.poison || 0;
+      const equipPoison = Math.floor((unit.equipPoison || 0) * 1);
       caltropTargets.forEach(e => {
         e._marked = 2;
         e._snareTrap = caltropDmg;
+        if (caltropPoison + equipPoison > 0) {
+          e.poison = (e.poison || 0) + caltropPoison + equipPoison;
+        }
       });
       const names = caltropTargets.map(e => e.name).join(', ');
-      parts.push(`Caltrops! ${names} marked and trapped!`);
+      const poisonNote = (caltropPoison + equipPoison > 0) ? ` +${caltropPoison + equipPoison} Poison!` : '';
+      parts.push(`Caltrops! ${names} marked and trapped!${poisonNote}`);
       caltropTargets.forEach(e => {
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: e.index, text: 'Caltrops!', color: 'var(--gold)' });
       });
@@ -4916,11 +4961,19 @@ class CombatEngine {
   afterEncounter() {
     const hasDefiance = this.getActiveBoons().includes('arminius_defiance');
     const revivePct = hasDefiance ? 0.7 : 0.5;
+    const difficulty = (window.game && window.game.difficulty) || 1;
+    const postCombatHeal = 3 + Math.floor(difficulty / 2);
     this.party.forEach(u => {
       if (u.downed) {
         u.downed = false;
         u.hp = Math.floor(u.maxHp * revivePct);
         this.addLog(`${u.name} recovers at ${u.hp} HP.`);
+      } else {
+        const healed = Math.min(postCombatHeal, u.maxHp - u.hp);
+        if (healed > 0) {
+          u.hp += healed;
+          this.addLog(`${u.name} catches their breath. (+${healed} HP)`);
+        }
       }
       u.block = 0;
       u.poison = 0;

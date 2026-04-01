@@ -36,7 +36,14 @@
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/leechMoundSmall.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_lesser_leech_mound.png\")",
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/leechMoundBig.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_leech_mound.png\")",
       "Bash(cp \"c:/Users/Lutz Görs/Downloads/ursusArmored.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_ursus_ferox.png\")",
-      "Bash(cp \"c:/Users/Lutz Görs/Downloads/cubArmored.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_bone_gnawer_cub.png\")"
+      "Bash(cp \"c:/Users/Lutz Görs/Downloads/cubArmored.png\" \"D:/Dokumente/Gamedesign/Last Cohort/Last-Cohort/assets/enemy_bone_gnawer_cub.png\")",
+      "Bash(for class:*)",
+      "Bash(__NEW_LINE_8b51b492d5a53687__ grep:*)",
+      "Bash(xargs echo:*)",
+      "Bash(__NEW_LINE_8b51b492d5a53687__ done:*)",
+      "Bash(for range:*)",
+      "Bash(__NEW_LINE_113e2895bf17a63f__ sed:*)",
+      "Bash(__NEW_LINE_113e2895bf17a63f__ done:*)"
     ]
   }
 }
