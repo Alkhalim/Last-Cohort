@@ -237,7 +237,7 @@ const RAW_CLASSES = {
         "id": "field_surgery", "name": "Field Surgery", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 6+. Heal all allies for 4 HP.",
-        "effects": { "healAll": 4, "bonusHealScale": 0.85 }
+        "effects": { "healAll": 4, "bonusHealScale": 0.75 }
       },
       {
         "id": "venom_strike", "name": "Venom Strike", "cooldown": 1,
@@ -485,7 +485,7 @@ const RAW_CLASSES = {
         "id": "battle_horn", "name": "Battle Horn", "starter": true, "cooldown": 2,
         "cost": { "type": "range", "min": 1, "max": 3 }, "target": "all_allies",
         "description": "Heal all allies 1 HP. +1 Block all.",
-        "effects": { "healAll": 1, "blockAll": 1, "bonusHealScale": 0.75, "blockScale": 1.1 }
+        "effects": { "healAll": 1, "blockAll": 1, "bonusHealScale": 0.65, "blockScale": 1.1 }
       },
       {
         "id": "war_drums", "name": "War Drums", "cooldown": 3, "starter": true,
@@ -953,13 +953,13 @@ const RAW_CLASSES = {
         "id": "flame_touch", "name": "Flame Touch", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 1 damage. Heal a random wounded ally for 1 HP. +1 Morale.",
-        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.55, "bonusHealScale": 0.9 }
+        "effects": { "damage": 1, "flameTouch": true, "morale": 1, "bonusDmgScale": 0.55, "bonusHealScale": 0.8 }
       },
       {
         "id": "prayer_of_mending", "name": "Prayer of Mending", "starter": true, "cooldown": 1,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "single_ally",
         "description": "Heal ally for 4 HP. +3 Morale.",
-        "effects": { "heal": 4, "morale": 2, "bonusHealScale": 1.2 }
+        "effects": { "heal": 4, "morale": 2, "bonusHealScale": 1.25 }
       },
       {
         "id": "sacred_ward", "name": "Sacred Ward", "starter": true, "cooldown": 2,
@@ -996,7 +996,7 @@ const RAW_CLASSES = {
         "id": "rite_of_consecration", "name": "Rite of Consecration", "cooldown": 3,
         "cost": { "type": "combined", "min": 10, "dice": 3 }, "target": "all_allies",
         "description": "3 dice totaling 10+. All allies +2 damage for 3 attacks. +5 Morale. Heal all 3 HP.",
-        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 3 }, "morale": 5, "healAll": 3 }
+        "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 3 }, "morale": 5, "healAll": 3, "bonusHealScale": 0.9 }
       },
       {
         "id": "flame_shield", "name": "Flame Shield", "cooldown": 3,
@@ -1020,7 +1020,7 @@ const RAW_CLASSES = {
         "id": "eternal_flame", "name": "Eternal Flame", "cooldown": 4,
         "cost": { "type": "combined", "min": 9, "dice": 2 }, "target": "all_allies",
         "description": "2 dice totaling 9+. Free action. Heal all 6 HP, gain 4 Block, +7 Morale. Act again.",
-        "effects": { "healAll": 6, "blockAll": 4, "morale": 7, "freeAction": true, "bonusHealScale": 0.8, "blockScale": 0.8 }
+        "effects": { "healAll": 6, "blockAll": 4, "morale": 7, "freeAction": true, "bonusHealScale": 0.7, "blockScale": 0.8 }
       }
     ]
   },
