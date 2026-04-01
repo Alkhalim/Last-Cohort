@@ -434,6 +434,45 @@ class CombatEngine {
 
     // Poison ticks moved: ally poison at end of player turn, enemy poison at end of enemy turn
 
+    // Morale HP tick: high morale heals, low morale damages
+    if (this.morale >= 85) {
+      const target = this.party.filter(u => !u.downed && u.hp < u.maxHp).sort((a, b) => a.hp - b.hp)[0];
+      if (target) {
+        const heal = Math.min(2, target.maxHp - target.hp);
+        target.hp += heal;
+        this.addLog(`High spirits lift the cohort. ${target.name} heals ${heal} HP.`);
+        if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: heal });
+      }
+    } else if (this.morale >= 70) {
+      const target = this.party.filter(u => !u.downed && u.hp < u.maxHp).sort((a, b) => a.hp - b.hp)[0];
+      if (target) {
+        const heal = Math.min(1, target.maxHp - target.hp);
+        if (heal > 0) {
+          target.hp += heal;
+          this.addLog(`Confidence steadies the men. ${target.name} heals ${heal} HP.`);
+          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: heal });
+        }
+      }
+    } else if (this.morale <= 15) {
+      const alive = this.party.filter(u => !u.downed);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        target.hp = Math.max(1, target.hp - 2);
+        target.stats.damageTaken += 2;
+        this.addLog(`Despair gnaws at the cohort. ${target.name} suffers 2 damage.`);
+        if (this.onVisual) this.onVisual('unitHit', { unitIndex: target.index, damage: 2, type: 'morale' });
+      }
+    } else if (this.morale <= 30) {
+      const alive = this.party.filter(u => !u.downed);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        target.hp = Math.max(1, target.hp - 1);
+        target.stats.damageTaken += 1;
+        this.addLog(`Low morale weighs on the men. ${target.name} suffers 1 damage.`);
+        if (this.onVisual) this.onVisual('unitHit', { unitIndex: target.index, damage: 1, type: 'morale' });
+      }
+    }
+
     // Structure aura damage (Wicker Man: turnDamageAll)
     this.enemies.forEach(e => {
       if (!e.dead && e.turnDamageAll) {
@@ -553,6 +592,21 @@ class CombatEngine {
         u.hp = Math.min(u.maxHp, u.hp + scHeal);
         this.addLog(`${u.name}'s Survivor's Charm restores ${scHeal} HP.`);
         if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: scHeal });
+      }
+    });
+
+    // Stoneskin Wrap: convert excess block (above 5) into healing (1 HP per 3 block)
+    this.party.forEach(u => {
+      if (!u.downed && this.unitHasItem(u, 'stoneskin_wrap') && (u.block || 0) > 5 && u.hp < u.maxHp) {
+        const excess = u.block - 5;
+        const healAmt = Math.min(Math.floor(excess / 3), u.maxHp - u.hp);
+        if (healAmt > 0) {
+          const blockUsed = healAmt * 3;
+          u.block -= blockUsed;
+          u.hp += healAmt;
+          this.addLog(`Stoneskin Wrap converts ${blockUsed} block into ${healAmt} HP for ${u.name}.`);
+          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: healAmt });
+        }
       }
     });
 
@@ -1761,14 +1815,20 @@ class CombatEngine {
         const overkillPct = overkill / total;
         if (overkillPct >= 0.75) {
           this.morale = Math.min(100, this.morale + 2);
-          parts.push('OVERKILL! (+2 Morale)');
+          const okHeal = Math.min(2, unit.maxHp - unit.hp);
+          if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
+          parts.push(`OVERKILL! (+2 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
           if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
           if (this.onVisual) this.onVisual('morale', { amount: 2 });
+          if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
         } else if (overkillPct >= 0.6) {
           this.morale = Math.min(100, this.morale + 1);
-          parts.push('Overkill! (+1 Morale)');
+          const okHeal = Math.min(1, unit.maxHp - unit.hp);
+          if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
+          parts.push(`Overkill! (+1 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
           if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
           if (this.onVisual) this.onVisual('morale', { amount: 1 });
+          if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
         }
       }
 
@@ -2235,6 +2295,13 @@ class CombatEngine {
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
       const doubledStr = multiplied ? (result.triplePoison ? ' TRIPLED!' : ' Doubled!') : '';
       parts.push(`Applies ${totalPoison}${bonusStr} Poison.${doubledStr}`);
+      // Venomheart Pendant: gain 2 Block when applying poison
+      if (this.unitHasItem(unit, 'venomheart_pendant')) {
+        unit.block = (unit.block || 0) + 2;
+        unit.stats.blockGenerated += 2;
+        parts.push('Venomheart Pendant grants 2 Block.');
+        if (this.onVisual) this.onVisual('unitBlock', { unitIndex: unit.index, amount: 2 });
+      }
     }
     // Mark Target: enemy takes +20% damage for 1 turn
     if (result.markTarget && result.target) {
@@ -2275,6 +2342,13 @@ class CombatEngine {
         }
       });
       parts.push(`${unit.name} uses ${skill.name} \u2014 applies ${totalPoison} Poison to all enemies.`);
+      // Venomheart Pendant: gain 2 Block when applying poison
+      if (this.unitHasItem(unit, 'venomheart_pendant')) {
+        unit.block = (unit.block || 0) + 2;
+        unit.stats.blockGenerated += 2;
+        parts.push('Venomheart Pendant grants 2 Block.');
+        if (this.onVisual) this.onVisual('unitBlock', { unitIndex: unit.index, amount: 2 });
+      }
     }
     // Damage all enemies (AoE)
     // Cataphract's Doom: +3 damage per remaining 6 in pool
@@ -2358,17 +2432,23 @@ class CombatEngine {
         spiritA.hp = Math.min(spiritA.maxHp, spiritA.hp + healForA);
         parts.push(`The spirits' bond pulses — each heals ${healForV} HP!`);
       }
-      // AoE overkill morale
+      // AoE overkill morale + self-heal
       if (bestOverkillPct >= 0.75) {
         this.morale = Math.min(100, this.morale + 2);
-        parts.push('OVERKILL! (+2 Morale)');
+        const okHeal = Math.min(2, unit.maxHp - unit.hp);
+        if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
+        parts.push(`OVERKILL! (+2 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
         if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
         if (this.onVisual) this.onVisual('morale', { amount: 2 });
+        if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
       } else if (bestOverkillPct >= 0.6) {
         this.morale = Math.min(100, this.morale + 1);
-        parts.push('Overkill! (+1 Morale)');
+        const okHeal = Math.min(1, unit.maxHp - unit.hp);
+        if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
+        parts.push(`Overkill! (+1 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
         if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
         if (this.onVisual) this.onVisual('morale', { amount: 1 });
+        if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
       }
     }
     // Consume all damage buffs after dealing damage
@@ -3884,6 +3964,14 @@ class CombatEngine {
             if (poisoner) poisoner.stats.poisonDamageDealt += poisonDmg;
             this.addLog(`${e.name} takes ${poisonDmg} poison damage.`);
             if (this.onVisual) this.onVisual('enemyAttack', { enemyIndex: e.index, type: 'poison' });
+            // Plague Doctor's Mask: heal lowest HP ally when enemy takes poison damage
+            if (this.partyHasItem('plague_doctors_mask')) {
+              const wounded = this.party.filter(u => !u.downed && u.hp < u.maxHp).sort((a, b) => a.hp - b.hp)[0];
+              if (wounded) {
+                wounded.hp = Math.min(wounded.maxHp, wounded.hp + 1);
+                if (this.onVisual) this.onVisual('unitHeal', { unitIndex: wounded.index, amount: 1 });
+              }
+            }
             e.poison = Math.max(0, e.poison - 1);
             if (e.hp <= 0) {
               e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
@@ -4208,6 +4296,13 @@ class CombatEngine {
         if (absorbed > 0) {
           target.stats.blockAbsorbed += absorbed;
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
+          // Ironblood Salve: heal 1 HP when block absorbs damage
+          if (this.unitHasItem(target, 'ironblood_salve') && target.hp < target.maxHp) {
+            target.hp = Math.min(target.maxHp, target.hp + 1);
+            target.stats.healingDone += 1;
+            this.addLog(`Ironblood Salve restores 1 HP.`);
+            if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: 1 });
+          }
         }
       }
       // Berserker Mushroom: gain +1 damage each time hit (max +4)
@@ -4962,7 +5057,8 @@ class CombatEngine {
     const hasDefiance = this.getActiveBoons().includes('arminius_defiance');
     const revivePct = hasDefiance ? 0.7 : 0.5;
     const difficulty = (window.game && window.game.difficulty) || 1;
-    const postCombatHeal = 3 + Math.floor(difficulty / 2);
+    const hasSupport = this.party.some(u => CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes('support'));
+    const postCombatHeal = 3 + Math.floor(difficulty / 2) + (hasSupport ? 0 : 2);
     this.party.forEach(u => {
       if (u.downed) {
         u.downed = false;

@@ -26,8 +26,8 @@ const RAW_CLASSES = {
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
         "cost": { "type": "even" }, "target": "self",
-        "description": "Gain 3 + die value Block this turn and next.",
-        "effects": { "block": 3, "dieScaleBlock": true, "blockScale": 0.8, "shieldBrace": true }
+        "description": "Gain 3 + die value Block this turn and next. Heal 2 HP.",
+        "effects": { "block": 3, "dieScaleBlock": true, "blockScale": 0.8, "shieldBrace": true, "heal": 2 }
       },
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
@@ -625,8 +625,8 @@ const RAW_CLASSES = {
       {
         "id": "cavalry_escape", "name": "Cavalry Escape", "cooldown": 4,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "all_allies",
-        "description": "2 dice totaling 5+. All allies take 50% less damage during the next enemy turn.",
-        "effects": { "damageShield": 0.5 }
+        "description": "2 dice totaling 5+. All allies take 50% less damage during the next enemy turn. Heal all allies 2 HP.",
+        "effects": { "damageShield": 0.5, "healAll": 2 }
       },
       {
         "id": "warhorse_kick", "name": "Warhorse Kick", "cooldown": 3,

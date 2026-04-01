@@ -33,19 +33,19 @@ class GameUI {
       const band = getMoraleBand(this.engine.morale);
       let effects = '';
       if (this.engine.morale >= 85) {
-        effects = 'Inspired: +2 damage and +2 healing to all actions.';
+        effects = 'Inspired: +2 damage, +2 healing. Heals most wounded ally 2 HP/turn.';
       } else if (this.engine.morale >= 70) {
-        effects = 'Confident: +1 damage and +1 healing to all actions.';
+        effects = 'Confident: +1 damage, +1 healing. Heals most wounded ally 1 HP/turn.';
       } else if (this.engine.morale >= 55) {
         effects = 'Steady: Baseline performance. No modifiers.';
       } else if (this.engine.morale >= 40) {
         effects = 'Shaken: No major modifiers.';
       } else if (this.engine.morale >= 30) {
-        effects = 'Distressed: -1 damage and -1 healing to all actions.';
+        effects = 'Distressed: -1 damage, -1 healing. 1 damage to a random ally/turn.';
       } else if (this.engine.morale >= 15) {
-        effects = 'Wavering: -1 damage and -1 healing to all actions.';
+        effects = 'Wavering: -1 damage, -1 healing. 1 damage to a random ally/turn.';
       } else {
-        effects = 'Broken: -2 damage and -2 healing to all actions.';
+        effects = 'Broken: -2 damage, -2 healing. 2 damage to a random ally/turn.';
       }
       tooltip.textContent = effects;
       tooltip.classList.remove('hidden');
