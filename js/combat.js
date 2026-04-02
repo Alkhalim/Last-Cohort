@@ -64,8 +64,8 @@ class CombatEngine {
         },
         equipDamage: 0, equipBlock: 0, equipHeal: 0, equipExtraDice: 0, equipPoison: 0,
         bonusDamage: 0, bonusBlock: 0, bonusHeal: 0, bonusPoison: 0,
-        stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 },
-        runStats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 },
+        stats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0, maxSingleHit: 0 },
+        runStats: { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0, maxSingleHit: 0 },
       };
     });
     this.party.forEach(u => this.initSkills(u));
@@ -116,7 +116,7 @@ class CombatEngine {
           u.runStats[key] = (u.runStats[key] || 0) + (u.stats[key] || 0);
         }
       }
-      u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0 };
+      u.stats = { damageDealt: 0, healingDone: 0, blockGenerated: 0, blockAbsorbed: 0, moraleRestored: 0, damageTaken: 0, poisonInflicted: 0, poisonDamageDealt: 0, maxSingleHit: 0 };
       if (u.passive) u.passive.triggered = false;
       this.computeEquipmentStats(u);
     });
@@ -1809,6 +1809,7 @@ class CombatEngine {
       const hpBeforeHit = result.target.hp;
       result.target.hp = Math.max(0, result.target.hp - total);
       unit.stats.damageDealt += total;
+      if (total > unit.stats.maxSingleHit) unit.stats.maxSingleHit = total;
       if (total > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: total });
       const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
@@ -4012,6 +4013,7 @@ class CombatEngine {
             e.poison = Math.max(0, e.poison - 1);
             if (e.hp <= 0) {
               e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
+              this.poisonKills = (this.poisonKills || 0) + 1;
               this.addLog(`${e.name} falls to poison!`);
               const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
               const diffBonusKill = Math.floor((this.difficulty || 1) / 3);

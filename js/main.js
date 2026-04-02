@@ -899,9 +899,50 @@ class Game {
     this.engine.killedEnemies.forEach(eid => {
       this.stats.enemiesKilled[eid] = (this.stats.enemiesKilled[eid] || 0) + 1;
     });
+    this.stats.poisonKills = (this.stats.poisonKills || 0) + (this.engine.poisonKills || 0);
     this.stats.encountersWon++;
     if (this.engine.hasBossEnemy()) this.stats.bossesKilled++;
     if (this.difficulty > this.stats.highestDifficulty) this.stats.highestDifficulty = this.difficulty;
+
+    // Track combat achievements
+    const aa = this.achievements;
+    // Flawless encounter: no unit took damage
+    if (!aa.flawless_encounter && this.engine.party.every(u => (u.stats.damageTaken || 0) === 0)) {
+      aa.flawless_encounter = true;
+      this.addNotification('Achievement: Flawless Victory!');
+    }
+    // Boss killed within 3 turns
+    if (!aa.kill_boss_turn3 && this.engine.hasBossEnemy() && this.engine.turn <= 3) {
+      aa.kill_boss_turn3 = true;
+      this.addNotification('Achievement: Blitzkrieg — boss down in 3 turns!');
+    }
+    // High morale boss finish
+    if (!aa.high_morale_finish && this.engine.hasBossEnemy() && this.engine.morale > 90) {
+      aa.high_morale_finish = true;
+      this.addNotification('Achievement: Unbreakable Spirit!');
+    }
+    // Low morale boss win
+    if (!aa.low_morale_win && this.engine.hasBossEnemy() && this.engine.morale < 10) {
+      aa.low_morale_win = true;
+      this.addNotification('Achievement: Against All Odds!');
+    }
+    // Solo survivor boss win
+    if (!aa.solo_survivor && this.engine.hasBossEnemy()) {
+      const alive = this.engine.party.filter(u => !u.downed);
+      if (alive.length === 1) { aa.solo_survivor = true; this.addNotification('Achievement: Last Man Standing!'); }
+    }
+    // No downed during march (tracked per-encounter, reset on downed)
+    if (this.engine.party.some(u => u.downed)) this._marchHadDowned = true;
+
+    // Overkill 30+ damage in a single hit
+    if (!aa.overkill_30 && this.engine.party.some(u => (u.stats.maxSingleHit || 0) >= 30)) {
+      aa.overkill_30 = true;
+      this.addNotification('Achievement: Excessive Force — 30+ damage in one hit!');
+    }
+    // Track classes used
+    if (!this.stats.classesUsed) this.stats.classesUsed = {};
+    this.engine.party.forEach(u => { this.stats.classesUsed[u.classId] = true; });
+
     this.saveStats();
     this.checkAchievements();
   }
@@ -910,6 +951,22 @@ class Game {
     this.clearSavedRun();
     if (victory) this.stats.runsCompleted++;
     else this.stats.runsLost++;
+    this.stats.totalRuns = (this.stats.totalRuns || 0) + 1;
+    this.stats.totalRenown = (this.stats.totalRenown || 0) + (this.engine ? this.engine.totalRenownEarned : 0);
+
+    const aa = this.achievements;
+    // No downed during entire march
+    if (victory && !this._marchHadDowned && !aa.no_downed_march) {
+      aa.no_downed_march = true;
+      this.addNotification('Achievement: Iron Discipline — no units downed!');
+    }
+    // Three curses win
+    if (victory && this.activeCurses && this.activeCurses.length >= 3 && !aa.three_curses_win) {
+      aa.three_curses_win = true;
+      this.addNotification('Achievement: Masochist — won with 3+ curses!');
+    }
+    this._marchHadDowned = false;
+
     this.saveStats();
     this.checkAchievements();
     this.sendAnalytics(victory);
@@ -1019,8 +1076,8 @@ class Game {
           equipment: { weapon: saved.equipment.weapon, armor: saved.equipment.armor, trinket: saved.equipment.trinket },
           equipDamage: 0, equipBlock: 0, equipHeal: 0, equipPoison: 0, equipExtraDice: 0,
           bonusDamage: saved.bonusDamage || 0, bonusBlock: saved.bonusBlock || 0, bonusHeal: saved.bonusHeal || 0, bonusPoison: saved.bonusPoison || 0, _trainingCount: saved._trainingCount || 0,
-          stats: saved.stats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
-          runStats: saved.runStats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0 },
+          stats: saved.stats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0, maxSingleHit:0 },
+          runStats: saved.runStats || { damageDealt:0, healingDone:0, blockGenerated:0, blockAbsorbed:0, moraleRestored:0, damageTaken:0, poisonInflicted:0, poisonDamageDealt:0, maxSingleHit:0 },
         };
         this.engine.computeEquipmentStats(unit);
         return unit;
@@ -1772,6 +1829,36 @@ class Game {
       this.addNotification('Class Unlocked: Vestalis!');
     }
 
+    // Kill milestones
+    const totalKills = Object.values(s.enemiesKilled || {}).reduce((sum, v) => sum + v, 0);
+    if (!a.kill_50 && totalKills >= 50) { a.kill_50 = true; this.addNotification('Achievement: 50 enemies slain!'); }
+    if (!a.kill_200 && totalKills >= 200) { a.kill_200 = true; this.addNotification('Achievement: 200 enemies slain!'); }
+    if (!a.kill_500 && totalKills >= 500) { a.kill_500 = true; this.addNotification('Achievement: 500 enemies slain — Decimator!'); }
+
+    // Poison kills
+    if (!a.poison_kill_20 && (s.poisonKills || 0) >= 20) { a.poison_kill_20 = true; this.addNotification('Achievement: 20 poison kills!'); }
+
+    // Renown milestones
+    if (!a.renown_100 && (s.totalRenown || 0) >= 100) { a.renown_100 = true; this.addNotification('Achievement: 100 Renown earned!'); }
+    if (!a.renown_500 && (s.totalRenown || 0) >= 500) { a.renown_500 = true; this.addNotification('Achievement: 500 Renown — Legendary!'); }
+
+    // Run milestones
+    if (!a.ten_runs && (s.totalRuns || 0) >= 10) { a.ten_runs = true; this.addNotification('Achievement: 10 runs completed!'); }
+    if (!a.five_wins && (s.runsCompleted || 0) >= 5) { a.five_wins = true; this.addNotification('Achievement: 5 victories!'); }
+
+    // Bestiary completion
+    if (!a.full_bestiary && s.enemiesKilled) {
+      const allEnemies = Object.values(ENEMY_DATA).filter(e => !e.canSpawn);
+      const discovered = allEnemies.filter(e => (s.enemiesKilled[e.id] || 0) >= 1);
+      if (discovered.length >= allEnemies.length) { a.full_bestiary = true; this.addNotification('Achievement: Bestiary complete!'); }
+    }
+
+    // All classes used (tracked via stats)
+    if (!a.all_classes_used && s.classesUsed) {
+      const allClasses = Object.keys(CLASS_DATA);
+      if (allClasses.every(cid => s.classesUsed[cid])) { a.all_classes_used = true; this.addNotification('Achievement: Every class used!'); }
+    }
+
     this.saveAchievements();
   }
 
@@ -1865,7 +1952,7 @@ class Game {
         const complexityPips = Array.from({ length: 3 }, (_, i) =>
           `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
         ).join('');
-        html += `<div class="classes-card unlocked class-${primaryTag}">
+        html += `<div class="classes-card unlocked class-${primaryTag}" data-class-id="${classId}">
           <div class="classes-header">
             <span class="classes-name">${renderClassName(classId, data.name)}</span>
             <span class="classes-title">${data.title}</span>
@@ -1891,6 +1978,77 @@ class Game {
     }
 
     content.innerHTML = html;
+
+    content.querySelectorAll('.classes-card.unlocked').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        this.showClassDetail(card.dataset.classId);
+      });
+    });
+  }
+
+  showClassDetail(classId) {
+    const data = CLASS_DATA[classId];
+    if (!data) return;
+
+    const primaryTag = data.tags.find(t => t !== 'roman' && t !== 'germanic') || 'roman';
+    const tagPips = data.tags.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
+    const complexity = data.complexity || 1;
+    const complexityLabel = ['Simple', 'Moderate', 'Complex'][complexity - 1];
+    const complexityPips = Array.from({ length: 3 }, (_, i) =>
+      `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
+    ).join('');
+    const portrait = getPlayerPortrait(data.title);
+
+    const skillsHtml = data.skills.map(s => {
+      const cdText = s.cooldown ? `<span class="cd-detail-cd">CD: ${s.cooldown}</span>` : '';
+      const starterTag = s.starter ? '<span class="cd-detail-starter">Starter</span>' : '';
+      return `<div class="cd-detail-skill">
+        <div class="cd-detail-skill-header">
+          <span class="cd-detail-skill-name">${s.name}</span>
+          <span class="cd-detail-skill-cost">[${s.cost.label}]</span>
+          ${cdText}${starterTag}
+        </div>
+        <div class="cd-detail-skill-target">${s.target.replace(/_/g, ' ')}</div>
+        <div class="cd-detail-skill-desc">${s.description}</div>
+      </div>`;
+    }).join('');
+
+    let overlay = document.getElementById('class-detail-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'class-detail-overlay';
+      document.getElementById('game-container').appendChild(overlay);
+    }
+
+    overlay.innerHTML = `
+      <div class="cd-detail-scroll">
+        <div class="cd-detail-portrait-wrap">
+          <img class="cd-detail-portrait" src="${portrait}" alt="${data.name}">
+        </div>
+        <div class="cd-detail-header">
+          <span class="cd-detail-name">${renderClassName(classId, data.name)}</span>
+          <span class="cd-detail-title">${data.title}</span>
+          <span class="cd-detail-tags">${tagPips}</span>
+        </div>
+        <div class="cd-detail-meta">
+          <span class="cd-detail-hp">HP: ${data.maxHp}</span>
+          <span class="cd-detail-complexity">${complexityPips} ${complexityLabel}</span>
+          <span class="cd-detail-slots">Slots: ${data.equipSlots.weapon}W / ${data.equipSlots.armor}A / ${data.equipSlots.trinket}T</span>
+        </div>
+        <div class="cd-detail-desc">${data.description}</div>
+        <div class="cd-detail-section-title">Passive</div>
+        <div class="cd-detail-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>
+        <div class="cd-detail-section-title">Skills</div>
+        <div class="cd-detail-skills">${skillsHtml}</div>
+        <button class="btn-secondary cd-detail-back">Back</button>
+      </div>
+    `;
+
+    overlay.style.display = 'flex';
+    overlay.querySelector('.cd-detail-back').addEventListener('click', () => {
+      overlay.style.display = 'none';
+    });
   }
 
   showAchievesScreen() {
@@ -1899,69 +2057,97 @@ class Game {
     const a = this.achievements;
     const s = this.stats;
 
-    // Build full achievement list with rewards
-    const ACCOLADE_DEFS = [
-      // Early progression (all have boons + class unlocks)
-      { key: 'first_boss_kill', name: "First Blood", desc: "Defeat your first boss.", progress: () => (s.bossesKilled || 0) >= 1 ? 'Done' : '0/1' },
-      { key: 'first_elite_kill', name: "Elite Slayer", desc: "Defeat your first elite enemy.", progress: () => { const ids = ['oak_shield','wicker_man','ironbound_champion']; return ids.some(id => (s.enemiesKilled[id]||0)>=1) ? 'Done' : '0/1'; } },
-      { key: 'class_signifer', name: "Deeper Into The Forest", desc: "Reach March 3.", progress: () => (s.highestDifficulty||1) >= 3 ? 'Done' : `March ${s.highestDifficulty||1}/3` },
-      { key: 'class_equites', name: "Veteran's March", desc: "Reach March 5.", progress: () => (s.highestDifficulty||1) >= 5 ? 'Done' : `March ${s.highestDifficulty||1}/5` },
-      { key: 'class_arcania', name: "Through The Fog", desc: "Defeat the Fog Weaver.", progress: () => (s.enemiesKilled['fog_weaver']||0) >= 1 ? 'Done' : '0/1' },
-      // Mid progression
-      { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 7.", progress: () => (s.highestDifficulty||1) >= 7 ? 'Done' : `March ${s.highestDifficulty||1}/7` },
-      { key: 'class_cataphract', name: "Into The Darkness", desc: "Reach March 9.", progress: () => (s.highestDifficulty||1) >= 9 ? 'Done' : `March ${s.highestDifficulty||1}/9` },
-      { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
-      { key: 'class_wulfswestr', name: "Thusnelda's Defeat", desc: "Defeat Thusnelda.", progress: () => (s.enemiesKilled['thusnelda']||0) >= 1 ? 'Done' : '0/1' },
-      { key: 'class_vestalis', name: "The Last March", desc: "Complete a full run (March 10).", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : '0/1' },
-      // Boss kill x3 (curses)
-      { key: 'boss_arminius_champion_x3', name: "Warlord Slayer", desc: "Defeat the Germanic Warlord 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion']||0) + '/3' },
-      { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch']||0) + '/3' },
-      { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman']||0) + '/3' },
-      { key: 'boss_serpent_shaman_x3', name: "Serpent Slayer", desc: "Defeat the Serpent Shaman 3 times.", progress: () => Math.min(3, s.enemiesKilled['serpent_shaman']||0) + '/3' },
-      { key: 'boss_mire_mother_x3', name: "Beast Tamer", desc: "Defeat the Mire Mother 3 times.", progress: () => Math.min(3, s.enemiesKilled['mire_mother']||0) + '/3' },
-      { key: 'boss_bone_speaker_x3', name: "Silence the Dead", desc: "Defeat the Bone Speaker 3 times.", progress: () => Math.min(3, s.enemiesKilled['bone_speaker']||0) + '/3' },
-      { key: 'boss_fog_weaver_x3', name: "Fog Cutter", desc: "Defeat the Fog Weaver 3 times.", progress: () => Math.min(3, s.enemiesKilled['fog_weaver']||0) + '/3' },
-      { key: 'boss_blood_stag_x3', name: "Stag Hunter", desc: "Defeat the Blood Stag 3 times.", progress: () => Math.min(3, s.enemiesKilled['blood_stag']||0) + '/3' },
-      // Story bosses (hidden until done)
-      { key: 'boss_corpse_arminius', name: "The Betrayer Falls", desc: "Defeat the Corpse of Arminius.", hidden: true, progress: () => a.boss_corpse_arminius ? 'Done' : '0/1' },
-      { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
-      { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
-      { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
-      { key: 'boss_lindwurm', name: "Dragon Slayer", desc: "Slay the Lindwurm Lord.", hidden: true, progress: () => a.boss_lindwurm ? 'Done' : '0/1' },
-      // Equipment
-      { key: 'hero_three_rares', name: "Collector", desc: "One hero with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
-      { key: 'hero_only_rares', name: "Gilded Warrior", desc: "One hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },
-      { key: 'party_all_rares', name: "Legion of Gold", desc: "Entire party with only rare items.", progress: () => a.party_all_rares ? 'Done' : 'Not yet' },
-      { key: 'hero_first_epic', name: "Relic Hunter", desc: "Equip your first epic item.", progress: () => a.hero_first_epic ? 'Done' : 'Not yet' },
-      { key: 'hero_three_epics', name: "Relic Hoarder", desc: "One hero with 3 epic items.", progress: () => a.hero_three_epics ? 'Done' : 'Not yet' },
-      { key: 'hero_only_epics', name: "Demigod", desc: "One hero with only epic equipment.", progress: () => a.hero_only_epics ? 'Done' : 'Not yet' },
-      { key: 'party_all_epics', name: "Pantheon", desc: "Entire party with only epic items.", progress: () => a.party_all_epics ? 'Done' : 'Not yet' },
+    // Build full achievement list organized by section
+    const totalKills = Object.values(s.enemiesKilled || {}).reduce((sum, v) => sum + v, 0);
+    const SECTIONS = [
+      { title: 'PROGRESSION', defs: [
+        { key: 'first_boss_kill', name: "First Blood", desc: "Defeat your first boss.", progress: () => (s.bossesKilled || 0) >= 1 ? 'Done' : '0/1' },
+        { key: 'first_elite_kill', name: "Elite Slayer", desc: "Defeat your first elite enemy.", progress: () => { const ids = ['oak_shield','wicker_man','ironbound_champion']; return ids.some(id => (s.enemiesKilled[id]||0)>=1) ? 'Done' : '0/1'; } },
+        { key: 'class_signifer', name: "Deeper Into The Forest", desc: "Reach March 3.", progress: () => (s.highestDifficulty||1) >= 3 ? 'Done' : `March ${s.highestDifficulty||1}/3` },
+        { key: 'class_equites', name: "Veteran's March", desc: "Reach March 5.", progress: () => (s.highestDifficulty||1) >= 5 ? 'Done' : `March ${s.highestDifficulty||1}/5` },
+        { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 7.", progress: () => (s.highestDifficulty||1) >= 7 ? 'Done' : `March ${s.highestDifficulty||1}/7` },
+        { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
+        { key: 'class_cataphract', name: "Into The Darkness", desc: "Reach March 9.", progress: () => (s.highestDifficulty||1) >= 9 ? 'Done' : `March ${s.highestDifficulty||1}/9` },
+        { key: 'class_vestalis', name: "The Last March", desc: "Complete a full run (March 10).", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : '0/1' },
+        { key: 'class_arcania', name: "Through The Fog", desc: "Defeat the Fog Weaver.", progress: () => (s.enemiesKilled['fog_weaver']||0) >= 1 ? 'Done' : '0/1' },
+        { key: 'class_wulfswestr', name: "Thusnelda's Defeat", desc: "Defeat Thusnelda.", progress: () => (s.enemiesKilled['thusnelda']||0) >= 1 ? 'Done' : '0/1' },
+      ]},
+      { title: 'BOSS MASTERY', defs: [
+        { key: 'boss_arminius_champion_x3', name: "Warlord Slayer", desc: "Defeat the Germanic Warlord 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion']||0) + '/3' },
+        { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch']||0) + '/3' },
+        { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman']||0) + '/3' },
+        { key: 'boss_serpent_shaman_x3', name: "Serpent Slayer", desc: "Defeat the Serpent Shaman 3 times.", progress: () => Math.min(3, s.enemiesKilled['serpent_shaman']||0) + '/3' },
+        { key: 'boss_mire_mother_x3', name: "Beast Tamer", desc: "Defeat the Mire Mother 3 times.", progress: () => Math.min(3, s.enemiesKilled['mire_mother']||0) + '/3' },
+        { key: 'boss_bone_speaker_x3', name: "Silence the Dead", desc: "Defeat the Bone Speaker 3 times.", progress: () => Math.min(3, s.enemiesKilled['bone_speaker']||0) + '/3' },
+        { key: 'boss_fog_weaver_x3', name: "Fog Cutter", desc: "Defeat the Fog Weaver 3 times.", progress: () => Math.min(3, s.enemiesKilled['fog_weaver']||0) + '/3' },
+        { key: 'boss_blood_stag_x3', name: "Stag Hunter", desc: "Defeat the Blood Stag 3 times.", progress: () => Math.min(3, s.enemiesKilled['blood_stag']||0) + '/3' },
+        { key: 'boss_corpse_arminius', name: "The Betrayer Falls", desc: "Defeat the Corpse of Arminius.", hidden: true, progress: () => a.boss_corpse_arminius ? 'Done' : '0/1' },
+        { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
+        { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
+        { key: 'boss_ariovistus', name: "King Breaker", desc: "Defeat Ariovistus.", hidden: true, progress: () => a.boss_ariovistus ? 'Done' : '0/1' },
+        { key: 'boss_lindwurm', name: "Dragon Slayer", desc: "Slay the Lindwurm Lord.", hidden: true, progress: () => a.boss_lindwurm ? 'Done' : '0/1' },
+      ]},
+      { title: 'COMBAT', defs: [
+        { key: 'kill_50', name: "Centurion's Tally", desc: "Kill 50 enemies total.", progress: () => Math.min(50, totalKills) + '/50' },
+        { key: 'kill_200', name: "Legionary's Harvest", desc: "Kill 200 enemies total.", progress: () => Math.min(200, totalKills) + '/200' },
+        { key: 'kill_500', name: "Decimator", desc: "Kill 500 enemies total.", progress: () => Math.min(500, totalKills) + '/500' },
+        { key: 'flawless_encounter', name: "Flawless Victory", desc: "Win an encounter with no unit taking damage.", progress: () => a.flawless_encounter ? 'Done' : 'Not yet' },
+        { key: 'no_downed_march', name: "Iron Discipline", desc: "Complete a march without any unit being downed.", progress: () => a.no_downed_march ? 'Done' : 'Not yet' },
+        { key: 'kill_boss_turn3', name: "Blitzkrieg", desc: "Kill a boss within 3 turns.", progress: () => a.kill_boss_turn3 ? 'Done' : 'Not yet' },
+        { key: 'poison_kill_20', name: "Venomous Legacy", desc: "Kill 20 enemies with poison damage.", progress: () => Math.min(20, s.poisonKills||0) + '/20' },
+        { key: 'overkill_30', name: "Excessive Force", desc: "Deal 30+ damage in a single hit.", progress: () => a.overkill_30 ? 'Done' : 'Not yet' },
+      ]},
+      { title: 'EQUIPMENT', defs: [
+        { key: 'hero_three_rares', name: "Collector", desc: "One hero with 3 rare items.", progress: () => a.hero_three_rares ? 'Done' : 'Not yet' },
+        { key: 'hero_only_rares', name: "Gilded Warrior", desc: "One hero with only rare equipment.", progress: () => a.hero_only_rares ? 'Done' : 'Not yet' },
+        { key: 'party_all_rares', name: "Legion of Gold", desc: "Entire party with only rare items.", progress: () => a.party_all_rares ? 'Done' : 'Not yet' },
+        { key: 'hero_first_epic', name: "Relic Hunter", desc: "Equip your first epic item.", progress: () => a.hero_first_epic ? 'Done' : 'Not yet' },
+        { key: 'hero_three_epics', name: "Relic Hoarder", desc: "One hero with 3 epic items.", progress: () => a.hero_three_epics ? 'Done' : 'Not yet' },
+      ]},
+      { title: 'SPECIAL', defs: [
+        { key: 'full_bestiary', name: "Naturalist", desc: "Discover every enemy in the bestiary.", progress: () => a.full_bestiary ? 'Done' : 'Not yet' },
+        { key: 'all_classes_used', name: "Versatile Commander", desc: "Complete a march with every class.", progress: () => a.all_classes_used ? 'Done' : 'Not yet' },
+        { key: 'high_morale_finish', name: "Unbreakable Spirit", desc: "Finish a boss fight with morale above 90.", progress: () => a.high_morale_finish ? 'Done' : 'Not yet' },
+        { key: 'low_morale_win', name: "Against All Odds", desc: "Win a boss fight with morale below 10.", progress: () => a.low_morale_win ? 'Done' : 'Not yet' },
+        { key: 'solo_survivor', name: "Last Man Standing", desc: "Win a boss fight with only one unit alive.", progress: () => a.solo_survivor ? 'Done' : 'Not yet' },
+        { key: 'three_curses_win', name: "Masochist", desc: "Complete a march with 3 or more curses active.", progress: () => a.three_curses_win ? 'Done' : 'Not yet' },
+        { key: 'renown_100', name: "Renowned", desc: "Accumulate 100 total Renown.", progress: () => Math.min(100, s.totalRenown||0) + '/100' },
+        { key: 'renown_500', name: "Legendary", desc: "Accumulate 500 total Renown.", progress: () => Math.min(500, s.totalRenown||0) + '/500' },
+        { key: 'ten_runs', name: "Veteran", desc: "Complete 10 runs (win or lose).", progress: () => Math.min(10, s.totalRuns||0) + '/10' },
+        { key: 'five_wins', name: "Conqueror", desc: "Win 5 runs.", progress: () => Math.min(5, s.runsCompleted||0) + '/5' },
+        { key: 'hidden_march_clear', name: "Secret Paths", desc: "Complete a hidden march.", hidden: true, progress: () => a.hidden_march_clear ? 'Done' : '0/1' },
+        { key: 'leave_3_epics', name: "Sacrifice to the Gods", desc: "Leave behind 3 epic items in a single run.", progress: () => a.leave_3_epics ? 'Done' : 'Not yet' },
+      ]},
     ];
 
-    const unlockedCount = ACCOLADE_DEFS.filter(d => !!a[d.key]).length;
-    let html = `<div class="achieves-counter">${unlockedCount}/${ACCOLADE_DEFS.length} earned</div>`;
+    const allDefs = SECTIONS.flatMap(sec => sec.defs);
+    const unlockedCount = allDefs.filter(d => !!a[d.key]).length;
+    let html = `<div class="achieves-counter">${unlockedCount}/${allDefs.length} earned</div>`;
 
-    ACCOLADE_DEFS.forEach(def => {
-      const unlocked = !!a[def.key];
-      if (def.hidden && !unlocked) {
-        html += `<div class="achievement-slot locked hidden-achievement"><div class="achievement-name">???</div><div class="achievement-desc">Hidden</div></div>`;
-        return;
-      }
-      // Find rewards
-      const rewards = [];
-      const curse = CURSE_DEFS.find(c => c.achievement === def.key);
-      const boon = BOON_DEFS.find(b => b.achievement === def.key);
-      const classUnlock = Object.entries(CLASS_DATA).find(([id, d]) => d.unlockKey === def.key);
-      if (classUnlock) rewards.push(`<span style="color:var(--class-${classUnlock[1].tags.find(t=>t!=='roman'&&t!=='germanic')||'roman'})">Class: ${classUnlock[1].name}</span>`);
-      if (boon) rewards.push(`<span style="color:var(--green-bright)">Boon: ${boon.name}</span>`);
-      if (curse) rewards.push(`<span style="color:var(--red-bright)">Curse: ${curse.name}</span>`);
+    SECTIONS.forEach(section => {
+      const sectionUnlocked = section.defs.filter(d => !!a[d.key]).length;
+      html += `<div class="achievement-section-header">${section.title} <span class="achievement-section-count">${sectionUnlocked}/${section.defs.length}</span></div>`;
+      section.defs.forEach(def => {
+        const unlocked = !!a[def.key];
+        if (def.hidden && !unlocked) {
+          html += `<div class="achievement-slot locked hidden-achievement"><div class="achievement-name">???</div><div class="achievement-desc">Hidden</div></div>`;
+          return;
+        }
+        const rewards = [];
+        const curse = CURSE_DEFS.find(c => c.achievement === def.key);
+        const boon = BOON_DEFS.find(b => b.achievement === def.key);
+        const classUnlock = Object.entries(CLASS_DATA).find(([id, d]) => d.unlockKey === def.key);
+        if (classUnlock) rewards.push(`<span style="color:var(--class-${classUnlock[1].tags.find(t=>t!=='roman'&&t!=='germanic')||'roman'})">Class: ${classUnlock[1].name}</span>`);
+        if (boon) rewards.push(`<span style="color:var(--green-bright)">Boon: ${boon.name}</span>`);
+        if (curse) rewards.push(`<span style="color:var(--red-bright)">Curse: ${curse.name}</span>`);
 
-      html += `<div class="achievement-slot ${unlocked ? 'unlocked' : 'locked'}">
-        <div class="achievement-name">${unlocked ? '★ ' : ''}${def.name}</div>
-        <div class="achievement-desc">${def.desc}</div>
-        ${rewards.length > 0 ? `<div class="achievement-rewards">${rewards.join(' · ')}</div>` : ''}
-        <div class="achievement-progress">${def.progress()}</div>
-      </div>`;
+        html += `<div class="achievement-slot ${unlocked ? 'unlocked' : 'locked'}">
+          <div class="achievement-name">${unlocked ? '★ ' : ''}${def.name}</div>
+          <div class="achievement-desc">${def.desc}</div>
+          ${rewards.length > 0 ? `<div class="achievement-rewards">${rewards.join(' · ')}</div>` : ''}
+          <div class="achievement-progress">${def.progress()}</div>
+        </div>`;
+      });
     });
 
     content.innerHTML = html;
