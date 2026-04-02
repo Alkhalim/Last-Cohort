@@ -344,7 +344,7 @@ class GameUI {
 
     this.engine.enemies.forEach((enemy, i) => {
       const el = document.createElement('div');
-      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${this.isEnemyPreview(enemy) ? ' preview' : ''}${enemy.justSpawned ? ' spawning' : ''}${enemy.isBoss ? ' boss' : ''}${enemy.block > 0 ? ' has-block' : ''}${enemy.poison > 0 ? ' has-poison' : ''}`;
+      el.className = `enemy-card${enemy.dead ? ' dead' : ''}${this.isEnemyTargetable(enemy) ? ' targetable' : ''}${this.isEnemyPreview(enemy) ? ' preview' : ''}${enemy.justSpawned ? ' spawning' : ''}${enemy.isBoss ? ' boss' : ''}${enemy.block > 0 ? ' has-block' : ''}${enemy.poison > 0 ? ' has-poison' : ''}${enemy._skipNextAction ? ' stunned' : ''}`;
       el.id = `enemy-${i}`;
 
       const hpPct = (enemy.hp / enemy.maxHp) * 100;
@@ -353,6 +353,7 @@ class GameUI {
       this.prevEnemyHp[i] = enemy.hp;
 
       el.innerHTML = `
+        ${enemy._skipNextAction ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
         <div class="enemy-name">${enemy.name}${enemy.isBoss ? ' <span class="boss-icon">\u2620</span>' : ''}</div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
@@ -1257,9 +1258,17 @@ class GameUI {
         }
         return `${verb} <span class="stat-dmg">${b}</span> damage`;
       });
+      // Morale Scaling: replace "Morale-scaled." with the actual damage at current morale
+      if (skill.effects && skill.effects.moraleScaling) {
+        const baseDmg = (skill.effects.damage || 0) + skillBonusDmg + (cavalryCharge ? Math.floor((skill.effects.damage || 0) * 0.5) : 0);
+        const moraleNorm = (this.engine.morale || 0) / 100;
+        const scale = 0.5 + moraleNorm * 2.0;
+        const scaledTotal = Math.round(baseDmg * scale);
+        desc = desc.replace(/Morale-scaled\./g, `Total: <span class="stat-dmg">${scaledTotal}</span> <span class="stat-breakdown">(x${scale.toFixed(1)} morale)</span>.`);
+      }
       // Buff damage preview: scale "+X damage" with half of caster's equipDamage
       const halfEquipDmg = Math.floor(equipDmg / 2);
-      if (skill.effects && (skill.effects.buffAllies || skill.effects.buffSelf) && halfEquipDmg > 0) {
+      if (skill.effects && (skill.effects.buffAllies || skill.effects.buffSelf || skill.effects.buffTarget) && halfEquipDmg > 0) {
         desc = desc.replace(/\+(\d+) damage/g, (match, base) => {
           const b = parseInt(base);
           const total = b + halfEquipDmg;
@@ -3993,6 +4002,22 @@ class GameUI {
     if (window.game) window.game.triggerHint('first_item_drop');
     this.engine.afterEncounter();
 
+    // Final boss: skip loot and training, grant bonus renown instead
+    const diff = window.game ? window.game.difficulty : 1;
+    const isFinalBoss = diff >= 8 && isBossVictory && this.engine.enemies &&
+      this.engine.enemies.some(e => e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus');
+    if (isFinalBoss) {
+      const bonusRenown = 60;
+      this.engine.totalRenownEarned += bonusRenown;
+      this.engine.addLog(`The forest yields its final tribute. (+${bonusRenown} Renown)`);
+      this.engine.pendingSkillPicks = 0;
+      this.pendingLoot = [];
+      this.lootScreenFinal = true;
+      this.lootReturnToMap = false;
+      this.showPostBossChoice();
+      return;
+    }
+
     // XP bar: every encounter adds XP, skill pick granted every 3 encounters (bosses always grant)
     this.lastEncounterGrantedTraining = this.engine.addEncounterXP(isBossVictory);
 
@@ -4349,6 +4374,14 @@ class GameUI {
       }
       return `${verb} <span class="stat-dmg">${b}</span> damage`;
     });
+
+    // Morale Scaling: show damage range outside combat
+    if (skill.effects && skill.effects.moraleScaling) {
+      const baseDmg = (skill.effects.damage || 0) + scaledBonusDmg;
+      const lo = Math.round(baseDmg * 0.5);
+      const hi = Math.round(baseDmg * 2.5);
+      desc = desc.replace(/Morale-scaled\./g, `Total: <span class="stat-dmg">${lo}-${hi}</span> <span class="stat-breakdown">(x0.5-2.5 morale)</span>.`);
+    }
 
     // Die-scaled damage — equipment bonus scales with die value (die/3)
     if (skill.effects && skill.effects.dieScaleDamage) {
@@ -4734,6 +4767,8 @@ class GameUI {
         }
         // Track total training count (used by Gilded Cuirass)
         unit._trainingCount = (unit._trainingCount || 0) + 1;
+        this._cachedStatPicksMap = null;
+        this._cachedSkillChoicesMap = null;
         this.engine.pendingSkillPicks--;
         if (this.engine.pendingSkillPicks > 0) {
           this.showLevelUpScreen();

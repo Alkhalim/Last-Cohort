@@ -643,6 +643,14 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('unitBlock', { unitIndex: u.index, amount: u._blockNextTurn });
           u._blockNextTurn = 0;
         }
+        if (u._healNextTurn && u._healNextTurn > 0 && u.hp < u.maxHp) {
+          const braceHeal = Math.min(u._healNextTurn, u.maxHp - u.hp);
+          u.hp += braceHeal;
+          u.stats.healingDone += braceHeal;
+          this.addLog(`${u.name}'s Shield Brace mends! (+${braceHeal} HP)`);
+          if (this.onVisual) this.onVisual('unitHeal', { unitIndex: u.index, amount: braceHeal });
+          u._healNextTurn = 0;
+        }
       }
       u.taunt = false;
       u._counterStance = 0;
@@ -1677,15 +1685,6 @@ class CombatEngine {
     }
 
     if (result.damage && result.target && result.target.hp !== undefined) {
-      // Morale Scaling: damage scales from 0.5x at 0 morale to 2.5x at 100 morale
-      let scaledDamage = result.damage;
-      if (result.moraleScaling) {
-        // Linear scale: morale 0 = 0.5x, 50 = 1.5x, 100 = 2.5x
-        const moraleNorm = this.morale / 100; // 0 to 1
-        const scale = 0.5 + moraleNorm * 2.0; // 0.5 to 2.5
-        scaledDamage = Math.round(result.damage * scale);
-        if (scale > 1.05) parts.push(`Morale fuels the charge! (x${scale.toFixed(1)})`);
-      }
       // Bonus damage scaling: only scales own equipment damage, buff damage always full
       const dmgScale = result.bonusDmgScale || (result.halfBonusDmg ? 0.5 : 1);
       const ownBonusDmg = (unit.equipDamage || 0) + moraleMod + chargeBonus;
@@ -1693,6 +1692,15 @@ class CombatEngine {
       // Die-scale: equipment bonus scales with die value (die/3). High rolls amplify gear, low rolls diminish it.
       if (result._dieScaleFactor != null) {
         effectiveBonusDmg = Math.floor(effectiveBonusDmg * result._dieScaleFactor);
+      }
+      // Morale Scaling: damage scales from 0.5x at 0 morale to 2.5x at 100 morale (applied to base + equipment)
+      let scaledDamage = result.damage;
+      if (result.moraleScaling) {
+        const moraleNorm = this.morale / 100; // 0 to 1
+        const scale = 0.5 + moraleNorm * 2.0; // 0.5 to 2.5
+        scaledDamage = Math.round((result.damage + effectiveBonusDmg) * scale);
+        effectiveBonusDmg = 0; // already included in scaledDamage
+        if (scale > 1.05) parts.push(`Morale fuels the charge! (x${scale.toFixed(1)})`);
       }
       // Overrun: log bonus from matching dice
       if (result._overrunBonus) {
@@ -1765,13 +1773,19 @@ class CombatEngine {
         parts.push('Kill Shot!');
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Kill Shot!', color: 'var(--red-bright)' });
       }
+      // Shoulder Charge: +20% damage against back-row targets
+      if (result.shoulderCharge && result.target.row === 'back') {
+        const scBonus = Math.round(total * 0.2);
+        total += scBonus;
+        parts.push(`Shoulder Charge crushes back-row target! (+${scBonus})`);
+      }
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
       const auraReduction = this.getAuraDamageReduction(result.target);
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);
-      // Packleader's Bow: +3 damage vs enemies with no block
+      // Packleader's Bow: +4 damage vs enemies with no block
       if (this.unitHasItem(unit, 'packleaders_bow') && (!result.target.block || result.target.block <= 0)) {
-        total += 3;
-        parts.push("Packleader's Bow! Unshielded prey! (+3)");
+        total += 4;
+        parts.push("Packleader's Bow! Unshielded prey! (+4)");
       }
       // Corona Obsidionalis: above 70 morale, attacks ignore block
       const coronaPierce = this.morale > 70 && this.unitHasItem(unit, 'corona_obsidionalis');
@@ -2094,11 +2108,14 @@ class CombatEngine {
         result.target.buffs.push({ damage: 2, attacksLeft: bsAttacks });
         parts.push(`Bone Saw of Asclepius empowers ${result.target.name} — +2 damage (${bsAttacks === 1 ? 'next attack' : bsAttacks + ' attacks'}).`);
       }
-      // Howl of Defiance: healing a unit below 25% HP also grants 4 Block
-      if (this.unitHasItem(unit, 'howl_of_defiance') && actual > 0 && before <= result.target.maxHp * 0.25) {
-        result.target.block = (result.target.block || 0) + 4;
-        result.target.stats.blockGenerated += 4;
-        parts.push(`Howl of Defiance shields ${result.target.name}! (+4 Block)`);
+      // Howl of Defiance: healing a unit below 40% HP also grants 5 Block and +2 Morale
+      if (this.unitHasItem(unit, 'howl_of_defiance') && actual > 0 && before <= result.target.maxHp * 0.4) {
+        result.target.block = (result.target.block || 0) + 5;
+        result.target.stats.blockGenerated += 5;
+        this.morale = Math.min(100, this.morale + 2);
+        this.clampMorale();
+        parts.push(`Howl of Defiance shields ${result.target.name}! (+5 Block, +2 Morale)`);
+        if (this.onVisual) this.onVisual('morale', { amount: 2 });
       }
       // Special: Marsh Fang — healing clears 3 poison from target
       if (this.unitHasItem(unit, 'marsh_fang') && result.target.poison > 0) {
@@ -2166,9 +2183,12 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: blockTarget.index, amount: totalBlock });
-      // Shield Brace: store block to also apply next turn
+      // Shield Brace: store block and heal to also apply next turn
       if (result.shieldBrace) {
         blockTarget._blockNextTurn = (blockTarget._blockNextTurn || 0) + totalBlock;
+        if (result.heal) {
+          blockTarget._healNextTurn = (blockTarget._healNextTurn || 0) + (result.heal + bonusHeal);
+        }
       }
       // Shieldbearer's Grip: grant block to a random other ally (scales with level)
       if (this.unitHasItem(unit, 'shieldbearers_grip')) {
@@ -2278,6 +2298,17 @@ class CombatEngine {
       unit.buffs.push({ damage: selfBonusDmg, attacksLeft: buffAttacks });
       const attackStr = selfAttacks === 1 ? 'next attack' : `next ${selfAttacks} attacks`;
       parts.push(`${unit.name} gains +${selfBonusDmg} damage (${attackStr}).`);
+    }
+    // Buff Target: buff the targeted ally
+    if (result.buffTarget && result.target) {
+      const tgtAttacks = result.buffTarget.attacks || 1;
+      const tgtBonusDmg = (result.buffTarget.bonusDamage || 0) + Math.floor((unit.equipDamage || 0) / 2);
+      let buffAttacks = tgtAttacks;
+      if (this.unitHasItem(unit, 'sigil_of_the_ninth')) buffAttacks += 1;
+      if (this.unitHasItem(unit, 'eagle_standard')) buffAttacks += 1;
+      result.target.buffs.push({ damage: tgtBonusDmg, attacksLeft: buffAttacks });
+      const attackStr = tgtAttacks === 1 ? 'next attack' : `next ${tgtAttacks} attacks`;
+      parts.push(`${result.target.name} gains +${tgtBonusDmg} damage (${attackStr}).`);
     }
     // Poison (single target — equipment scaling, optionally amplified by bonusPoisonScale)
     if (result.poison && result.target) {
@@ -3544,6 +3575,12 @@ class CombatEngine {
             }
           });
 
+          // Packleader's Bow: kills grant +1 die next turn
+          if (this.partyHasItem('packleaders_bow')) {
+            this._bonusDiceNext = (this._bonusDiceNext || 0) + 1;
+            this.addLog("Packleader's Bow — the kill fuels the hunt! (+1 die next turn)");
+          }
+
           // Vanguard's Banner: kills grant all allies block (scales with level)
           if (this.partyHasItem('vanguards_banner')) {
             const vbLv = this.getPartyItemLevel('vanguards_banner');
@@ -3995,7 +4032,7 @@ class CombatEngine {
               }
               if (this.partyHasItem('corpsebloom')) {
                 const cbLv = this.getPartyItemLevel('corpsebloom');
-                const cbHeal = 1 * cbLv;
+                const cbHeal = 2 * cbLv;
                 this.party.forEach(u => {
                   if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + cbHeal);
                 });
@@ -4271,10 +4308,11 @@ class CombatEngine {
         dmg = Math.max(1, Math.round(dmg * target._damageShield));
         target._damageShield = 0;
       }
-      // Enemy pierceBlock: ignore target's block entirely
+      // Enemy pierceBlock: ignore half of target's block
       if (action.pierceBlock && target.block > 0) {
-        this.addLog(`The shot pierces through ${target.name}'s block!`);
-        // Don't absorb — skip block check below
+        const ignored = Math.floor(target.block / 2);
+        target.block -= ignored;
+        this.addLog(`The shot pierces half of ${target.name}'s block! (${ignored} block ignored)`);
       }
       // Hunt marked: bonus damage against marked targets
       if (target._huntMarked && target._huntMarked > 0 && dmg > 0) {
@@ -4283,11 +4321,12 @@ class CombatEngine {
         this.addLog(`Marked target! +${markBonus} bonus damage!`);
         if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Marked!', color: 'var(--red-bright)' });
       }
-      if (target.block > 0 && !action.pierceBlock) {
+      if (target.block > 0) {
         const absorbed = Math.min(target.block, dmg);
         // Legionary's Lorica: deal difficulty damage back when hit while having block
         if (absorbed > 0 && this.unitHasItem(target, 'legionary_lorica')) {
-          const loricaDmg = this.difficulty || 1;
+          const loricaLv = this.getItemLevel(target, 'legionary_lorica');
+          const loricaDmg = 2 * loricaLv;
           enemy.hp = Math.max(0, enemy.hp - loricaDmg);
           this.addLog(`Lorica retaliates for ${loricaDmg} damage!`);
         }
@@ -4438,6 +4477,12 @@ class CombatEngine {
 
     if (action.morale) {
       let moraleDelta = action.morale;
+      // Difficulty scaling: mid-game and late-game enemies deal more morale damage
+      if (moraleDelta < 0) {
+        const diff = this.difficulty || 1;
+        if (diff >= 6) moraleDelta = Math.floor(moraleDelta * 1.4);
+        else if (diff >= 4) moraleDelta = Math.floor(moraleDelta * 1.2);
+      }
       // Deafened: morale attacks have no effect
       if (enemy._deafened && enemy._deafened > 0 && moraleDelta < 0) {
         enemy._deafened--;

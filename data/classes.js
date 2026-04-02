@@ -26,8 +26,8 @@ const RAW_CLASSES = {
       {
         "id": "shield_brace", "name": "Shield Brace", "starter": true,
         "cost": { "type": "even" }, "target": "self",
-        "description": "Gain 3 + die value Block this turn and next. Heal 2 HP.",
-        "effects": { "block": 3, "dieScaleBlock": true, "blockScale": 0.8, "shieldBrace": true, "heal": 2 }
+        "description": "Gain 3 + die value Block this turn and next. Heal 4 HP this turn and next.",
+        "effects": { "block": 3, "dieScaleBlock": true, "blockScale": 0.8, "shieldBrace": true, "heal": 4 }
       },
       {
         "id": "gladius_thrust", "name": "Gladius Thrust", "starter": true,
@@ -75,7 +75,7 @@ const RAW_CLASSES = {
       {
         "id": "shoulder_charge", "name": "Shoulder Charge", "cooldown": 1,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
-        "description": "Deal 4 damage, knock to back row. Back row: deal 6 damage, stun.",
+        "description": "Deal 4 damage, knock to back row. Back row: +20%, deal 6 damage, stun.",
         "effects": { "damage": 4, "shoulderCharge": true }
       },
       {
@@ -308,7 +308,7 @@ const RAW_CLASSES = {
         "cost": { "type": "range", "min": 1, "max": 2 }, "target": "single_enemy",
         "ignoreRow": true,
         "description": "Ranged. Deal 3 damage, apply 1 Poison. Triples poison if target already poisoned.",
-        "effects": { "damage": 3, "poison": 1, "triplePoison": true, "bonusDmgScale": 0.85 }
+        "effects": { "damage": 3, "poison": 1, "triplePoison": true, "bonusDmgScale": 0.55 }
       },
       {
         "id": "kill_shot", "name": "Kill Shot", "cooldown": 1,
@@ -365,8 +365,8 @@ const RAW_CLASSES = {
       {
         "id": "wilderness_instinct", "name": "Wilderness Instinct", "cooldown": 3,
         "cost": { "type": "range", "min": 2, "max": 4 }, "target": "self",
-        "description": "Take 50% less damage this enemy turn. Next turn, heal 4 HP and gain 4 Block.",
-        "effects": { "wildernessInstinct": true }
+        "description": "Cleanse Poison. Take 50% less damage this enemy turn. Next turn, heal 4 HP and gain 4 Block.",
+        "effects": { "wildernessInstinct": true, "cleanse": true }
       }
     ]
   },
@@ -390,7 +390,7 @@ const RAW_CLASSES = {
         "id": "standard_strike", "name": "Standard Strike", "starter": true,
         "cost": { "type": "any" }, "target": "single_enemy",
         "description": "Deal 2 damage. +2 Morale.",
-        "effects": { "damage": 2, "morale": 1 }
+        "effects": { "damage": 2, "morale": 2 }
       },
       {
         "id": "raise_the_eagle", "name": "Raise the Eagle", "starter": true,
@@ -423,10 +423,10 @@ const RAW_CLASSES = {
         "effects": { "blockAll": 6, "moraleHealAll": 2 }
       },
       {
-        "id": "standard_charge", "name": "Standard Charge", "cooldown": 1,
+        "id": "standard_charge", "name": "Standard Charge", "cooldown": 2,
         "cost": { "type": "combined", "min": 5, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling 5+. Deal 9 damage. Up to 2.5x at full morale.",
-        "effects": { "damage": 9, "moraleScaling": true }
+        "description": "2 dice totaling 5+. Deal 6 damage. Morale-scaled.",
+        "effects": { "damage": 6, "moraleScaling": true }
       },
       {
         "id": "rally_fallen", "name": "Rally the Fallen", "cooldown": 5,
@@ -444,7 +444,7 @@ const RAW_CLASSES = {
         "id": "martyrs_banner", "name": "Martyr's Banner", "cooldown": 3,
         "cost": { "type": "exact", "val": 1 }, "target": "all_allies",
         "description": "Sacrifice 5 HP. All allies gain +2 damage for 2 attacks and 4 Block.",
-        "effects": { "selfDamage": 5, "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 4 }
+        "effects": { "selfDamage": 5, "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "blockAll": 4, "bonusDmgScale": 1.25, "blockScale": 1.1 }
       },
       {
         "id": "fortunes_favor", "name": "Fortune's Favor", "cooldown": 3,
@@ -454,9 +454,9 @@ const RAW_CLASSES = {
       },
       {
         "id": "eagles_blessing", "name": "Eagle's Blessing", "cooldown": 2,
-        "cost": { "type": "exact", "val": 6 }, "target": "self",
+        "cost": { "type": "exact", "val": 6 }, "target": "single_ally",
         "description": "Free action. Heal 3 HP, gain 3 Block, +1 damage for 2 attacks, +4 Morale. Act again this turn.",
-        "effects": { "heal": 3, "block": 3, "buffSelf": { "bonusDamage": 1, "attacks": 2 }, "morale": 2, "freeAction": true }
+        "effects": { "heal": 3, "block": 3, "buffTarget": { "bonusDamage": 1, "attacks": 2 }, "morale": 2, "freeAction": true }
       }
     ]
   },

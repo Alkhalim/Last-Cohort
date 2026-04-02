@@ -1195,107 +1195,156 @@ class Game {
       return;
     }
 
-    let html = '';
-    // Sort: bosses first, then elites, then by name
-    const sorted = [...discovered].sort((a, b) => {
-      if (a.isBoss !== b.isBoss) return a.isBoss ? -1 : 1;
-      if (a.isElite !== b.isElite) return a.isElite ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
+    // Assign category to each enemy
+    const getCategory = (enemy) => {
+      if (enemy.isBoss) return 'boss';
+      if (enemy.isElite) return 'elite';
+      const cat = REDUCED_ART_ENEMY_CATEGORY[enemy.id];
+      if (cat === 'caster') return 'caster';
+      if (cat === 'ranged') return 'ranged';
+      if (cat === 'monster') return 'beast';
+      return 'melee';
+    };
 
-    sorted.forEach(enemy => {
-      const kills = s.enemiesKilled[enemy.id] || 0;
-      const tier = kills >= 10 ? 3 : kills >= 3 ? 2 : 1;
-      const tag = enemy.isBoss ? '<span class="bestiary-tag boss">BOSS</span>' : enemy.isElite ? '<span class="bestiary-tag elite">ELITE</span>' : '';
-      const row = enemy.row === 'front' ? 'Front Row' : 'Back Row';
+    // Build filter bar
+    const filters = [
+      { key: 'all', label: 'All' },
+      { key: 'melee', label: 'Melee' },
+      { key: 'ranged', label: 'Ranged' },
+      { key: 'caster', label: 'Caster' },
+      { key: 'beast', label: 'Beast' },
+      { key: 'elite', label: 'Elite' },
+      { key: 'boss', label: 'Boss' },
+    ];
 
-      let details = `<div class="bestiary-stat">HP: ${enemy.maxHp} | ${row} | Killed: ${kills}</div>`;
-      // Tier 2: show actions
-      if (tier >= 2) {
-        const actions = (enemy.actions || []).map(a => {
-          let info = a.name;
-          if (a.damage) info += ` (${a.damage} dmg)`;
-          if (a.poisonTarget) info += ` (+${a.poisonTarget} poison)`;
-          if (a.morale) info += ` (${a.morale} morale)`;
-          if (a.aoe) info += ' [AoE]';
-          return `<span class="bestiary-action">${info}</span>`;
-        }).join('');
-        details += `<div class="bestiary-actions">${actions}</div>`;
+    const renderEntries = (filter) => {
+      const sorted = [...discovered].sort((a, b) => {
+        if (a.isBoss !== b.isBoss) return a.isBoss ? -1 : 1;
+        if (a.isElite !== b.isElite) return a.isElite ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      let html = '';
+      sorted.forEach(enemy => {
+        const cat = getCategory(enemy);
+        if (filter !== 'all' && cat !== filter) return;
+        const kills = s.enemiesKilled[enemy.id] || 0;
+        const tier = kills >= 10 ? 3 : kills >= 3 ? 2 : 1;
+        const tag = enemy.isBoss ? '<span class="bestiary-tag boss">BOSS</span>' : enemy.isElite ? '<span class="bestiary-tag elite">ELITE</span>' : '';
+        const row = enemy.row === 'front' ? 'Front Row' : 'Back Row';
+
+        let details = `<div class="bestiary-stat">HP: ${enemy.maxHp} | ${row} | Killed: ${kills}</div>`;
+        if (tier >= 2) {
+          const actions = (enemy.actions || []).map(a => {
+            let info = a.name;
+            if (a.damage) info += ` (${a.damage} dmg)`;
+            if (a.poisonTarget) info += ` (+${a.poisonTarget} poison)`;
+            if (a.morale) info += ` (${a.morale} morale)`;
+            if (a.aoe) info += ' [AoE]';
+            return `<span class="bestiary-action">${info}</span>`;
+          }).join('');
+          details += `<div class="bestiary-actions">${actions}</div>`;
+        }
+        if (tier >= 3) {
+          details += `<div class="bestiary-lore">${enemy.description}</div>`;
+        }
+        if (tier < 2) details += `<div class="bestiary-locked">Kill 3 times to reveal abilities.</div>`;
+        else if (tier < 3) details += `<div class="bestiary-locked">Kill 10 times to reveal lore.</div>`;
+
+        const portrait = getEnemyPortrait(enemy.id);
+        html += `<div class="bestiary-entry tier-${tier}">
+          <div class="bestiary-header"><img class="bestiary-portrait" src="${portrait}" alt="${enemy.name}">${tag}<span class="bestiary-name">${enemy.name}</span></div>
+          ${details}
+        </div>`;
+      });
+
+      const undiscovered = allEnemies.length - discovered.length;
+      if (filter === 'all' && undiscovered > 0) {
+        html += `<div class="bestiary-entry undiscovered"><div class="bestiary-header"><span class="bestiary-name">??? (${undiscovered} more)</span></div><div class="bestiary-locked">Defeat new enemies to discover them.</div></div>`;
       }
-      // Tier 3: show description/lore
-      if (tier >= 3) {
-        details += `<div class="bestiary-lore">${enemy.description}</div>`;
-      }
-      // Tier < 3: show locked info
-      if (tier < 2) details += `<div class="bestiary-locked">Kill 3 times to reveal abilities.</div>`;
-      else if (tier < 3) details += `<div class="bestiary-locked">Kill 10 times to reveal lore.</div>`;
+      return html;
+    };
 
-      html += `<div class="bestiary-entry tier-${tier}">
-        <div class="bestiary-header">${tag}<span class="bestiary-name">${enemy.name}</span></div>
-        ${details}
-      </div>`;
+    // Render filter bar + entries
+    let filterHtml = '<div class="bestiary-filters">';
+    filters.forEach(f => {
+      filterHtml += `<button class="bestiary-filter-btn${f.key === 'all' ? ' active' : ''}" data-filter="${f.key}">${f.label}</button>`;
     });
+    filterHtml += '</div>';
 
-    // Show undiscovered count
-    const undiscovered = allEnemies.length - discovered.length;
-    if (undiscovered > 0) {
-      html += `<div class="bestiary-entry undiscovered"><div class="bestiary-header"><span class="bestiary-name">??? (${undiscovered} more)</span></div><div class="bestiary-locked">Defeat new enemies to discover them.</div></div>`;
-    }
+    const entriesId = 'bestiary-entries';
+    content.innerHTML = filterHtml + `<div id="${entriesId}">${renderEntries('all')}</div>`;
 
-    content.innerHTML = html;
+    // Bind filter clicks
+    content.querySelectorAll('.bestiary-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        content.querySelectorAll('.bestiary-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(entriesId).innerHTML = renderEntries(btn.dataset.filter);
+      });
+    });
   }
 
   showCodexScreen() {
     this.ui.showScreen('codex-screen');
     const content = document.getElementById('codex-content');
-    content.innerHTML = `
-      <div class="codex-section">
-        <h3 class="codex-heading">DICE COSTS</h3>
-        <div class="codex-entry"><b>Any</b> — Use any single die.</div>
-        <div class="codex-entry"><b>X+</b> — Die must be X or higher (e.g. 5+ means 5 or 6).</div>
-        <div class="codex-entry"><b>X-Y</b> — Die must be between X and Y inclusive.</div>
-        <div class="codex-entry"><b>=X</b> — Die must be exactly X.</div>
-        <div class="codex-entry"><b>Even / Odd</b> — Die must be even (2/4/6) or odd (1/3/5).</div>
-        <div class="codex-entry"><b>Pair</b> — Two dice with the same value.</div>
-        <div class="codex-entry"><b>Even/Odd Pair</b> — A pair where both dice are even or odd.</div>
-        <div class="codex-entry"><b>Consecutive</b> — Two dice with adjacent values (e.g. 3+4).</div>
-        <div class="codex-entry"><b>2d X+</b> — Two dice whose sum is X or more.</div>
-      </div>
-      <div class="codex-section">
-        <h3 class="codex-heading">STATUS EFFECTS</h3>
-        <div class="codex-entry"><b style="color:#8a2">Poison</b> — Deals damage equal to its value each turn, then decreases by 1. Stacks additively.</div>
-        <div class="codex-entry"><b style="color:var(--blue-bright)">Block</b> — Absorbs incoming damage before HP. Unused block fades between turns.</div>
-        <div class="codex-entry"><b>Stun</b> — Unit skips their next action.</div>
-        <div class="codex-entry"><b style="color:var(--gold)">Mark</b> — Marked targets take +20% damage from all sources.</div>
-        <div class="codex-entry"><b>Taunt</b> — Forces enemies to target this unit.</div>
-      </div>
-      <div class="codex-section">
-        <h3 class="codex-heading">MORALE</h3>
-        <div class="codex-entry"><b style="color:#c9a227">85+</b> — Inspired: +2 damage/healing. Heals most wounded ally 2 HP/turn.</div>
-        <div class="codex-entry"><b style="color:#c9a227">70-84</b> — Confident: +1 damage/healing. Heals most wounded ally 1 HP/turn.</div>
-        <div class="codex-entry"><b style="color:#6b8f4a">40-69</b> — Steady: No modifiers.</div>
-        <div class="codex-entry"><b style="color:#a0522d">16-30</b> — Distressed: -1 damage/healing. 1 damage to random ally/turn.</div>
-        <div class="codex-entry"><b style="color:#6b1a1a">0-15</b> — Broken: -2 damage/healing. 2 damage to random ally/turn.</div>
-        <div class="codex-entry">Morale decays each turn. Killing enemies and using morale skills restores it.</div>
-      </div>
-      <div class="codex-section">
-        <h3 class="codex-heading">EQUIPMENT</h3>
-        <div class="codex-entry"><b style="color:var(--red-bright)">Damage</b> — Added to all damage-dealing skills.</div>
-        <div class="codex-entry"><b style="color:var(--blue-bright)">Block</b> — Added to all block-granting skills.</div>
-        <div class="codex-entry"><b style="color:var(--green-bright)">Heal</b> — Added to all healing skills.</div>
-        <div class="codex-entry"><b style="color:#8a2">Poison</b> — Added to all poison-applying skills.</div>
-        <div class="codex-entry"><b>Max HP</b> — Increases maximum hit points.</div>
-        <div class="codex-entry"><b>Extra Dice</b> — Adds bonus dice to your pool each turn.</div>
-        <div class="codex-entry">Items have class tags — they can only be equipped by matching classes.</div>
-      </div>
-      <div class="codex-section">
-        <h3 class="codex-heading">COMBAT FLOW</h3>
-        <div class="codex-entry">Each turn: roll dice → assign dice to skills → end turn → enemies act.</div>
-        <div class="codex-entry">Each unit can act once per turn. Skills consume dice from the shared pool.</div>
-        <div class="codex-entry">After combat: standing units heal, downed units revive at 50% HP.</div>
-        <div class="codex-entry">Between marches: brief rest heals all soldiers 15% max HP.</div>
-      </div>
-    `;
+    const sections = [
+      { title: 'DICE COSTS', entries: [
+        '<b>Any</b> — Use any single die.',
+        '<b>X+</b> — Die must be X or higher (e.g. 5+ means 5 or 6).',
+        '<b>X-Y</b> — Die must be between X and Y inclusive.',
+        '<b>=X</b> — Die must be exactly X.',
+        '<b>Even / Odd</b> — Die must be even (2/4/6) or odd (1/3/5).',
+        '<b>Pair</b> — Two dice with the same value.',
+        '<b>Even/Odd Pair</b> — A pair where both dice are even or odd.',
+        '<b>Consecutive</b> — Two dice with adjacent values (e.g. 3+4).',
+        '<b>2d X+</b> — Two dice whose sum is X or more.',
+      ]},
+      { title: 'STATUS EFFECTS', entries: [
+        '<b style="color:#8a2">Poison</b> — Deals damage equal to its value each turn, then decreases by 1. Stacks additively.',
+        '<b style="color:var(--blue-bright)">Block</b> — Absorbs incoming damage before HP. Unused block fades between turns.',
+        '<b>Stun</b> — Unit skips their next action.',
+        '<b style="color:var(--gold)">Mark</b> — Marked targets take +20% damage from all sources.',
+        '<b>Taunt</b> — Forces enemies to target this unit.',
+      ]},
+      { title: 'MORALE', entries: [
+        '<b style="color:#c9a227">85+</b> — Inspired: +2 damage/healing. Heals most wounded ally 2 HP/turn.',
+        '<b style="color:#c9a227">70-84</b> — Confident: +1 damage/healing. Heals most wounded ally 1 HP/turn.',
+        '<b style="color:#6b8f4a">40-69</b> — Steady: No modifiers.',
+        '<b style="color:#a0522d">16-30</b> — Distressed: -1 damage/healing. 1 damage to random ally/turn.',
+        '<b style="color:#6b1a1a">0-15</b> — Broken: -2 damage/healing. 2 damage to random ally/turn.',
+        'Morale decays each turn. Killing enemies and using morale skills restores it.',
+      ]},
+      { title: 'EQUIPMENT', entries: [
+        '<b style="color:var(--red-bright)">Damage</b> — Added to all damage-dealing skills.',
+        '<b style="color:var(--blue-bright)">Block</b> — Added to all block-granting skills.',
+        '<b style="color:var(--green-bright)">Heal</b> — Added to all healing skills.',
+        '<b style="color:#8a2">Poison</b> — Added to all poison-applying skills.',
+        '<b>Max HP</b> — Increases maximum hit points.',
+        '<b>Extra Dice</b> — Adds bonus dice to your pool each turn.',
+        'Items have class tags — they can only be equipped by matching classes.',
+      ]},
+      { title: 'COMBAT FLOW', entries: [
+        'Each turn: roll dice → assign dice to skills → end turn → enemies act.',
+        'Each unit can act once per turn. Skills consume dice from the shared pool.',
+        'After combat: standing units heal, downed units revive at 50% HP.',
+        'Between marches: brief rest heals all soldiers 15% max HP.',
+      ]},
+    ];
+
+    content.innerHTML = sections.map(s => {
+      const entriesHtml = s.entries.map(e => `<div class="codex-entry">${e}</div>`).join('');
+      return `<div class="codex-section collapsed">
+        <h3 class="codex-heading">${s.title}</h3>
+        <div class="codex-body">${entriesHtml}</div>
+      </div>`;
+    }).join('');
+
+    content.querySelectorAll('.codex-heading').forEach(heading => {
+      heading.addEventListener('click', () => {
+        heading.parentElement.classList.toggle('collapsed');
+      });
+    });
   }
 
   showRunHistoryScreen() {

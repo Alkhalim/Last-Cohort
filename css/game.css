@@ -172,7 +172,9 @@ html, body {
 
 /* --- Submenu screens (Unlocks, Options) --- */
 #unlocks-screen,
-#options-screen {
+#options-screen,
+#bestiary-screen,
+#codex-screen {
   justify-content: center;
   align-items: center;
   background: linear-gradient(180deg, #0a0a0c 0%, #141820 50%, #1a1410 100%);
@@ -834,6 +836,7 @@ html, body {
 }
 
 .enemy-card {
+  position: relative;
   width: 90px;
   min-width: 70px;
   flex-shrink: 1;
@@ -844,6 +847,10 @@ html, body {
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
+}
+
+.enemy-card.stunned {
+  opacity: 0.7;
 }
 
 .enemy-card.dead {
@@ -4182,7 +4189,12 @@ html, body {
 }
 .bestiary-entry.tier-3 { border-color: rgba(201,162,39,0.3); }
 .bestiary-entry.undiscovered { opacity: 0.4; border-style: dashed; }
-.bestiary-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.bestiary-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.bestiary-portrait {
+  width: 36px; height: 36px; border-radius: 4px; object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;
+  background: rgba(0,0,0,0.3);
+}
 .bestiary-name { font-weight: 700; font-size: 0.85rem; color: var(--text-bright); }
 .bestiary-tag { font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; letter-spacing: 1px; }
 .bestiary-tag.boss { background: rgba(180,40,40,0.3); color: var(--red-bright); border: 1px solid rgba(180,40,40,0.5); }
@@ -4195,10 +4207,26 @@ html, body {
 }
 .bestiary-lore { font-size: 0.7rem; color: var(--text-dim); font-style: italic; line-height: 1.4; margin-top: 4px; }
 .bestiary-locked { font-size: 0.65rem; color: rgba(255,255,255,0.25); font-style: italic; }
+.bestiary-filters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; justify-content: center; }
+.bestiary-filter-btn {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px; padding: 3px 8px;
+  border-radius: 3px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.bestiary-filter-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-bright); }
+.bestiary-filter-btn.active { background: rgba(201,162,39,0.2); color: var(--gold); border-color: rgba(201,162,39,0.5); }
 
 /* Codex */
-.codex-section { margin-bottom: 16px; }
-.codex-heading { color: var(--gold); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 6px; border-bottom: 1px solid rgba(201,162,39,0.3); padding-bottom: 4px; }
+.codex-section { margin-bottom: 4px; }
+.codex-heading {
+  color: var(--gold); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 0;
+  border-bottom: 1px solid rgba(201,162,39,0.3); padding: 8px 0 4px;
+  cursor: pointer; user-select: none;
+}
+.codex-heading::before { content: '\25BC '; font-size: 0.6rem; }
+.codex-section.collapsed .codex-heading::before { content: '\25B6 '; }
+.codex-body { padding: 6px 0; }
+.codex-section.collapsed .codex-body { display: none; }
 .codex-entry { font-size: 0.73rem; color: var(--text-bright); margin-bottom: 4px; line-height: 1.4; padding-left: 8px; }
 
 .achieves-counter { text-align: center; color: var(--gold); font-size: 0.7rem; margin-bottom: 8px; }

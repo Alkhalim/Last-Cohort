@@ -143,7 +143,7 @@ const RAW_ENEMIES = {
   },
   "grove_witch": {
     "id": "grove_witch", "name": "Grove Witch",
-    "maxHp": 45, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 22,
+    "maxHp": 45, "row": "back", "damage": [6, 11], "speed": 1, "xpValue": 22,
     "isBoss": true, "ai": "boss",
     "description": "A twisted figure wreathed in green flame, half-woman, half-forest. She commands root and thorn, drains the will from soldiers, and summons healing totems from the living earth. The longer she lives, the stronger the forest grows around her.",
     "actions": [
@@ -208,7 +208,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Precise Shot", "damage": 8, "chance": 0.3, "text": "looses a precise arrow", "ignoreRow": true },
       { "name": "Mark Prey", "damage": 3, "chance": 0.3, "text": "studies a target — marking them for death", "ignoreRow": true, "markTarget": true, "morale": -3 },
-      { "name": "Marked Shot", "damage": 14, "chance": 0.25, "text": "fires at a marked target — the arrow punches through armor", "ignoreRow": true, "cooldown": 1, "pierceBlock": true },
+      { "name": "Marked Shot", "damage": 14, "chance": 0.25, "text": "fires at a marked target — the arrow punches through half the armor", "ignoreRow": true, "cooldown": 1, "pierceBlock": true },
       { "name": "Arrow Rain", "damage": 5, "chance": 0.15, "text": "sends a volley of arrows into the Roman line", "aoe": true, "cooldown": 1 }
     ]
   },
@@ -476,14 +476,14 @@ const RAW_ENEMIES = {
     "id": "warden_of_the_deep", "name": "Warden of the Deep",
     "maxHp": 28, "row": "front", "damage": [6, 11], "speed": 1, "xpValue": 8,
     "minDifficulty": 5,
-    "description": "An ancient forest guardian bound in living bark. Immensely tough. Reduces damage to all nearby enemies.",
+    "description": "A many-headed serpent lurking in the still, black waters. Immensely tough. Reduces damage to all nearby enemies.",
     "ai": "defensive",
     "aura": { "damageReduction": 2 },
     "startWithSelfBlock": true,
     "actions": [
-      { "name": "Root Slam", "damage": 8, "chance": 0.4, "text": "slams with gnarled roots" },
-      { "name": "Bark Shield", "damage": 0, "chance": 0.35, "text": "hardens its bark — all allies brace", "blockAllEnemies": 4, "blockSelf": 6 },
-      { "name": "Entangle", "damage": 5, "morale": -3, "chance": 0.25, "text": "wraps roots around a soldier" }
+      { "name": "Tidal Crush", "damage": 8, "chance": 0.4, "text": "surges forward with crushing force" },
+      { "name": "Scale Ward", "damage": 0, "chance": 0.35, "text": "submerges and resurfaces — scales harden across all allies", "blockAllEnemies": 4, "blockSelf": 6 },
+      { "name": "Drowning Coil", "damage": 5, "morale": -3, "chance": 0.25, "text": "drags a soldier beneath the surface" }
     ]
   },
   "raven_caller": {

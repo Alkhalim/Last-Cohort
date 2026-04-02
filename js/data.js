@@ -362,6 +362,12 @@ function buildSkillExecute(skillData) {
       attacks: effects.buffSelf.attacks || 1,
     };
 
+    // Buff Target: buff the targeted ally
+    if (effects.buffTarget) result.buffTarget = {
+      bonusDamage: effects.buffTarget.bonusDamage,
+      attacks: effects.buffTarget.attacks || 1,
+    };
+
     // Stun: stun target next turn
     if (effects.stun) result.stun = true;
 
@@ -814,7 +820,7 @@ const ITEM_SPECIAL_SCALING = {
   fang_necklace:       { base: 1, formula: lv => 1 * lv },
   wolf_pelt:           { base: 3, formula: lv => 3 + (lv - 1) },
   thorn_mantle:        { base: 2, formula: lv => 2 * lv },
-  corpsebloom:         { base: 1, formula: lv => 1 * lv },
+  corpsebloom:         { base: 2, formula: lv => 2 * lv },
 };
 
 function formatItemSpecial(item) {
