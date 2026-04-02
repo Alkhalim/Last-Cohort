@@ -143,14 +143,14 @@ const RAW_ENEMIES = {
   },
   "grove_witch": {
     "id": "grove_witch", "name": "Grove Witch",
-    "maxHp": 45, "row": "back", "damage": [6, 11], "speed": 1, "xpValue": 22,
+    "maxHp": 45, "row": "back", "damage": [5, 10], "speed": 1, "xpValue": 22,
     "isBoss": true, "ai": "boss",
     "description": "A twisted figure wreathed in green flame, half-woman, half-forest. She commands root and thorn, drains the will from soldiers, and summons healing totems from the living earth. The longer she lives, the stronger the forest grows around her.",
     "actions": [
-      { "name": "Thorn Volley", "damage": 6, "chance": 0.3, "text": "sends a volley of blackened thorns", "aoe": true },
-      { "name": "Soul Drain", "damage": 8, "morale": -5, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
+      { "name": "Thorn Volley", "damage": 5, "chance": 0.3, "text": "sends a volley of blackened thorns", "aoe": true },
+      { "name": "Soul Drain", "damage": 7, "morale": -5, "chance": 0.25, "text": "drains the life and will from a soldier", "ignoreRow": true },
       { "name": "Swamp Call", "damage": 0, "morale": -8, "chance": 0.2, "text": "calls upon the swamp spirits", "cooldown": 2 },
-      { "name": "Root Grasp", "damage": 10, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true, "cooldown": 1 }
+      { "name": "Root Grasp", "damage": 9, "chance": 0.25, "text": "commands roots to crush a soldier", "ignoreRow": true, "cooldown": 1 }
     ]
   },
 

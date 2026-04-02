@@ -66,7 +66,6 @@ const CURSE_DEFS = [
   { id: 'rare_collector', name: "Rare Collector", achievement: 'hero_three_rares', description: "Uncommon/rare items drop 30% less.", renown: 10 },
   { id: 'golden_challenge', name: "Golden Challenge", achievement: 'hero_only_rares', description: "Start with 1 fewer die (3 instead of 4).", renown: 30 },
   { id: 'victors_burden', name: "Victor's Burden", achievement: 'class_vestalis', description: "Enemies gain +1 Block at the start of each turn.", renown: 15 },
-  { id: 'ultimate_test', name: "Ultimate Test", achievement: 'party_all_rares', description: "All curses active simultaneously.", renown: 50 },
 ];
 
 const BOON_DEFS = [
@@ -85,7 +84,6 @@ const BOON_DEFS = [
   { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+2 damage to all units for the first 2 turns of combat.", renown: -10 },
   { id: 'epic_fortune', name: "Epic Fortune", achievement: 'hero_three_epics', description: "Item drops have +10% chance to upgrade rarity.", renown: -15 },
   { id: 'demigods_shield', name: "Demigod's Shield", achievement: 'hero_only_epics', description: "All units start combat with 3 Block.", renown: -15 },
-  { id: 'pantheons_grace', name: "Pantheon's Grace", achievement: 'party_all_epics', description: "All boons active simultaneously.", renown: -50 },
 ];
 
 class Game {
@@ -763,39 +761,19 @@ class Game {
         const cid = card.dataset.curseId;
         const type = card.dataset.type;
         if (type === 'curse') {
-          if (cid === 'ultimate_test') {
-            if (this.activeCurses.includes('ultimate_test')) {
-              this.activeCurses = [];
-            } else {
-              this.activeCurses = CURSE_DEFS.filter(c => !!unlockedAchievements[c.achievement]).map(c => c.id);
-            }
+          const idx = this.activeCurses.indexOf(cid);
+          if (idx >= 0) {
+            this.activeCurses.splice(idx, 1);
           } else {
-            const idx = this.activeCurses.indexOf(cid);
-            if (idx >= 0) {
-              this.activeCurses.splice(idx, 1);
-              const utIdx = this.activeCurses.indexOf('ultimate_test');
-              if (utIdx >= 0) this.activeCurses.splice(utIdx, 1);
-            } else {
-              this.activeCurses.push(cid);
-            }
+            this.activeCurses.push(cid);
           }
         } else {
           // Boon toggle
-          if (cid === 'pantheons_grace') {
-            if (this.activeBoons.includes('pantheons_grace')) {
-              this.activeBoons = [];
-            } else {
-              this.activeBoons = BOON_DEFS.filter(b => !!unlockedAchievements[b.achievement]).map(b => b.id);
-            }
+          const idx = this.activeBoons.indexOf(cid);
+          if (idx >= 0) {
+            this.activeBoons.splice(idx, 1);
           } else {
-            const idx = this.activeBoons.indexOf(cid);
-            if (idx >= 0) {
-              this.activeBoons.splice(idx, 1);
-              const pgIdx = this.activeBoons.indexOf('pantheons_grace');
-              if (pgIdx >= 0) this.activeBoons.splice(pgIdx, 1);
-            } else {
-              this.activeBoons.push(cid);
-            }
+            this.activeBoons.push(cid);
           }
         }
         this.renderCurseSelect();
