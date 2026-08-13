@@ -201,7 +201,7 @@ const RAW_ENEMIES = {
   },
   "silent_huntsman": {
     "id": "silent_huntsman", "name": "The Silent Huntsman",
-    "maxHp": 50, "row": "back", "damage": [7, 12], "speed": 1, "xpValue": 22,
+    "maxHp": 62, "startBlock": 6, "row": "back", "damage": [7, 12], "speed": 1, "xpValue": 22,
     "minDifficulty": 2,
     "isBoss": true, "ai": "boss",
     "description": "A scarred bowman who never misses. Trained by Arminius himself. He marks his prey, then strikes with lethal precision.",
@@ -301,7 +301,7 @@ const RAW_ENEMIES = {
 
   "cursed_warrior": {
     "id": "cursed_warrior", "name": "Cursed Warrior",
-    "maxHp": 20, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 6,
+    "maxHp": 15, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 6,
     "minDifficulty": 4,
     "deathPoison": 3,
     "description": "A Germanic warrior marked by the Bone Speaker's rituals. Black veins crawl across his skin. Even in death, he poisons.",
@@ -317,12 +317,13 @@ const RAW_ENEMIES = {
     "maxHp": 40, "row": "back", "damage": [4, 8], "speed": 1, "xpValue": 25,
     "minDifficulty": 4,
     "isBoss": true, "ai": "boss",
+    "holdFrontOnceExposed": true,
     "description": "An ancient death-priest draped in human bones. He weakens the body, drains the will, and curses weapons. The longer you fight, the weaker you become.",
     "actions": [
-      { "name": "Bone Curse", "damage": 3, "morale": -5, "poisonTarget": 7, "chance": 0.3, "text": "speaks a bone curse — pain and dread wash over a soldier", "ignoreRow": true },
-      { "name": "Wither", "damage": 0, "morale": -6, "chance": 0.25, "text": "chants words of withering — your men feel their strength fade" },
-      { "name": "Soul Shackle", "damage": 17, "morale": -4, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true, "cooldown": 1 },
-      { "name": "Raise the Dead", "damage": 0, "chance": 0.2, "text": "raises a cursed warrior from the mud", "spawn": "cursed_warrior" }
+      { "name": "Bone Curse", "damage": 3, "morale": -5, "poisonTarget": 4, "chance": 0.3, "text": "speaks a bone curse — pain and dread wash over a soldier", "ignoreRow": true },
+      { "name": "Wither", "damage": 0, "morale": -6, "chance": 0.25, "text": "chants words of withering — your men feel their strength fade", "cooldown": 2 },
+      { "name": "Soul Shackle", "damage": 12, "morale": -4, "chance": 0.25, "text": "binds a soldier's spirit in chains of bone", "ignoreRow": true, "cooldown": 1 },
+      { "name": "Raise the Dead", "damage": 0, "chance": 0.2, "text": "raises a cursed warrior from the mud", "spawn": "cursed_warrior", "cooldown": 3 }
     ]
   },
 
@@ -331,10 +332,11 @@ const RAW_ENEMIES = {
     "maxHp": 42, "row": "back", "damage": [6, 11], "speed": 2, "xpValue": 25,
     "minDifficulty": 3,
     "isBoss": true, "ai": "boss",
+    "holdFrontOnceExposed": true,
     "description": "A painted shaman who dances between the lines. Starts with Block equal to your highest poison stat. Heals 6 HP each turn by dancing with her snakes. When a snake dies, poisons a random soldier (3).",
     "actions": [
       { "name": "Venom Spit", "damage": 6, "poisonTarget": 3, "chance": 0.25, "text": "spits a stream of dark venom", "ignoreRow": true },
-      { "name": "Fang Strike", "damage": 8, "poisonTarget": 4, "chance": 0.3, "text": "lunges with a fanged staff" },
+      { "name": "Fang Strike", "damage": 8, "poisonTarget": 3, "chance": 0.3, "text": "lunges with a fanged staff" },
       { "name": "Venom Cloud", "damage": 4, "poisonTarget": 2, "chance": 0.25, "text": "exhales a cloud of poison", "aoe": true, "cooldown": 2 },
       { "name": "Call Serpent", "damage": 0, "chance": 0.2, "text": "whistles — a serpent slithers from the shadows. The shaman's wounds close.", "spawn": "serpent_shade", "cooldown": 2 }
     ]
@@ -353,7 +355,7 @@ const RAW_ENEMIES = {
 
   "leech_mound": {
     "id": "leech_mound", "name": "Leech Mound",
-    "maxHp": 50, "row": "front", "damage": [4, 8], "speed": 1, "xpValue": 25,
+    "maxHp": 42, "row": "front", "damage": [4, 8], "speed": 1, "xpValue": 25,
     "minDifficulty": 4,
     "isBoss": true, "ai": "boss",
     "description": "A writhing mass of leeches fused into a single monstrous organism. On death it bursts into 5 leeches. If 3+ survive, they reform into a lesser mound. Each turn it venoms one of your dice.",
@@ -367,7 +369,7 @@ const RAW_ENEMIES = {
   },
   "lesser_leech_mound": {
     "id": "lesser_leech_mound", "name": "Lesser Leech Mound",
-    "maxHp": 30, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 12,
+    "maxHp": 20, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 12,
     "isBoss": true, "ai": "boss",
     "description": "A smaller mound reformed from surviving leeches. On death spawns 2 leeches but cannot reform again.",
     "deathPoison": 2,

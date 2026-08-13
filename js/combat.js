@@ -904,11 +904,21 @@ class CombatEngine {
       }
     }
 
-    // Serpent Shaman: passive dance — swap with a snake and heal 6 each turn
+    // Serpent Shaman: passive dance — swap with a snake and heal each turn.
+    // Once her guard has been broken (holdFrontOnceExposed committed her to the
+    // front) the dance must NOT put her back out of reach. Previously it swapped
+    // rows unconditionally, every turn, even with every snake dead — so a melee
+    // party could never corner her and she healed 6 HP a turn while they tried.
     const shaman = this.enemies.find(e => e.id === 'serpent_shaman' && !e.dead);
     if (shaman) {
       const snakes = this.enemies.filter(e => !e.dead && e !== shaman && (e.id === 'fen_viper' || e.id === 'serpent_shade'));
-      if (snakes.length > 0) {
+      if (shaman._committedToFront) {
+        // Cornered: she still heals, but from the front row where she can be hit.
+        shaman.row = 'front';
+        const heal = Math.min(3, shaman.maxHp - shaman.hp);
+        if (heal > 0) shaman.hp += heal;
+        this.addLog(`${shaman.name} dances in place — cornered, she recovers only ${heal} HP.`);
+      } else if (snakes.length > 0) {
         // Prefer a snake in the opposite row; if all in same row, swap forces row change
         const oppositeRow = shaman.row === 'front' ? 'back' : 'front';
         let swapTarget = snakes.find(s => s.row === oppositeRow);
@@ -927,11 +937,12 @@ class CombatEngine {
         this.addLog(`${shaman.name} dances — swaps with ${swapTarget.name} and heals ${heal} HP!`);
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: shaman.index, text: 'Dance!', color: '#8a4' });
       } else {
-        // No snakes — just swap row and heal (reduced)
-        shaman.row = shaman.row === 'front' ? 'back' : 'front';
-        const heal = Math.min(4, shaman.maxHp - shaman.hp);
+        // No snakes left — she is exposed; stay in the front row and heal less.
+        shaman.row = 'front';
+        shaman._committedToFront = true;
+        const heal = Math.min(3, shaman.maxHp - shaman.hp);
         if (heal > 0) shaman.hp += heal;
-        this.addLog(`${shaman.name} dances to the ${shaman.row} row! (+${heal} HP)`);
+        this.addLog(`${shaman.name} has no snakes left to hide behind! (+${heal} HP)`);
       }
     }
 
@@ -3667,10 +3678,14 @@ class CombatEngine {
             this.addLog(`${mireMother.name} howls with rage! Her attacks grow stronger!`);
           }
 
-          // Leech Mound: on death, spawn 5 leeches
+          // Leech Mound: on death, burst into leeches.
+          // Was 5. At march 6 that is ~215 HP of fresh enemies arriving exactly
+          // when the party has spent itself killing a 213 HP boss — measured at
+          // a 0% win rate for any party without cleanse. Three stages
+          // (mound -> burst -> reformed lesser mound) is the identity of the
+          // fight; the burst being a second full health bar is not.
           if (e.id === 'leech_mound') {
-            const diffBonus = Math.max(0, (this.difficulty || 1) - 1);
-            for (let li = 0; li < 5 && this.enemies.filter(en => !en.dead).length < 6; li++) {
+            for (let li = 0; li < 2 && this.enemies.filter(en => !en.dead).length < 6; li++) {
               this.spawnBossMinion('mire_leech');
             }
             this.addLog('The Leech Mound bursts apart — leeches swarm everywhere!');
@@ -3816,6 +3831,21 @@ class CombatEngine {
         }
       }
     }
+    // Once a back-row enemy with holdFrontOnceExposed has had its front line
+    // cleared, it steps forward and STAYS there — even if it later summons more
+    // bodies. Without this, a boss that continuously refills the front row can
+    // never be reached by melee, so breaking the line achieves nothing.
+    this.enemies.forEach(e => {
+      if (e.dead || !e.holdFrontOnceExposed || e._committedToFront) return;
+      const frontAlive = this.enemies.some(o => !o.dead && o !== e && o.row === 'front');
+      if (!frontAlive) {
+        e._committedToFront = true;
+        e.row = 'front';
+        this.addLog(`${e.name}'s guard is broken — it is forced into the open!`);
+        if (this.onVisual) this.onVisual('statusText', { enemyIndex: e.index, text: 'EXPOSED!', color: 'var(--gold)' });
+      }
+    });
+
     // Safety: if all enemies are dead after processing deaths, trigger victory
     if (this.enemies.length > 0 && this.enemies.every(e => e.dead) && this.phase !== PHASE.VICTORY && this.phase !== PHASE.DEFEAT) {
       this.triggerVictory();

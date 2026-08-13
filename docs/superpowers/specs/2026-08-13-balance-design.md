@@ -55,7 +55,76 @@ items assume the late game still bites.
 
 ---
 
-## B2 — Two bosses are far out of line
+## B2 — Boss outliers  ✅ PARTIALLY IMPLEMENTED (2026-08-13)
+
+> **My first diagnosis was wrong and is corrected below.** I claimed the Leech
+> Mound had an "uncapped spawn cascade". It does not — `combat.js:4640-4641`
+> already caps live enemies at 5 and limits each enemy to one spawn. Add counts
+> and poison values were also *not* the binding constraint. Tracing actual
+> fights found the real mechanisms, and tuning against them worked.
+
+### What was actually wrong, and what changed
+
+**The Leech Mound is a three-stage fight.** Kill the mound (213 HP at march 6) →
+it bursts into **5** leeches → 3 leeches then *merge into a Lesser Leech Mound*
+(128 HP) → that dies into 2 more. Over 550 HP with no recovery window. A trace
+showed the party reaching 25 HP on the boss and then being wiped by the burst.
+Changed: burst 5 → 2 (`js/combat.js`), mound 50 → 42, lesser mound 30 → 20.
+
+**The Bone Speaker was buried in add HP.** Three `cursed_warrior` at 85 HP each
+at march 6 — 255 HP of chaff against a 170 HP boss. A trace showed the party
+never damaging the boss at all. Changed: 3 adds → 2, `cursed_warrior` 20 → 15
+(which also helps "Dead Legion", the 0%-win hardest normal encounter),
+`Raise the Dead` cooldown 3, `Soul Shackle` 17 → 12, `Bone Curse` poison 7 → 4,
+`Wither` cooldown 2, plus `holdFrontOnceExposed`.
+
+**New mechanic: `holdFrontOnceExposed`** (`js/combat.js`, checkEnemyDeaths).
+Once a back-row enemy's front line is cleared it steps forward and *stays*
+there, even if it later summons more bodies. This implements the review note
+that breaking the line should mean something rather than being undone every turn.
+
+**The "jumping back" behaviour was the Serpent Shaman, not the Bone Speaker.**
+Its dance swapped its row *unconditionally every turn* — and kept doing so even
+with every snake dead. Now it respects the commit and heals 3 instead of 6 once
+cornered.
+
+**The Silent Huntsman had no defence at all** — 50 HP, back row, nothing else.
+Raised to 62 HP with 6 starting block.
+
+### Measured result (avg of pure-melee / mixed / no-cleanse comps, marches 4–8)
+
+| boss | before | after |
+|---|---|---|
+| The Bone Speaker | **0%** | 41% |
+| The Leech Mound | **0%** | 24% |
+| The Silent Huntsman | 96–100% | 88% |
+| Corpse of Varus | 100% | 90% |
+
+Boss spread went from **0%–100%** to **9%–90%**.
+
+### Still open
+
+**Serpent Shaman is now the hardest boss at 9%** and per-boss tuning did not fix
+it. Tracing shows why: poison reaches **25 stacks on a 56 HP unit by turn three**.
+Reach was never its constraint. It needs the systemic fix below, not more tuning.
+
+**The real systemic problem: 7 of 13 classes have no poison cleanse at all**
+(legionary, signifer, cornicen, equites, ballistarius, praetorian, arcania), and
+the cleanses that exist are mostly non-starter skills that may never be learned.
+Against poison-heavy bosses those comps have no answer, and poison's `N(N+1)/2`
+curve does the rest. Control measurement: pure melee wins **97%** of normal
+march-6 encounters — it is a strong comp that three specific bosses hard-counter.
+
+Options, in order of preference:
+1. Cap poison stacks **on party units only** (leaves player poison builds intact
+   — see B7). Testing showed a cap of 8 lifting Serpent Shaman from 8% → 30%
+   for pure melee.
+2. Give every class one baseline cleanse or poison-resistance option.
+3. Make Block reduce incoming poison application.
+
+---
+
+## B2 (original analysis, superseded above) — Two bosses are far out of line
 
 **Evidence.** Win rate against the average for their march, every march they appear at:
 

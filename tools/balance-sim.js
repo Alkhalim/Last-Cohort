@@ -639,6 +639,159 @@ function reportMarchLength() {
 }
 
 // ============================================================
+// 7. March length vs progression
+// ============================================================
+// Cutting encounters does not only shorten a march — it also cuts the XP and
+// item drops that fund the party, so the party arrives at every later march
+// weaker. Difficulty compensation has to be judged against that weaker party,
+// not against the current one.
+//
+// Measured from the real map generator:
+//   current  (maxMidDepth 6/4): 5.40 fights per march
+//   proposed (maxMidDepth 4/3): 4.28 fights per march   (-21%)
+// Skill picks are 1 per 3 encounters (combat.js:4967), and drops roll per
+// encounter, so both scale with the fight count.
+function buildPartyScaled(g, engine, classIds, difficulty, rng, progressionMult) {
+  buildParty(g, engine, classIds, difficulty, rng);
+  if (progressionMult >= 1) return;
+
+  // Fewer encounters => fewer skill picks and fewer/weaker items.
+  engine.party.forEach(u => {
+    const starters = u.allSkills.filter(s => s.starter).length;
+    const learned = u.skills.length;
+    const target = Math.max(starters, Math.round(starters + (learned - starters) * progressionMult));
+    if (target < learned) u.skills = u.skills.slice(0, target);
+
+    // Strip a proportional share of equipment: fewer drops means emptier slots.
+    for (const slot of ['weapon', 'armor', 'trinket']) {
+      const arr = u.equipment[slot];
+      const filled = arr.filter(Boolean).length;
+      const keep = Math.max(1, Math.round(filled * progressionMult));
+      let removed = 0;
+      for (let i = arr.length - 1; i >= 0 && (filled - removed) > keep; i--) {
+        if (arr[i]) { arr[i] = null; removed++; }
+      }
+    }
+    engine.computeEquipmentStats(u);
+    u.hp = Math.min(u.hp, u.maxHp);
+  });
+}
+
+function runMarchScaled(seed, classIds, difficulty, combats, progressionMult, enemyBuff) {
+  const g = createGame(seed);
+  const engine = new g.api.CombatEngine();
+  buildPartyScaled(g, engine, classIds, difficulty, g.rng, progressionMult);
+
+  const normalPool = encountersFor(g, difficulty, 'normal');
+  const bossPool = encountersFor(g, difficulty, 'boss');
+  if (!normalPool.length || !bossPool.length) return null;
+
+  // enemyBuff simulates raising difficulty to compensate for the shorter march.
+  const applyBuff = () => {
+    if (!enemyBuff || enemyBuff === 1) return;
+    engine.enemies.forEach(e => {
+      if (e.dead) return;
+      e.maxHp = Math.round(e.maxHp * enemyBuff);
+      e.hp = Math.round(e.hp * enemyBuff);
+      e.actions = e.actions.map(a => ({
+        ...a,
+        damage: a.damage > 0 ? Math.max(1, Math.round(a.damage * enemyBuff)) : 0,
+      }));
+    });
+  };
+
+  const rest = Math.floor(combats * 0.66);
+  for (let c = 0; c < combats; c++) {
+    engine.initEncounter(normalPool[Math.floor(g.rng() * normalPool.length)]);
+    engine.beginSpawning();
+    g.drainTimers();
+    applyBuff();
+    const res = runEncounterLoop(g, engine);
+    if (res !== 'victory') return false;
+    engine.party.forEach(u => {
+      if (u.downed) { u.downed = false; u.hp = Math.floor(u.maxHp * 0.5); }
+    });
+    // Rest nodes also get cut by a shorter march — scale the heal with length.
+    if (c === rest) {
+      engine.party.forEach(u => { u.hp = Math.min(u.maxHp, u.hp + Math.floor(u.maxHp * 0.15)); });
+    }
+  }
+  engine.initEncounter(bossPool[Math.floor(g.rng() * bossPool.length)]);
+  engine.beginSpawning();
+  g.drainTimers();
+  applyBuff();
+  return runEncounterLoop(g, engine) === 'victory';
+}
+
+// Encounter loop for an already-initialised encounter (so buffs can be applied
+// after spawning but before the first turn).
+function runEncounterLoop(g, engine) {
+  const { api } = g;
+  const { playPlayerTurn } = require('./sim-harness.js');
+  let turns = 0;
+  while (turns < 40) {
+    if (engine.phase === api.PHASE.VICTORY) return 'victory';
+    if (engine.phase === api.PHASE.DEFEAT) return 'defeat';
+    engine.startRollPhase(); g.drainTimers();
+    if (engine.phase === api.PHASE.VICTORY) return 'victory';
+    if (engine.phase === api.PHASE.DEFEAT) return 'defeat';
+    if (engine.phase === api.PHASE.ROLLING) { engine.onDiceRevealed(); g.drainTimers(); }
+    if (engine.phase === api.PHASE.PLAYER_TURN) { playPlayerTurn(engine, api, null); g.drainTimers(); }
+    if (engine.phase === api.PHASE.VICTORY) return 'victory';
+    if (engine.phase === api.PHASE.DEFEAT) return 'defeat';
+    if (engine.phase === api.PHASE.PLAYER_TURN) { engine.endPlayerTurn(); g.drainTimers(); }
+    turns++;
+  }
+  return 'timeout';
+}
+
+function reportLengthVsProgression() {
+  heading('7. SHORTER MARCHES + DIFFICULTY COMPENSATION');
+  const rngSel = createGame(31).rng;
+  let seed = 600000;
+  const reps = FAST ? 40 : 140;
+  const marches = FAST ? [4, 7] : [2, 4, 6, 7, 8];
+
+  console.log('\nmeasured from the real map generator:');
+  console.log('  current  maxMidDepth 6/4 -> 5.40 fights per march');
+  console.log('  proposed maxMidDepth 4/3 -> 4.28 fights per march  (-21%)');
+  console.log('  skill picks over a run: 14.4 -> 11.4; drops fall by the same 21%\n');
+  console.log('"short" also carries 79% progression, so the party is weaker at every march.\n');
+
+  const scenarios = [
+    { label: 'current (5.4 fights)',        combats: 5, prog: 1.00, buff: 1.00 },
+    { label: 'short, no compensation',      combats: 4, prog: 0.79, buff: 1.00 },
+    { label: 'short + 10% enemy power',     combats: 4, prog: 0.79, buff: 1.10 },
+    { label: 'short + 20% enemy power',     combats: 4, prog: 0.79, buff: 1.20 },
+  ];
+
+  console.log('march   ' + scenarios.map(s => s.label.padStart(24)).join(''));
+  console.log('-'.repeat(8 + scenarios.length * 24));
+  const totals = scenarios.map(() => []);
+  for (const diff of marches) {
+    const cells = scenarios.map((s, si) => {
+      let wins = 0, runs = 0;
+      for (let i = 0; i < reps; i++) {
+        const r = runMarchScaled(seed++, randomParty(rngSel), diff, s.combats, s.prog, s.buff);
+        if (r === null) continue;
+        runs++; if (r) wins++;
+      }
+      const v = runs ? wins / runs : 0;
+      totals[si].push(v);
+      return (v * 100).toFixed(0) + '%';
+    });
+    console.log(String(diff).padStart(5) + '   ' + cells.map(c => c.padStart(24)).join(''));
+  }
+  console.log('-'.repeat(8 + scenarios.length * 24));
+  console.log('  avg   ' + totals.map(t =>
+    ((t.reduce((a, b) => a + b, 0) / t.length) * 100).toFixed(0).padStart(23) + '%').join(''));
+
+  console.log('\nPick the compensation that lands closest to the "current" column.');
+  console.log('Anything harder than that overshoots, because the shorter march has');
+  console.log('already removed a fifth of the run\'s XP and loot.');
+}
+
+// ============================================================
 const t0 = Date.now();
 console.log(`Last Cohort — balance simulation${FAST ? ' (fast)' : ''}`);
 console.log(`samples/cell=${N}  marches=[${DIFFICULTIES.join(',')}]  classes=${CLASSES.length}`);
@@ -649,5 +802,6 @@ if (!ONLY || ONLY === 'encounters') reportEncounters();
 if (!ONLY || ONLY === 'skills') reportSkills();
 if (!ONLY || ONLY === 'items') reportItems();
 if (!ONLY || ONLY === 'march') reportMarchLength();
+if (!ONLY || ONLY === 'length') reportLengthVsProgression();
 
 console.log(`\ndone in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
