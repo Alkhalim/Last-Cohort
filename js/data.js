@@ -85,11 +85,33 @@ function buildCost(costData) {
 }
 
 // --- Build an execute function from skill effect data ---
+// Deep-clone a skill's effects block so each unit owns its own copy.
+// Effects are plain data (numbers, booleans, and small nested objects such as
+// buffAllies), so a structural clone is sufficient and keeps run-scoped upgrades
+// from leaking back into CLASS_DATA. See cloneSkillForUnit below.
+function cloneSkillEffects(effects) {
+  if (!effects) return {};
+  const copy = {};
+  for (const [key, val] of Object.entries(effects)) {
+    copy[key] = (val && typeof val === 'object') ? { ...val } : val;
+  }
+  return copy;
+}
+
+// Build a unit-owned copy of a skill: its own effects object, and an execute
+// closure that reads from that object rather than the shared class definition.
+function cloneSkillForUnit(skill) {
+  return { ...skill, effects: cloneSkillEffects(skill.effects) };
+}
+
 function buildSkillExecute(skillData) {
-  const effects = skillData.effects;
+  const sharedEffects = skillData.effects;
   const passiveTrigger = skillData.passiveTrigger;
 
-  return function execute(unit, targets, dice) {
+  // effectsOverride lets a unit pass its own cloned effects block, so per-run
+  // skill upgrades apply to that unit only. Falls back to the shared definition.
+  return function execute(unit, targets, dice, effectsOverride) {
+    const effects = effectsOverride || sharedEffects;
     const result = {};
     // Die value scaling: add die value(s) to base damage or block
     const dieTotal = dice.reduce((s, d) => s + (d ? d.value : 0), 0);

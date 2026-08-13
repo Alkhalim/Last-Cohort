@@ -49,7 +49,7 @@ class CombatEngine {
         hp: data.maxHp,
         block: 0,
         downed: false,
-        allSkills: data.skills.map(s => ({ ...s })),
+        allSkills: data.skills.map(s => cloneSkillForUnit(s)),
         skills: [], // populated by getUnlockedSkills
         passive: { ...data.passive },
         passiveTriggered: false,
@@ -1523,7 +1523,7 @@ class CombatEngine {
     // Trigger cut-in portrait for the attacking unit
     if (this.onVisual) this.onVisual('skillCutIn', { classTitle: unit.title, skillName: skill.name });
 
-    const result = skill.execute(unit, targets, usedDice);
+    const result = skill.execute(unit, targets, usedDice, skill.effects);
 
     // Overrun: bonus damage for each other die in the roll matching the used die's value
     if (result.overrun && usedDice.length === 1 && usedDice[0]) {

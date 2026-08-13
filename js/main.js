@@ -117,6 +117,7 @@ class Game {
     this.audioCtx = null;
     this.lowpassFilter = null;
     this.currentSource = null;
+    this.bindAudioUnlock();
 
     this.showHomeScreen();
     this.bindStartScreen();
@@ -180,6 +181,44 @@ class Game {
       this.audioCtx = null;
       this.audioFilterActive = false;
     }
+  }
+
+  // Browsers create an AudioContext in the "suspended" state until a user
+  // gesture resumes it. This matters more than it looks: connectTrackToFilter()
+  // routes the <audio> element through the graph with createMediaElementSource,
+  // which permanently detaches it from the default output. Attaching to a
+  // suspended context therefore produces total silence, not just a missing
+  // filter — which is exactly why music worked over file:// (where the graph is
+  // skipped) and died in the browser.
+  // Resolves to whether the context is actually running.
+  resumeAudioContext() {
+    if (!this.audioCtx) return Promise.resolve(false);
+    if (this.audioCtx.state === 'running') return Promise.resolve(true);
+    try {
+      return Promise.resolve(this.audioCtx.resume())
+        .then(() => this.audioCtx.state === 'running')
+        .catch(() => false);
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
+  // Safety net: the start-screen click is not always the gesture a browser
+  // accepts for unblocking audio. Listen for the first few interactions
+  // anywhere and retry, then stop listening once the context is running.
+  bindAudioUnlock() {
+    const events = ['pointerdown', 'touchstart', 'keydown'];
+    const unlock = () => {
+      this.initAudioContext();
+      this.resumeAudioContext().then(running => {
+        if (!running) return;
+        events.forEach(evt => document.removeEventListener(evt, unlock));
+        if (this.currentTrack && this.currentTrack.paused && this.musicStarted) {
+          this.currentTrack.play().catch(() => {});
+        }
+      });
+    };
+    events.forEach(evt => document.addEventListener(evt, unlock, { passive: true }));
   }
 
   createReverbImpulse(duration, decay) {
@@ -255,11 +294,16 @@ class Game {
     const audio = new Audio(src);
     audio.loop = loop;
     audio.volume = this.getMusicVolume();
-    // Connect to Web Audio API filter if available (not on file://)
-    if (this.audioCtx) {
-      this.connectTrackToFilter(audio);
-    }
-    audio.play().catch(() => {});
+
+    // Start playback synchronously so it stays inside the user gesture that
+    // triggered it. The element is audible on its own — the Web Audio graph is
+    // attached afterwards, and only once the context is confirmed running, so a
+    // blocked context can never silence the track outright.
+    audio.play().catch(err => console.warn('Music playback blocked:', err));
+
+    this.resumeAudioContext().then(running => {
+      if (running) this.connectTrackToFilter(audio);
+    });
     if (!loop) {
       audio.addEventListener('ended', () => {
         if (this.musicMode === 'gameplay') {
@@ -428,7 +472,9 @@ class Game {
   returnHome() {
     this.clearSavedRun();
     if (this.engine) {
-      this.trackRunEnd(true);
+      // Retiring mid-run is not a completed run. If the final boss was already
+      // beaten, onVictory() has recorded 'victory' and trackRunEnd is a no-op.
+      this.trackRunEnd('retired');
       this.finalizeLeaderboard(true);
     }
     this.showHomeScreen();
@@ -463,6 +509,7 @@ class Game {
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
     this._leaderboardSaved = false;
+    this._runEndTracked = false;
     this.currentRunRenown = 0;
     this.activeCurses = [];
     this.activeBoons = [];
@@ -947,19 +994,46 @@ class Game {
     this.checkAchievements();
   }
 
-  trackRunEnd(victory) {
+  // Called after each march boss falls. The run continues afterwards, so this
+  // must NOT touch run-completion stats. Previously trackRunEnd() was called
+  // here, which incremented runsCompleted on every march — unlocking Vestalis
+  // after March 1 and cascading the entire class ladder open.
+  trackMarchComplete() {
+    this.stats.marchesCompleted = (this.stats.marchesCompleted || 0) + 1;
+
+    const aa = this.achievements;
+    // "No units downed" is scoped to a single march, so it belongs here.
+    if (!this._marchHadDowned && !aa.no_downed_march) {
+      aa.no_downed_march = true;
+      this.addNotification('Achievement: Iron Discipline — no units downed!');
+    }
+    this._marchHadDowned = false;
+
+    this.saveStats();
+    this.checkAchievements();
+  }
+
+  // Called only when the run genuinely ends.
+  //   'victory' — the final march boss was defeated
+  //   'defeat'  — the party wiped
+  //   'retired' — the player chose to return home mid-run
+  // Retiring is deliberately not a completed run: it must not satisfy the
+  // Cataphract/Praetorian unlock conditions.
+  trackRunEnd(outcome) {
+    // returnHome() can fire after the final-victory screen already reported the
+    // run, so guard against double counting.
+    if (this._runEndTracked) return;
+    this._runEndTracked = true;
+
+    const victory = outcome === 'victory';
     this.clearSavedRun();
     if (victory) this.stats.runsCompleted++;
-    else this.stats.runsLost++;
+    else if (outcome === 'defeat') this.stats.runsLost++;
+    else this.stats.runsRetired = (this.stats.runsRetired || 0) + 1;
     this.stats.totalRuns = (this.stats.totalRuns || 0) + 1;
     this.stats.totalRenown = (this.stats.totalRenown || 0) + (this.engine ? this.engine.totalRenownEarned : 0);
 
     const aa = this.achievements;
-    // No downed during entire march
-    if (victory && !this._marchHadDowned && !aa.no_downed_march) {
-      aa.no_downed_march = true;
-      this.addNotification('Achievement: Iron Discipline — no units downed!');
-    }
     // Three curses win
     if (victory && this.activeCurses && this.activeCurses.length >= 3 && !aa.three_curses_win) {
       aa.three_curses_win = true;
@@ -970,9 +1044,11 @@ class Game {
     this.saveStats();
     this.checkAchievements();
     this.sendAnalytics(victory);
-    // Leaderboard entry is saved when the run actually ends (defeat or return home), not here
-    if (!victory) {
-      this.finalizeLeaderboard(victory);
+    // Only a wipe finalises the leaderboard here. A retired run is finalised by
+    // returnHome(), which records it as a completed entry rather than a loss —
+    // preserving the pre-split behaviour for voluntary retirement.
+    if (outcome === 'defeat') {
+      this.finalizeLeaderboard(false);
     }
   }
 
@@ -1063,7 +1139,7 @@ class Game {
 
       this.engine.party = data.party.map(saved => {
         const classData = CLASS_DATA[saved.classId];
-        const allSkills = classData.skills.map(s => ({ ...s }));
+        const allSkills = classData.skills.map(s => cloneSkillForUnit(s));
         const learnedSet = new Set(saved.learnedSkillIds);
         const skills = allSkills.filter(s => learnedSet.has(s.id)).map(s => ({ ...s }));
         const unit = {
@@ -1784,30 +1860,33 @@ class Game {
       const hasEliteKill = s.enemiesKilled && eliteIds.some(eid => (s.enemiesKilled[eid] || 0) >= 1);
       if (hasEliteKill || a.first_elite_kill) { a.class_cornicen = true; this.addNotification('Class Unlocked: Cornicen!'); }
     }
-    // Reach march 3 → Signifer (also unlock if any march 3+ achievement exists)
-    if (!a.class_signifer && (currentDiff >= 3 || a.class_equites || a.class_ballistarius || a.class_praetorian || a.class_cataphract)) {
-      a.class_signifer = true;
-      this.addNotification('Class Unlocked: Signifer!');
-    }
-    // Reach march 5 → Equites
-    if (!a.class_equites && (currentDiff >= 5 || a.class_ballistarius || a.class_praetorian || a.class_cataphract)) {
-      a.class_equites = true;
-      this.addNotification('Class Unlocked: Equites!');
-    }
-    // Reach march 7 → Ballistarius
-    if (!a.class_ballistarius && (currentDiff >= 7 || a.class_praetorian || a.class_cataphract)) {
-      a.class_ballistarius = true;
-      this.addNotification('Class Unlocked: Ballistarius!');
-    }
-    // Reach march 8 → Praetorian
-    if (!a.class_praetorian && (currentDiff >= 8 || a.class_cataphract || a.boss_corpse_varus)) {
-      a.class_praetorian = true;
-      this.addNotification('Class Unlocked: Praetorian!');
-    }
-    // Reach march 9 → Cataphract
-    if (!a.class_cataphract && (currentDiff >= 9 || a.class_vestalis || a.boss_spirits_defeated)) {
-      a.class_cataphract = true;
-      this.addNotification('Class Unlocked: Cataphract!');
+    // --- Class unlock ladder -------------------------------------------
+    // Rungs are ordered easiest → hardest. Each rung unlocks on its own
+    // condition OR on any *higher* rung already being unlocked (backfill, so a
+    // player who jumps deep is never missing an earlier class).
+    //
+    // There are only 8 marches (MARCH_THEMES), so nothing may gate on March 9 —
+    // the old Cataphract condition (currentDiff >= 9) was unreachable and it
+    // survived only via the Vestalis cascade.
+    const runsWon = s.runsCompleted || 0;
+    const unlockLadder = [
+      { key: 'class_signifer',     name: 'Signifer',     met: currentDiff >= 3 },
+      { key: 'class_equites',      name: 'Equites',      met: currentDiff >= 5 },
+      { key: 'class_ballistarius', name: 'Ballistarius', met: currentDiff >= 7 },
+      { key: 'class_vestalis',     name: 'Vestalis',     met: currentDiff >= 8 },
+      // Completing a run means defeating the final march boss. Retiring home
+      // does not count — see trackRunEnd().
+      { key: 'class_cataphract',   name: 'Cataphract',   met: runsWon >= 1 || !!a.boss_spirits_defeated },
+      { key: 'class_praetorian',   name: 'Praetorian',   met: runsWon >= 2 },
+    ];
+    for (let i = 0; i < unlockLadder.length; i++) {
+      const rung = unlockLadder[i];
+      if (a[rung.key]) continue;
+      const higherUnlocked = unlockLadder.slice(i + 1).some(higher => a[higher.key]);
+      if (rung.met || higherUnlocked) {
+        a[rung.key] = true;
+        this.addNotification(`Class Unlocked: ${rung.name}!`);
+      }
     }
     // Defeat Fog Weaver → Arcania
     if (!a.class_arcania) {
@@ -1822,11 +1901,6 @@ class Game {
     // Flawless boss win — tracked for achievements but no longer unlocks Praetorian
     if (!a._bossFlawless && this._pendingBossFlawless) {
       a._bossFlawless = true;
-    }
-    // Win full run → Vestalis
-    if (!a.class_vestalis && ((s.runsCompleted || 0) >= 1 || a.boss_spirits_defeated)) {
-      a.class_vestalis = true;
-      this.addNotification('Class Unlocked: Vestalis!');
     }
 
     // Kill milestones
@@ -2066,9 +2140,9 @@ class Game {
         { key: 'class_signifer', name: "Deeper Into The Forest", desc: "Reach March 3.", progress: () => (s.highestDifficulty||1) >= 3 ? 'Done' : `March ${s.highestDifficulty||1}/3` },
         { key: 'class_equites', name: "Veteran's March", desc: "Reach March 5.", progress: () => (s.highestDifficulty||1) >= 5 ? 'Done' : `March ${s.highestDifficulty||1}/5` },
         { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 7.", progress: () => (s.highestDifficulty||1) >= 7 ? 'Done' : `March ${s.highestDifficulty||1}/7` },
-        { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
-        { key: 'class_cataphract', name: "Into The Darkness", desc: "Reach March 9.", progress: () => (s.highestDifficulty||1) >= 9 ? 'Done' : `March ${s.highestDifficulty||1}/9` },
-        { key: 'class_vestalis', name: "The Last March", desc: "Complete a full run (March 10).", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : '0/1' },
+        { key: 'class_vestalis', name: "The Threshold", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
+        { key: 'class_cataphract', name: "Into The Darkness", desc: "Complete a full run.", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : `${s.runsCompleted||0}/1 runs` },
+        { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Complete two full runs.", progress: () => (s.runsCompleted||0) >= 2 ? 'Done' : `${s.runsCompleted||0}/2 runs` },
         { key: 'class_arcania', name: "Through The Fog", desc: "Defeat the Fog Weaver.", progress: () => (s.enemiesKilled['fog_weaver']||0) >= 1 ? 'Done' : '0/1' },
         { key: 'class_wulfswestr', name: "Thusnelda's Defeat", desc: "Defeat Thusnelda.", progress: () => (s.enemiesKilled['thusnelda']||0) >= 1 ? 'Done' : '0/1' },
       ]},
@@ -2161,6 +2235,7 @@ class Game {
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
     this._leaderboardSaved = false;
+    this._runEndTracked = false;
     this.currentRunRenown = 0;
     // Boon: Spirit's Peace — start at 60 morale
     this.engine.morale = this.activeBoons.includes('spirits_peace') ? 60 : 50;

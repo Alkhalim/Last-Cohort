@@ -3060,7 +3060,12 @@ class GameUI {
         if (!u.downed) u.buffs.push({ damage: effects.buffDamage, attacksLeft: effects.buffAttacks || 2 });
       });
     }
-    if (effects.grantBlock) {
+    // grantBlock is overloaded: a number grants temporary block to the party,
+    // an object ({amount, tag, count}) grants permanent equipBlock and is
+    // handled further down. Without this type guard the object form
+    // string-concatenates into u.block ("0[object Object]") and corrupts all
+    // block arithmetic for the encounter.
+    if (typeof effects.grantBlock === 'number') {
       this.engine.party.forEach(u => {
         if (!u.downed) u.block = (u.block || 0) + effects.grantBlock;
       });
@@ -3141,7 +3146,7 @@ class GameUI {
     if (effects.morale && effects.morale > 0) outcomeText += ` (+${effects.morale} Morale)`;
     if (effects.morale && effects.morale < 0) outcomeText += ` (${effects.morale} Morale)`;
     if (effects.buffDamage) outcomeText += ` (+${effects.buffDamage} damage for ${effects.buffAttacks || 2} attacks)`;
-    if (effects.grantBlock) outcomeText += ` (+${effects.grantBlock} Block)`;
+    if (typeof effects.grantBlock === 'number') outcomeText += ` (+${effects.grantBlock} Block)`;
     if (effects.poisonParty) outcomeText += ` (${effects.poisonParty} Poison to all)`;
     if (effects.extraDiceNext) outcomeText += ` (+${effects.extraDiceNext} bonus dice next combat)`;
     if (effects.maxHpAll) outcomeText += ` (+${effects.maxHpAll} max HP to all)`;
@@ -4810,7 +4815,6 @@ class GameUI {
       return;
     }
 
-    if (window.game) window.game.trackRunEnd(true);
     this.showScreen('run-complete-screen');
 
     const diff = window.game.difficulty || 1;
@@ -4820,9 +4824,17 @@ class GameUI {
     const isFinalVictory = diff >= 8 && this.engine.enemies &&
       this.engine.enemies.some(e => e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus');
 
+    // Only the final boss ends the run. Every other march boss is a checkpoint —
+    // reporting it as a run completion is what unlocked the whole class ladder
+    // after March 1.
+    if (window.game) {
+      if (isFinalVictory) window.game.trackRunEnd('victory');
+      else window.game.trackMarchComplete();
+    }
+
     document.getElementById('run-complete-title').textContent = isFinalVictory ? 'THE FOREST IS SILENCED' : 'VICTORY';
     document.getElementById('run-complete-text').textContent = isFinalVictory
-      ? 'The spirits of Arminius and Varus dissolve into the mist. The forest releases its grip. After ten marches through darkness, your cohort has broken the curse of Teutoburg. Rome will remember what you did here.'
+      ? 'The spirits of Arminius and Varus dissolve into the mist. The forest releases its grip. After eight marches through darkness, your cohort has broken the curse of Teutoburg. Rome will remember what you did here.'
       : `Your cohort has defeated the Champion and broken through. The forest grows darker ahead, but there is still work to be done. Will you press on?`;
 
     const statsEl = document.getElementById('run-complete-stats');
@@ -5233,7 +5245,7 @@ class GameUI {
   }
 
   showRunSummary(isVictory) {
-    if (window.game) window.game.trackRunEnd(false);
+    if (window.game) window.game.trackRunEnd('defeat');
     this.showScreen('run-complete-screen');
 
     document.getElementById('run-complete-title').textContent = 'DEFEAT';
