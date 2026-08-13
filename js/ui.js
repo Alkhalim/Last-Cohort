@@ -523,16 +523,18 @@ class GameUI {
         } else if (intent.isTaunted) {
           targetIndices = [targetUnit.index];
           intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span> (Taunted)`;
-        } else if (intent.isSniper) {
-          targetIndices = [targetUnit.index];
-          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span> (Lowest HP)`;
         } else {
           targetIndices = [targetUnit.index];
           intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span>`;
         }
+
+        // Wounded enemies that strike twice previewed as a single hit.
+        if (intent.hits > 1) {
+          intentText += ` <span style="color:var(--red-bright)">×${intent.hits}</span>`;
+        }
       }
 
-      tooltip.innerHTML += `<div class="enemy-tooltip-intent">${intentText}</div>`;
+      tooltip.innerHTML += `<div class="enemy-tooltip-intent-label">NEXT ATTACK</div><div class="enemy-tooltip-intent">${intentText}</div>`;
 
       targetIndices.forEach(idx => {
         const unitEl = document.getElementById(`unit-${idx}`);
@@ -664,20 +666,30 @@ class GameUI {
     // Player turn: show all dice with staged highlighting
     const stagedDiceIds = this.stagedSkill ? this.stagedSkill.diceIds : [];
 
+    // Resolve the staged skill once so dice can be marked eligible or not.
+    const stagedSkillDef = this.stagedSkill && this.selectedUnitIndex !== null
+      ? (this.engine.party[this.selectedUnitIndex].skills.find(s => s.id === this.stagedSkill.skillId) || null)
+      : null;
+
     this.engine.dicePool.dice.forEach(die => {
       const isStaged = stagedDiceIds.includes(die.id);
+      // Show which dice this skill's cost can actually accept, so the rule is
+      // visible rather than only enforced on click.
+      const ineligible = !!stagedSkillDef && !die.used && !isStaged &&
+        !this.isDieSelectable(stagedSkillDef, die);
       const el = document.createElement('div');
-      el.className = `die${die.used ? ' used' : ''}${isStaged ? ' selected' : ''}`;
+      el.className = `die${die.used ? ' used' : ''}${isStaged ? ' selected' : ''}${ineligible ? ' ineligible' : ''}`;
       el.textContent = die.value;
       el.dataset.dieId = die.id;
 
-      if (!die.used && this.engine.phase === PHASE.PLAYER_TURN && this.stagedSkill) {
+      if (!die.used && this.engine.phase === PHASE.PLAYER_TURN && this.stagedSkill && !ineligible) {
         // In staged mode: click dice to swap them in/out of the staged set
         el.addEventListener('click', () => this.onDieClickStaged(die));
       }
 
-      // Centurion adjust buttons
-      if (!die.used && this.engine.canAdjustDie() && this.engine.phase === PHASE.PLAYER_TURN && !this.stagedSkill) {
+      // Centurion adjust buttons — kept available while a skill is staged, since
+      // nudging a die is exactly how a player makes an unaffordable cost work.
+      if (!die.used && this.engine.canAdjustDie() && this.engine.phase === PHASE.PLAYER_TURN) {
         const adjustContainer = document.createElement('div');
         adjustContainer.className = 'die-adjust';
         if (die.value > 1) {
@@ -689,6 +701,8 @@ class GameUI {
             if (down.disabled) return;
             down.disabled = true;
             this.engine.adjustDie(die.id, -1);
+            this.pruneStagedDice();
+            this.render();
           });
           adjustContainer.appendChild(down);
         }
@@ -701,18 +715,25 @@ class GameUI {
             if (up.disabled) return;
             up.disabled = true;
             this.engine.adjustDie(die.id, 1);
+            this.pruneStagedDice();
+            this.render();
           });
           adjustContainer.appendChild(up);
         }
         el.appendChild(adjustContainer);
       }
 
-      // Cornicen reroll button
-      if (!die.used && this.engine.canRerollDie() && this.engine.phase === PHASE.PLAYER_TURN && !this.stagedSkill) {
+      // Cornicen reroll button — also kept available while a skill is staged.
+      if (!die.used && this.engine.canRerollDie() && this.engine.phase === PHASE.PLAYER_TURN) {
         const rerollBtn = document.createElement('button');
         rerollBtn.className = 'reroll-btn';
         rerollBtn.textContent = '↻';
-        rerollBtn.addEventListener('click', (e) => { e.stopPropagation(); this.engine.rerollDie(die.id); });
+        rerollBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.engine.rerollDie(die.id);
+          this.pruneStagedDice();
+          this.render();
+        });
         el.appendChild(rerollBtn);
       }
 
@@ -734,12 +755,16 @@ class GameUI {
     if (!this.stagedSkill || die.used) return;
     const idx = this.stagedSkill.diceIds.indexOf(die.id);
     const skill = this.engine.party[this.selectedUnitIndex].skills.find(s => s.id === this.stagedSkill.skillId);
-    const neededDice = skill.cost.dice;
+    if (!skill) return;
+    const neededDice = this.engine.dicePool.requiredDiceCount(skill.cost);
 
     if (idx >= 0) {
       // Deselect this die
       this.stagedSkill.diceIds.splice(idx, 1);
     } else {
+      // Refuse dice this cost can never use, rather than letting the player
+      // build a selection that silently cannot be paid.
+      if (!this.isDieSelectable(skill, die)) return;
       // If at capacity, remove oldest and add new
       if (this.stagedSkill.diceIds.length >= neededDice) {
         this.stagedSkill.diceIds.shift();
@@ -747,6 +772,38 @@ class GameUI {
       this.stagedSkill.diceIds.push(die.id);
     }
     this.render();
+  }
+
+  // Adjusting or rerolling a die can invalidate one that is already staged
+  // (e.g. nudging a 5 down to 4 under a "5+" cost). Drop those rather than
+  // leaving a selection that looks valid but cannot be paid.
+  pruneStagedDice() {
+    if (!this.stagedSkill || this.selectedUnitIndex === null) return;
+    const caster = this.engine.party[this.selectedUnitIndex];
+    if (!caster) return;
+    const skill = caster.skills.find(s => s.id === this.stagedSkill.skillId);
+    if (!skill) return;
+    const pool = this.engine.dicePool;
+    const kept = [];
+    for (const id of this.stagedSkill.diceIds) {
+      const die = pool.dice.find(d => d.id === id);
+      if (die && !die.used && pool.canAcceptDie(skill.cost, kept, die)) kept.push(id);
+    }
+    this.stagedSkill.diceIds = kept;
+  }
+
+  // True if `die` can currently be staged onto `skill`. Dropping the oldest die
+  // when at capacity means a full selection is still open to any die that would
+  // be valid once that oldest one is released.
+  isDieSelectable(skill, die) {
+    if (!skill || !die || die.used) return false;
+    const pool = this.engine.dicePool;
+    let staged = this.stagedSkill ? this.stagedSkill.diceIds : [];
+    if (staged.includes(die.id)) return true;
+    if (staged.length >= pool.requiredDiceCount(skill.cost)) {
+      staged = staged.slice(1); // the shift() that onDieClickStaged would apply
+    }
+    return pool.canAcceptDie(skill.cost, staged, die);
   }
 
   // Dice reveal: all dice shake with cycling numbers, then settle one by one
@@ -3446,7 +3503,10 @@ class GameUI {
           u.equipment[slot].forEach(id => {
             if (!id) return;
             const item = getItemData(id);
-            if (item && !item.stats.extraDice) allItems.push({ unit: u, itemId: id, item });
+            // Offer anything with a stat the smith can actually raise. Excluding
+            // every extraDice item used to lock Runic Stone out entirely; only
+            // the extraDice stat itself is off limits.
+            if (itemHasScalableStat(item)) allItems.push({ unit: u, itemId: id, item });
           });
         }
       }
@@ -4194,6 +4254,9 @@ class GameUI {
     const tag = getPrimaryTag(unit.classId);
     const slots = unit.equipment[item.slot];
     const hasEmpty = slots.some(s => s === null);
+    // Clear any stale replacement selection carried over from a unit whose
+    // slots were full, so the stat preview below can't reference it.
+    if (hasEmpty) this._replaceSlotIdx = undefined;
 
     // Navigation arrows
     const prevArrow = eligible.length > 1 ? `<button class="loot-nav-arrow loot-nav-prev" id="loot-prev">◀</button>` : '';
@@ -4204,17 +4267,20 @@ class GameUI {
     const hpPct = Math.round((unit.hp / unit.maxHp) * 100);
     const hpColor = unit.downed ? 'var(--text-dim)' : hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
 
-    // Equipment in the relevant slot
+    // Equipment in the relevant slot.
+    // While an empty slot exists the item always goes there (engine.equipItem
+    // fills empties first), so filled slots must not look selectable — offering
+    // a replacement the Equip button then ignores is what made this confusing.
     const slotItems = slots.map((id, si) => {
       const eq = id ? getItemData(id) : null;
-      const selected = this._replaceSlotIdx === si;
+      const selected = !hasEmpty && this._replaceSlotIdx === si;
       if (!eq) return `<div class="loot-slot-item empty">— empty —</div>`;
       // Stat diff if this slot is selected for replacement
       let diffHtml = '';
       if (selected) {
         diffHtml = this._buildStatDiff(eq.stats, item.stats);
       }
-      return `<div class="loot-slot-item ${selected ? 'selected-replace' : ''} rarity-${eq.rarity}" data-slot-idx="${si}">
+      return `<div class="loot-slot-item ${selected ? 'selected-replace' : ''}${hasEmpty ? ' not-replaceable' : ''} rarity-${eq.rarity}"${hasEmpty ? '' : ` data-slot-idx="${si}"`}>
         <span class="loot-slot-name">${eq.name}${eq.level > 1 ? ` Lv${eq.level}` : ''}</span>
         <span class="loot-slot-stats">${formatItemStats(eq.stats)}</span>
         ${eq.special ? `<span class="loot-slot-special">${formatItemSpecial(eq)}</span>` : ''}
@@ -4320,7 +4386,7 @@ class GameUI {
     // Bind slot click for replacement selection
     unitDisplay.querySelectorAll('.loot-slot-item[data-slot-idx]').forEach(el => {
       el.addEventListener('click', () => {
-        this._replaceSlotIdx = parseInt(el.dataset.slotIdx);
+        this._replaceSlotIdx = parseInt(el.dataset.slotIdx, 10);
         this.renderLootScreen();
       });
     });
@@ -5022,7 +5088,10 @@ class GameUI {
           u.equipment[slot].forEach(id => {
             if (!id) return;
             const item = getItemData(id);
-            if (item && !item.stats.extraDice) allItems.push({ unit: u, itemId: id, item });
+            // Offer anything with a stat the smith can actually raise. Excluding
+            // every extraDice item used to lock Runic Stone out entirely; only
+            // the extraDice stat itself is off limits.
+            if (itemHasScalableStat(item)) allItems.push({ unit: u, itemId: id, item });
           });
         }
       }

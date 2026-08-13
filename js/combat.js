@@ -4735,34 +4735,31 @@ class CombatEngine {
       let action = availableActions[0];
       for (const a of availableActions) { cum += a.chance; if (roll <= cum) { action = a; break; } }
 
-      // Pick target
+      // Use the same selection the enemy turn will use, so the preview can't
+      // promise one target and strike another.
       const taunting = alive.find(u => u.taunt);
-      let target;
-      if (taunting) {
-        target = taunting;
-      } else if (e.id === 'silent_huntsman' && action.name === 'Marked Shot') {
-        // Prefer the marked target
-        const markedUnit = alive.find(u => u._huntMarked && u._huntMarked > 0);
-        target = markedUnit || alive[Math.floor(Math.random() * alive.length)];
-      } else if (e.ai === 'bully') {
-        target = alive.reduce((max, u) => u.hp > max.hp ? u : max, alive[0]);
-      } else {
-        target = alive[Math.floor(Math.random() * alive.length)];
-      }
+      const target = this.pickEnemyTarget(e, action, { record: false }) || alive[0];
 
-      const isAoe = action.aoe && action.damage > 0;
       e._intent = {
         action: action,
         targetIndex: target.index,
         targetName: target.name,
-        isAoe: isAoe,
+        // An AoE action with no direct damage (a poison or morale spread) still
+        // hits everyone; gating on damage made it preview as single-target.
+        isAoe: !!action.aoe,
         isTaunted: !!taunting,
-        isSniper: e.ai === 'sniper',
+        // Enemies with woundedDoubleAttack strike twice below half HP. The
+        // preview showed a single hit.
+        hits: (e.woundedDoubleAttack && e.hp < e.maxHp / 2) ? 2 : 1,
       };
     });
   }
 
-  pickEnemyTarget(enemy, action) {
+  // Shared by intent previewing and the enemy turn, so the two cannot drift.
+  // Pass { record: false } when previewing: the ambush-spread bookkeeping must
+  // only be consumed when an attack actually resolves, otherwise rolling an
+  // intent would burn the spread and the real attack would pick differently.
+  pickEnemyTarget(enemy, action, { record = true } = {}) {
     let alive = this.party.filter(u => !u.downed);
     // Dead Drop: untargetable units can't be targeted (fall back to all alive if everyone is untargetable)
     const targetable = alive.filter(u => !u._untargetable);
@@ -4770,6 +4767,11 @@ class CombatEngine {
     if (alive.length === 0) return null;
     const taunting = alive.find(u => u.taunt);
     if (taunting) return taunting;
+    // Silent Huntsman: Marked Shot seeks the unit it marked.
+    if (enemy.id === 'silent_huntsman' && action && action.name === 'Marked Shot') {
+      const markedUnit = alive.find(u => u._huntMarked && u._huntMarked > 0);
+      if (markedUnit) return markedUnit;
+    }
     // Slingers: target highest HP
     if (enemy.ai === 'bully') {
       return alive.reduce((max, u) => u.hp > max.hp ? u : max, alive[0]);
@@ -4780,13 +4782,13 @@ class CombatEngine {
       const untargeted = alive.filter(u => !this._ambushTargeted.has(u.index));
       if (untargeted.length > 0) {
         const target = untargeted[Math.floor(Math.random() * untargeted.length)];
-        this._ambushTargeted.add(target.index);
+        if (record) this._ambushTargeted.add(target.index);
         return target;
       }
     }
     if (this._ambushTargeted) {
       const target = alive[Math.floor(Math.random() * alive.length)];
-      this._ambushTargeted.add(target.index);
+      if (record) this._ambushTargeted.add(target.index);
       return target;
     }
 

@@ -571,11 +571,20 @@ html, body {
 .status-debuff { background: rgba(180, 60, 60, 0.15); color: #cc6666; }
 .status-buff { background: rgba(60, 140, 60, 0.15); color: var(--green-bright); }
 
-.enemy-tooltip-intent {
-  font-size: 0.65rem;
+/* The intent block was previously unlabelled, so players had no way to know
+   the line was a forecast of the enemy's next action. */
+.enemy-tooltip-intent-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
   margin-top: 6px;
   padding-top: 5px;
   border-top: 1px solid var(--border);
+}
+
+.enemy-tooltip-intent {
+  font-size: 0.65rem;
+  margin-top: 2px;
 }
 
 .enemy-target-highlight {
@@ -1147,6 +1156,14 @@ html, body {
   color: #555;
   cursor: default;
   opacity: 0.4;
+}
+
+/* A die this skill's cost can never accept. Distinct from .used: the die is
+   still available this turn, just not for the staged skill. */
+.die.ineligible {
+  opacity: 0.28;
+  filter: grayscale(1);
+  cursor: not-allowed;
 }
 
 .die.highlight {

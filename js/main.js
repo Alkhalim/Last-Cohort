@@ -210,10 +210,19 @@ class Game {
     const events = ['pointerdown', 'touchstart', 'keydown'];
     const unlock = () => {
       this.initAudioContext();
+      // Music used to wait for the Start button specifically, so a player who
+      // sat on the title screen heard nothing and reasonably reported "no
+      // music". Autoplay on load is not possible, but the first interaction
+      // anywhere is enough — it does not have to be Start.
+      if (!this.musicStarted) {
+        this.currentTrack = this.playTrack(MUSIC_MENU, true);
+        this.musicStarted = true;
+        this.musicMode = 'menu';
+      }
       this.resumeAudioContext().then(running => {
         if (!running) return;
         events.forEach(evt => document.removeEventListener(evt, unlock));
-        if (this.currentTrack && this.currentTrack.paused && this.musicStarted) {
+        if (this.currentTrack && this.currentTrack.paused) {
           this.currentTrack.play().catch(() => {});
         }
       });

@@ -768,9 +768,20 @@ function renderTagPips(classTags) {
 }
 
 // Create a leveled copy of an item — each level adds +1 to a random positive stat
+// extraDice is deliberately never scaled — +1 die per level would be absurd.
+// An item whose only stat is extraDice therefore has nowhere to put its bonus
+// levels, so leveling it produces an instance identical to the base item.
+// Runic Stone was exactly this case: a Lv5 was byte-identical to a Lv1.
+function itemHasScalableStat(item) {
+  if (!item || !item.stats) return false;
+  return Object.keys(item.stats).some(k => k !== 'extraDice' && item.stats[k] !== 0);
+}
+
 function createLeveledItem(itemId, bonusLevels) {
   const base = ITEM_DATA[itemId];
   if (!base || bonusLevels <= 0) return itemId; // return plain ID if no scaling
+  // Don't mint a fake leveled instance that can never differ from the base.
+  if (!itemHasScalableStat(base)) return itemId;
 
   // Create a unique instance ID
   const instanceId = itemId + '_lv' + (1 + bonusLevels) + '_' + Math.random().toString(36).substr(2, 4);
