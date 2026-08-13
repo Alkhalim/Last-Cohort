@@ -1,0 +1,491 @@
+Last Cohort — balance simulation
+samples/cell=160  marches=[1,2,3,4,5,6,7,8]  classes=13
+
+==========================================================================
+1. CLASS STRENGTH  (full marches — 6 fights then a boss)
+==========================================================================
+
+march completion rate when this class is on the team.
+contribution = share of the team's damage + poison + healing + block.
+
+class         marches  march%   contribution    dmg  poison  heal  block  down%
+-------------------------------------------------------------------------------
+legionary         99    72.7   ████████████   119      1     4     28    29
+wulfswestr        95    71.6   ████████████   134      0     4     25    32
+praetorian       115    69.6   ██████████··    98      0     1     12    34
+ballistarius      85    69.4   █████████···    98      3     1      2    34
+cataphract       115    67.8   ███████████·   101      1     0     60    32
+equites          103    67.0   ██████████··   111      0     2     12    41
+vestalis         107    65.4   ██████······    13      8    23     31    37
+centurion        123    64.2   ███████·····    61      1     1     19    42
+arcania          106    64.2   ███████·····    59     20     1      2    49
+cornicen         101    61.4   ███████·····    61      6     2      5    51
+sagittarius       99    60.6   █████████···    68     26     1      3    46
+signifer         106    56.6   ███████·····    45      0     2     38    49
+medicus           96    53.1   ████········     2     31     6      2    53
+
+spread: legionary 72.7%  →  medicus 53.1%  (19.6 points)
+
+==========================================================================
+2. PARTY COMBINATIONS  (every 3-class team)
+==========================================================================
+
+286 combinations, 12 full marches each
+
+STRONGEST
+  legionary + sagittarius + vestalis             100%   17.4 turns
+  legionary + praetorian + vestalis              100%   21.8 turns
+  legionary + wulfswestr + vestalis              100%   20.4 turns
+  legionary + vestalis + arcania                 100%   19.7 turns
+  praetorian + wulfswestr + cataphract           100%   14.5 turns
+  praetorian + vestalis + cataphract             100%   22.8 turns
+  legionary + equites + wulfswestr                92%   15.3 turns
+  legionary + ballistarius + cataphract           92%   17.0 turns
+  legionary + praetorian + wulfswestr             92%   15.8 turns
+  legionary + praetorian + cataphract             92%   15.8 turns
+
+WEAKEST
+  medicus + cornicen + arcania                     0%   13.3 turns
+  centurion + medicus + arcania                    0%   11.9 turns
+  medicus + sagittarius + arcania                  8%   11.0 turns
+  medicus + sagittarius + signifer                 8%   13.0 turns
+  centurion + cornicen + arcania                   8%   10.7 turns
+  cornicen + praetorian + arcania                 17%   13.1 turns
+  cornicen + equites + ballistarius               17%   10.3 turns
+  signifer + ballistarius + arcania               17%   12.8 turns
+  sagittarius + ballistarius + arcania            17%   10.9 turns
+  sagittarius + equites + arcania                 17%   11.1 turns
+
+appearances in the strongest 10% of teams:
+  legionary       16
+  wulfswestr      13
+  praetorian      11
+  cataphract      11
+  vestalis        10
+  sagittarius     5
+  equites         5
+  ballistarius    5
+  arcania         4
+  signifer        2
+  cornicen        1
+  centurion       1
+
+appearances in the weakest 10% of teams:
+  medicus         16
+  arcania         13
+  cornicen        11
+  signifer        10
+  ballistarius    8
+  sagittarius     7
+  equites         6
+  centurion       5
+  praetorian      4
+  vestalis        2
+  cataphract      2
+
+==========================================================================
+3. ENEMIES & BOSSES  (win rate against a scaled party)
+==========================================================================
+
+BOSSES (hardest first)
+march  boss                              win%   turns
+------------------------------------------------------------------
+   4   The Leech Mound                    17      5.3
+   6   The Leech Mound                    21      5.1
+   5   The Leech Mound                    25      5.0
+   7   The Leech Mound                    29      4.9
+   4   The Bone Speaker                   33      5.3
+   5   The Bone Speaker                   33      5.8
+   8   The Leech Mound                    33      4.9
+   6   The Bone Speaker                   38      5.6
+   7   The Bone Speaker                   42      5.4
+   8   The Bone Speaker                   42      5.8
+   6   Serpent Shaman                     46      5.4
+   7   Ursus Ferox                        63      5.3
+   3   Serpent Shaman                     71      6.0
+   4   Serpent Shaman                     71      5.7
+   5   Ursus Ferox                        71      4.3
+   8   Serpent Shaman                     71      4.3
+   2   Serpent Shaman                     75      6.5
+   4   Ursus Ferox                        75      5.0
+   6   The Mire Mother                    79      5.8
+   7   The Blood Stag                     79      4.6
+   8   The Blood Stag                     79      4.2
+   5   Serpent Shaman                     83      4.7
+   6   The Grove Witch                    83      6.0
+   6   The Blood Stag                     83      4.4
+   8   Ursus Ferox                        83      5.3
+   4   Germanic Warlord                   88      5.6
+   5   The Blood Stag                     88      4.4
+   6   Germanic Warlord                   88      4.9
+   6   Ursus Ferox                        88      5.7
+   7   Serpent Shaman                     88      4.8
+   8   Corpse of Arminius                 88      4.7
+   3   Ursus Ferox                        92      5.1
+   4   Corpse of Arminius                 92      4.5
+   6   Corpse of Arminius                 92      5.0
+   7   Corpse of Arminius                 92      4.1
+   8   The Mire Mother                    92      4.5
+   2   The Grove Witch                    96      6.2
+   3   Germanic Warlord                   96      5.2
+   4   The Grove Witch                    96      5.8
+   4   The Fog Weaver                     96      5.7
+   5   The Grove Witch                    96      5.0
+   5   Corpse of Arminius                 96      4.1
+   6   The Fog Weaver                     96      5.2
+   7   The Silent Huntsman                96      3.5
+   7   The Mire Mother                    96      5.5
+   8   Germanic Warlord                   96      4.5
+   8   The Grove Witch                    96      4.9
+   8   The Silent Huntsman                96      3.2
+   8   The Fog Weaver                     96      4.8
+   8   Spirits of Arminius & Varus        96      3.2
+   1   Germanic Warlord                  100      3.4
+   1   The Grove Witch                   100      4.6
+   2   Germanic Warlord                  100      4.4
+   2   The Silent Huntsman               100      3.0
+   3   The Grove Witch                   100      6.1
+   3   The Silent Huntsman               100      3.2
+   3   The Mire Mother                   100      7.6
+   4   The Silent Huntsman               100      3.1
+   4   The Mire Mother                   100      5.5
+   5   Germanic Warlord                  100      5.2
+   5   The Silent Huntsman               100      3.6
+   5   The Mire Mother                   100      5.2
+   5   The Fog Weaver                    100      6.8
+   6   The Silent Huntsman               100      3.8
+   6   Corpse of Varus                   100      5.1
+   7   Germanic Warlord                  100      4.0
+   7   The Grove Witch                   100      6.4
+   7   The Fog Weaver                    100      5.0
+   7   Corpse of Varus                   100      4.8
+   8   Corpse of Varus                   100      4.5
+
+OUT OF LINE WITH THEIR MARCH (>20 points from the march average)
+  march 3  Serpent Shaman                   71%  (march avg 93%, -22 → TOO HARD)
+  march 4  The Leech Mound                  17%  (march avg 77%, -60 → TOO HARD)
+  march 4  The Bone Speaker                 33%  (march avg 77%, -43 → TOO HARD)
+  march 4  The Silent Huntsman             100%  (march avg 77%, +23 → TOO EASY)
+  march 4  The Mire Mother                 100%  (march avg 77%, +23 → TOO EASY)
+  march 5  The Leech Mound                  25%  (march avg 81%, -56 → TOO HARD)
+  march 5  The Bone Speaker                 33%  (march avg 81%, -48 → TOO HARD)
+  march 6  The Leech Mound                  21%  (march avg 76%, -55 → TOO HARD)
+  march 6  The Bone Speaker                 38%  (march avg 76%, -39 → TOO HARD)
+  march 6  Serpent Shaman                   46%  (march avg 76%, -30 → TOO HARD)
+  march 6  The Silent Huntsman             100%  (march avg 76%, +24 → TOO EASY)
+  march 6  Corpse of Varus                 100%  (march avg 76%, +24 → TOO EASY)
+  march 7  The Leech Mound                  29%  (march avg 82%, -53 → TOO HARD)
+  march 7  The Bone Speaker                 42%  (march avg 82%, -40 → TOO HARD)
+  march 8  The Leech Mound                  33%  (march avg 82%, -49 → TOO HARD)
+  march 8  The Bone Speaker                 42%  (march avg 82%, -40 → TOO HARD)
+
+HARDEST NORMAL ENCOUNTERS
+  march 7  Dead Legion                         0%  2.5 turns
+  march 8  Heart Guardians                    10%  2.8 turns
+  march 7  The Rotting Core                   20%  2.8 turns
+  march 8  Dead Legion                        20%  2.2 turns
+  march 8  The Rotting Core                   20%  3.0 turns
+  march 8  The Elder's Court                  40%  3.7 turns
+  march 8  Drowned Wardens                    60%  4.9 turns
+  march 6  Blood Circle                       70%  3.1 turns
+  march 7  Heart Guardians                    70%  3.0 turns
+  march 8  Spectral Patrol                    70%  3.1 turns
+  march 8  Woven Doom                         70%  4.3 turns
+  march 6  Iron Stampede                      80%  3.6 turns
+
+EASIEST NORMAL ENCOUNTERS
+  march 8  Ritual Warband                    100%  3.5 turns
+  march 8  Toxic Shallows                    100%  2.1 turns
+  march 8  Warden's Stand                    100%  4.2 turns
+  march 8  The Thorn Canopy                  100%  1.8 turns
+  march 8  The Haunted Trail                 100%  2.4 turns
+  march 8  Iron Stampede                     100%  2.7 turns
+  march 8  Blood Circle                      100%  2.7 turns
+  march 8  The Sow's Fury                    100%  3.1 turns
+
+DIFFICULTY CURVE BY MARCH
+  march  1  ██████████████████████████████ 100%
+  march  2  ██████████████████████████████ 100%
+  march  3  ██████████████████████████████ 100%
+  march  4  ██████████████████████████████ 100%
+  march  5  ██████████████████████████████ 100%
+  march  6  ███████████████████████████··· 91%
+  march  7  ██████████████████████████···· 85%
+  march  8  ████████████████████████······ 80%
+
+==========================================================================
+4. SKILL USAGE  (how often each skill is actually the best play)
+==========================================================================
+
+720 fights, every unit holding its full kit.
+pick% = how often the skill was chosen when it was affordable.
+A skill offered constantly but rarely picked is losing to its own alternatives.
+
+ARCANIA
+   Throwing Knife            █████████·······  56.9%  (offered 624x)
+   Reconnaissance            ················   0.4%  (offered 283x)
+   Nerve Strike              ················   0.0%  (offered 485x)
+   Contingency Plan          ················   0.0%  (offered 315x)
+   Shadow Network            ················   0.0%  (offered 575x)
+
+BALLISTARIUS
+   Burning Pitch             ██████████████··  85.8%  (offered 367x)
+   Staggering Shot           ██··············  10.8%  (offered 295x)
+   Pinning Shot              █···············   3.5%  (offered 509x)
+   Ballista Bolt             ················   1.6%  (offered 612x)
+   Brace Position            ················   0.4%  (offered 562x)
+   never affordable: Devastator Volley
+
+CATAPHRACT
+   Mounted Sweep             ███████·········  42.3%  (offered 532x)
+   Kontos Strike             █···············   6.8%  (offered 770x)
+   Cataphract's Doom         █···············   5.6%  (offered 354x)
+   Heavy Charge              █···············   4.3%  (offered 563x)
+   Thundering Charge         █···············   3.8%  (offered 551x)
+   never affordable: Unbreakable Line
+
+CENTURION
+   Slash                     ███·············  20.2%  (offered 1304x)
+   Decimation Strike         █···············   8.9%  (offered 508x)
+   Tactical Preparation      █···············   5.0%  (offered 1043x)
+   No Retreat                ················   2.3%  (offered 557x)
+   Tighten Ranks             ················   1.1%  (offered 1107x)
+
+CORNICEN
+   Cacophony                 ████████████····  75.2%  (offered 266x)
+   Deafening Blast           ███·············  18.5%  (offered 319x)
+   Shrieking Note            █···············   6.3%  (offered 607x)
+   Horn Blast                █···············   5.3%  (offered 827x)
+   Resonance                 ················   1.8%  (offered 737x)
+
+EQUITES
+   Hit and Run               ██████··········  39.7%  (offered 730x)
+   Trample                   ███·············  16.4%  (offered 420x)
+   Overrun                   █···············   4.8%  (offered 898x)
+   Scouting Maneuver         ················   0.8%  (offered 387x)
+   Rally Charge              ················   0.1%  (offered 667x)
+
+LEGIONARY
+   Gladius Thrust            ████············  22.5%  (offered 879x)
+   Strike                    ██··············  11.5%  (offered 1032x)
+   Shield Brace              █···············   4.3%  (offered 914x)
+   Fortified Strike          ················   1.6%  (offered 1032x)
+   Hold Fast                 ················   1.3%  (offered 465x)
+
+MEDICUS
+   Plague Flask              █████████·······  54.2%  (offered 696x)
+   Aconitum                  █···············   8.8%  (offered 941x)
+   Sawbones' Choice          █···············   3.4%  (offered 442x)
+   Triage                    ················   2.7%  (offered 479x)
+   Venom Strike              ················   1.2%  (offered 885x)
+
+PRAETORIAN
+   Execute                   █████···········  33.8%  (offered 854x)
+   Shield Slam               █···············   4.6%  (offered 969x)
+   Gladius Imperialis        █···············   4.6%  (offered 1190x)
+   Shield of Rome            █···············   3.5%  (offered 974x)
+   Praetorian Guard          ················   2.7%  (offered 516x)
+   never affordable: Imperial Decree
+
+SAGITTARIUS
+   Mark Target               █████████·······  57.3%  (offered 300x)
+   Poisoned Arrow            ████············  24.1%  (offered 427x)
+   Caltrops                  ███·············  16.2%  (offered 505x)
+   Flaming Arrow             █···············   6.8%  (offered 530x)
+   Arrow Volley              ················   3.0%  (offered 632x)
+
+SIGNIFER
+   Sacrifice the Standard    █████···········  30.9%  (offered 489x)
+   Eagle's Blessing          ████············  24.3%  (offered 448x)
+   Standard Strike           ██··············  13.1%  (offered 1283x)
+   Shield the Standard       █···············   3.8%  (offered 1100x)
+   Raise the Eagle           █···············   3.2%  (offered 1090x)
+
+VESTALIS
+   Purifying Flame           ████████········  47.1%  (offered 395x)
+   Prayer of Mending         █···············   9.1%  (offered 900x)
+   Vesta's Judgment          █···············   8.8%  (offered 479x)
+   Eternal Flame             █···············   7.1%  (offered 604x)
+   Flame Touch               █···············   4.9%  (offered 1134x)
+   never affordable: Rite of Consecration
+
+WULFSWESTR
+   Wild Swing                ████············  24.7%  (offered 1105x)
+   Shield Bash               ██··············  14.5%  (offered 956x)
+   Wild Roots                ················   1.4%  (offered 440x)
+   Twinned Herbs             ················   1.2%  (offered 486x)
+   Forest Shroud             ················   1.1%  (offered 466x)
+
+LOSES TO ITS OWN ALTERNATIVES
+(the sim understands these effects and still almost never picks them)
+   arcania/Reconnaissance (offered 283x, picked 1x)
+   arcania/Nerve Strike (offered 485x, picked 0x)
+   arcania/Shadow Network (offered 575x, picked 0x)
+   arcania/Dead Drop (offered 283x, picked 0x)
+   arcania/Expose Weakness (offered 421x, picked 0x)
+   arcania/Assassination (offered 503x, picked 0x)
+   arcania/Laced Blade (offered 460x, picked 0x)
+   arcania/Smoke Bomb (offered 298x, picked 0x)
+   ballistarius/Ballista Bolt (offered 612x, picked 10x)
+   ballistarius/Brace Position (offered 562x, picked 2x)
+   ballistarius/Concussive Shot (offered 267x, picked 0x)
+   ballistarius/Scorpio (offered 530x, picked 0x)
+   ballistarius/Smokescreen (offered 530x, picked 0x)
+   ballistarius/Siege Shot (offered 427x, picked 0x)
+   ballistarius/Suppressive Volley (offered 299x, picked 0x)
+   ballistarius/Spotter's Call (offered 329x, picked 0x)
+   cataphract/Rally the Line (offered 320x, picked 6x)
+   cataphract/Formation Command (offered 643x, picked 9x)
+   cataphract/Iron Curtain (offered 686x, picked 1x)
+   cataphract/Armored Advance (offered 514x, picked 0x)
+   centurion/Tighten Ranks (offered 1107x, picked 12x)
+   centurion/Iron Discipline (offered 564x, picked 6x)
+   centurion/Officer's Care (offered 1103x, picked 6x)
+   centurion/Measured Advance (offered 784x, picked 3x)
+   centurion/Overwatch (offered 567x, picked 1x)
+   centurion/Rally Cry (offered 938x, picked 1x)
+   centurion/Commanding Shout (offered 570x, picked 0x)
+   cornicen/Resonance (offered 737x, picked 13x)
+   cornicen/Dissonant Blast (offered 348x, picked 5x)
+   cornicen/Battle Horn (offered 688x, picked 6x)
+   cornicen/Harmonic Frequency (offered 523x, picked 3x)
+   cornicen/Rallying Trumpet (offered 727x, picked 0x)
+   cornicen/Echoing Blast (offered 755x, picked 0x)
+   cornicen/March Tempo (offered 658x, picked 0x)
+   cornicen/War Drums (offered 348x, picked 0x)
+   equites/Scouting Maneuver (offered 387x, picked 3x)
+   equites/Rally Charge (offered 667x, picked 1x)
+   equites/Flanking Strike (offered 631x, picked 0x)
+   equites/Drag Down (offered 390x, picked 0x)
+   equites/Cavalry Escape (offered 372x, picked 0x)
+   legionary/Fortified Strike (offered 1032x, picked 16x)
+   legionary/Hold Fast (offered 465x, picked 6x)
+   legionary/Pilum Cast (offered 779x, picked 9x)
+   legionary/Shoulder Charge (offered 720x, picked 0x)
+   legionary/Shield Wall (offered 327x, picked 0x)
+   legionary/Sunder (offered 748x, picked 0x)
+   legionary/Counter Stance (offered 436x, picked 0x)
+   legionary/Precision Drill (offered 627x, picked 0x)
+   legionary/Twin Slash (offered 357x, picked 0x)
+   medicus/Venom Strike (offered 885x, picked 11x)
+   medicus/Emergency Draught (offered 748x, picked 1x)
+   medicus/Bind Wounds (offered 821x, picked 1x)
+   medicus/Hippocratic Strike (offered 837x, picked 0x)
+   medicus/Stimulant (offered 499x, picked 0x)
+   medicus/Calculated Dosage (offered 446x, picked 0x)
+   medicus/Transfusion (offered 821x, picked 0x)
+   medicus/Field Surgery (offered 446x, picked 0x)
+   praetorian/Roman Discipline (offered 1031x, picked 3x)
+   praetorian/Avenger's Oath (offered 860x, picked 0x)
+   praetorian/Condemn (offered 1079x, picked 0x)
+   praetorian/Wrath of Rome (offered 706x, picked 0x)
+   praetorian/Sacrificial Guard (offered 823x, picked 0x)
+   praetorian/Last Stand (offered 155x, picked 0x)
+   sagittarius/Kill Shot (offered 566x, picked 1x)
+   sagittarius/Aimed Shot (offered 670x, picked 1x)
+   sagittarius/Loose Arrow (offered 737x, picked 0x)
+   sagittarius/Trick Shot (offered 363x, picked 0x)
+   sagittarius/Wilderness Instinct (offered 645x, picked 0x)
+   signifer/Defiant Stand (offered 558x, picked 7x)
+   signifer/Martyr's Banner (offered 560x, picked 1x)
+   signifer/Inspire (offered 593x, picked 1x)
+   signifer/Standard Charge (offered 1132x, picked 0x)
+   signifer/Fortune's Favor (offered 562x, picked 0x)
+   signifer/Battle Hymn (offered 989x, picked 0x)
+   vestalis/Flame Shield (offered 703x, picked 4x)
+   vestalis/Divine Intercession (offered 503x, picked 1x)
+   wulfswestr/Wild Roots (offered 440x, picked 6x)
+   wulfswestr/Twinned Herbs (offered 486x, picked 6x)
+   wulfswestr/Forest Shroud (offered 466x, picked 5x)
+   wulfswestr/Herb Poultice (offered 467x, picked 4x)
+   wulfswestr/Berserker's Howl (offered 507x, picked 1x)
+   wulfswestr/Predator's Pounce (offered 761x, picked 0x)
+   wulfswestr/Axe Throw (offered 777x, picked 0x)
+   wulfswestr/Wolfbite (offered 784x, picked 0x)
+   wulfswestr/Shield Wall Dance (offered 697x, picked 0x)
+
+NOT EVALUATED BY THE SIM — no conclusion either way
+(built on effects the sim AI does not model; needs human judgement)
+   arcania/Contingency Plan, arcania/Misdirection, arcania/Deep Cover, cataphract/Destrier's Fury, centurion/Press the Advantage, equites/Momentum Strike, equites/Breakneck Charge, equites/All-In Charge, equites/Warhorse Kick, sagittarius/Snare Trap, vestalis/Wrath of Vesta, vestalis/Litany of Courage
+
+==========================================================================
+5. ITEM IMPACT  (march-7 completion with the item forced onto the party)
+==========================================================================
+
+baseline march-7 completion: 19.7%  (132 marches)
+each item is then forced onto every unit that can hold it.
+
+STRONGEST ITEMS (win rate above baseline)
+  Pilum of the Lost         [epic]       41%   +21
+  Vulcan's Hammer           [epic]       41%   +21
+  Scout's Leather           [uncommon]   36%   +17
+  Windreader's Charm        [rare]       36%   +17
+  Varus's Last Shield       [epic]       36%   +17
+  Wyrm's Hoard Ring         [epic]       36%   +17
+  Battle Standard Cord      [rare]       32%   +12
+  Survivor's Charm          [rare]       32%   +12
+  Stoneskin Wrap            [uncommon]   32%   +12
+  Warlord's Blade           [rare]       27%   +8
+  Officer's Cloak           [uncommon]   27%   +8
+  Centurion's Vine Staff    [uncommon]   27%   +8
+
+WEAKEST ITEMS
+  Boar Tusk Pauldron        [rare]        0%   -20
+  Plague Doctor's Mask      [rare]        9%   -11
+  Viper's Fletching         [rare]        9%   -11
+  Thusnelda's Standard      [epic]        9%   -11
+  Packleader's Bow          [epic]        9%   -11
+  Wolfsmother Pelt          [epic]        9%   -11
+  Bitter Remedy             [uncommon]    9%   -11
+  Aesculapius's Saw         [epic]        9%   -11
+  Night Owl Pendant         [uncommon]    9%   -11
+  Centurion's Whistle       [uncommon]    9%   -11
+  Aquila Spearhead          [rare]        9%   -11
+  Berserker Mushroom        [uncommon]    9%   -11
+
+AVERAGE WIN RATE BY RARITY (should rise with rarity)
+  uncommon   █████····················· 17.8%  (33 items)
+  rare       █████····················· 19.4%  (37 items)
+  epic       █████····················· 20.0%  (35 items)
+
+==========================================================================
+6. MARCH LENGTH  (attrition across consecutive fights)
+==========================================================================
+
+Current map: depths 0-6 plus a rest and a boss, with 2 mid nodes
+converted to events — about 6 fights per march before the boss.
+
+MARCH 1
+  combats   complete%   wiped before boss%   died at fight (avg)
+        3        100%                  0%                   —
+        4        100%                  0%                   —
+        5        100%                  0%                   —
+        6        100%                  0%                   —
+        7        100%                  0%                   —
+
+MARCH 3
+  combats   complete%   wiped before boss%   died at fight (avg)
+        3         93%                  0%                 4.0
+        4         93%                  0%                 5.0
+        5         96%                  0%                 6.0
+        6         93%                  3%                 5.8
+        7         90%                  1%                 7.9
+
+MARCH 5
+  combats   complete%   wiped before boss%   died at fight (avg)
+        3         80%                  0%                 4.0
+        4         71%                  0%                 5.0
+        5         73%                  0%                 6.0
+        6         78%                  1%                 6.8
+        7         77%                  2%                 7.7
+
+MARCH 7
+  combats   complete%   wiped before boss%   died at fight (avg)
+        3         36%                 50%                 2.4
+        4         23%                 63%                 2.7
+        5         23%                 72%                 2.8
+        6         14%                 76%                 3.4
+        7         12%                 82%                 3.4
+
+
+done in 216.0s

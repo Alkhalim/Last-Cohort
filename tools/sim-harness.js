@@ -167,6 +167,37 @@ function scoreSkill(engine, api, unitIndex, skill) {
   if (blockAmt > 0) score += Math.min(blockAmt, Math.max(2, incoming)) * 0.9;
   if (fx.blockAll) score += Math.min(fx.blockAll * allies.length, Math.max(3, incoming)) * 0.9;
 
+  // Morale drives the damage/healing bands, so morale swings are real value.
+  // 30 skills carry a morale effect; ignoring them made whole kits invisible.
+  if (fx.morale) score += fx.morale * 0.9;
+  if (fx.moraleHealAll) score += 4;
+
+  // Damage multipliers on top of a base the AI already counted.
+  if (fx.bonusDmgScale && dmg > 0) score += dmg * (fx.bonusDmgScale - 1);
+  if (fx.halfBonusDmg && dmg > 0) score -= dmg * 0.25;
+  if (fx.bonusHealScale && healAmt > 0) score += healAmt * (fx.bonusHealScale - 1);
+  if (fx.blockScale && blockAmt > 0) score += blockAmt * (fx.blockScale - 1);
+
+  if (fx.pierceBlock) score += enemies.reduce((s, e) => s + Math.min(4, e.block || 0), 0);
+  if (fx.pierceRow) score += 4;
+  if (fx.splashAdjacentPct) score += (dmg || 4) * fx.splashAdjacentPct;
+  if (fx.freeAction) score += 8;          // an extra action is worth roughly a skill
+  if (fx.bonusDiceNext) score += fx.bonusDiceNext * 4;
+  if (fx.healSelf) score += Math.min(fx.healSelf, unit.maxHp - unit.hp);
+  if (fx.blockOthersOnly) score += Math.min(fx.blockOthersOnly * (allies.length - 1), Math.max(3, incoming)) * 0.9;
+  if (fx.cleanseAll) score += allies.filter(u => u.poison > 0).length * 3;
+  if (fx.damageShield) score += 5;
+  if (fx.intercept) score += 5;
+  if (fx.condemn) score += 5;
+  if (fx.cripple) score += 4;
+  if (fx.knockback) score += 2;
+  if (fx.smokeScreen) score += 3;
+  if (fx.counterStance) score += 3;
+  if (fx.buffSelf) score += 3;
+  if (fx.shieldBrace) score += 4;
+  if (fx.gladiusThrust) score += 4;
+  if (fx.scoutingManeuver) score += 2;
+
   // Utility, valued modestly so it is used but does not dominate.
   if (fx.stun) score += 6;
   if (fx.revive) score += 20;

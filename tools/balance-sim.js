@@ -137,10 +137,21 @@ function sample(seed, classIds, difficulty, encounter, collect, opts = {}) {
 // Single encounters saturate near 97% win for a properly scaled party, so they
 // cannot separate classes. Attrition across a march is where power actually
 // shows, because HP and cooldowns carry over.
-function runMarch(seed, classIds, difficulty, { combats = 6, collect = null } = {}) {
+function runMarch(seed, classIds, difficulty, { combats = 6, collect = null, forceItem = null } = {}) {
   const g = createGame(seed);
   const engine = new g.api.CombatEngine();
   buildParty(g, engine, classIds, difficulty, g.rng);
+
+  if (forceItem) {
+    const it = g.api.ITEM_DATA[forceItem];
+    if (it) {
+      engine.party.forEach(u => {
+        if (g.api.canEquipItem(u, it)) engine.equipItem(u.index, forceItem);
+        engine.computeEquipmentStats(u);
+        u.hp = u.maxHp;
+      });
+    }
+  }
 
   const normalPool = encountersFor(g, difficulty, 'normal');
   const bossPool = encountersFor(g, difficulty, 'boss');
@@ -445,17 +456,38 @@ function reportSkills() {
   console.log('A skill offered constantly but rarely picked is losing to its own alternatives.\n');
 
   const g = createGame(1);
+
+  // The AI can only value effects it models. A skill built entirely on effects
+  // it does not understand will never be picked — that says nothing about the
+  // skill. Separate those out rather than reporting them as weak.
+  const scoredKeys = new Set(
+    [...require('fs').readFileSync(require('path').join(__dirname, 'sim-harness.js'), 'utf8')
+      .matchAll(/fx\.([a-zA-Z]+)/g)].map(m => m[1])
+  );
+  const isEvaluable = (skill) => {
+    const keys = Object.keys(skill.effects || {});
+    return keys.some(k => scoredKeys.has(k));
+  };
+
   const deadWeight = [];
+  const notEvaluated = [];
   for (const classId of Object.keys(byClass).sort()) {
     const used = byClass[classId];
     const all = g.api.CLASS_DATA[classId].skills;
+    const byId = Object.fromEntries(all.map(s => [s.id, s]));
     console.log(classId.toUpperCase());
     used.sort((a, b) => (b.uses / Math.max(1, b.offers)) - (a.uses / Math.max(1, a.offers)));
     used.slice(0, 5).forEach(r => console.log(
       '   ' + r.name.padEnd(26) + bar(r.uses / Math.max(1, r.offers), 1, 16) +
       ' ' + pct(r.uses, r.offers).padStart(6) + `  (offered ${r.offers}x)`));
-    const tail = used.filter(r => r.offers >= 20 && r.uses / r.offers < 0.02);
-    tail.forEach(r => deadWeight.push(`${classId}/${r.name} (offered ${r.offers}x, picked ${r.uses}x)`));
+
+    used.filter(r => r.offers >= 100 && r.uses / r.offers < 0.02).forEach(r => {
+      const def = byId[r.skillId];
+      const line = `${classId}/${r.name} (offered ${r.offers}x, picked ${r.uses}x)`;
+      if (def && isEvaluable(def)) deadWeight.push(line);
+      else notEvaluated.push(`${classId}/${r.name}`);
+    });
+
     const seen = new Set(used.map(r => r.skillId));
     const neverOffered = all.filter(s => !seen.has(s.id));
     if (neverOffered.length) {
@@ -465,8 +497,14 @@ function reportSkills() {
   }
 
   if (deadWeight.length) {
-    console.log('OFFERED OFTEN, ALMOST NEVER WORTH PICKING');
+    console.log('LOSES TO ITS OWN ALTERNATIVES');
+    console.log('(the sim understands these effects and still almost never picks them)');
     deadWeight.forEach(d => console.log('   ' + d));
+  }
+  if (notEvaluated.length) {
+    console.log('\nNOT EVALUATED BY THE SIM — no conclusion either way');
+    console.log('(built on effects the sim AI does not model; needs human judgement)');
+    console.log('   ' + notEvaluated.join(', '));
   }
   return collect;
 }
@@ -475,53 +513,38 @@ function reportSkills() {
 // 5. Item impact
 // ============================================================
 function reportItems() {
-  heading('5. ITEM IMPACT  (win rate with the item forced onto the party)');
+  heading('5. ITEM IMPACT  (march-7 completion with the item forced onto the party)');
   const g0 = createGame(1);
   const items = Object.values(g0.api.ITEM_DATA).filter(i => !i.baseId);
   const rngSel = createGame(19).rng;
   let seed = 300000;
-  const diff = FAST ? 4 : 5;
-  const pool = encountersFor(g0, diff, 'normal');
-  const reps = FAST ? 6 : 20;
+  // March 7: single encounters saturate at 100% win, so item differences only
+  // show where the game is actually pushing back.
+  const diff = FAST ? 6 : 7;
+  const reps = FAST ? 6 : 22;
 
-  // Baseline: normal loadouts.
-  let baseWins = 0, baseFights = 0;
+  let baseWins = 0, baseRuns = 0;
   for (let i = 0; i < reps * 6; i++) {
-    const team = randomParty(rngSel);
-    const enc = pool[Math.floor(rngSel() * pool.length)];
-    const r = sample(seed++, team, diff, enc);
-    if (r.result === 'timeout') continue;
-    baseFights++; if (r.result === 'victory') baseWins++;
+    const m = runMarch(seed++, randomParty(rngSel), diff);
+    if (!m) continue;
+    baseRuns++; if (m.completed) baseWins++;
   }
-  const baseline = baseFights ? baseWins / baseFights : 0;
-  console.log(`\nbaseline win rate at march ${diff}: ${(baseline * 100).toFixed(1)}%  (${baseFights} fights)\n`);
+  const baseline = baseRuns ? baseWins / baseRuns : 0;
+  console.log(`\nbaseline march-${diff} completion: ${(baseline * 100).toFixed(1)}%  (${baseRuns} marches)`);
+  console.log('each item is then forced onto every unit that can hold it.\n');
 
   const results = [];
   for (const item of items) {
     if (item.minDifficulty && item.minDifficulty > diff) continue;
     if (item.maxDifficulty && item.maxDifficulty < diff) continue;
-    let wins = 0, fights = 0;
+    let wins = 0, runs = 0;
     for (let i = 0; i < reps; i++) {
-      const team = randomParty(rngSel);
-      const enc = pool[Math.floor(rngSel() * pool.length)];
-      const gg = createGame(seed);
-      const engine = new gg.api.CombatEngine();
-      buildParty(gg, engine, team, diff, gg.rng);
-      // Force the item onto every unit that can hold it.
-      engine.party.forEach(u => {
-        const it = gg.api.ITEM_DATA[item.id];
-        if (gg.api.canEquipItem(u, it)) engine.equipItem(u.index, item.id);
-        engine.computeEquipmentStats(u);
-        u.hp = u.maxHp;
-      });
-      const enc2 = enc;
-      const r = runEncounter(gg, engine, enc2, { maxTurns: 40 });
-      seed++;
-      if (r.result === 'timeout') continue;
-      fights++; if (r.result === 'victory') wins++;
+      const m = runMarch(seed++, randomParty(rngSel), diff, { forceItem: item.id });
+      if (!m) continue;
+      runs++; if (m.completed) wins++;
     }
-    if (fights < Math.max(3, reps / 2)) continue;
-    results.push({ id: item.id, name: item.name, rarity: item.rarity, win: wins / fights, fights });
+    if (runs < Math.max(3, reps / 2)) continue;
+    results.push({ id: item.id, name: item.name, rarity: item.rarity, win: wins / runs, fights: runs });
   }
   results.sort((a, b) => b.win - a.win);
 
