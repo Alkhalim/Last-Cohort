@@ -123,6 +123,22 @@ teams. It is a good *complement* and a poor *carry*.
 
 ## 6. Rarity does not deliver power
 
+> **CORRECTION (added after re-testing).** The *individual item rankings* below were
+> under-powered and should be ignored. Each item was measured over 22 marches against a
+> ~20% base rate, where the standard error is ~8.5 points — so ±17-point swings are
+> expected noise across ~80 items. Re-running the extremes at n=100:
+>
+> | item | n=22 (below) | n=100 |
+> |---|---|---|
+> | baseline | 19.7% | 20% |
+> | Boar Tusk Pauldron | 0% (−20) | **21%** |
+> | Scout's Leather | 36% (+17) | **14%** |
+> | Pilum of the Lost | 41% (+21) | **21%** |
+>
+> No individual item is confirmed as an outlier. The **rarity aggregate is still
+> informative** — it averages 33–37 items over ~750 marches per tier — so "rarity
+> delivers almost nothing" stands. The named items do not.
+
 March-7 completion with each item forced onto the party (baseline 19.7%):
 
 ```
@@ -173,6 +189,30 @@ The mechanic is strong; the classes built on it are not. That gap is where the d
 space is: poison needs either faster application or a payoff for stacking, because
 right now the classes that enable it die before it pays off (Medicus down rate 53%,
 Arcania 49%).
+
+### 8a. Poison IS strong against bosses — the march average hides it
+
+Prompted by a playtest recollection that poison teams felt very strong against bosses,
+measured directly with the team held constant (Medicus + Sagittarius + Legionary,
+march 6, 250 fights per cell):
+
+| target | poison applied | damage realised | conversion | fight length |
+|---|---|---|---|---|
+| **Boss** | 67.9 | **91.3** | **1.35×** | 6.9 turns |
+| Normal encounter | 45.3 | 53.1 | 1.17× | 4.6 turns |
+
+Poison deals **72% more damage per boss fight**, at a better conversion rate, because
+longer fights let stacks tick out instead of being wasted on enemies that die early.
+The playtest recollection is correct; the class table in section 4 averages over a
+march that is 6 normal fights to 1 boss, which drowns the effect.
+
+**But the compounding is far from realised.** A single stack of N poison yields
+`N(N+1)/2` damage — a conversion of `(N+1)/2`, so a stack of 6 should convert at 3.5×.
+Measured conversion even against bosses is 1.35×. Poison is being applied in small
+increments (3–4 at a time) and fights end before large stacks pay off.
+
+That is the actual design gap: the mechanic's payoff curve rewards big stacks, but
+nothing in the kits enables building one.
 
 ---
 
