@@ -854,8 +854,33 @@ const ITEM_SPECIAL_SCALING = {
   wolf_pelt:           { base: 3, formula: lv => 3 + (lv - 1) },
   thorn_mantle:        { base: 2, formula: lv => 2 * lv },
   corpsebloom:         { base: 2, formula: lv => 2 * lv },
+
+  // --- Previously missing ------------------------------------------------
+  // These all scale in combat.js but had no text formula, so their cards kept
+  // showing level-1 numbers at every level. hound_collar is the item reported
+  // as "applies more poison than it says".
+  centurions_gorget:   { base: 3, formula: lv => 3 + (lv - 1) },
+  champions_helm:      { base: 1, formula: lv => lv },
+  chiefs_spear:        { base: 2, formula: lv => 2 + (lv - 1) },
+  hound_collar:        { base: 2, formula: lv => 2 + (lv - 1) },
+  legionary_lorica:    { base: 2, formula: lv => 2 * lv },
+  legionary_rations:   { base: 1, formula: lv => 1 * lv },
+  lorica_of_the_damned:{ base: 23, formula: lv => Math.round((0.2 + lv * 0.03) * 100) },
+  oak_splinter:        { base: 2, formula: lv => 2 + (lv - 1) },
+  vanguards_banner:    { base: 2, formula: lv => 2 + (lv - 1) },
+  wicker_ash:          { base: 1, formula: lv => lv },
+  wolf_blood_tonic:    { base: 1, formula: lv => 1 * lv },
+  // Two independent numbers in one sentence.
+  sword_of_germanicus: [
+    { base: 3, formula: lv => 3 + (lv - 1) },
+    { base: 2, formula: lv => 2 + Math.floor(lv / 2) },
+  ],
 };
 
+// Rewrite an item's special text for its current level. Accepts either a single
+// {base, formula} or an array of them, patched left to right — several specials
+// state two independent numbers, and patching only the first left the other
+// stale.
 function formatItemSpecial(item) {
   if (!item.special) return '';
   const lv = item.level || 1;
@@ -863,9 +888,31 @@ function formatItemSpecial(item) {
   const baseId = item.baseId || item.id;
   const scaling = ITEM_SPECIAL_SCALING[baseId];
   if (!scaling) return item.special;
-  const scaled = scaling.formula(lv);
-  // Replace the first occurrence of the base number with the scaled value
-  return item.special.replace(new RegExp('\\b' + scaling.base + '\\b'), String(scaled));
+
+  const rules = Array.isArray(scaling) ? scaling : [scaling];
+  let text = item.special;
+  let searchFrom = 0;
+  for (const rule of rules) {
+    const re = new RegExp('\\b' + rule.base + '\\b');
+    const rest = text.slice(searchFrom);
+    const idx = rest.search(re);
+    if (idx === -1) continue;
+    const scaled = String(rule.formula(lv));
+    const absolute = searchFrom + idx;
+    text = text.slice(0, absolute) + rest.replace(re, scaled);
+    // Continue past what we just wrote so the next rule can't re-match it.
+    searchFrom = absolute + scaled.length;
+  }
+  return text;
+}
+
+// Poison ticks for its full value and then decays by 1, so N poison deals
+// N + (N-1) + ... + 1 damage in total. Nothing in the UI said so, which is very
+// likely why "+2 poison" was reported as dealing more than it claims: it deals
+// 3. Used wherever a poison figure is shown.
+function poisonTotalDamage(n) {
+  const v = Math.max(0, Math.floor(n || 0));
+  return (v * (v + 1)) / 2;
 }
 
 // --- Enemy action riders -------------------------------------------------

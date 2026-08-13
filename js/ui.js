@@ -363,7 +363,7 @@ class GameUI {
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
-        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">&#x1F6E1;${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon">&#x2620;${enemy.poison}</span>` : ''}</div>
+        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">&#x1F6E1;${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon" title="Poison ${enemy.poison} — ${poisonTotalDamage(enemy.poison)} damage over ${enemy.poison} turns">&#x2620;${enemy.poison}</span>` : ''}</div>
         ${this.renderIntentBadge(enemy)}
       `;
 
@@ -395,6 +395,21 @@ class GameUI {
 
     const backExists = this.engine.enemies.some(e => e.row === 'back');
     document.getElementById('enemy-row-back').classList.toggle('hidden', !backExists);
+  }
+
+  // Attack range was never explained anywhere — "Ranged." was hand-written into
+  // some descriptions and the rule that melee cannot reach the back row while
+  // the front row lives was stated nowhere. Derive the badge from ignoreRow so
+  // every offensive skill carries it.
+  getRangeBadge(skill) {
+    const targetsEnemies = [TARGET.SINGLE_ENEMY, TARGET.DUAL_ENEMY, TARGET.RANDOM_ENEMY,
+      TARGET.ALL_ENEMIES, TARGET.FRONT_ROW].includes(skill.target);
+    if (!targetsEnemies) return '';
+    // Row-agnostic targets can't be blocked by the front line either way.
+    if (skill.target === TARGET.ALL_ENEMIES || skill.target === TARGET.FRONT_ROW) return '';
+    return skill.ignoreRow
+      ? '<span class="skill-range ranged" title="Ranged — can hit the back row even while the front row stands.">RANGED</span>'
+      : '<span class="skill-range melee" title="Melee — can only reach the back row once the front row has fallen.">MELEE</span>';
   }
 
   // A compact, always-visible summary of what this enemy will do next. The
@@ -490,7 +505,7 @@ class GameUI {
       })()}
       ${(() => {
         const effects = [];
-        if (enemy.poison > 0) effects.push(`<span class="status-poison">Poison ${enemy.poison}</span>`);
+        if (enemy.poison > 0) effects.push(`<span class="status-poison" title="Ticks for its value each turn, then decays by 1">Poison ${enemy.poison} (${poisonTotalDamage(enemy.poison)} dmg over ${enemy.poison} turns)</span>`);
         if (enemy.block > 0) effects.push(`<span class="status-block">Block ${enemy.block}</span>`);
         if (enemy._marked && enemy._marked > 0) effects.push(`<span class="status-marked">Marked (${enemy._marked}t)</span>`);
         if (enemy._condemned && enemy._condemned > 0) effects.push(`<span class="status-condemned">Condemned (${enemy._condemned}t)</span>`);
@@ -936,7 +951,7 @@ class GameUI {
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
           ${threatLabel}
           ${unit.block > 0 ? `<span class="block-icon" title="Block">&#x1F6E1;${unit.block}</span>` : ''}
-          ${unit.poison > 0 ? `<span class="poison-icon" title="Poison">&#x2620;${unit.poison}</span>` : ''}
+          ${unit.poison > 0 ? `<span class="poison-icon" title="Poison ${unit.poison} — ticks for its value each turn then decays by 1, so ${poisonTotalDamage(unit.poison)} damage over ${unit.poison} turns">&#x2620;${unit.poison}</span>` : ''}
           ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg}\u2694(${minAtk})</span>`; })() : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
           ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
@@ -1314,9 +1329,11 @@ class GameUI {
         desc = desc.replace(/Poison equal to unique die values in pool/g,
           `<span class="stat-poison">${poisonAmt}</span> <span class="stat-breakdown">(${uniqueValues} unique${equipPoison > 0 ? `+${equipPoison}` : ''}${allUnique ? ' ×2' : ''})</span> Poison`);
         if (allUnique) {
-          desc = desc.replace(/All unique: double poison and deal (\d+) damage/g, (m, base) => {
-            const dmg = parseInt(base) + effectiveBonusDmg;
-            return `All unique! <span class="stat-dmg">+${dmg}</span> damage`;
+          // Tolerates both "All unique:" and "All dice unique:" so a wording
+          // change to the description cannot silently disable this preview.
+          desc = desc.replace(/All (?:dice )?unique: double poison and deal (\d+) damage/g, (m, base) => {
+            const dmg = parseInt(base, 10) + effectiveBonusDmg;
+            return `All dice unique! <span class="stat-dmg">+${dmg}</span> damage`;
           });
         }
       }
@@ -1516,12 +1533,42 @@ class GameUI {
         desc = desc.replace(/Block equal to the lower die/g, `<span class="stat-block">1-5</span>${equipBlock > 0 ? ` <span class="stat-breakdown">(die+${equipBlock})</span>` : ''} Block`);
       }
 
+      // Split-scaling poison (Plague Flask): the main target and the splash
+      // scale equipment poison by different factors — bonusPoisonScale and
+      // splashPoisonScale — but the generic rule below adds flat equipPoison to
+      // every number in the description. That under-reported the main target
+      // and OVER-reported the splash, which is why the splash looked like it
+      // applied less poison than advertised. Handle both explicitly first.
+      const fx = skill.effects || {};
+      if (fx.poisonSplash !== undefined) {
+        const mainScale = fx.bonusPoisonScale || 1;
+        const splashScale = fx.splashPoisonScale !== undefined ? fx.splashPoisonScale : 0.5;
+        const vfMain = this.engine.unitHasItem(unit, 'vipers_fletching') ? 2 : 0;
+        const vfSplash = this.engine.unitHasItem(unit, 'vipers_fletching') ? 1 : 0;
+        const mainBonus = Math.floor(equipPoison * mainScale) + vfMain;
+        const splashBonus = Math.floor(equipPoison * splashScale) + vfSplash;
+        const chip = (total, base, bonus) => bonus > 0
+          ? `<span class="stat-poison">${total}</span> <span class="stat-breakdown">(${base}+${bonus})</span> Poison`
+          : `<span class="stat-poison">${total}</span> Poison`;
+        desc = desc.replace(/(\d+) Poison to adjacent enemies/g, (m, base) => {
+          const b = parseInt(base, 10);
+          return chip(b + splashBonus, b, splashBonus) + ' to adjacent enemies';
+        });
+        desc = desc.replace(/(\d+) Poison to target/g, (m, base) => {
+          const b = parseInt(base, 10);
+          return chip(b + mainBonus, b, mainBonus) + ' to target';
+        });
+      }
+
       // Replace poison values
       desc = desc.replace(/(\d+) Poison/g, (match, base) => {
-        const b = parseInt(base);
-        if (equipPoison > 0) {
-          const total = b + equipPoison;
-          return `<span class="stat-poison">${total}</span> <span class="stat-breakdown">(${b}+${equipPoison})</span> Poison`;
+        const b = parseInt(base, 10);
+        // Respect a skill-specific scale rather than assuming 1:1.
+        const scale = (skill.effects && skill.effects.bonusPoisonScale) || 1;
+        const bonus = Math.floor(equipPoison * scale);
+        if (bonus > 0) {
+          const total = b + bonus;
+          return `<span class="stat-poison">${total}</span> <span class="stat-breakdown">(${b}+${bonus})</span> Poison`;
         }
         return `<span class="stat-poison">${b}</span> Poison`;
       });
@@ -1545,7 +1592,7 @@ class GameUI {
       }
       const dicePips = this.getDicePips(skill.cost);
       el.innerHTML = `
-        <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${dicePips} ${cdText}</div>
+        <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${dicePips}${this.getRangeBadge(skill)} ${cdText}</div>
         <div class="skill-desc">${desc}</div>
         ${cooldownOverlay}
       `;
@@ -3473,7 +3520,13 @@ class GameUI {
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
       const tag = getPrimaryTag(unit.classId);
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      // Previously only the name and the delta were shown, with no cost, target
+      // or description — so the choice had to be made blind.
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong>` +
+        `<span class="respite-skill-cost">[${skill.cost.label}]</span>` +
+        `<br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>` +
+        `<div class="respite-skill-desc">${baseDef.description || ''}</div>` +
+        (skill.cooldown ? `<div class="respite-skill-meta">Cooldown: ${skill.cooldown} turn${skill.cooldown > 1 ? 's' : ''}</div>` : '');
 
       btn.addEventListener('click', () => {
         // Apply the randomly chosen upgrade
@@ -5291,7 +5344,13 @@ class GameUI {
       const tag = getPrimaryTag(unit.classId);
       const btn = document.createElement('button');
       btn.className = 'btn-event-choice';
-      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
+      // Previously only the name and the delta were shown, with no cost, target
+      // or description — so the choice had to be made blind.
+      btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong>` +
+        `<span class="respite-skill-cost">[${skill.cost.label}]</span>` +
+        `<br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>` +
+        `<div class="respite-skill-desc">${baseDef.description || ''}</div>` +
+        (skill.cooldown ? `<div class="respite-skill-meta">Cooldown: ${skill.cooldown} turn${skill.cooldown > 1 ? 's' : ''}</div>` : '');
       btn.addEventListener('click', () => {
         if (eff.damage) baseDef.effects.damage += amt;
         else if (eff.heal) baseDef.effects.heal += amt;

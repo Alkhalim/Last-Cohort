@@ -619,6 +619,82 @@ class Game {
     }
   }
 
+  // A persistent rules reference. The contextual hints fire once for 8 seconds
+  // and are then never shown again, so the systems players found most confusing
+  // — dice costs, attack range, poison maths — had no lasting explanation.
+  showHelpScreen() {
+    const sections = [
+      {
+        title: 'Dice',
+        body: `Every turn your cohort rolls a shared pool of dice. <strong>All soldiers draw from the same pool</strong> — spending a die on one soldier takes it away from another.
+        <br><br>Each skill lists what it costs. The pips beside a skill show how many dice it needs, and the label shows which values qualify:
+        <ul>
+          <li><strong>Any</strong> — any single die.</li>
+          <li><strong>5+</strong> — one die of at least that value.</li>
+          <li><strong>Exactly 4</strong> — one die of that precise value.</li>
+          <li><strong>2-4</strong> — one die inside that range.</li>
+          <li><strong>Sum 6+</strong> — two dice adding up to at least that.</li>
+          <li><strong>Pair</strong> — two dice of equal value.</li>
+          <li><strong>Run</strong> — two dice one apart, e.g. 3 and 4.</li>
+          <li><strong>Odd + Even</strong> — one of each.</li>
+        </ul>
+        Select a skill first, then click the dice you want to spend. Dice this skill cannot use are greyed out.`,
+      },
+      {
+        title: 'Attack Range',
+        body: `Enemies stand in a <strong>front row</strong> and a <strong>back row</strong>.
+        <br><br><span class="help-badge ranged">RANGED</span> skills can strike either row at any time.
+        <br><span class="help-badge melee">MELEE</span> skills can only reach the back row once the front row has fallen.
+        <br><br>Every offensive skill shows its range on the skill card.`,
+      },
+      {
+        title: 'Poison',
+        body: `Poison ticks for its <strong>full current value</strong> at the end of each turn, then decays by 1.
+        <br><br>That means poison deals far more than its number suggests:
+        <ul>
+          <li><strong>2 Poison</strong> → 2 then 1 = <strong>3 damage</strong></li>
+          <li><strong>4 Poison</strong> → 4+3+2+1 = <strong>10 damage</strong></li>
+          <li><strong>6 Poison</strong> → <strong>21 damage</strong></li>
+        </ul>
+        Stacking poison before it decays is the strongest way to use it.`,
+      },
+      {
+        title: 'Block',
+        body: `Block absorbs incoming damage before it reaches HP, and decays between turns.
+        <br><br>The striped section on a soldier's HP bar shows the damage expected next turn <em>after</em> their current Block — so adding Block visibly shrinks it.`,
+      },
+      {
+        title: 'Morale',
+        body: `Morale runs from 0 to 100 and shifts how your cohort fights.
+        <ul>
+          <li><strong>85+ Inspired</strong> — +2 damage and healing, heals your most wounded each turn.</li>
+          <li><strong>70+ Confident</strong> — +1 damage and healing, small heal each turn.</li>
+          <li><strong>55+ Steady</strong> — no modifiers.</li>
+          <li><strong>40+ Shaken</strong> — no major modifiers.</li>
+          <li><strong>30+ Distressed</strong> — -1 damage and healing, chip damage each turn.</li>
+          <li><strong>15+ Wavering</strong> — -1 damage and healing, chip damage each turn.</li>
+          <li><strong>Below 15 Broken</strong> — -2 damage and healing, heavier chip damage.</li>
+        </ul>
+        Killing enemies restores morale. Defeating a boss restores it to at least 75.`,
+      },
+      {
+        title: 'Next Attack',
+        body: `During your turn each enemy shows what it intends to do next: its damage, whether it hits everyone, and whether it stuns.
+        <br><br>Hover or hold an enemy for the full breakdown, including which soldier it is aiming at. A <strong>×2</strong> means it will strike twice.`,
+      },
+      {
+        title: 'Downed Soldiers',
+        body: `At 0 HP a soldier is downed for the rest of the encounter, and revives afterwards at half HP. If all three go down, the run ends.`,
+      },
+    ];
+
+    const content = document.getElementById('help-content');
+    content.innerHTML = sections.map(s =>
+      `<div class="help-section"><h3 class="help-section-title">${s.title}</h3><div class="help-section-body">${s.body}</div></div>`
+    ).join('');
+    this.ui.showScreen('help-screen');
+  }
+
   showOptionsScreen() {
     // Track which screen we came from so Back returns there
     const active = document.querySelector('.screen.active');
@@ -855,6 +931,12 @@ class Game {
     });
     document.getElementById('btn-options-back').addEventListener('click', () => {
       this.ui.showScreen(this.previousScreen || 'title-screen');
+    });
+    document.getElementById('btn-help').addEventListener('click', () => {
+      this.showHelpScreen();
+    });
+    document.getElementById('btn-help-back').addEventListener('click', () => {
+      this.ui.showScreen('options-screen');
     });
 
     const musicSlider = document.getElementById('opt-music-vol');

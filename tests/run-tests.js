@@ -945,5 +945,192 @@ section('2.4 / 2.10 — readouts and wording');
 }
 
 // ============================================================
+section('2.6 — poison maths is stated, not implied');
+// ============================================================
+{
+  const { poisonTotalDamage } = (() => {
+    const ctx = {
+      console, window: {}, document: {},
+      localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    };
+    vm.createContext(ctx);
+    for (const f of ['data/classes.js', 'data/enemies.js', 'data/items.js',
+                     'data/events.js', 'data/gamedata.js', 'js/data.js']) {
+      vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+    }
+    vm.runInContext('globalThis.__p = { poisonTotalDamage };', ctx);
+    return ctx.__p;
+  })();
+
+  check('poison total matches the tick-then-decay rule', () => {
+    // N + (N-1) + ... + 1
+    assertEqual(poisonTotalDamage(1), 1, '1 poison');
+    assertEqual(poisonTotalDamage(2), 3, '2 poison should deal 3');
+    assertEqual(poisonTotalDamage(4), 10, '4 poison should deal 10');
+    assertEqual(poisonTotalDamage(6), 21, '6 poison should deal 21');
+    assertEqual(poisonTotalDamage(0), 0, '0 poison');
+  });
+
+  check('poison totals are surfaced in the UI', () => {
+    const ui = fs.readFileSync(path.join(ROOT, 'js/ui.js'), 'utf8');
+    const uses = (ui.match(/poisonTotalDamage\(/g) || []).length;
+    assert(uses >= 3, `poison totals shown in only ${uses} place(s)`);
+  });
+
+  check('the help screen explains poison, dice and range', () => {
+    const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
+    assert(/showHelpScreen\(\)/.test(main), 'no help screen');
+    for (const topic of ['Dice', 'Attack Range', 'Poison', 'Block', 'Morale', 'Next Attack']) {
+      assert(new RegExp(`title: '${topic}'`).test(main), `help screen missing "${topic}"`);
+    }
+  });
+}
+
+// ============================================================
+section('2.5 — attack range is derived, not hand-written');
+// ============================================================
+{
+  const ui = fs.readFileSync(path.join(ROOT, 'js/ui.js'), 'utf8');
+
+  check('a range badge is derived from ignoreRow', () => {
+    assert(/getRangeBadge\(skill\)/.test(ui), 'range badge is never rendered');
+    assert(/skill\.ignoreRow[\s\S]{0,120}RANGED/.test(ui),
+      'range badge is not derived from ignoreRow');
+  });
+}
+
+// ============================================================
+section('2.7 — skill previews stay in step with description prose');
+// ============================================================
+{
+  const ui = fs.readFileSync(path.join(ROOT, 'js/ui.js'), 'utf8');
+  const classes = fs.readFileSync(path.join(ROOT, 'data/classes.js'), 'utf8');
+
+  // Every description string in the game.
+  const descs = [];
+  const descRe = /"description":\s*"((?:[^"\\]|\\.)*)"/g;
+  let m;
+  while ((m = descRe.exec(classes)) !== null) descs.push(m[1].replace(/\\"/g, '"'));
+
+  check('the Calculated Dosage preview still matches its description', () => {
+    // Renaming "All unique:" to "All dice unique:" silently disabled this once.
+    const skill = descs.find(d => /double poison and deal/.test(d));
+    assert(skill, 'Calculated Dosage description not found');
+    const rx = ui.match(/desc\.replace\(\/(All \(\?:dice \)\?unique[^/]*)\//);
+    assert(rx, 'the all-unique preview regex is gone');
+    assert(new RegExp(rx[1]).test(skill),
+      `preview regex no longer matches the description: "${skill}"`);
+  });
+
+  check('split poison scaling is previewed with the right factors', () => {
+    // Plague Flask scales the main target by bonusPoisonScale and the splash by
+    // splashPoisonScale; a flat equipPoison over-reported the splash, which is
+    // why it looked like it applied less poison than advertised.
+    assert(/Poison to adjacent enemies/.test(ui),
+      'splash poison is not previewed separately');
+    assert(/splashPoisonScale/.test(ui),
+      'splash preview ignores splashPoisonScale');
+    assert(/bonusPoisonScale/.test(ui),
+      'main-target preview ignores bonusPoisonScale');
+  });
+
+  check('the generic poison rewrite respects a skill-specific scale', () => {
+    assert(/const scale = \(skill\.effects && skill\.effects\.bonusPoisonScale\) \|\| 1/.test(ui),
+      'generic poison preview still assumes 1:1 equipment scaling');
+  });
+}
+
+// ============================================================
+section('2.8 — item special text matches item behaviour');
+// ============================================================
+{
+  const ctx = {
+    console, window: {}, document: {},
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  };
+  vm.createContext(ctx);
+  for (const f of ['data/classes.js', 'data/enemies.js', 'data/items.js',
+                   'data/events.js', 'data/gamedata.js', 'js/data.js']) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  }
+  vm.runInContext(`
+    loadGameData();
+    globalThis.__i = { ITEM_DATA, ITEM_SPECIAL_SCALING, formatItemSpecial, createLeveledItem };
+  `, ctx);
+  const { ITEM_DATA, ITEM_SPECIAL_SCALING, formatItemSpecial } = ctx.__i;
+
+  const combatSrc = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8') +
+                    fs.readFileSync(path.join(ROOT, 'js/ui.js'), 'utf8');
+  const levelScaledInCode = new Set(
+    [...combatSrc.matchAll(/get(?:Party)?ItemLevel\([^)]*?'([a-z_]+)'\)/g)].map(x => x[1])
+  );
+
+  check('every item that scales in code also scales its text', () => {
+    const missing = [...levelScaledInCode]
+      .filter(id => ITEM_DATA[id] && ITEM_DATA[id].special)
+      .filter(id => !ITEM_SPECIAL_SCALING[id]);
+    assert(missing.length === 0,
+      `these scale in combat but their card never updates: ${missing.join(', ')}`);
+  });
+
+  check('each scaling rule\'s base number appears in the item text', () => {
+    const bad = [];
+    for (const [id, rule] of Object.entries(ITEM_SPECIAL_SCALING)) {
+      const item = ITEM_DATA[id];
+      if (!item || !item.special) { bad.push(`${id} (no special text)`); continue; }
+      const rules = Array.isArray(rule) ? rule : [rule];
+      for (const r of rules) {
+        if (!new RegExp('\\b' + r.base + '\\b').test(item.special)) {
+          bad.push(`${id} (base ${r.base} not in "${item.special}")`);
+        }
+      }
+    }
+    assert(bad.length === 0, `scaling rules that cannot fire: ${bad.join('; ')}`);
+  });
+
+  check('a rule at level 1 reproduces the printed base value', () => {
+    const bad = [];
+    for (const [id, rule] of Object.entries(ITEM_SPECIAL_SCALING)) {
+      const rules = Array.isArray(rule) ? rule : [rule];
+      for (const r of rules) {
+        if (r.formula(1) !== r.base) {
+          bad.push(`${id}: text says ${r.base} but level 1 computes ${r.formula(1)}`);
+        }
+      }
+    }
+    assert(bad.length === 0, bad.join('; '));
+  });
+
+  check('leveled text actually changes', () => {
+    const item = { ...ITEM_DATA['hound_collar'], level: 3, baseId: 'hound_collar' };
+    const text = formatItemSpecial(item);
+    assert(text !== ITEM_DATA['hound_collar'].special,
+      'Lv3 Hound Collar still prints its level-1 text');
+    assert(/4 poison/.test(text), `expected 4 poison at Lv3, got: "${text}"`);
+  });
+
+  check('multi-value specials patch every number', () => {
+    const item = { ...ITEM_DATA['sword_of_germanicus'], level: 3, baseId: 'sword_of_germanicus' };
+    const text = formatItemSpecial(item);
+    // 3 + (3-1) = 5 morale, 2 + floor(3/2) = 3 HP
+    assert(/5 morale/.test(text), `morale not scaled: "${text}"`);
+    assert(/3 HP/.test(text), `heal not scaled: "${text}"`);
+  });
+}
+
+// ============================================================
+section('2.9 — Brief Respite shows full skill info');
+// ============================================================
+{
+  const ui = fs.readFileSync(path.join(ROOT, 'js/ui.js'), 'utf8');
+
+  check('upgrade cards show cost and description', () => {
+    const cards = (ui.match(/respite-skill-desc/g) || []).length;
+    assert(cards >= 2, 'respite upgrade cards still show only the delta');
+    assert(/respite-skill-cost/.test(ui), 'respite upgrade cards omit the dice cost');
+  });
+}
+
+// ============================================================
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed > 0 ? 1 : 0);

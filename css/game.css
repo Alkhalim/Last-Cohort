@@ -571,6 +571,88 @@ html, body {
 .status-debuff { background: rgba(180, 60, 60, 0.15); color: #cc6666; }
 .status-buff { background: rgba(60, 140, 60, 0.15); color: var(--green-bright); }
 
+/* Brief Respite skill upgrade cards */
+.respite-skill-cost {
+  font-size: 0.62rem;
+  color: var(--gold);
+  margin-left: 5px;
+}
+
+.respite-skill-desc {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.respite-skill-meta {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+/* Help / rules reference */
+.help-section {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.help-section-title {
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  margin: 0 0 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 3px;
+}
+
+.help-section-body {
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.help-section-body strong { color: var(--text-bright); }
+
+.help-section-body ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.help-section-body li { margin-bottom: 3px; }
+
+.help-badge {
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.help-badge.ranged { color: var(--blue-bright); border: 1px solid var(--blue-bright); }
+.help-badge.melee { color: var(--text-dim); border: 1px solid var(--border); }
+
+/* Attack range, derived from ignoreRow rather than hand-written prose. */
+.skill-range {
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  padding: 1px 3px;
+  border-radius: 2px;
+  margin-left: 4px;
+  vertical-align: middle;
+  cursor: help;
+}
+
+.skill-range.ranged {
+  color: var(--blue-bright);
+  border: 1px solid var(--blue-bright);
+}
+
+.skill-range.melee {
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
 /* Incoming-damage forecast on a party HP bar. Sits above .hp-fill and spans
    only the damage that will get past current Block. */
 .hp-threat {
