@@ -47,7 +47,11 @@ class GameUI {
       } else {
         effects = 'Broken: -2 damage, -2 healing. 2 damage to a random ally/turn.';
       }
-      tooltip.textContent = effects;
+      // The tooltip previously showed only the band's effects, never the word
+      // "Morale" nor the value — so hovering the bar did not identify it.
+      tooltip.innerHTML =
+        `<div class="morale-tooltip-title">Morale: ${this.engine.morale}/100 — ${band.label}</div>` +
+        `<div class="morale-tooltip-effects">${effects}</div>`;
       tooltip.classList.remove('hidden');
     };
     const hide = () => { tooltip.classList.add('hidden'); };
@@ -360,6 +364,7 @@ class GameUI {
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
         <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">&#x1F6E1;${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon">&#x2620;${enemy.poison}</span>` : ''}</div>
+        ${this.renderIntentBadge(enemy)}
       `;
 
       if (drainPct > hpPct) {
@@ -392,6 +397,41 @@ class GameUI {
     document.getElementById('enemy-row-back').classList.toggle('hidden', !backExists);
   }
 
+  // A compact, always-visible summary of what this enemy will do next. The
+  // intent used to live only inside the hover tooltip and carried no numbers,
+  // so players had no way to plan around incoming damage.
+  renderIntentBadge(enemy) {
+    if (enemy.dead || enemy.isStructure) return '';
+    if (this.engine.phase !== PHASE.PLAYER_TURN) return '';
+    const intent = enemy._intent;
+    if (!intent) return '';
+    if (intent.type === 'stunned') {
+      return '<div class="enemy-intent-badge stunned">STUNNED</div>';
+    }
+
+    const action = intent.action || {};
+    const target = this.engine.party[intent.targetIndex];
+    const dmg = this.engine.predictEnemyDamage(enemy, action, target);
+    const hits = intent.hits || 1;
+    const parts = [];
+
+    if (dmg > 0) {
+      parts.push(`<span class="intent-dmg">⚔ ${dmg}${hits > 1 ? `×${hits}` : ''}</span>`);
+    }
+    if (action.poisonTarget) parts.push(`<span class="intent-poison">☠ ${action.poisonTarget}</span>`);
+    if (action.boarCharge) parts.push('<span class="intent-stun">STUN</span>');
+    if (action.aoe) parts.push('<span class="intent-aoe">AOE</span>');
+
+    if (parts.length === 0) {
+      // Non-damaging actions still deserve a heads-up.
+      if (action.spawn) parts.push('<span class="intent-other">SUMMON</span>');
+      else if (action.blockSelf || action.blockAllEnemies || action.blockFrontRow) parts.push('<span class="intent-other">BLOCK</span>');
+      else if (action.morale) parts.push(`<span class="intent-other">${action.morale} MORALE</span>`);
+      else return '';
+    }
+    return `<div class="enemy-intent-badge">${parts.join(' ')}</div>`;
+  }
+
   showEnemyTooltip(enemy, el) {
     this.hideEnemyTooltip();
     const tooltip = document.createElement('div');
@@ -400,16 +440,7 @@ class GameUI {
 
     const actions = enemy.actions.map(a => {
       let desc = `<strong>${a.name}</strong>`;
-      const details = [];
-      if (a.damage > 0) details.push(`<span class="stat-dmg">${a.damage} dmg</span>`);
-      if (a.poisonTarget) details.push(`<span class="stat-poison">${a.poisonTarget} poison</span>`);
-      if (a.morale) details.push(`<span class="stat-morale-text">${a.morale} morale</span>`);
-      if (a.blockAllEnemies) details.push(`<span class="stat-block">+${a.blockAllEnemies} block all</span>`);
-      if (a.blockFrontRow) details.push(`<span class="stat-block">+${a.blockFrontRow} block front</span>`);
-      if (a.blockSelf) details.push(`<span class="stat-block">+${a.blockSelf} block self</span>`);
-      if (a.spawn) details.push('<span style="color:var(--gold)">spawns unit</span>');
-      if (a.aoe) details.push('<span style="color:var(--red-bright)">AOE</span>');
-      if (a.ignoreRow) details.push('<span style="color:var(--text-dim)">any row</span>');
+      const details = describeEnemyAction(a);
       if (details.length > 0) desc += ` (${details.join(', ')})`;
       // Show flavor text for passive/structure abilities or when no mechanical details
       if (a.text && (details.length === 0 || enemy.isStructure)) {
@@ -840,6 +871,12 @@ class GameUI {
     const area = document.getElementById('party-area');
     area.innerHTML = '';
 
+    // Forecast of incoming damage, so each unit's HP bar can show what is about
+    // to hit it. Computed once per render rather than per unit.
+    const forecast = this.engine.phase === PHASE.PLAYER_TURN
+      ? this.engine.predictIncomingDamage()
+      : {};
+
     this.engine.party.forEach((unit, i) => {
       const el = document.createElement('div');
       const isTargetable = this.isAllyTargetable(unit);
@@ -861,6 +898,19 @@ class GameUI {
 
       const hpDelta = unit.hp - prevHp;
 
+      // Incoming-damage forecast: a segment on the HP bar spanning the damage
+      // that will actually reach HP (i.e. after current block), anchored at the
+      // right-hand end of the fill.
+      const threat = !unit.downed ? forecast[i] : null;
+      const threatAfterBlock = threat ? threat.afterBlock : 0;
+      const threatPct = threat ? Math.min(hpPct, (threatAfterBlock / unit.maxHp) * 100) : 0;
+      const threatHtml = threat && threat.raw > 0
+        ? `<div class="hp-threat${threat.lethal ? ' lethal' : ''}" style="width:${threatPct}%;left:${hpPct - threatPct}%"></div>`
+        : '';
+      const threatLabel = threat && threat.raw > 0
+        ? `<span class="hp-incoming${threat.lethal ? ' lethal' : ''}" title="Incoming next turn${(unit.block || 0) > 0 ? ` — ${threat.raw} damage, ${unit.block} absorbed by Block` : ''}">-${threatAfterBlock}${threatAfterBlock === 0 ? ' (blocked)' : ''}</span>`
+        : '';
+
       if (unit.block > 0) el.classList.add('has-block');
       if (unit.poison > 0) el.classList.add('has-poison');
       const isStunned = unit._stunNextTurn || unit._stunnedThisTurn;
@@ -878,11 +928,13 @@ class GameUI {
           <div class="hp-bar">
             <div class="hp-drain" style="width:${drainPct}%"></div>
             <div class="hp-fill ${isHealing ? 'healing' : ''} ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${fillStartPct}%"></div>
+            ${threatHtml}
           </div>
           ${hpDelta !== 0 ? `<span class="hp-delta ${hpDelta > 0 ? 'hp-delta-heal' : 'hp-delta-damage'}">${hpDelta > 0 ? '+' + hpDelta : hpDelta}</span>` : ''}
         </div>
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
+          ${threatLabel}
           ${unit.block > 0 ? `<span class="block-icon" title="Block">&#x1F6E1;${unit.block}</span>` : ''}
           ${unit.poison > 0 ? `<span class="poison-icon" title="Poison">&#x2620;${unit.poison}</span>` : ''}
           ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg}\u2694(${minAtk})</span>`; })() : ''}
@@ -2042,7 +2094,7 @@ class GameUI {
         else if (m >= 30) effects = 'Distressed: -1 damage and -1 healing to all actions.';
         else if (m >= 15) effects = 'Wavering: -1 damage and -1 healing to all actions.';
         else effects = 'Broken: -2 damage and -2 healing to all actions.';
-        label.title = effects;
+        label.title = `Morale: ${m}/100 — ${effects}`;
       };
       label.addEventListener('mouseenter', showTip);
       label.addEventListener('touchstart', showTip, { passive: true });
@@ -3822,7 +3874,7 @@ class GameUI {
       introEl.parentNode.insertBefore(statusEl, introEl.nextSibling);
     }
     const moraleBand = getMoraleBand(this.engine.morale);
-    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale} (${moraleBand.label})</span></div>`;
+    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale}/100 (${moraleBand.label})</span></div>`;
     statusHtml += '<div class="camp-units">';
     this.engine.party.forEach(u => {
       const tag = getPrimaryTag(u.classId);
@@ -5054,7 +5106,7 @@ class GameUI {
       introEl.parentNode.insertBefore(statusEl, introEl.nextSibling);
     }
     const moraleBand = getMoraleBand(this.engine.morale);
-    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale} (${moraleBand.label})</span> | All soldiers healed 15%</div>`;
+    let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale}/100 (${moraleBand.label})</span> | All soldiers healed 15%</div>`;
     statusHtml += '<div class="camp-units">';
     this.engine.party.forEach(u => {
       const tag = getPrimaryTag(u.classId);

@@ -87,7 +87,7 @@ const RAW_CLASSES = {
       {
         "id": "fortified_strike", "name": "Fortified Strike",
         "cost": { "type": "any" }, "target": "single_enemy",
-        "description": "Gain 2 Block. Deal damage equal to your current Block.",
+        "description": "Gain 2 Block, then deal damage equal to your total Block.",
         "effects": { "damage": 0, "fortifiedStrike": true }
       }
     ]
@@ -268,7 +268,7 @@ const RAW_CLASSES = {
         "id": "calculated_dosage", "name": "Calculated Dosage", "cooldown": 2,
         "cost": { "type": "exact", "val": 3 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. Apply Poison equal to unique die values in pool. All unique: double poison and deal 4 damage.",
+        "description": "Ranged. Apply Poison equal to unique die values in pool. All dice unique: double poison and deal 4 damage.",
         "effects": { "calculatedDosage": true }
       }
     ]

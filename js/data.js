@@ -868,6 +868,57 @@ function formatItemSpecial(item) {
   return item.special.replace(new RegExp('\\b' + scaling.base + '\\b'), String(scaled));
 }
 
+// --- Enemy action riders -------------------------------------------------
+// Every mechanical key an enemy action can carry, and how to show it. The
+// tooltip previously hardcoded nine of these, so eleven riders were invisible —
+// including War Boar's Boar Charge, which stuns its target, and `cooldown`,
+// which 64 actions use. Adding a rider to enemy data without adding it here
+// will fail the "no unlabelled enemy action rider" test.
+const ACTION_RIDER_LABELS = {
+  damage:           v => v > 0 ? `<span class="stat-dmg">${v} dmg</span>` : null,
+  poisonTarget:     v => `<span class="stat-poison">${v} poison</span>`,
+  morale:           v => `<span class="stat-morale-text">${v} morale</span>`,
+  blockAllEnemies:  v => `<span class="stat-block">+${v} block all</span>`,
+  blockFrontRow:    v => `<span class="stat-block">+${v} block front</span>`,
+  blockSelf:        v => `<span class="stat-block">+${v} block self</span>`,
+  spawn:            () => '<span style="color:var(--gold)">spawns unit</span>',
+  aoe:              () => '<span style="color:var(--red-bright)">AOE</span>',
+  ignoreRow:        () => '<span style="color:var(--text-dim)">any row</span>',
+  // Previously invisible:
+  boarCharge:       () => '<span style="color:var(--red-bright)">STUNS target</span>',
+  multiTarget:      () => '<span style="color:var(--red-bright)">hits multiple</span>',
+  markTarget:       () => '<span style="color:var(--red-bright)">marks target</span>',
+  weakenTarget:     () => '<span style="color:var(--red-bright)">weakens target</span>',
+  pierceBlock:      () => '<span style="color:var(--red-bright)">ignores block</span>',
+  runeBinding:      () => '<span style="color:var(--gold)">binds a die</span>',
+  damageFromBlock:  () => '<span style="color:var(--blue-bright)">adds its block</span>',
+  healAlly:         v => `<span class="stat-heal">heals ally ${v}</span>`,
+  healSelf:         v => `<span class="stat-heal">heals self ${v}</span>`,
+  selfDamage:       v => `<span class="stat-dmg">costs ${v} HP</span>`,
+  cooldown:         v => `<span style="color:var(--text-dim)">every ${v + 1} turns</span>`,
+  // Structural//internal keys that carry no player-facing meaning.
+  name:             () => null,
+  chance:           () => null,
+  text:             () => null,
+  phase:            () => null,
+  toRow:            () => null,
+};
+
+// Build the detail chips for one enemy action. Shared by the bestiary tooltip
+// and the next-attack preview so the two can never disagree.
+function describeEnemyAction(action) {
+  const details = [];
+  for (const key of Object.keys(action)) {
+    const fmt = ACTION_RIDER_LABELS[key];
+    if (!fmt) continue;
+    const val = action[key];
+    if (val === undefined || val === null || val === false) continue;
+    const chip = fmt(val);
+    if (chip) details.push(chip);
+  }
+  return details;
+}
+
 function formatItemStats(stats) {
   const colors = {
     dmg: 'var(--red-bright)', block: 'var(--blue-bright)', HP: '#cc8844',

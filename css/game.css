@@ -571,6 +571,73 @@ html, body {
 .status-debuff { background: rgba(180, 60, 60, 0.15); color: #cc6666; }
 .status-buff { background: rgba(60, 140, 60, 0.15); color: var(--green-bright); }
 
+/* Incoming-damage forecast on a party HP bar. Sits above .hp-fill and spans
+   only the damage that will get past current Block. */
+.hp-threat {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(200, 50, 50, 0.55),
+    rgba(200, 50, 50, 0.55) 3px,
+    rgba(200, 50, 50, 0.25) 3px,
+    rgba(200, 50, 50, 0.25) 6px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hp-threat.lethal {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 60, 60, 0.9),
+    rgba(255, 60, 60, 0.9) 3px,
+    rgba(120, 0, 0, 0.7) 3px,
+    rgba(120, 0, 0, 0.7) 6px
+  );
+  animation: target-pulse 0.9s infinite alternate;
+}
+
+.hp-incoming {
+  color: var(--red-bright);
+  font-size: 0.6rem;
+  margin-left: 3px;
+}
+
+.hp-incoming.lethal {
+  font-weight: bold;
+  animation: target-pulse 0.9s infinite alternate;
+}
+
+/* Compact "what this enemy does next" badge on the enemy card. */
+.enemy-intent-badge {
+  margin-top: 3px;
+  font-size: 0.58rem;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+  line-height: 1.2;
+}
+
+.enemy-intent-badge.stunned { color: var(--red-bright); font-weight: bold; }
+.enemy-intent-badge .intent-dmg { color: var(--red-bright); font-weight: bold; }
+.enemy-intent-badge .intent-poison { color: #8a4; }
+.enemy-intent-badge .intent-stun { color: var(--gold); font-weight: bold; }
+.enemy-intent-badge .intent-aoe { color: var(--red-bright); }
+.enemy-intent-badge .intent-other { color: var(--text-dim); }
+
+.morale-tooltip-title {
+  font-weight: bold;
+  color: var(--text-bright);
+  margin-bottom: 3px;
+}
+
+.morale-tooltip-effects {
+  color: var(--text-dim);
+}
+
 /* The intent block was previously unlabelled, so players had no way to know
    the line was a forecast of the enemy's next action. */
 .enemy-tooltip-intent-label {

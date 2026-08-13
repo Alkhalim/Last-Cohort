@@ -713,5 +713,237 @@ section('1.3 / 1.4 / 1.5 — UI gating and intent');
 }
 
 // ============================================================
+section('2.1 — every enemy action rider is labelled');
+// ============================================================
+{
+  const ctx = {
+    console, window: {}, document: {},
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  };
+  vm.createContext(ctx);
+  for (const f of ['data/classes.js', 'data/enemies.js', 'data/items.js',
+                   'data/events.js', 'data/gamedata.js', 'js/data.js']) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  }
+  vm.runInContext(`
+    loadGameData();
+    globalThis.__a = { ENEMY_DATA, ACTION_RIDER_LABELS, describeEnemyAction };
+  `, ctx);
+  const { ENEMY_DATA, ACTION_RIDER_LABELS, describeEnemyAction } = ctx.__a;
+
+  check('no enemy action carries an unlabelled key', () => {
+    const unknown = new Set();
+    for (const e of Object.values(ENEMY_DATA)) {
+      for (const a of (e.actions || [])) {
+        for (const k of Object.keys(a)) {
+          if (!(k in ACTION_RIDER_LABELS)) unknown.add(`${e.id}.${k}`);
+        }
+      }
+    }
+    assert(unknown.size === 0,
+      `unlabelled action keys (add to ACTION_RIDER_LABELS): ${[...unknown].join(', ')}`);
+  });
+
+  check('War Boar\'s stun is visible', () => {
+    const boar = ENEMY_DATA['war_boar'].actions.find(a => a.boarCharge);
+    assert(boar, 'Boar Charge not found');
+    const text = describeEnemyAction(boar).join(' ').replace(/<[^>]+>/g, '');
+    assert(/STUNS/.test(text), `stun not surfaced: "${text}"`);
+  });
+
+  check('cooldowns are surfaced', () => {
+    const boar = ENEMY_DATA['war_boar'].actions.find(a => a.cooldown);
+    const text = describeEnemyAction(boar).join(' ').replace(/<[^>]+>/g, '');
+    assert(/every \d+ turns/.test(text), `cooldown not surfaced: "${text}"`);
+  });
+
+  check('flavour-only keys produce no chips', () => {
+    const chips = describeEnemyAction({ name: 'X', chance: 0.5, text: 'does a thing' });
+    assertEqual(chips.length, 0, 'structural keys leaked into the detail chips');
+  });
+}
+
+// ============================================================
+section('2.2 / 2.3 — incoming damage forecast');
+// ============================================================
+{
+  const ctx = {
+    console, window: {}, document: {},
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    setTimeout, clearTimeout, requestAnimationFrame: () => {},
+  };
+  vm.createContext(ctx);
+  for (const f of ['data/classes.js', 'data/enemies.js', 'data/items.js',
+                   'data/events.js', 'data/gamedata.js', 'js/data.js',
+                   'js/dice.js', 'js/combat.js']) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  }
+  vm.runInContext('loadGameData(); globalThis.__CE = CombatEngine;', ctx);
+  const CombatEngine = ctx.__CE;
+
+  // Minimal engine standing in for a real fight.
+  function makeEngine({ party, enemies, curses = [] }) {
+    const e = Object.create(CombatEngine.prototype);
+    e.party = party;
+    e.enemies = enemies;
+    e._ambushDamageHalved = false;
+    e.getActiveCurses = () => curses;
+    return e;
+  }
+  const unit = (over = {}) => ({
+    index: 0, name: 'A', classId: 'legionary', hp: 20, maxHp: 20,
+    block: 0, downed: false, ...over,
+  });
+  const foe = (over = {}) => ({
+    index: 0, id: 'x', name: 'F', hp: 10, maxHp: 10, dead: false,
+    actions: [], ...over,
+  });
+
+  check('a plain hit predicts its action damage', () => {
+    const action = { name: 'Hit', damage: 7, chance: 1 };
+    const e = makeEngine({ party: [unit()], enemies: [foe({ actions: [action] })] });
+    assertEqual(e.predictEnemyDamage(e.enemies[0], action, e.party[0]), 7, 'wrong prediction');
+  });
+
+  check('non-damaging actions predict zero', () => {
+    const action = { name: 'Guard', damage: 0, blockSelf: 5, chance: 1 };
+    const e = makeEngine({ party: [unit()], enemies: [foe({ actions: [action] })] });
+    assertEqual(e.predictEnemyDamage(e.enemies[0], action, e.party[0]), 0, 'wrong prediction');
+  });
+
+  check('the Hunter\'s Shadow curse is included', () => {
+    const action = { name: 'Hit', damage: 7, chance: 1 };
+    const e = makeEngine({
+      party: [unit()], enemies: [foe({ actions: [action] })], curses: ['hunters_shadow'],
+    });
+    assertEqual(e.predictEnemyDamage(e.enemies[0], action, e.party[0]), 8, 'curse not applied');
+  });
+
+  check('block is subtracted from the forecast', () => {
+    const action = { name: 'Hit', damage: 7, chance: 1 };
+    const f = foe({ actions: [action] });
+    f._intent = { action, targetIndex: 0, isAoe: false, hits: 1 };
+    const e = makeEngine({ party: [unit({ block: 3 })], enemies: [f] });
+    const forecast = e.predictIncomingDamage();
+    assertEqual(forecast[0].raw, 7, 'raw damage wrong');
+    assertEqual(forecast[0].afterBlock, 4, 'block not subtracted');
+    assert(!forecast[0].lethal, 'wrongly flagged lethal');
+  });
+
+  check('damage fully absorbed by block reports zero but is still shown', () => {
+    const action = { name: 'Hit', damage: 3, chance: 1 };
+    const f = foe({ actions: [action] });
+    f._intent = { action, targetIndex: 0, isAoe: false, hits: 1 };
+    const e = makeEngine({ party: [unit({ block: 10 })], enemies: [f] });
+    const forecast = e.predictIncomingDamage();
+    assertEqual(forecast[0].afterBlock, 0, 'should be fully absorbed');
+    assertEqual(forecast[0].raw, 3, 'raw damage should still be reported');
+  });
+
+  check('lethal damage is flagged', () => {
+    const action = { name: 'Hit', damage: 25, chance: 1 };
+    const f = foe({ actions: [action] });
+    f._intent = { action, targetIndex: 0, isAoe: false, hits: 1 };
+    const e = makeEngine({ party: [unit({ hp: 20 })], enemies: [f] });
+    assert(e.predictIncomingDamage()[0].lethal, 'lethal hit not flagged');
+  });
+
+  check('double attacks are counted twice', () => {
+    const action = { name: 'Hit', damage: 5, chance: 1 };
+    const f = foe({ actions: [action], woundedDoubleAttack: true });
+    f._intent = { action, targetIndex: 0, isAoe: false, hits: 2 };
+    const e = makeEngine({ party: [unit()], enemies: [f] });
+    assertEqual(e.predictIncomingDamage()[0].raw, 10, 'second hit not counted');
+  });
+
+  check('AoE damage lands on every living unit', () => {
+    const action = { name: 'Sweep', damage: 4, aoe: true, chance: 1 };
+    const f = foe({ actions: [action] });
+    f._intent = { action, targetIndex: 0, isAoe: true, hits: 1 };
+    const e = makeEngine({
+      party: [unit({ index: 0 }), unit({ index: 1 }), unit({ index: 2, downed: true })],
+      enemies: [f],
+    });
+    const forecast = e.predictIncomingDamage();
+    assertEqual(forecast[0].raw, 4, 'unit 0 missed');
+    assertEqual(forecast[1].raw, 4, 'unit 1 missed');
+    assert(!forecast[2], 'downed unit included in forecast');
+  });
+
+  check('damage from several enemies is summed', () => {
+    const a1 = { name: 'A', damage: 3, chance: 1 };
+    const a2 = { name: 'B', damage: 4, chance: 1 };
+    const f1 = foe({ index: 0, actions: [a1] });
+    const f2 = foe({ index: 1, actions: [a2] });
+    f1._intent = { action: a1, targetIndex: 0, isAoe: false, hits: 1 };
+    f2._intent = { action: a2, targetIndex: 0, isAoe: false, hits: 1 };
+    const e = makeEngine({ party: [unit()], enemies: [f1, f2] });
+    assertEqual(e.predictIncomingDamage()[0].raw, 7, 'damage not summed');
+  });
+
+  check('stunned and dead enemies contribute nothing', () => {
+    const action = { name: 'Hit', damage: 9, chance: 1 };
+    const stunned = foe({ index: 0, actions: [action] });
+    stunned._intent = { type: 'stunned' };
+    const dead = foe({ index: 1, actions: [action], dead: true });
+    dead._intent = { action, targetIndex: 0, isAoe: false, hits: 1 };
+    const e = makeEngine({ party: [unit()], enemies: [stunned, dead] });
+    assert(!e.predictIncomingDamage()[0], 'stunned or dead enemy contributed damage');
+  });
+
+  check('predicting does not mutate fight state', () => {
+    // A forecast that consumes one-shot state would desync the real attack.
+    const action = { name: 'Charge', damage: 6, chance: 1 };
+    const f = foe({ id: 'blood_stag', actions: [action], _chargeReady: true, block: 4 });
+    f._intent = { action, targetIndex: 0, isAoe: false, hits: 1 };
+    const u = unit({ _pinned: true });
+    const e = makeEngine({ party: [u], enemies: [f] });
+    const before = JSON.stringify({ f, u });
+    e.predictIncomingDamage();
+    e.predictEnemyDamage(f, action, u);
+    assertEqual(JSON.stringify({ f, u }), before, 'forecast mutated fight state');
+  });
+
+  check('suppress and cripple reduce the forecast', () => {
+    const action = { name: 'Hit', damage: 10, chance: 1 };
+    const plain = makeEngine({ party: [unit()], enemies: [foe({ actions: [action] })] });
+    const base = plain.predictEnemyDamage(plain.enemies[0], action, plain.party[0]);
+    const supp = makeEngine({
+      party: [unit()], enemies: [foe({ actions: [action], _suppressed: 1 })],
+    });
+    assert(supp.predictEnemyDamage(supp.enemies[0], action, supp.party[0]) < base,
+      'suppression not reflected');
+  });
+}
+
+// ============================================================
+section('2.4 / 2.10 — readouts and wording');
+// ============================================================
+{
+  const ui = fs.readFileSync(path.join(ROOT, 'js/ui.js'), 'utf8');
+  const classes = fs.readFileSync(path.join(ROOT, 'data/classes.js'), 'utf8');
+
+  check('the morale tooltip names the stat and shows the value', () => {
+    assert(/Morale: \$\{this\.engine\.morale\}\/100/.test(ui),
+      'morale tooltip still omits the word "Morale" or the value');
+  });
+
+  check('camp morale shows X/100', () => {
+    const matches = ui.match(/camp-morale">Morale: <span[^>]*>\$\{this\.engine\.morale\}\/100/g) || [];
+    assertEqual(matches.length, 2, 'not every camp screen shows morale out of 100');
+  });
+
+  check('Calculated Dosage wording updated', () => {
+    assert(/All dice unique: double poison/.test(classes),
+      'Calculated Dosage still uses the old wording');
+  });
+
+  check('Fortified Strike ordering is unambiguous', () => {
+    assert(/Gain 2 Block, then deal damage equal to your total Block/.test(classes),
+      'Fortified Strike description still ambiguous about ordering');
+  });
+}
+
+// ============================================================
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed > 0 ? 1 : 0);

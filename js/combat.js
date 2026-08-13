@@ -4755,6 +4755,72 @@ class CombatEngine {
     });
   }
 
+  // Pure forecast of the damage `action` would deal to `target` right now.
+  // Mirrors the deterministic parts of executeEnemyAction but must NOT consume
+  // any of the one-shot state it reads (Intelligence Network, Blood Stag
+  // charge, pin, suppress, cripple) — a preview may never alter the fight.
+  // Enemy actions carry fixed damage values, so this is exact rather than a
+  // range. Excludes redirection (Intercept) and miss chance (Smoke Screen).
+  predictEnemyDamage(enemy, action, target) {
+    if (!action) return 0;
+    if (!(action.damage > 0 || action.damageFromBlock)) return 0;
+    let dmg = action.damage || 0;
+
+    // Arcania: Intelligence Network cuts the strongest attack by 40%, once.
+    const arcania = this.party.find(u => u.classId === 'arcania' && !u.downed && !u._intNetUsed);
+    if (arcania && dmg > 0) {
+      const maxDmg = Math.max(...enemy.actions.map(a => a.damage || 0));
+      if (dmg >= maxDmg && maxDmg > 0) dmg -= Math.floor(dmg * 0.4);
+    }
+    if (this._ambushDamageHalved) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (action.damageFromBlock && enemy.block > 0) dmg += enemy.block;
+    if (enemy.id === 'blood_stag' && enemy._chargeReady && !(target && target.block > 0)) dmg *= 2;
+    if (enemy.berserkRage && enemy.maxHp > 0) {
+      dmg += Math.round(dmg * (1 - enemy.hp / enemy.maxHp) * 0.5);
+    }
+    if (this.getActiveCurses().includes('hunters_shadow')) dmg += 1;
+    if (enemy._pinned) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.15)));
+    if (enemy._suppressed > 0) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.4)));
+    if (enemy._crippled > 0) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.3)));
+    return Math.max(0, dmg);
+  }
+
+  // Total damage each party member should expect before their next turn, as
+  // { unitIndex: { raw, afterBlock, lethal } }. Drives the HP-bar forecast.
+  predictIncomingDamage() {
+    const forecast = {};
+    const alive = this.party.filter(u => !u.downed);
+    const add = (unit, amount) => {
+      if (!unit || amount <= 0) return;
+      const cur = forecast[unit.index] || { raw: 0 };
+      cur.raw += amount;
+      forecast[unit.index] = cur;
+    };
+
+    this.enemies.forEach(e => {
+      if (e.dead || e.isStructure) return;
+      const intent = e._intent;
+      if (!intent || intent.type === 'stunned' || !intent.action) return;
+      const action = intent.action;
+      const hits = intent.hits || 1;
+      if (intent.isAoe) {
+        alive.forEach(u => add(u, this.predictEnemyDamage(e, action, u) * hits));
+      } else {
+        const target = this.party[intent.targetIndex];
+        add(target && !target.downed ? target : alive[0],
+          this.predictEnemyDamage(e, action, target) * hits);
+      }
+    });
+
+    for (const unit of this.party) {
+      const f = forecast[unit.index];
+      if (!f) continue;
+      f.afterBlock = Math.max(0, f.raw - (unit.block || 0));
+      f.lethal = f.afterBlock >= unit.hp;
+    }
+    return forecast;
+  }
+
   // Shared by intent previewing and the enemy turn, so the two cannot drift.
   // Pass { record: false } when previewing: the ambush-spread bookkeeping must
   // only be consumed when an attack actually resolves, otherwise rolling an
