@@ -3664,7 +3664,7 @@ class CombatEngine {
             const aliveParty = this.party.filter(u => !u.downed);
             if (aliveParty.length > 0) {
               const victim = aliveParty[Math.floor(Math.random() * aliveParty.length)];
-              const poisonAmt = 3;
+              const poisonAmt = 2;
               victim.poison = (victim.poison || 0) + poisonAmt;
               this.addLog(`${shamanAlive.name} hisses — ${victim.name} is poisoned in revenge! (+${poisonAmt} Poison)`);
               if (this.onVisual) this.onVisual('unitPoison', { unitIndex: victim.index, amount: poisonAmt });
