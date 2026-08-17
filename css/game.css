@@ -681,6 +681,51 @@ html, body {
   animation: target-pulse 0.9s infinite alternate;
 }
 
+/* Staged-skill outcome preview, shown while hovering a valid target */
+.hp-skill-preview {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  animation: preview-pulse 0.7s infinite alternate;
+}
+.hp-skill-preview.damage {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(240, 200, 80, 0.85),
+    rgba(240, 200, 80, 0.85) 3px,
+    rgba(240, 200, 80, 0.4) 3px,
+    rgba(240, 200, 80, 0.4) 6px
+  );
+}
+.hp-skill-preview.damage.lethal {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 90, 60, 0.95),
+    rgba(255, 90, 60, 0.95) 3px,
+    rgba(150, 20, 0, 0.75) 3px,
+    rgba(150, 20, 0, 0.75) 6px
+  );
+}
+.hp-skill-preview.heal {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(110, 200, 110, 0.8),
+    rgba(110, 200, 110, 0.8) 3px,
+    rgba(110, 200, 110, 0.4) 3px,
+    rgba(110, 200, 110, 0.4) 6px
+  );
+}
+@keyframes preview-pulse {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+.hp-preview-label { font-size: 0.65rem; font-weight: 700; }
+.hp-preview-label.damage { color: var(--gold); }
+.hp-preview-label.damage.lethal { color: var(--red-bright); }
+.hp-preview-label.heal { color: var(--green-bright); }
+
 .hp-incoming {
   color: var(--red-bright);
   font-size: 0.6rem;
@@ -1290,6 +1335,25 @@ html, body {
   color: var(--text-dim);
   border-style: dashed;
   cursor: default;
+}
+
+/* Pip face: 3×3 grid, pips drawn in currentColor so used/dim states inherit */
+.die-face {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 74%;
+  height: 74%;
+  pointer-events: none;
+}
+.die-face span { display: flex; align-items: center; justify-content: center; }
+.die-pip::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
 }
 
 .die.selected {
@@ -4049,10 +4113,12 @@ html, body {
 @media (max-height: 600px) {
   #dice-area { min-height: 100px; padding: 8px; }
   .die { width: 44px; height: 44px; font-size: 1.2rem; }
+  .die-pip::before { width: 7px; height: 7px; }
 }
 
 @media (min-width: 481px) {
   .die { width: 58px; height: 58px; font-size: 1.6rem; }
+  .die-pip::before { width: 9px; height: 9px; }
   .enemy-card { width: 120px; }
 }
 

@@ -202,7 +202,7 @@ const RAW_ENEMIES = {
   "silent_huntsman": {
     "id": "silent_huntsman", "name": "The Silent Huntsman",
     "maxHp": 93, "startBlock": 6, "row": "back", "damage": [7, 12], "speed": 1, "xpValue": 22,
-    "minDifficulty": 2,
+    "minDifficulty": 1,
     "isBoss": true, "ai": "boss",
     "description": "A scarred bowman who never misses. Trained by Arminius himself. He marks his prey, then strikes with lethal precision.",
     "actions": [
@@ -814,10 +814,10 @@ const RAW_ENEMIES = {
     "isBoss": true, "ai": "boss",
     "description": "The corrupted spirit of Publius Quinctilius Varus, the Roman general who led his legions to slaughter. He commands the dead from the back row, whispering Rome's failure.",
     "actions": [
-      { "name": "Commander's Lash", "damage": 17, "morale": -5, "chance": 0.3, "text": "lashes out with spectral authority", "ignoreRow": true },
-      { "name": "Rally the Dead", "damage": 0, "chance": 0.2, "text": "raises a hand — the dead answer his command", "spawn": "cursed_warrior" },
-      { "name": "Shield Formation", "damage": 0, "chance": 0.25, "text": "commands a ghostly formation — all warriors brace", "blockAllEnemies": 6 },
-      { "name": "Varus's Shame", "damage": 0, "morale": -8, "chance": 0.25, "text": "whispers of Rome's failure — your men's resolve crumbles", "cooldown": 2 }
+      { "name": "Commander's Lash", "damage": 18, "morale": -5, "chance": 0.4, "text": "lashes out with spectral authority", "ignoreRow": true },
+      { "name": "Rally the Dead", "damage": 0, "chance": 0.25, "text": "raises a hand — the dead answer his command", "spawn": "cursed_warrior" },
+      { "name": "Shield Formation", "damage": 0, "chance": 0.2, "text": "commands a ghostly formation — all warriors brace", "blockAllEnemies": 6 },
+      { "name": "Varus's Shame", "damage": 0, "morale": -8, "chance": 0.15, "text": "whispers of Rome's failure — your men's resolve crumbles", "cooldown": 2 }
     ]
   },
 
@@ -828,7 +828,7 @@ const RAW_ENEMIES = {
     "isBoss": true, "ai": "boss",
     "description": "The defiant spirit of Arminius, bound to Varus in death. They cannot be separated — damaging one heals the other. Both must fall.",
     "actions": [
-      { "name": "Phantom Blade", "damage": 10, "chance": 0.35, "text": "slashes with a spectral blade" },
+      { "name": "Phantom Blade", "damage": 12, "chance": 0.35, "text": "slashes with a spectral blade" },
       { "name": "Spirit Charge", "damage": 8, "chance": 0.25, "text": "charges through the line as a ghost", "aoe": true, "cooldown": 1 },
       { "name": "Defiance", "damage": 0, "morale": -5, "chance": 0.2, "text": "roars defiance — his spirit hardens", "blockSelf": 8 },
       { "name": "Wrath of the Forest", "damage": 13, "poisonTarget": 3, "chance": 0.2, "text": "channels the forest's wrath", "ignoreRow": true }
@@ -845,7 +845,7 @@ const RAW_ENEMIES = {
       { "name": "Spectral Command", "damage": 6, "morale": -5, "chance": 0.3, "text": "commands from beyond the grave", "ignoreRow": true },
       { "name": "Legion's Ghost", "damage": 5, "chance": 0.25, "text": "summons the ghosts of the lost legions", "aoe": true },
       { "name": "Guilt's Embrace", "damage": 0, "morale": -6, "chance": 0.2, "text": "drowns your men in the weight of Rome's guilt", "cooldown": 1 },
-      { "name": "Death's Verdict", "damage": 14, "chance": 0.25, "text": "passes a final verdict from beyond death", "ignoreRow": true, "cooldown": 1 }
+      { "name": "Death's Verdict", "damage": 16, "chance": 0.25, "text": "passes a final verdict from beyond death", "ignoreRow": true, "cooldown": 1 }
     ]
   }
 };

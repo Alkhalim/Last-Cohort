@@ -1116,6 +1116,186 @@ section('2.8 — item special text matches item behaviour');
     assert(/5 morale/.test(text), `morale not scaled: "${text}"`);
     assert(/3 HP/.test(text), `heal not scaled: "${text}"`);
   });
+
+  check('leveled text never duplicates the prefix before the number', () => {
+    // The splice bug repeated everything between the search start and the
+    // matched number: "Kills restore +Kills restore +3 extra morale."
+    for (const [id] of Object.entries(ITEM_SPECIAL_SCALING)) {
+      if (!ITEM_DATA[id] || !ITEM_DATA[id].special) continue;
+      for (const lv of [2, 3, 5]) {
+        const text = formatItemSpecial({ ...ITEM_DATA[id], level: lv, baseId: id });
+        // Text may only ever get longer by digits, never by repeated words.
+        const base = ITEM_DATA[id].special;
+        assert(text.length <= base.length + 8,
+          `${id} Lv${lv} text ballooned — likely duplicated: "${text}"`);
+        const firstWord = base.split(' ')[0];
+        const occursBase = base.split(firstWord).length - 1;
+        const occursScaled = text.split(firstWord).length - 1;
+        assertEqual(occursScaled, occursBase,
+          `${id} Lv${lv} repeats "${firstWord}": "${text}"`);
+      }
+    }
+  });
+
+  check('chiefs_spear Lv2 prints exactly one clean sentence', () => {
+    const text = formatItemSpecial({ ...ITEM_DATA['chiefs_spear'], level: 2, baseId: 'chiefs_spear' });
+    assertEqual(text, 'Kills restore +3 extra morale.', 'chiefs_spear Lv2 text is mangled');
+  });
+}
+
+// ============================================================
+section('2.10 — skill data consistency');
+// ============================================================
+{
+  const ctx = {
+    console, window: {}, document: {},
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  };
+  vm.createContext(ctx);
+  for (const f of ['data/classes.js', 'data/enemies.js', 'data/items.js',
+                   'data/events.js', 'data/gamedata.js', 'js/data.js']) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  }
+  vm.runInContext(`loadGameData(); globalThis.__c = { CLASS_DATA };`, ctx);
+  const { CLASS_DATA } = ctx.__c;
+
+  check('No Retreat description matches its effects', () => {
+    const skill = Object.values(CLASS_DATA).flatMap(c => c.skills)
+      .find(s => s.id === 'no_retreat');
+    assert(skill, 'no_retreat skill missing');
+    assertEqual(skill.effects.blockScale, 2, 'No Retreat gear-block multiplier');
+    const descMorale = (skill.description.match(/(-\d+) Morale/) || [])[1];
+    assertEqual(parseInt(descMorale), skill.effects.morale,
+      'No Retreat description morale does not match its effect');
+  });
+
+  check('skill descriptions state the morale their effects apply', () => {
+    const bad = [];
+    for (const cls of Object.values(CLASS_DATA)) {
+      for (const s of cls.skills) {
+        if (!s.effects || s.effects.morale === undefined || !s.description) continue;
+        const m = s.description.match(/(-\d+) Morale/);
+        if (m && parseInt(m[1]) !== s.effects.morale) {
+          bad.push(`${s.id}: says ${m[1]}, applies ${s.effects.morale}`);
+        }
+      }
+    }
+    assert(bad.length === 0, `morale mismatches: ${bad.join('; ')}`);
+  });
+}
+
+// ============================================================
+section('2.11 — six-march run structure');
+// ============================================================
+{
+  const ctx = {
+    console, window: {}, document: {},
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  };
+  vm.createContext(ctx);
+  for (const f of ['data/classes.js', 'data/enemies.js', 'data/items.js',
+                   'data/events.js', 'data/gamedata.js', 'js/data.js', 'js/map.js']) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  }
+  vm.runInContext(`
+    loadGameData();
+    globalThis.__m = { REGIONS, FINAL_MARCH, STORY_BOSS_NAMES, contentToSlotGate,
+      generateRoute, generateMap, ITEM_DATA, RAW_ENCOUNTERS, BOSS_ENCOUNTERS };
+  `, ctx);
+  const M = ctx.__m;
+
+  check('a route is 6 slots, fixed bookends, no repeated regions', () => {
+    for (let i = 0; i < 50; i++) {
+      const r = M.generateRoute(i % 2 ? null : ['ambush_trail', 'poisoned_bog', 'old_forest', 'blood_grove', 'heart_forest', 'threshold']);
+      assertEqual(r.length, M.FINAL_MARCH, 'route length');
+      assertEqual(r[0], 'ambush_trail', 'route must open on the tutorial march');
+      assertEqual(r[5], 'threshold', 'route must end at the Threshold');
+      assert(['hunting_grounds', 'poisoned_bog'].includes(r[1]), `bad slot-2 region ${r[1]}`);
+      const mids = ['old_forest', 'blood_grove', 'drowned_vale'];
+      assert(mids.includes(r[2]) && mids.includes(r[3]) && r[2] !== r[3], `bad mid slots ${r[2]}/${r[3]}`);
+      assert(['haunted_march', 'heart_forest'].includes(r[4]), `bad slot-5 region ${r[4]}`);
+      assertEqual(new Set(r).size, 6, 'route repeats a region');
+    }
+  });
+
+  check('every curated region pool resolves to real encounters', () => {
+    const T = M.RAW_ENCOUNTERS.threatLevels;
+    const all = new Set([...T.easy, ...T.mid, ...T.hard].map(e => e.name));
+    for (const [id, region] of Object.entries(M.REGIONS)) {
+      if (!region.pool) continue;
+      const missing = region.pool.filter(n => !all.has(n));
+      assert(missing.length === 0, `${id} pool references unknown encounters: ${missing.join(', ')}`);
+    }
+  });
+
+  check('every region intro/second key exists in the tables', () => {
+    for (const [id, region] of Object.entries(M.REGIONS)) {
+      assert(M.RAW_ENCOUNTERS.marchIntroEncounters[region.introKey],
+        `${id}: no intro table for key ${region.introKey}`);
+      assert(M.RAW_ENCOUNTERS.marchSecondEncounters[region.introKey],
+        `${id}: no second table for key ${region.introKey}`);
+    }
+  });
+
+  check('no item gate survives past the final march after the load remap', () => {
+    const bad = Object.values(M.ITEM_DATA)
+      .filter(i => i.minDifficulty && i.minDifficulty > M.FINAL_MARCH)
+      .map(i => i.id);
+    assert(bad.length === 0, `unreachable items: ${bad.join(', ')}`);
+  });
+
+  const bossOfFinalMap = () => {
+    const nodes = M.generateMap(M.FINAL_MARCH, [], new Set(), 'threshold');
+    const bossNode = nodes.find(n => n.type === 'boss');
+    return bossNode && bossNode.encounter && bossNode.encounter.name;
+  };
+
+  check('final march serves only Arminius before any story boss has fallen', () => {
+    ctx.window.game = { achievements: {} };
+    for (let i = 0; i < 25; i++) {
+      assertEqual(bossOfFinalMap(), 'Corpse of Arminius', 'locked rotation leaked a deeper boss');
+    }
+  });
+
+  check('beating Arminius adds Varus; beating Varus adds the Spirits', () => {
+    ctx.window.game = { achievements: { boss_corpse_arminius: true } };
+    let seen = new Set();
+    for (let i = 0; i < 60; i++) seen.add(bossOfFinalMap());
+    assert(seen.has('Corpse of Varus'), 'Varus never appeared after Arminius was beaten');
+    assert(!seen.has('Spirits of Arminius & Varus'), 'Spirits appeared before Varus was beaten');
+
+    ctx.window.game = { achievements: { boss_corpse_arminius: true, boss_corpse_varus: true } };
+    seen = new Set();
+    for (let i = 0; i < 90; i++) seen.add(bossOfFinalMap());
+    assert(seen.has('Spirits of Arminius & Varus'), 'Spirits never joined the rotation');
+    assert(seen.has('Corpse of Arminius') && seen.has('Corpse of Varus'),
+      'earlier story bosses left the rotation — it should grow, not replace');
+  });
+
+  check('story bosses never appear outside the final march', () => {
+    ctx.window.game = { achievements: { boss_corpse_arminius: true, boss_corpse_varus: true } };
+    for (let slot = 1; slot < M.FINAL_MARCH; slot++) {
+      for (let i = 0; i < 15; i++) {
+        const nodes = M.generateMap(slot, [], new Set(), null);
+        const bossNode = nodes.find(n => n.type === 'boss');
+        const name = bossNode && bossNode.encounter && bossNode.encounter.name;
+        assert(!M.STORY_BOSS_NAMES.includes(name),
+          `story boss "${name}" appeared at march ${slot}`);
+      }
+    }
+    delete ctx.window.game;
+  });
+
+  check('the march-1 boss pool offers three choices', () => {
+    const names = new Set();
+    for (let i = 0; i < 80; i++) {
+      const nodes = M.generateMap(1, [], new Set(), 'ambush_trail');
+      const bossNode = nodes.find(n => n.type === 'boss');
+      if (bossNode && bossNode.encounter) names.add(bossNode.encounter.name);
+    }
+    assert(names.has('The Silent Huntsman'), 'Silent Huntsman missing from the march-1 pool');
+    assert(names.size >= 3, `march-1 boss pool too small: ${[...names].join(', ')}`);
+  });
 }
 
 // ============================================================

@@ -140,8 +140,8 @@ const RAW_CLASSES = {
       {
         "id": "no_retreat", "name": "No Retreat",
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
-        "description": "All allies gain 7 Block. -5 Morale.",
-        "effects": { "blockAll": 7, "morale": -3, "blockScale": 1.3 }
+        "description": "All allies gain 7 Block. Gear Block counts double. -3 Morale.",
+        "effects": { "blockAll": 7, "morale": -3, "blockScale": 2 }
       },
       {
         "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
@@ -152,7 +152,7 @@ const RAW_CLASSES = {
       {
         "id": "decimation_strike", "name": "Decimation Strike", "cooldown": 2,
         "cost": { "type": "combinedExact", "val": 7, "dice": 2 }, "target": "single_enemy",
-        "description": "2 dice totaling exactly 7. Deal 17 damage. -5 Morale.",
+        "description": "2 dice totaling exactly 7. Deal 17 damage. -3 Morale.",
         "effects": { "damage": 17, "morale": -3, "bonusDmgScale": 1.5 }
       },
       {
@@ -431,7 +431,7 @@ const RAW_CLASSES = {
       {
         "id": "rally_fallen", "name": "Rally the Fallen", "cooldown": 5,
         "cost": { "type": "combined", "min": 8, "dice": 2 }, "target": "single_ally",
-        "description": "2 dice totaling 8+. Revive a downed ally at 25% HP with equal Block. -15 Morale.",
+        "description": "2 dice totaling 8+. Revive a downed ally at 25% HP with equal Block. -8 Morale.",
         "effects": { "revive": true, "morale": -8 }
       },
       {
@@ -908,7 +908,7 @@ const RAW_CLASSES = {
       {
         "id": "berserkers_howl", "name": "Berserker's Howl", "cooldown": 3,
         "cost": { "type": "exact", "val": 6 }, "target": "all_allies",
-        "description": "Others gain +2 damage for 2 attacks. Wulfswestr gains +4 damage for 2 attacks. -8 Morale.",
+        "description": "Others gain +2 damage for 2 attacks. Wulfswestr gains +4 damage for 2 attacks. -4 Morale.",
         "effects": { "buffAllies": { "bonusDamage": 2, "attacks": 2 }, "buffSelf": { "bonusDamage": 4, "attacks": 2 }, "morale": -4, "bonusDmgScale": 0.45 }
       },
       {

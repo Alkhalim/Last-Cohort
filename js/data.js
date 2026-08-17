@@ -557,10 +557,33 @@ function loadGameData() {
 
   // Drop tables (resolve boss pool references)
   DROP_TABLES = buildDropTables(RAW_ENCOUNTERS.dropTables, BOSS_DROP_POOL);
+
+  // Item and drop-tier difficulty gates were authored on the old 8-march
+  // scale. Runs are now FINAL_MARCH slots long; items and drops are
+  // progression, so their gates follow the run's slots. Encounter, enemy and
+  // event gates are NOT remapped — those numbers are content keys that
+  // regions translate via contentDiff.
+  for (const item of Object.values(ITEM_DATA)) {
+    if (item.minDifficulty) item.minDifficulty = contentToSlotGate(item.minDifficulty);
+    if (item.maxDifficulty) item.maxDifficulty = contentToSlotGate(item.maxDifficulty);
+  }
+  for (const table of Object.values(DROP_TABLES)) {
+    for (const tier of table.tiers) {
+      if (tier.minDifficulty) tier.minDifficulty = contentToSlotGate(tier.minDifficulty);
+    }
+  }
 }
 
 // --- Encounter generation by threat level ---
 let _lastEncounterName = null;
+
+function pickEncounterAvoidRepeat(pool) {
+  if (pool.length === 0) return null;
+  const filtered = pool.filter(e => e.name !== _lastEncounterName);
+  const chosen = (filtered.length > 0 ? filtered : pool)[Math.floor(Math.random() * (filtered.length > 0 ? filtered : pool).length)];
+  _lastEncounterName = chosen.name;
+  return chosen;
+}
 
 function generateEncounterByThreat(threat, difficulty) {
   const diff = difficulty || 1;
@@ -569,22 +592,133 @@ function generateEncounterByThreat(threat, difficulty) {
     if (e.maxDifficulty && e.maxDifficulty < diff) return false;
     return true;
   });
-  const pickAvoidRepeat = (pool) => {
-    if (pool.length === 0) return null;
-    const filtered = pool.filter(e => e.name !== _lastEncounterName);
-    const chosen = (filtered.length > 0 ? filtered : pool)[Math.floor(Math.random() * (filtered.length > 0 ? filtered : pool).length)];
-    _lastEncounterName = chosen.name;
-    return chosen;
-  };
   if (threat <= 1 && diff <= 3) {
-    return pickAvoidRepeat(filterByDiff(_encounterThreatData.easy));
+    return pickEncounterAvoidRepeat(filterByDiff(_encounterThreatData.easy));
   } else if (threat <= 1 && diff > 3) {
-    return pickAvoidRepeat(filterByDiff(_encounterThreatData.mid));
+    return pickEncounterAvoidRepeat(filterByDiff(_encounterThreatData.mid));
   } else if (threat === 2) {
-    return pickAvoidRepeat(filterByDiff(_encounterThreatData.mid));
+    return pickEncounterAvoidRepeat(filterByDiff(_encounterThreatData.mid));
   } else {
-    return pickAvoidRepeat(filterByDiff(_encounterThreatData.hard));
+    return pickEncounterAvoidRepeat(filterByDiff(_encounterThreatData.hard));
   }
+}
+
+// ============================================================
+// Marches: regions and the per-run route
+//
+// A run is FINAL_MARCH marches long. The REGION decides WHAT you fight —
+// encounter pools, intro tables, event flavor. The SLOT (1..FINAL_MARCH)
+// decides HOW STRONG it is — every stat-scaling formula keys off the slot.
+//
+// contentDiff maps a region onto the difficulty numbers the data tables were
+// authored with (the old 10-march numbering, offset by one from march 3 on).
+// The four late regions carry an explicit encounter-name pool instead,
+// because their old numbers collide: haunted and heart both sat at 7,
+// drowned and threshold both at 8.
+// ============================================================
+const FINAL_MARCH = 6;
+
+// Old 8-march difficulty gate → slot gate on the 6-march scale.
+function contentToSlotGate(d) {
+  return Math.max(1, Math.ceil(d * FINAL_MARCH / 8));
+}
+
+const STORY_BOSS_NAMES = ['Corpse of Arminius', 'Corpse of Varus', 'Spirits of Arminius & Varus'];
+
+const REGIONS = {
+  ambush_trail: {
+    name: 'The Ambush Trail', subtitle: 'The forest closes behind you.',
+    theme: 'forest', music: 'assets/Cohort Defiant.mp3',
+    introKey: '1', contentDiff: 1,
+  },
+  hunting_grounds: {
+    name: 'The Hunting Grounds', subtitle: 'They know these woods. You do not.',
+    theme: 'forest-dark', music: 'assets/Hunters in the Canopy.mp3',
+    introKey: '2', contentDiff: 2,
+  },
+  poisoned_bog: {
+    name: 'The Poisoned Bog', subtitle: 'The ground turns to black water.',
+    theme: 'bog', music: 'assets/Black Mire Pulse.mp3',
+    introKey: '4', contentDiff: 4,
+  },
+  old_forest: {
+    name: 'The Old Forest', subtitle: 'Ancient things stir between the roots.',
+    theme: 'ancient', music: 'assets/Roots Remember Blood.mp3',
+    introKey: '5', contentDiff: 5,
+  },
+  blood_grove: {
+    name: 'The Blood Grove', subtitle: 'Altars stained red. The druids watch.',
+    theme: 'blood', music: 'assets/Crimson Ritual.mp3',
+    introKey: '6', contentDiff: 6,
+  },
+  drowned_vale: {
+    name: 'The Drowned Vale', subtitle: 'The water remembers the drowned.',
+    theme: 'bog', music: 'assets/Black Mire Pulse.mp3',
+    introKey: '8', contentDiff: 8,
+    pool: ['Sunken Court', 'Drowned Wardens', "Warden's Stand", 'Toxic Shallows',
+           'Swamp Horror', 'Forest Fortress', 'Root Guardians', 'The Old Growth',
+           'Plague Pit', 'Leech Swarm'],
+  },
+  haunted_march: {
+    name: 'The Haunted March', subtitle: 'The dead walk in Roman formation.',
+    theme: 'haunted', music: 'assets/Eagle of the Unremembered.mp3',
+    introKey: '7', contentDiff: 7,
+    pool: ['The Haunted Trail', 'The Fallen Century', 'Cavalry Ghost',
+           "The Officer's Grave", 'Spectral Patrol', 'Dead Legion', 'Bone Court',
+           'Cursed Patrol', 'The Broken Standard', 'The Last Muster',
+           'Carrion Watch', 'Grave Escort', 'Procession of the Dead'],
+  },
+  heart_forest: {
+    name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.',
+    theme: 'heart', music: 'assets/Root-Rot Cathedral.mp3',
+    introKey: '9', contentDiff: 7,
+    pool: ['The Living Wall', 'Fungal Bloom', 'The Rotting Core', 'The Thorn Canopy',
+           'Heart Guardians', 'Blood Circle', 'Altar Guard', 'Ritual Warband'],
+  },
+  threshold: {
+    name: 'The Threshold', subtitle: 'Between worlds. The spirits await.',
+    theme: 'threshold', music: 'assets/Spirits at the Teutoburg Gate.mp3',
+    introKey: '10', contentDiff: 8,
+    pool: ['Threshold Guardians', 'The Last Veil', 'Ghost Pack', 'Woven Doom',
+           "The Elder's Court"],
+  },
+};
+
+// Route: slot 1 and the finale are fixed; everything between is drawn so that
+// every run skips one early, one mid and one late region. lastRoute biases the
+// draw toward regions the previous run skipped.
+function generateRoute(lastRoute) {
+  const last = Array.isArray(lastRoute) ? lastRoute : [];
+  const pick = (options, avoid) => {
+    let pool = options.filter(o => o !== avoid);
+    if (pool.length === 0) pool = options;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+  const route = ['ambush_trail'];
+  route.push(pick(['hunting_grounds', 'poisoned_bog'], last[1]));
+  const midOptions = ['old_forest', 'blood_grove', 'drowned_vale'];
+  const skippedLast = last.length ? midOptions.find(r => !last.includes(r)) : null;
+  const first = skippedLast || pick(midOptions);
+  const second = pick(midOptions.filter(r => r !== first));
+  if (Math.random() < 0.5) route.push(first, second); else route.push(second, first);
+  route.push(pick(['haunted_march', 'heart_forest'], last[4]));
+  route.push('threshold');
+  return route;
+}
+
+// Region-aware encounter generation. Curated regions draw from their named
+// pool; the rest reuse the threat tiers at the region's contentDiff.
+function generateEncounterForRegion(regionId, threat, difficulty) {
+  const region = REGIONS[regionId];
+  if (!region) return generateEncounterByThreat(threat, difficulty);
+  if (region.pool) {
+    const all = [..._encounterThreatData.easy, ..._encounterThreatData.mid, ..._encounterThreatData.hard];
+    const pool = region.pool
+      .map(name => all.find(e => e.name === name))
+      .filter(Boolean);
+    if (pool.length > 0) return pickEncounterAvoidRepeat(pool);
+  }
+  return generateEncounterByThreat(threat, region.contentDiff);
 }
 
 // --- Morale helpers ---
@@ -899,7 +1033,10 @@ function formatItemSpecial(item) {
     if (idx === -1) continue;
     const scaled = String(rule.formula(lv));
     const absolute = searchFrom + idx;
-    text = text.slice(0, absolute) + rest.replace(re, scaled);
+    // Splice from the match position, not from searchFrom — using `rest` here
+    // duplicated everything between searchFrom and the number ("Kills restore
+    // +Kills restore +3 extra morale.").
+    text = text.slice(0, absolute) + rest.slice(idx).replace(re, scaled);
     // Continue past what we just wrote so the next rule can't re-match it.
     searchFrom = absolute + scaled.length;
   }

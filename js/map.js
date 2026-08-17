@@ -2,10 +2,16 @@
 // Last Cohort – Map Generator
 // ============================================================
 
-function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Set()) {
+function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Set(), regionId = null) {
   const nodes = [];
   let idCounter = 0;
-  const isFinalMarch = difficulty >= 8;
+  // difficulty is the SLOT (1..FINAL_MARCH): it drives threat, scaling and
+  // progression gates. The region drives content — encounter pools, intro
+  // tables and event flavor — through its contentDiff / curated pool.
+  const region = (typeof REGIONS !== 'undefined' && regionId) ? REGIONS[regionId] : null;
+  const contentDiff = region ? region.contentDiff : difficulty;
+  const finalMarch = typeof FINAL_MARCH !== 'undefined' ? FINAL_MARCH : 8;
+  const isFinalMarch = difficulty >= finalMarch;
   const maxMidDepth = isFinalMarch ? 4 : 6; // Standard: 7 layers (0-6) + boss, Final: 5 (0-4) + rest + boss
 
   // Depth 0: start node (easy combat)
@@ -281,9 +287,10 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
   for (const node of nodes) {
     if (node.type === 'combat') {
       // First combat node (depth 0): use region-specific intro encounter
+      const introKey = region ? region.introKey : String(difficulty);
       const introEncounters = typeof RAW_ENCOUNTERS !== 'undefined' && RAW_ENCOUNTERS.marchIntroEncounters;
-      if (node.depth === 0 && introEncounters && introEncounters[String(difficulty)]) {
-        const intros = introEncounters[String(difficulty)];
+      if (node.depth === 0 && introEncounters && introEncounters[introKey]) {
+        const intros = introEncounters[introKey];
         if (Array.isArray(intros)) {
           const pick = intros[Math.floor(Math.random() * intros.length)];
           node.encounter = pick;
@@ -292,9 +299,9 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
           node.encounter = intros;
           node._introEncounterName = intros.name;
         }
-      } else if (node.depth === 1 && typeof RAW_ENCOUNTERS !== 'undefined' && RAW_ENCOUNTERS.marchSecondEncounters && RAW_ENCOUNTERS.marchSecondEncounters[String(difficulty)]) {
+      } else if (node.depth === 1 && typeof RAW_ENCOUNTERS !== 'undefined' && RAW_ENCOUNTERS.marchSecondEncounters && RAW_ENCOUNTERS.marchSecondEncounters[introKey]) {
         // Second combat node: use curated second encounter, different from intro
-        const seconds = RAW_ENCOUNTERS.marchSecondEncounters[String(difficulty)];
+        const seconds = RAW_ENCOUNTERS.marchSecondEncounters[introKey];
         const usedIntroName = nodes.find(n => n._introEncounterName)?._introEncounterName;
         let pool = Array.isArray(seconds) ? seconds : [seconds];
         if (usedIntroName) {
@@ -303,10 +310,10 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
         if (pool.length > 0) {
           node.encounter = pool[Math.floor(Math.random() * pool.length)];
         } else {
-          node.encounter = generateEncounterByThreat(node.threat, difficulty);
+          node.encounter = generateEncounterForRegion(regionId, node.threat, difficulty);
         }
       } else {
-        node.encounter = generateEncounterByThreat(node.threat, difficulty);
+        node.encounter = generateEncounterForRegion(regionId, node.threat, difficulty);
       }
       // Ambush: at difficulty 3+, 30% chance for combat nodes to become ambushes (not on intro, not after another ambush)
       if (difficulty >= 3 && node.depth > 0 && Math.random() < 0.3) {
@@ -319,21 +326,29 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
         }
       }
     } else if (node.type === 'boss') {
-      // Story bosses are forced at specific marches
-      const storyBosses = { 4: 'Corpse of Arminius', 6: 'Corpse of Varus', 8: 'Spirits of Arminius & Varus' };
-      const forcedBossName = storyBosses[difficulty];
-      if (forcedBossName) {
-        const forcedBoss = BOSS_ENCOUNTERS.find(b => b.name === forcedBossName);
-        if (forcedBoss) {
-          node.encounter = forcedBoss;
-        }
-      }
-      if (!node.encounter) {
+      const storyNames = typeof STORY_BOSS_NAMES !== 'undefined'
+        ? STORY_BOSS_NAMES
+        : ['Corpse of Arminius', 'Corpse of Varus', 'Spirits of Arminius & Varus'];
+      if (isFinalMarch) {
+        // The final march belongs to the story bosses, unlocked as a rotation:
+        // Arminius always; Varus once Arminius has fallen at least once;
+        // the Spirits once Varus has fallen. Meta-progression, not per-run.
+        const aa = (typeof window !== 'undefined' && window.game && window.game.achievements) || {};
+        const rotation = ['Corpse of Arminius'];
+        if (aa.boss_corpse_arminius) rotation.push('Corpse of Varus');
+        if (aa.boss_corpse_varus) rotation.push('Spirits of Arminius & Varus');
+        const chosenName = rotation[Math.floor(Math.random() * rotation.length)];
+        node.encounter = BOSS_ENCOUNTERS.find(b => b.name === chosenName) || BOSS_ENCOUNTERS[0];
+      } else {
+        // Every earlier march draws from the regular pool; story bosses never
+        // appear outside the final march. minDifficulty on boss encounters is
+        // authored on the old 8-march scale — translate it to a slot gate.
         const eligibleBosses = BOSS_ENCOUNTERS.filter(b => {
-          if (b.minDifficulty && b.minDifficulty > difficulty) return false;
-          // Exclude story bosses from random pool
-          if (Object.values(storyBosses).includes(b.name)) return false;
-          return true;
+          if (storyNames.includes(b.name)) return false;
+          const gate = b.minDifficulty
+            ? (typeof contentToSlotGate === 'function' ? contentToSlotGate(b.minDifficulty) : b.minDifficulty)
+            : 1;
+          return gate <= difficulty;
         });
         // Avoid repeating bosses until all eligible have been fought
         let unseenBosses = eligibleBosses.filter(b => !recentBosses.includes(b.name));
@@ -348,9 +363,11 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
     } else if (node.type === 'event') {
       // Filter by difficulty, then weighted random — no regular event repeats per march
       const repeatable = ['skill_upgrade', 'item_upgrade', 'item_trade']; // these can repeat
+      // Events filter on contentDiff: their difficulty gates are content keys
+      // (march-flavor text), not power gates.
       const eligible = EVENT_DATA.filter(e => {
-        if (e.minDifficulty && e.minDifficulty > difficulty) return false;
-        if (e.maxDifficulty && e.maxDifficulty < difficulty) return false;
+        if (e.minDifficulty && e.minDifficulty > contentDiff) return false;
+        if (e.maxDifficulty && e.maxDifficulty < contentDiff) return false;
         if (e.oncePerRun && usedRunEventIds.has(e.id)) return false;
         if (e.type === 'item_trade' && merchantCount >= MAX_MERCHANTS_PER_MARCH) return false;
         return true;

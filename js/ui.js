@@ -339,6 +339,114 @@ class GameUI {
     this.updateMoodClass();
   }
 
+  // --- Staged-skill outcome preview -------------------------------------
+  // With a skill staged, hovering a valid target paints the projected damage
+  // onto the enemy's HP bar (or projected healing onto an ally's), plus a
+  // number next to the HP text. Mirrors the skill-card maths so the card and
+  // the bar can never disagree.
+  getStagedSkillPreview() {
+    if (!this.stagedSkill || this.selectedUnitIndex === null) return null;
+    const unit = this.engine.party[this.selectedUnitIndex];
+    if (!unit) return null;
+    const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
+    if (!skill || !skill.effects) return null;
+    const fx = skill.effects;
+    const dieTotal = this.stagedSkill.diceIds.reduce((sum, id) => {
+      const d = this.engine.dicePool.dice.find(die => die.id === id);
+      return sum + (d ? d.value : 0);
+    }, 0);
+    const equipDmg = unit.equipDamage || 0;
+    const buffDmg = (unit.buffs || []).reduce((s, b) => s + (b.damage || 0), 0);
+    let moraleMod = 0;
+    if (this.engine.morale >= 85) moraleMod = 2;
+    else if (this.engine.morale >= 70) moraleMod = 1;
+    else if (this.engine.morale <= 15) moraleMod = -2;
+    else if (this.engine.morale <= 30) moraleMod = -1;
+    const auraReduction = this.engine.enemies
+      .filter(e => !e.dead && e.aura && e.aura.damageReduction)
+      .reduce((s, e) => s + e.aura.damageReduction, 0);
+    const ownBonusDmg = equipDmg + moraleMod - auraReduction;
+    const dmgScale = fx.bonusDmgScale || (fx.halfBonusDmg ? 0.5 : 1);
+    const skillBonusDmg = dmgScale !== 1
+      ? Math.floor(ownBonusDmg * dmgScale) + buffDmg
+      : ownBonusDmg + buffDmg;
+
+    let damage = 0;
+    const baseDmg = fx.damage || fx.damageAll || 0;
+    if (baseDmg > 0 || fx.dieScaleDamage) {
+      if (fx.dieScaleDamage) {
+        const rawScale = dieTotal / 3;
+        const softScale = rawScale <= 1 ? rawScale : 1 + (rawScale - 1) * 0.7;
+        damage = Math.max(1, baseDmg + dieTotal + Math.floor(skillBonusDmg * softScale));
+      } else {
+        const chargeBonus = (unit.classId === 'equites' && !unit.passiveTriggered)
+          ? Math.floor(baseDmg * 0.5) : 0;
+        damage = Math.max(1, baseDmg + skillBonusDmg + chargeBonus);
+      }
+      if (fx.moraleScaling) {
+        damage = Math.round(damage * (0.5 + ((this.engine.morale || 0) / 100) * 2.0));
+      }
+    }
+
+    let heal = 0;
+    const baseHeal = fx.heal || fx.healAll || 0;
+    if (baseHeal > 0 || fx.dieScaleHeal) {
+      const totalBonusHeal = (unit.equipHeal || 0) + moraleMod;
+      heal = fx.dieScaleHeal
+        ? Math.max(0, baseHeal + dieTotal + Math.floor(totalBonusHeal * (dieTotal / 3)))
+        : Math.max(0, baseHeal + totalBonusHeal);
+    }
+    if (damage <= 0 && heal <= 0) return null;
+    return { damage, heal, pierce: !!fx.pierceBlock };
+  }
+
+  showTargetPreview(el, target) {
+    const p = this.getStagedSkillPreview();
+    if (!p) return;
+    this.hideTargetPreview(el);
+    const bar = el.querySelector('.hp-bar');
+    const textLine = el.querySelector('.hp-text');
+    if (!bar) return;
+    const hpPct = (target.hp / target.maxHp) * 100;
+    if (target.kind === 'enemy' && p.damage > 0) {
+      const toHp = p.pierce ? p.damage : Math.max(0, p.damage - (target.block || 0));
+      const lethal = toHp >= target.hp;
+      const segPct = Math.min(hpPct, (toHp / target.maxHp) * 100);
+      if (segPct > 0) {
+        const seg = document.createElement('div');
+        seg.className = `hp-skill-preview damage${lethal ? ' lethal' : ''}`;
+        seg.style.width = segPct + '%';
+        seg.style.left = (hpPct - segPct) + '%';
+        bar.appendChild(seg);
+      }
+      if (textLine) {
+        const label = document.createElement('span');
+        label.className = `hp-preview-label damage${lethal ? ' lethal' : ''}`;
+        label.textContent = toHp === 0 ? ' blocked' : (lethal ? ` -${toHp} ☠` : ` -${toHp}`);
+        textLine.appendChild(label);
+      }
+    } else if (target.kind === 'ally' && p.heal > 0) {
+      const healed = Math.min(target.maxHp, target.hp + p.heal);
+      const gain = healed - target.hp;
+      if (gain <= 0) return;
+      const seg = document.createElement('div');
+      seg.className = 'hp-skill-preview heal';
+      seg.style.left = hpPct + '%';
+      seg.style.width = ((gain / target.maxHp) * 100) + '%';
+      bar.appendChild(seg);
+      if (textLine) {
+        const label = document.createElement('span');
+        label.className = 'hp-preview-label heal';
+        label.textContent = ` +${gain}`;
+        textLine.appendChild(label);
+      }
+    }
+  }
+
+  hideTargetPreview(el) {
+    el.querySelectorAll('.hp-skill-preview, .hp-preview-label').forEach(n => n.remove());
+  }
+
   // --- Enemies ---
   renderEnemies() {
     const frontSlots = document.querySelector('#enemy-row-front .enemy-slots');
@@ -376,6 +484,11 @@ class GameUI {
 
       if (this.isEnemyTargetable(enemy)) {
         el.addEventListener('click', () => this.onEnemyClick(enemy));
+        // Staged-skill damage preview on the enemy's HP bar
+        el.addEventListener('mouseenter', () => {
+          if (this.stagedSkill) this.showTargetPreview(el, { kind: 'enemy', hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block });
+        });
+        el.addEventListener('mouseleave', () => this.hideTargetPreview(el));
       }
 
       // Enemy info tooltip on hover / long-press (not during spawn/pre-combat)
@@ -673,6 +786,29 @@ class GameUI {
   }
 
   // --- Dice Pool ---
+  // Classic pip face on a 3×3 grid, so dice read as dice at a glance.
+  // Cells: 0 1 2 / 3 4 5 / 6 7 8.
+  makeDieFace(value) {
+    const PIP_LAYOUT = {
+      1: [4],
+      2: [0, 8],
+      3: [0, 4, 8],
+      4: [0, 2, 6, 8],
+      5: [0, 2, 4, 6, 8],
+      6: [0, 2, 3, 5, 6, 8],
+    };
+    const face = document.createElement('div');
+    face.className = 'die-face';
+    face.setAttribute('aria-label', String(value));
+    const pips = PIP_LAYOUT[value] || [];
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement('span');
+      if (pips.includes(i)) cell.className = 'die-pip';
+      face.appendChild(cell);
+    }
+    return face;
+  }
+
   renderDicePool() {
     const pool = document.getElementById('dice-pool');
     pool.innerHTML = '';
@@ -698,11 +834,11 @@ class GameUI {
         if (i < this.diceRevealed) {
           // Settled
           el.className = 'die settled';
-          el.textContent = die.value;
+          el.appendChild(this.makeDieFace(die.value));
         } else {
-          // Shaking — show random number
+          // Shaking — show a random face
           el.className = 'die shaking';
-          el.textContent = Math.floor(Math.random() * 6) + 1;
+          el.appendChild(this.makeDieFace(Math.floor(Math.random() * 6) + 1));
         }
         pool.appendChild(el);
       });
@@ -725,7 +861,8 @@ class GameUI {
         !this.isDieSelectable(stagedSkillDef, die);
       const el = document.createElement('div');
       el.className = `die${die.used ? ' used' : ''}${isStaged ? ' selected' : ''}${ineligible ? ' ineligible' : ''}`;
-      el.textContent = die.value;
+      el.appendChild(this.makeDieFace(die.value));
+      el.title = String(die.value);
       el.dataset.dieId = die.id;
 
       if (!die.used && this.engine.phase === PHASE.PLAYER_TURN && this.stagedSkill && !ineligible) {
@@ -887,8 +1024,10 @@ class GameUI {
     area.innerHTML = '';
 
     // Forecast of incoming damage, so each unit's HP bar can show what is about
-    // to hit it. Computed once per render rather than per unit.
-    const forecast = this.engine.phase === PHASE.PLAYER_TURN
+    // to hit it. Computed once per render rather than per unit. Kept visible
+    // through the enemy turn: each enemy clears its _intent when it acts, so
+    // the forecast shrinks attack by attack instead of vanishing at end of turn.
+    const forecast = (this.engine.phase === PHASE.PLAYER_TURN || this.engine.phase === PHASE.ENEMY_TURN)
       ? this.engine.predictIncomingDamage()
       : {};
 
@@ -994,6 +1133,11 @@ class GameUI {
               this.engine.selectTarget(unit);
             }
           });
+          // Staged-skill healing preview on the ally's HP bar
+          el.addEventListener('mouseenter', () => {
+            if (this.stagedSkill) this.showTargetPreview(el, { kind: 'ally', hp: unit.hp, maxHp: unit.maxHp });
+          });
+          el.addEventListener('mouseleave', () => this.hideTargetPreview(el));
         } else if (!unit.downed) {
           el.addEventListener('click', () => this.onUnitClick(i));
         }
@@ -1410,16 +1554,21 @@ class GameUI {
       // Color-code remaining "X damage" (that hasn't been wrapped in spans already)
       desc = desc.replace(/(?<!">)(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
 
-      // Replace block values
+      // Replace block values — blockScale (No Retreat) multiplies the gear
+      // portion, so the shown total must use the scaled figure.
+      const scaledEquipBlock = Math.floor(equipBlock * ((skill.effects && skill.effects.blockScale) || 1));
       desc = desc.replace(/(\d+) Block/g, (match, base) => {
         const b = parseInt(base);
-        if (equipBlock > 0) {
-          const total = b + equipBlock;
-          return `<span class="stat-block">${total}</span> <span class="stat-breakdown">(${b}+${equipBlock})</span> Block`;
+        if (scaledEquipBlock > 0) {
+          const total = b + scaledEquipBlock;
+          return `<span class="stat-block">${total}</span> <span class="stat-breakdown">(${b}+${scaledEquipBlock})</span> Block`;
         }
         return `<span class="stat-block">${b}</span> Block`;
       });
 
+      // HP *costs* ("Costs 3 HP") are not healing and must not be rewritten by
+      // the heal bonus — the engine charges them flat. Shield them first.
+      desc = desc.replace(/([Cc]osts(?: you)?) (\d+) HP/g, '$1 §$2§ HP');
       // Replace heal values
       desc = desc.replace(/(\d+) HP/g, (match, base) => {
         const b = parseInt(base);
@@ -1429,6 +1578,7 @@ class GameUI {
         }
         return `<span class="stat-heal">${b}</span> HP`;
       });
+      desc = desc.replace(/§(\d+)§/g, '<span class="stat-dmg">$1</span>');
 
       // Replace "pair value" with actual value when dice are staged
       if (skill.cost && skill.cost.type === 'pair') {
@@ -2099,9 +2249,8 @@ class GameUI {
     if (this._inHiddenMarch && this._hiddenMarchData) {
       title.textContent = (this._hiddenMarchData.name || 'HIDDEN MARCH').toUpperCase();
     } else {
-      const diff = this.difficulty || 1;
-      const theme = typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[diff];
-      if (theme) {
+      const theme = window.game && window.game.currentRegion ? window.game.currentRegion() : null;
+      if (theme && theme.name) {
         title.textContent = theme.name.toUpperCase();
       } else {
         title.textContent = 'TEUTOBURG FOREST';
@@ -2241,7 +2390,7 @@ class GameUI {
     // Draw terrain decorations based on march theme
     const marchTheme = this._inHiddenMarch && this._hiddenMarchData
       ? (this._hiddenMarchData.theme || 'forest')
-      : ((typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) ? MARCH_THEMES[this.difficulty].theme : 'forest');
+      : ((window.game && window.game.currentRegion && window.game.currentRegion().theme) || 'forest');
     const terrainSeed = this._mapTerrainSeed || ((this.difficulty || 1) * 7919);
     const tRand = (i) => { let x = Math.sin(terrainSeed + i * 127.1) * 43758.5453; return x - Math.floor(x); };
     const margin = 20;
@@ -4172,10 +4321,12 @@ class GameUI {
     if (window.game) window.game.triggerHint('first_item_drop');
     this.engine.afterEncounter();
 
-    // Final boss: skip loot and training, grant bonus renown instead
+    // Final boss: skip loot and training, grant bonus renown instead.
+    // The final march's boss rotates (Arminius → Varus → Spirits), so any
+    // final-march boss victory ends the run — except inside the hidden march.
     const diff = window.game ? window.game.difficulty : 1;
-    const isFinalBoss = diff >= 8 && isBossVictory && this.engine.enemies &&
-      this.engine.enemies.some(e => e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus');
+    const finalMarch = typeof FINAL_MARCH !== 'undefined' ? FINAL_MARCH : 8;
+    const isFinalBoss = diff >= finalMarch && isBossVictory && !this._inHiddenMarch;
     if (isFinalBoss) {
       const bonusRenown = 60;
       this.engine.totalRenownEarned += bonusRenown;
@@ -4603,6 +4754,8 @@ class GameUI {
       return `<span class="stat-heal">${loVal}-${hiVal}</span> HP`;
     });
 
+    // HP *costs* are not healing — shield them from the heal-bonus rewrite.
+    desc = desc.replace(/([Cc]osts(?: you)?) (\d+) HP/g, '$1 §$2§ HP');
     // Heal values
     desc = desc.replace(/(\d+) HP/g, (match, base) => {
       const b = parseInt(base);
@@ -4611,6 +4764,7 @@ class GameUI {
       }
       return `<span class="stat-heal">${b}</span> HP`;
     });
+    desc = desc.replace(/§(\d+)§/g, '<span class="stat-dmg">$1</span>');
 
     // Die value ranges (non-combat context — always show ranges with bonuses)
     desc = desc.replace(/die value x(\d+)/g, (m, mult) => {
@@ -4991,9 +5145,10 @@ class GameUI {
     const diff = window.game.difficulty || 1;
     const marchLabel = diff === 1 ? 'First March' : `March ${diff}`;
 
-    // Check if this was the final boss (march 8 - spirits defeated)
-    const isFinalVictory = diff >= 8 && this.engine.enemies &&
-      this.engine.enemies.some(e => e.id === 'spirit_of_arminius' || e.id === 'spirit_of_varus');
+    // Final march boss defeated — whichever story boss the rotation served.
+    const finalMarch = typeof FINAL_MARCH !== 'undefined' ? FINAL_MARCH : 8;
+    const isFinalVictory = diff >= finalMarch && this.engine.enemies &&
+      this.engine.enemies.some(e => e.isBoss);
 
     // Only the final boss ends the run. Every other march boss is a checkpoint —
     // reporting it as a run completion is what unlocked the whole class ladder
@@ -5003,9 +5158,23 @@ class GameUI {
       else window.game.trackMarchComplete();
     }
 
+    // Per-boss run-ending text; the teaser fires while deeper bosses remain
+    // locked in the rotation, so the player knows the forest is not done.
+    const finalBossId = isFinalVictory
+      ? (this.engine.enemies.filter(e => e.isBoss).map(e => e.id)[0] || '')
+      : '';
+    const finalTexts = {
+      corpse_of_arminius: 'The Betrayer crumbles into the mud he rose from. The forest releases its grip — for now. Your cohort marches out of Teutoburg alive. Rome will remember what you did here.',
+      corpse_of_varus: 'The ghost of the general fades, his shame finally laid down. The forest releases its grip — for now. Your cohort marches out of Teutoburg alive. Rome will remember what you did here.',
+      spirit_of_arminius: 'The spirits of Arminius and Varus dissolve into the mist. The forest releases its grip. After six marches through darkness, your cohort has broken the curse of Teutoburg. Rome will remember what you did here.',
+      spirit_of_varus: 'The spirits of Arminius and Varus dissolve into the mist. The forest releases its grip. After six marches through darkness, your cohort has broken the curse of Teutoburg. Rome will remember what you did here.',
+    };
+    const aa = (window.game && window.game.achievements) || {};
+    const rotationRemains = isFinalVictory && !finalBossId.startsWith('spirit') && !aa.boss_spirits_defeated;
+    const teaser = rotationRemains ? ' Yet something older still stirs beneath the roots. The forest will call again.' : '';
     document.getElementById('run-complete-title').textContent = isFinalVictory ? 'THE FOREST IS SILENCED' : 'VICTORY';
     document.getElementById('run-complete-text').textContent = isFinalVictory
-      ? 'The spirits of Arminius and Varus dissolve into the mist. The forest releases its grip. After eight marches through darkness, your cohort has broken the curse of Teutoburg. Rome will remember what you did here.'
+      ? (finalTexts[finalBossId] || finalTexts.spirit_of_arminius) + teaser
       : `Your cohort has defeated the Champion and broken through. The forest grows darker ahead, but there is still work to be done. Will you press on?`;
 
     const statsEl = document.getElementById('run-complete-stats');
@@ -5129,7 +5298,7 @@ class GameUI {
 
     // Restore theme
     const mapScreen = document.getElementById('map-screen');
-    const theme = (typeof MARCH_THEMES !== 'undefined' && MARCH_THEMES[this.difficulty]) || {};
+    const theme = (window.game && window.game.currentRegion && window.game.currentRegion()) || {};
     mapScreen.dataset.theme = theme.theme || 'forest';
 
     this.showMapScreen();

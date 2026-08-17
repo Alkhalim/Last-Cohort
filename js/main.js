@@ -495,9 +495,9 @@ class Game {
     list.innerHTML = '';
 
     const tests = [
-      { name: 'Barrow of Ariovistus (March 4)', desc: 'Fight the Revenant of Ariovistus', difficulty: 4, encounter: 'grave_of_ariovistus' },
-      { name: "Thusnelda's Ambush (March 6)", desc: 'Face the Chieftain\'s Wife', difficulty: 6, encounter: 'thusneldas_ambush' },
-      { name: "The Dragon's Lair (March 8)", desc: 'Enter the hidden march', difficulty: 8, encounter: 'dragons_lair' },
+      { name: 'Barrow of Ariovistus (March 3)', desc: 'Fight the Revenant of Ariovistus', difficulty: 3, region: 'poisoned_bog', encounter: 'grave_of_ariovistus' },
+      { name: "Thusnelda's Ambush (March 4)", desc: 'Face the Chieftain\'s Wife', difficulty: 4, region: 'blood_grove', encounter: 'thusneldas_ambush' },
+      { name: "The Dragon's Lair (March 6)", desc: 'Enter the hidden march', difficulty: 6, region: 'threshold', encounter: 'dragons_lair' },
     ];
 
     tests.forEach(test => {
@@ -540,10 +540,12 @@ class Game {
 
     // Scale party to appropriate march level
     const diff = test.difficulty;
+    // Per-march growth on the 6-march scale: ~8/6 of the old 8-march rates,
+    // so a slot-6 party matches the old march-8 party.
     const skillCount = 5;
-    const itemLevel = Math.max(0, Math.floor(diff * 0.4)); // bonus levels on items (conservative)
-    const hpBonus = Math.floor(diff * 4); // simulated HP growth from training
-    this._testEpicBudget = diff >= 7 ? 3 : diff >= 5 ? 1 : 0;
+    const itemLevel = Math.max(0, Math.floor(diff * 0.55)); // bonus levels on items (conservative)
+    const hpBonus = Math.floor(diff * 5.5); // simulated HP growth from training
+    this._testEpicBudget = diff >= 5 ? 3 : diff >= 4 ? 1 : 0;
 
     this.engine.party.forEach(u => {
       // Learn skills (starters + random unlocks)
@@ -568,14 +570,14 @@ class Game {
       const isSupport = tags.includes('support');
       const isCommand = tags.includes('command');
       const isElite = tags.includes('elite');
-      u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 4.9 : isRanged ? 3.85 : 2.1));
-      u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 2.6 : isMelee ? 2.08 : 1.04));
-      u.bonusHeal = Math.floor(diff * (isSupport ? 3.36 : 0.84));
-      u.bonusPoison = Math.floor(diff * (isRanged ? 1.05 : isSupport ? 0.7 : 0));
+      u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 6.5 : isRanged ? 5.1 : 2.8));
+      u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 3.5 : isMelee ? 2.8 : 1.4));
+      u.bonusHeal = Math.floor(diff * (isSupport ? 4.5 : 1.1));
+      u.bonusPoison = Math.floor(diff * (isRanged ? 1.4 : isSupport ? 0.95 : 0));
 
       // Equip items — fill all slots with appropriate rarity (tuned down for testing)
-      // Epic budget: march 8 = 3 epics per team, march 6 = 1 per team
-      const rarities = diff >= 7 ? ['uncommon', 'rare'] : diff >= 4 ? ['common', 'uncommon'] : ['common'];
+      // Epic budget: slot 5+ = 3 epics per team, slot 4 = 1 per team
+      const rarities = diff >= 5 ? ['uncommon', 'rare'] : diff >= 3 ? ['common', 'uncommon'] : ['common'];
       for (const slot of ['weapon', 'armor', 'trinket']) {
         for (let si = 0; si < u.equipment[slot].length; si++) {
           // Check if this slot should get an epic
@@ -605,13 +607,15 @@ class Game {
     const event = EVENT_DATA.find(e => e.id === test.encounter);
     if (event) {
       // Set up minimal map state so we can return to map after event
-      this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
+      this.route = generateRoute();
+      if (test.region) this.route[this.difficulty - 1] = test.region;
+      this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds, this.currentRegionId());
       this.ui.currentNodeId = null;
       this.ui.difficulty = this.difficulty;
       this.ui._mapTerrainSeed = Math.floor(Math.random() * 100000);
 
       const mapScreen = document.getElementById('map-screen');
-      const theme = MARCH_THEMES[this.difficulty] || { theme: 'forest' };
+      const theme = this.currentRegion();
       mapScreen.dataset.theme = theme.theme;
 
       // Directly show the event
@@ -1162,6 +1166,7 @@ class Game {
         activeBoons: [...(this.activeBoons || [])],
         selectedPartyClasses: [...(this.selectedPartyClasses || [])],
         currentRunRenown: this.currentRunRenown || 0,
+        route: [...(this.route || [])],
         recentBosses: [...(this.recentBosses || [])],
         usedRunEventIds: [...(this.usedRunEventIds || [])],
         morale: this.engine.morale,
@@ -1214,6 +1219,11 @@ class Game {
       this.activeBoons = data.activeBoons || [];
       this.selectedPartyClasses = data.selectedPartyClasses || [];
       this.currentRunRenown = data.currentRunRenown || 0;
+      // Old saves carry no route (and could sit past the new final march):
+      // build one and clamp so the run still ends properly.
+      this.difficulty = Math.min(this.difficulty, typeof FINAL_MARCH !== 'undefined' ? FINAL_MARCH : 8);
+      this.engine.difficulty = this.difficulty;
+      this.route = (data.route && data.route.length) ? data.route : generateRoute();
       this.recentBosses = data.recentBosses || [];
       this.usedRunEventIds = new Set(data.usedRunEventIds || []);
       this._leaderboardSaved = false;
@@ -1292,7 +1302,7 @@ class Game {
 
       const theme = this.ui._inHiddenMarch && this.ui._hiddenMarchData
         ? { theme: this.ui._hiddenMarchData.theme || 'forest' }
-        : (MARCH_THEMES[this.difficulty] || { theme: 'forest' });
+        : this.currentRegion();
       document.getElementById('map-screen').dataset.theme = theme.theme;
 
       this.ui.showMapScreen();
@@ -1956,15 +1966,13 @@ class Game {
     // condition OR on any *higher* rung already being unlocked (backfill, so a
     // player who jumps deep is never missing an earlier class).
     //
-    // There are only 8 marches (MARCH_THEMES), so nothing may gate on March 9 —
-    // the old Cataphract condition (currentDiff >= 9) was unreachable and it
-    // survived only via the Vestalis cascade.
+    // Runs are FINAL_MARCH (6) marches long — nothing may gate past March 6.
     const runsWon = s.runsCompleted || 0;
     const unlockLadder = [
-      { key: 'class_signifer',     name: 'Signifer',     met: currentDiff >= 3 },
-      { key: 'class_equites',      name: 'Equites',      met: currentDiff >= 5 },
-      { key: 'class_ballistarius', name: 'Ballistarius', met: currentDiff >= 7 },
-      { key: 'class_vestalis',     name: 'Vestalis',     met: currentDiff >= 8 },
+      { key: 'class_signifer',     name: 'Signifer',     met: currentDiff >= 2 },
+      { key: 'class_equites',      name: 'Equites',      met: currentDiff >= 4 },
+      { key: 'class_ballistarius', name: 'Ballistarius', met: currentDiff >= 5 },
+      { key: 'class_vestalis',     name: 'Vestalis',     met: currentDiff >= 6 },
       // Completing a run means defeating the final march boss. Retiring home
       // does not count — see trackRunEnd().
       { key: 'class_cataphract',   name: 'Cataphract',   met: runsWon >= 1 || !!a.boss_spirits_defeated },
@@ -2228,10 +2236,10 @@ class Game {
       { title: 'PROGRESSION', defs: [
         { key: 'first_boss_kill', name: "First Blood", desc: "Defeat your first boss.", progress: () => (s.bossesKilled || 0) >= 1 ? 'Done' : '0/1' },
         { key: 'first_elite_kill', name: "Elite Slayer", desc: "Defeat your first elite enemy.", progress: () => { const ids = ['oak_shield','wicker_man','ironbound_champion']; return ids.some(id => (s.enemiesKilled[id]||0)>=1) ? 'Done' : '0/1'; } },
-        { key: 'class_signifer', name: "Deeper Into The Forest", desc: "Reach March 3.", progress: () => (s.highestDifficulty||1) >= 3 ? 'Done' : `March ${s.highestDifficulty||1}/3` },
-        { key: 'class_equites', name: "Veteran's March", desc: "Reach March 5.", progress: () => (s.highestDifficulty||1) >= 5 ? 'Done' : `March ${s.highestDifficulty||1}/5` },
-        { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 7.", progress: () => (s.highestDifficulty||1) >= 7 ? 'Done' : `March ${s.highestDifficulty||1}/7` },
-        { key: 'class_vestalis', name: "The Threshold", desc: "Reach March 8.", progress: () => (s.highestDifficulty||1) >= 8 ? 'Done' : `March ${s.highestDifficulty||1}/8` },
+        { key: 'class_signifer', name: "Deeper Into The Forest", desc: "Reach March 2.", progress: () => (s.highestDifficulty||1) >= 2 ? 'Done' : `March ${s.highestDifficulty||1}/2` },
+        { key: 'class_equites', name: "Veteran's March", desc: "Reach March 4.", progress: () => (s.highestDifficulty||1) >= 4 ? 'Done' : `March ${s.highestDifficulty||1}/4` },
+        { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 5.", progress: () => (s.highestDifficulty||1) >= 5 ? 'Done' : `March ${s.highestDifficulty||1}/5` },
+        { key: 'class_vestalis', name: "The Threshold", desc: "Reach March 6.", progress: () => (s.highestDifficulty||1) >= 6 ? 'Done' : `March ${s.highestDifficulty||1}/6` },
         { key: 'class_cataphract', name: "Into The Darkness", desc: "Complete a full run.", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : `${s.runsCompleted||0}/1 runs` },
         { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Complete two full runs.", progress: () => (s.runsCompleted||0) >= 2 ? 'Done' : `${s.runsCompleted||0}/2 runs` },
         { key: 'class_arcania', name: "Through The Fog", desc: "Defeat the Fog Weaver.", progress: () => (s.enemiesKilled['fog_weaver']||0) >= 1 ? 'Done' : '0/1' },
@@ -2319,10 +2327,25 @@ class Game {
   }
 
   // --- Run management ---
+  // The run's route: one region id per march slot. Fixed bookends, randomized
+  // middle — see generateRoute() in data.js.
+  currentRegionId() {
+    if (!this.route || !this.route.length) this.route = generateRoute(this.stats && this.stats.lastRoute);
+    return this.route[Math.min(this.route.length - 1, Math.max(0, (this.difficulty || 1) - 1))];
+  }
+
+  currentRegion() {
+    const region = typeof REGIONS !== 'undefined' ? REGIONS[this.currentRegionId()] : null;
+    return region || (MARCH_THEMES[this.difficulty] || { name: `March ${this.difficulty}`, subtitle: 'Deeper into the forest.', theme: 'forest' });
+  }
+
   startNewRun() {
     this.clearSavedRun();
     this.difficulty = 1;
     this.marchCount = 0;
+    this.route = generateRoute(this.stats.lastRoute);
+    this.stats.lastRoute = [...this.route];
+    this.saveStats();
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
     this._leaderboardSaved = false;
@@ -2363,7 +2386,7 @@ class Game {
 
     this.startGameplayMusic();
 
-    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
+    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds, this.currentRegionId());
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
     this.ui._mapTerrainSeed = Math.floor(Math.random() * 100000);
@@ -2382,7 +2405,7 @@ class Game {
 
     this.resumeGameplayMusic();
 
-    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds);
+    this.ui.mapNodes = generateMap(this.difficulty, this.recentBosses, this.usedRunEventIds, this.currentRegionId());
     this.ui.currentNodeId = null;
     this.ui.difficulty = this.difficulty;
     this.ui._mapTerrainSeed = Math.floor(Math.random() * 100000);
@@ -2390,7 +2413,7 @@ class Game {
   }
 
   showMarchTitleCard() {
-    const theme = MARCH_THEMES[this.difficulty] || { name: `March ${this.difficulty}`, subtitle: 'Deeper into the forest.', theme: 'forest' };
+    const theme = this.currentRegion();
 
     // Apply theme to map screen
     const mapScreen = document.getElementById('map-screen');
