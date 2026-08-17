@@ -1916,7 +1916,9 @@ class Game {
         this.addNotification('Achievement: A hero equipped ONLY epic items!');
       }
 
-      const allOnlyEpics = this.engine.party.every(u => {
+      // Guard the every(): an empty party (title screen, pre-run) is
+      // vacuously "all epic" and fired this on fresh profiles.
+      const allOnlyEpics = this.engine.party.length > 0 && this.engine.party.every(u => {
         let total = 0, epics = 0;
         for (const slot of ['weapon', 'armor', 'trinket']) {
           u.equipment[slot].forEach(id => {
