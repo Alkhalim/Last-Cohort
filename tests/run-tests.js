@@ -1309,6 +1309,17 @@ section('2.9 — Brief Respite shows full skill info');
     assert(cards >= 2, 'respite upgrade cards still show only the delta');
     assert(/respite-skill-cost/.test(ui), 'respite upgrade cards omit the dice cost');
   });
+
+  check('map fog: outermost visible layer is typeless shadows', () => {
+    assert(/typedRange = 2/.test(ui), 'typedRange gone or changed from 2');
+    assert(/visibleRange = 3/.test(ui), 'visibleRange gone or changed from 3');
+    const shadowBlock = ui.match(/if \(isShadow\(node\)\) \{([\s\S]*?)continue;/);
+    assert(shadowBlock, 'shadow-node render branch missing');
+    assert(!/type-\$\{node\.type\}/.test(shadowBlock[1]),
+      'shadow nodes leak their type class');
+    assert(!/iconImg|map-icons/.test(shadowBlock[1]),
+      'shadow nodes leak their type icon');
+  });
 }
 
 // ============================================================

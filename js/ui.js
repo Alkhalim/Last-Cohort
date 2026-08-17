@@ -2349,10 +2349,14 @@ class GameUI {
     // If no current node, the start node (depth 0) is reachable
     const startReachable = this.currentNodeId === null;
 
-    // Fog of war: only show nodes within 2 depths of current position, or visited
+    // Fog of war: nodes up to visibleRange depths ahead are on the map, but
+    // only typedRange depths carry their type — the outermost visible layer
+    // renders as shadows, so the player knows nodes exist but not what they are.
     const currentNode = this.currentNodeId !== null ? this.mapNodes.find(n => n.id === this.currentNodeId) : null;
     const currentDepth = currentNode ? currentNode.depth : 0;
     const visibleRange = 3;
+    const typedRange = 2;
+    const isShadow = (node) => !node.visited && node.depth > currentDepth + typedRange;
 
     // Compute all nodes reachable via forward paths from current position
     const futureReachable = new Set();
@@ -3084,6 +3088,17 @@ class GameUI {
       const isCurrent = node.id === this.currentNodeId;
       const isUnreachable = !node.visited && !futureReachable.has(node.id);
       const isFuture = !node.visited && !isReachableNode && !isCurrent && !isUnreachable;
+
+      // Shadow layer: existence only — no type class (CSS would leak it),
+      // no icon, no threat information.
+      if (isShadow(node)) {
+        el.className = `map-node shadow${isUnreachable ? ' unreachable' : ''}`;
+        el.style.left = (pos.x - 32) + 'px';
+        el.style.top = (pos.y - 32) + 'px';
+        el.innerHTML = '<span class="map-node-icon map-node-shadow-mark">?</span>';
+        nodesLayer.appendChild(el);
+        continue;
+      }
 
       el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''}${isUnreachable ? ' unreachable' : ''}${isFuture ? ' future' : ''} type-${node.type}`;
       el.style.left = (pos.x - 32) + 'px';
