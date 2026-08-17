@@ -678,9 +678,12 @@ const REGIONS = {
   threshold: {
     name: 'The Threshold', subtitle: 'Between worlds. The spirits await.',
     theme: 'threshold', music: 'assets/Spirits at the Teutoburg Gate.mp3',
+    // Threshold-native only — the drowned encounters belong to the Drowned
+    // Vale now that it is its own region.
     introKey: '10', contentDiff: 8,
     pool: ['Threshold Guardians', 'The Last Veil', 'Ghost Pack', 'Woven Doom',
-           "The Elder's Court", 'Sunken Court', 'Drowned Wardens', "Warden's Stand"],
+           "The Elder's Court", 'The Severed Thread', 'Wolves Between Worlds',
+           'Court of Whispers'],
   },
 };
 

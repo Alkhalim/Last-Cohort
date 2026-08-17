@@ -105,7 +105,10 @@ const RAW_ENCOUNTERS = {
       { "name": "Threshold Guardians", "minDifficulty": 8, "enemies": ["fate_weaver", "death_champion", "spirit_wolf", "spirit_wolf"], "intro": "At the boundary between worlds, a fate weaver twists destiny while spectral wolves circle." },
       { "name": "The Last Veil", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "elder_seer", "heartwood_sentinel"], "intro": "Two fate weavers unravel the threads of reality. An elder seer and a sentinel guard the final threshold." },
       { "name": "Ghost Pack", "minDifficulty": 8, "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "forest_wraith"], "intro": "A pack of spectral wolves hunts between worlds. A forest spirit drives them forward." },
-      { "name": "Woven Doom", "minDifficulty": 8, "enemies": ["fate_weaver", "spirit_wolf", "death_champion", "blood_druid"], "intro": "Fate itself conspires against you. The threshold's guardians are woven from death and prophecy." }
+      { "name": "Woven Doom", "minDifficulty": 8, "enemies": ["fate_weaver", "spirit_wolf", "death_champion", "blood_druid"], "intro": "Fate itself conspires against you. The threshold's guardians are woven from death and prophecy." },
+      { "name": "The Severed Thread", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "spirit_wolf", "spirit_wolf"], "intro": "Two fate weavers hold a glowing thread between them — yours. A wolf of mist circles, waiting for the cut." },
+      { "name": "Wolves Between Worlds", "minDifficulty": 8, "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "elder_seer"], "intro": "Spectral wolves flicker in and out of being. An elder seer speaks, and the pack obeys." },
+      { "name": "Court of Whispers", "minDifficulty": 8, "enemies": ["elder_seer", "elder_seer", "spirit_wolf", "spirit_wolf"], "intro": "Two ancient seers whisper across the veil. Spectral wolves pad silently at the edge of hearing." }
     ]
   },
   "marchIntroEncounters": {

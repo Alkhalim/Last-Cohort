@@ -525,8 +525,13 @@ druid (was the 64% wipe machine; now 93%). Heart Guardians → the trio of
 death_champion + wraith + druid (was 4 bodies at 75%, half the region's
 wipes). Boss gates: Bone Speaker / Fog Weaver / Leech Mound content 4 → 5
 (slot gate 3 → 4), so slot 3 draws the gentler roster. Threshold pool grown
-from 5 to 8 with the drowned-ruins encounters (sunken halls at the
-threshold), diluting the Elder's Court draw.
+from 5 to 8 to dilute the Elder's Court draw — with three NEW
+threshold-native encounters (The Severed Thread, Wolves Between Worlds,
+Court of Whispers; fate weavers / spirit wolves / elder seers), after an
+owner correction: the drowned encounters stay **exclusive to the Drowned
+Vale** now that it is its own region. (The warden still fights in
+old-forest-flavored encounters like Forest Fortress — enemies may travel,
+encounters may not.) Threshold march completion with the native pool: 51%.
 
 **Story bosses** re-anchored after the scaling cuts: Arminius 95 HP / Blade
 18; Varus 145 HP, Lash 19 @ 0.45; Spirits 56/50 HP, Phantom Blade 13,
