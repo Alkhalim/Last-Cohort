@@ -621,3 +621,57 @@ Measured after the pass: curve **99 / 96 / 78 / 75 / 60 / 50**, full-run
 spreads widened a little — old forest (82–90) is the gentle mid draw vs
 blood grove (68–70), haunted (67) vs heart (52). Regions now have
 difficulty personalities; tighten only if draw-luck feels unfair in play.
+
+---
+
+# Enemy uniqueness pass + spread tightening (2026-08-17)
+
+## 16. Every enemy earns a distinct identity; sibling regions within ~8 points
+
+**Moss-Grown Idol redesigned** (owner: same role, own twist — not a warden
+clone). Two new engine mechanics landed:
+- **`rampDamage`** — the idol *wakes*: +3 damage per round it stands,
+  applied identically in the attack, the intent badge, and the HP-bar
+  forecast (a shared-path test guards this). 38 HP, speed 0, no aura;
+  Waking Blow / Gaze of the Old God (morale) / Stone Sleep (block+heal).
+  The fight it creates is a race, not a slog.
+- **`ai: 'carrion'`** — targets the most wounded soldier. Given to
+  raven_caller and shadow_stalker (whose description always promised it).
+  Tooltips explain both passives, and bully targeting too.
+
+**Roster differentiation** (data-only, engine already supported it):
+- The three defensive anchors now play differently: **warden** = team-wide
+  block turtle with aura; **heartwood** = self-sustain fortress (new
+  Regrow, heals 7); **idol** = escalation clock.
+- **forest_wraith**: Spectral Touch pierces Block (ghost hands through
+  armor) — the backline anti-block threat.
+- **ironhide_boar**: Iron Charge pierces Block ("shatters shields") — the
+  melee anti-block threat.
+- **rot_spawn** is the walking bomb: weaker alive (slam 6, spore poison 1),
+  deathPoison 2 → 3.
+- **§9 poison-intuition diet applied**: war_hound Hamstring and
+  elder_seer's Curse of Weakness now *weaken* (damage debuff) instead of
+  poisoning; runecarver's Curse Rune drops its poison. Weaken debuffs are
+  cleared between fights via computeEquipmentStats in afterEncounter —
+  which also fixes a pre-existing leak where the Fog Illusion's whisper
+  permanently drained damage across the run.
+
+**Spread tightening** (owner request). Per-cell analysis showed all three
+mid regions' encounters at 92–100% — the spread lived in tiny per-fight
+deltas compounding. Calibrated: idol HP 30→38 (it must survive to ramp),
+wicker_man turnDamageAll 2→1 (blood grove's attrition engine), ironhide
+gore 7→6, dryad arrow 6→5, and the heart's two 4-body stacks slimmed.
+
+Measured result (n=110 per march cell):
+
+```
+slot 3:  old forest 82 / blood grove 79 / drowned 76   (spread 6)
+slot 4:  old forest 77 / blood grove 79 / drowned 70   (spread 9)
+slot 5:  haunted 70 / heart 68                          (spread 2)
+curve: 99 / 97 / 79 / 75 / 69 / 49 — full-run ≈ 19%
+```
+
+The finale keeps its 20-point drop (the Threshold should be the peak).
+Run completion drifted 16→19% with the tightening; if that reads too
+generous after play, the single cleanest pull-back is the post-combat
+heal (`4 + slot` → `3 + slot`). 115 tests passing.

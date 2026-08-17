@@ -1284,6 +1284,34 @@ section('2.11 — six-march run structure');
     }
   });
 
+  check('the Moss-Grown Idol is its own design, not a warden clone', () => {
+    const idol = ctx.__m ? null : null; // resolved below via RAW_ENEMIES in this ctx
+    const E = vm.runInContext('RAW_ENEMIES', ctx);
+    const moss = E.moss_idol, warden = E.warden_of_the_deep;
+    assert(moss, 'moss_idol missing');
+    assert(moss.rampDamage >= 2, 'idol lost its wake-up ramp');
+    assert(!moss.aura, 'idol should not carry a damage-reduction aura (warden/heartwood territory)');
+    const mossActions = moss.actions.map(a => a.name).join(',');
+    const wardenActions = warden.actions.map(a => a.name).join(',');
+    assert(mossActions !== wardenActions, 'idol still shares the warden moveset');
+  });
+
+  check('ramping damage reaches both the attack and the forecast', () => {
+    const combat = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+    const rampSites = (combat.match(/rampDamage/g) || []).length;
+    assert(rampSites >= 3, 'rampDamage must be applied in enemyAct, predictEnemyDamage and rollEnemyIntents');
+    assert(/predictEnemyDamage[\s\S]{0,400}rampDamage/.test(combat),
+      'forecast does not include the ramp — intent badge would lie');
+  });
+
+  check('carrion hunters target the wounded', () => {
+    const E = vm.runInContext('RAW_ENEMIES', ctx);
+    assertEqual(E.raven_caller.ai, 'carrion', 'raven_caller lost its carrion instinct');
+    assertEqual(E.shadow_stalker.ai, 'carrion', 'shadow_stalker description promises weakest-target hunting');
+    const combat = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+    assert(/carrion/.test(combat), 'combat.js has no carrion targeting branch');
+  });
+
   check('every threat-tier encounter belongs to some region pool', () => {
     // Curation replaced the difficulty filters — an encounter in no pool is
     // dead content. (The legacy `templates` array is exempt.)

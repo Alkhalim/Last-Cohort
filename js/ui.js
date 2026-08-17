@@ -598,6 +598,9 @@ class GameUI {
         const passives = [];
         if (enemy.woundedDoubleAttack) passives.push('Passive: attacks twice when below 50% HP.');
         if (enemy.berserkRage) passives.push('Passive: deals bonus damage based on missing HP.');
+        if (enemy.rampDamage) passives.push(`Passive: wakes each round — attacks gain +${enemy.rampDamage} damage per round it stands.`);
+        if (enemy.ai === 'carrion') passives.push('Passive: always attacks the most wounded soldier.');
+        if (enemy.ai === 'bully') passives.push('Passive: always attacks the healthiest soldier.');
         if (enemy.deathPoison) passives.push(`On death: applies ${enemy.deathPoison} Poison to all soldiers.`);
         if (enemy.deathDamageEnemy) passives.push(`On death: deals ${enemy.deathDamageEnemy} damage to nearby enemies.`);
         if (enemy.deathMoraleMultiplier) passives.push(`Killing this enemy restores ${enemy.deathMoraleMultiplier}x morale.`);

@@ -110,9 +110,9 @@ const RAW_ENCOUNTERS = {
       { "name": "The Flooded Crossing", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "mire_leech", "mire_leech", "plague_bearer"], "intro": "The ford is gone \u2014 black water covers the path, and things move beneath it." },
       { "name": "Black Water Rising", "minDifficulty": 8, "enemies": ["mire_leech", "mire_leech", "mire_leech", "elder_seer"], "intro": "The water climbs as the seer chants. Leeches pour over the banks in a living tide." },
       { "name": "The Drowned Watch", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "shadow_stalker"], "intro": "Two wardens rise from the sunken hall, water sheeting from their scales. A shadow slips between them." },
-      { "name": "The Pulsing Grove", "minDifficulty": 7, "enemies": ["heartwood_sentinel", "rot_spawn", "rot_spawn", "dryad_huntress"], "intro": "The grove breathes. Fungal growths swell and burst in rhythm with the sentinel\u2019s heart." },
+      { "name": "The Pulsing Grove", "minDifficulty": 7, "enemies": ["heartwood_sentinel", "rot_spawn", "dryad_huntress"], "intro": "The grove breathes. Fungal growths swell and burst in rhythm with the sentinel\u2019s heart." },
       { "name": "Thorn Sisters", "minDifficulty": 7, "enemies": ["dryad_huntress", "dryad_huntress", "dryad_huntress"], "intro": "Three sisters draw their bows as one. The canopy hides them; the thorns do not miss." },
-      { "name": "Heartrot", "minDifficulty": 7, "enemies": ["rot_spawn", "rot_spawn", "dryad_huntress", "forest_wraith"], "intro": "The rot has reached the heart. What the fungus takes, the spirits keep." },
+      { "name": "Heartrot", "minDifficulty": 7, "enemies": ["rot_spawn", "dryad_huntress", "forest_wraith"], "intro": "The rot has reached the heart. What the fungus takes, the spirits keep." },
       { "name": "Court of Whispers", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "death_champion", "spirit_wolf"], "intro": "The weavers hold court across the veil. Death itself stands in attendance." }
     ]
   },

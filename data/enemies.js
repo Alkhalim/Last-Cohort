@@ -96,10 +96,10 @@ const RAW_ENEMIES = {
     "maxHp": 30, "row": "back", "damage": [2, 4], "speed": 0, "xpValue": 10,
     "description": "A towering effigy of woven branches, set ablaze by Germanic priests. The smoke chokes the air and shields nearby warriors. Periodically erupts in a gout of flame.",
     "ai": "aggressive", "isElite": true,
-    "aura": { "damageReduction": 2 }, "turnDamageAll": 2, "deathDamageEnemy": 6,
+    "aura": { "damageReduction": 2 }, "turnDamageAll": 1, "deathDamageEnemy": 6,
     "actions": [
       { "name": "Burning Effigy", "damage": 0, "chance": 0.4, "text": "burns — smoke shields nearby warriors", "blockAllEnemies": 3 },
-      { "name": "Flame Gout", "damage": 4, "chance": 0.35, "text": "erupts in a gout of flame", "aoe": true, "cooldown": 2 },
+      { "name": "Flame Gout", "damage": 3, "chance": 0.35, "text": "erupts in a gout of flame", "aoe": true, "cooldown": 2 },
       { "name": "Ember Spit", "damage": 3, "poisonTarget": 2, "chance": 0.25, "text": "spits burning embers at a soldier", "ignoreRow": true }
     ]
   },
@@ -224,7 +224,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Rune Ward", "damage": 0, "chance": 0.35, "text": "carves a protective rune — all warriors brace", "blockAllEnemies": 5 },
       { "name": "Rune Bolt", "damage": 5, "chance": 0.25, "text": "hurls a rune-charged bolt of energy", "ignoreRow": true },
-      { "name": "Curse Rune", "damage": 2, "morale": -4, "poisonTarget": 2, "chance": 0.2, "text": "traces a curse rune — dread and poison seep in", "ignoreRow": true },
+      { "name": "Curse Rune", "damage": 3, "morale": -4, "chance": 0.2, "text": "traces a curse rune — dread seeps into the bones", "ignoreRow": true },
       { "name": "Rune of Binding", "damage": 0, "chance": 0.2, "text": "carves a binding rune — all dice weaken", "cooldown": 2, "runeBinding": true }
     ]
   },
@@ -250,7 +250,7 @@ const RAW_ENEMIES = {
     "ai": "aggressive",
     "actions": [
       { "name": "Savage Bite", "damage": 5, "chance": 0.5, "text": "lunges with armored jaws" },
-      { "name": "Hamstring", "damage": 4, "poisonTarget": 2, "chance": 0.3, "text": "tears at the legs, leaving a festering wound" },
+      { "name": "Hamstring", "damage": 4, "weakenTarget": 1, "chance": 0.3, "text": "tears at the legs — the soldier's next blows fall weaker" },
       { "name": "Pack Howl", "damage": 0, "morale": -3, "chance": 0.2, "text": "howls — more answer from the dark" }
     ]
   },
@@ -454,7 +454,7 @@ const RAW_ENEMIES = {
     "id": "shadow_stalker", "name": "Shadow Stalker",
     "maxHp": 16, "row": "back", "damage": [5, 9], "speed": 3, "xpValue": 7,
     "minDifficulty": 4,
-    "description": "A forest assassin who strikes from the shadows. Fast, fragile, and deadly.",
+    "description": "A forest assassin who strikes from the shadows — always at whoever is closest to falling.", "ai": "carrion",
     "actions": [
       { "name": "Shadow Strike", "damage": 8, "chance": 0.5, "text": "lunges from the shadows at the weakest soldier", "ignoreRow": true },
       { "name": "Vanish", "damage": 0, "chance": 0.3, "text": "melts into the darkness", "blockSelf": 6 },
@@ -490,23 +490,22 @@ const RAW_ENEMIES = {
   },
   "moss_idol": {
     "id": "moss_idol", "name": "Moss-Grown Idol",
-    "maxHp": 28, "row": "front", "damage": [6, 11], "speed": 1, "xpValue": 8,
+    "maxHp": 38, "row": "front", "damage": [4, 14], "speed": 0, "xpValue": 9,
     "minDifficulty": 5,
-    "description": "An ancient stone idol of a forgotten god, sunk deep in moss and lichen. The old rites still move it. Reduces damage to all nearby enemies.",
-    "ai": "defensive",
-    "aura": { "damageReduction": 2 },
-    "startWithSelfBlock": true,
+    "description": "An ancient stone idol of a forgotten god, sunk deep in moss. It is waking — every round of battle its blows land harder. Fell it before the old god opens its eyes.",
+    "rampDamage": 3,
+    "startBlock": 8,
     "actions": [
-      { "name": "Stone Fist", "damage": 7, "chance": 0.4, "text": "swings a fist of ancient stone" },
-      { "name": "Lichen Ward", "damage": 0, "chance": 0.35, "text": "the old runes glow \u2014 moss hardens like iron across all allies", "blockAllEnemies": 4, "blockSelf": 6 },
-      { "name": "Crushing Grip", "damage": 5, "morale": -3, "chance": 0.25, "text": "seizes a soldier in a grip of ancient stone" }
+      { "name": "Waking Blow", "damage": 5, "chance": 0.55, "text": "grinds forward — a fist of ancient stone falls" },
+      { "name": "Gaze of the Old God", "damage": 0, "morale": -6, "chance": 0.25, "text": "its eyes open a fraction — dread pours out", "cooldown": 1 },
+      { "name": "Stone Sleep", "damage": 0, "chance": 0.2, "text": "settles into stillness — moss knits over the cracks", "blockSelf": 5, "healSelf": 4 }
     ]
   },
   "raven_caller": {
     "id": "raven_caller", "name": "Curse Raven",
     "maxHp": 14, "row": "back", "damage": [3, 6], "speed": 2, "xpValue": 7,
     "minDifficulty": 5,
-    "description": "A monstrous raven gorged on battlefield dead. Intelligent and cruel, it pecks at eyes and shreds nerves with its screech.",
+    "description": "A monstrous raven gorged on battlefield dead. It circles the wounded — whoever bleeds most is next.", "ai": "carrion",
     "actions": [
       { "name": "Raven Swarm", "damage": 4, "morale": -3, "chance": 0.4, "text": "sends a flock of ravens at a soldier's face", "ignoreRow": true },
       { "name": "Eye Peck", "damage": 6, "chance": 0.3, "text": "a raven dives for the eyes", "ignoreRow": true },
@@ -532,8 +531,8 @@ const RAW_ENEMIES = {
     "description": "A massive boar with hide like iron plate. Its charge shatters shields and bones alike.",
     "ai": "aggressive",
     "actions": [
-      { "name": "Tusk Gore", "damage": 7, "chance": 0.4, "text": "gores with iron-hard tusks" },
-      { "name": "Iron Charge", "damage": 5, "chance": 0.35, "text": "charges through the line", "aoe": true, "cooldown": 1 },
+      { "name": "Tusk Gore", "damage": 6, "chance": 0.4, "text": "gores with iron-hard tusks" },
+      { "name": "Iron Charge", "damage": 4, "chance": 0.35, "text": "charges through the line — shields splinter", "aoe": true, "pierceBlock": true, "cooldown": 1 },
       { "name": "Stomp", "damage": 9, "chance": 0.25, "text": "tramples a soldier underfoot" }
     ]
   },
@@ -543,7 +542,7 @@ const RAW_ENEMIES = {
     "minDifficulty": 7,
     "description": "A twisted forest spirit, half-tree, half-phantom. Its touch drains will and warmth. The deeper the forest, the more of them there are.",
     "actions": [
-      { "name": "Spectral Touch", "damage": 6, "morale": -4, "chance": 0.4, "text": "reaches through flesh with ghostly hands", "ignoreRow": true },
+      { "name": "Spectral Touch", "damage": 5, "morale": -4, "chance": 0.4, "text": "reaches through armor with ghostly hands", "ignoreRow": true, "pierceBlock": true },
       { "name": "Wail", "damage": 0, "morale": -6, "chance": 0.3, "text": "lets loose a wail that freezes the blood", "cooldown": 1 },
       { "name": "Life Drain", "damage": 8, "chance": 0.3, "text": "drains the warmth from a soldier", "ignoreRow": true }
     ]
@@ -554,7 +553,7 @@ const RAW_ENEMIES = {
     "minDifficulty": 7,
     "description": "A twisted forest nymph with bark-like skin and thorn-tipped arrows. She strikes from the canopy, her shots laced with the forest's venom.",
     "actions": [
-      { "name": "Thorn Arrow", "damage": 6, "poisonTarget": 2, "chance": 0.4, "text": "looses a thorn-tipped arrow", "ignoreRow": true },
+      { "name": "Thorn Arrow", "damage": 5, "poisonTarget": 2, "chance": 0.4, "text": "looses a thorn-tipped arrow", "ignoreRow": true },
       { "name": "Briar Volley", "damage": 4, "chance": 0.3, "text": "sends a volley of barbed thorns", "aoe": true, "cooldown": 2 },
       { "name": "Entangling Shot", "damage": 3, "morale": -3, "chance": 0.3, "text": "fires a root-wrapped arrow that binds and terrifies", "ignoreRow": true }
     ]
@@ -582,7 +581,7 @@ const RAW_ENEMIES = {
     "actions": [
       { "name": "Doom Word", "damage": 5, "morale": -5, "chance": 0.35, "text": "speaks a word of doom", "ignoreRow": true },
       { "name": "Fate Unraveled", "damage": 0, "morale": -8, "chance": 0.25, "text": "unravels fate itself — your men despair", "cooldown": 2 },
-      { "name": "Curse of Weakness", "damage": 3, "poisonTarget": 3, "chance": 0.25, "text": "curses a soldier with wasting sickness", "ignoreRow": true },
+      { "name": "Curse of Weakness", "damage": 3, "weakenTarget": 2, "chance": 0.25, "text": "curses a soldier — their strength drains away", "ignoreRow": true },
       { "name": "Spirit Ward", "damage": 0, "chance": 0.15, "text": "weaves a ward over her allies", "blockAllEnemies": 6 }
     ]
   },
@@ -637,12 +636,12 @@ const RAW_ENEMIES = {
     "id": "rot_spawn", "name": "Rot Spawn",
     "maxHp": 20, "row": "front", "damage": [5, 9], "speed": 1, "xpValue": 8,
     "minDifficulty": 7,
-    "description": "A mass of fungal growth shaped into a shambling form. It explodes on death, spreading poison to all soldiers.",
+    "description": "A mass of fungal growth shaped into a shambling form. Weak while it walks — but it bursts on death, and the spore cloud poisons every soldier.",
     "ai": "aggressive",
-    "deathPoison": 2,
+    "deathPoison": 3,
     "actions": [
-      { "name": "Fungal Slam", "damage": 7, "chance": 0.4, "text": "slams with a fungus-encrusted fist" },
-      { "name": "Spore Burst", "damage": 4, "poisonTarget": 2, "chance": 0.35, "text": "erupts in a cloud of toxic spores", "aoe": true, "cooldown": 2 },
+      { "name": "Fungal Slam", "damage": 6, "chance": 0.4, "text": "slams with a fungus-encrusted fist" },
+      { "name": "Spore Burst", "damage": 3, "poisonTarget": 1, "chance": 0.35, "text": "erupts in a cloud of toxic spores", "aoe": true, "cooldown": 2 },
       { "name": "Root Lash", "damage": 6, "morale": -3, "chance": 0.25, "text": "whips with tendrils of rotting root" }
     ]
   },
@@ -655,10 +654,11 @@ const RAW_ENEMIES = {
     "aura": { "damageReduction": 3 },
     "startWithSelfBlock": true,
     "actions": [
-      { "name": "Ironbark Slam", "damage": 8, "chance": 0.35, "text": "slams with an arm of living wood" },
-      { "name": "Root Cage", "damage": 0, "chance": 0.3, "text": "roots erupt — all warriors brace behind bark", "blockAllEnemies": 5, "blockSelf": 8 },
-      { "name": "Ancient Wrath", "damage": 6, "chance": 0.2, "text": "the ground splits with fury", "aoe": true, "cooldown": 2 },
-      { "name": "Entombing Roots", "damage": 5, "morale": -4, "chance": 0.15, "text": "roots wrap around a soldier, crushing and terrifying", "ignoreRow": true }
+      { "name": "Ironbark Slam", "damage": 8, "chance": 0.3, "text": "slams with an arm of living wood" },
+      { "name": "Root Cage", "damage": 0, "chance": 0.25, "text": "roots erupt — all warriors brace behind bark", "blockAllEnemies": 5, "blockSelf": 8 },
+      { "name": "Regrow", "damage": 0, "chance": 0.2, "text": "sap floods the wound — living wood closes over it", "healSelf": 7 },
+      { "name": "Ancient Wrath", "damage": 6, "chance": 0.15, "text": "the ground splits with fury", "aoe": true, "cooldown": 2 },
+      { "name": "Entombing Roots", "damage": 5, "morale": -4, "chance": 0.1, "text": "roots wrap around a soldier, crushing and terrifying", "ignoreRow": true }
     ]
   },
 

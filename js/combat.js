@@ -4271,6 +4271,14 @@ class CombatEngine {
         }
       }
       let actionDamage = action.damage || 0;
+      // Ramping enemies hit harder every round they stand
+      if (enemy.rampDamage && actionDamage > 0) {
+        const rampBonus = enemy.rampDamage * Math.max(0, (enemy._rampTurns || 1) - 1);
+        if (rampBonus > 0) {
+          actionDamage += rampBonus;
+          this.addLog(`${enemy.name} wakes further... (+${rampBonus} damage)`);
+        }
+      }
       // Ambush: enemies deal half damage on the surprise round
       if (this._ambushDamageHalved) {
         actionDamage = Math.max(1, Math.floor(actionDamage / 2));
@@ -4720,6 +4728,10 @@ class CombatEngine {
   rollEnemyIntents() {
     this.enemies.forEach(e => {
       if (e.dead || e.isStructure) { e._intent = null; return; }
+      // Ramping enemies (Moss-Grown Idol) wake a step further every round,
+      // whether or not their action lands. Bonus = rampDamage * (rounds - 1),
+      // so the first attack hits at base value.
+      if (e.rampDamage) e._rampTurns = (e._rampTurns || 0) + 1;
       if (e._skipNextAction) { e._intent = { type: 'stunned' }; return; }
 
       const alive = this.party.filter(u => !u.downed);
@@ -4798,6 +4810,10 @@ class CombatEngine {
     if (!action) return 0;
     if (!(action.damage > 0 || action.damageFromBlock)) return 0;
     let dmg = action.damage || 0;
+    // Ramping enemies (Moss-Grown Idol): mirror the bonus the attack will use
+    if (enemy.rampDamage && dmg > 0) {
+      dmg += enemy.rampDamage * Math.max(0, (enemy._rampTurns || 1) - 1);
+    }
 
     // Arcania: Intelligence Network cuts the strongest attack by 40%, once.
     const arcania = this.party.find(u => u.classId === 'arcania' && !u.downed && !u._intNetUsed);
@@ -4874,6 +4890,10 @@ class CombatEngine {
     // Slingers: target highest HP
     if (enemy.ai === 'bully') {
       return alive.reduce((max, u) => u.hp > max.hp ? u : max, alive[0]);
+    }
+    // Carrion hunters (ravens, stalkers): target the most wounded soldier
+    if (enemy.ai === 'carrion') {
+      return alive.reduce((min, u) => u.hp < min.hp ? u : min, alive[0]);
     }
 
     // Ambush spread: avoid targeting the same unit if others haven't been hit
@@ -5226,6 +5246,9 @@ class CombatEngine {
       u.block = 0;
       u.poison = 0;
       u.buffs = [];
+      // Weaken debuffs (Hamstring, Curse of Weakness, Pleading Whisper) cut
+      // into equipDamage; rebuilding from items ends them with the fight.
+      this.computeEquipmentStats(u);
     });
   }
 
