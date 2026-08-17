@@ -472,10 +472,94 @@ pass, including 8 new ones covering route invariants, pool resolution, the
 rotation gating, and story-boss exclusion from slots 1–5.
 
 Still open after this change:
-- `tools/balance-sim.js` / `tune-encounters.js` still assume the 8-march scale
-  and the old pool mapping — realign before the next tuning pass.
 - Progression pacing (XP cadence, loot volume per march) has only the test-scaler
   retune; real-run pacing needs a play-through check.
 - The poison-intuition diet (§9) and remaining variety moves (§10) are unapplied.
 - `MARCH_THEMES` in main.js is now a fallback only; remove once nothing references
   it.
+
+---
+
+# Balance pass on the 6-slot scale (2026-08-17, second session)
+
+## 14. Tools realigned, then the whole game retuned against measured marches
+
+**Tools** (commit c29a0b3): sim-harness exposes the region system;
+balance-sim/tune-encounters draw pools per (slot, region) exactly as map.js
+does, build parties with the retuned scaler, and measure bosses at their real
+slots (story bosses at the final march only). Two modelling bugs mattered:
+the sim never ran `afterEncounter()` between fights (understating march
+completion — it revived at 50% and healed nothing), and the five new haunted
+encounters (authored at minDifficulty 5) leaked into Old Forest and Blood
+Grove through their contentDiff filters. Both fixed; the haunted encounters
+now carry content key 7 and appear only via the haunted pool.
+
+**Method:** per-encounter win% turned out to be nearly useless as a target —
+slot-3 marches completed 54% while every slot-3 encounter measured 95–100%.
+Marches die to attrition and to bosses fought by worn parties. All tuning was
+therefore driven by (slot, region) *march completion* at real march lengths,
+n=110 per cell, with per-cell and wipe-attribution instrumentation to find
+causes (e.g. Heart Guardians alone caused 27 of 54 heart-region wipes and
+cost 57 HP per *won* fight).
+
+**Global knobs** (js/combat.js):
+- Post-combat heal `3 + floor(d/2)` → **`4 + d`** (+2 without support) — the
+  attrition valve.
+- Between-fight revive 50% → **55%** (defiance boon stays 70%).
+- Enemy damage step 0.5 → **0.45**; enemy HP step 0.9 → **0.85**.
+- Damage-reduction auras scale at **half-steps** (`+ceil(diffBonus/2)`) — a
+  flat reduction was silently doubling fight length in warden/heartwood
+  regions (reached −7 at slot 6; now −5).
+- Enemy poison scaling `+diffBonus` → **`+ceil(diffBonus/2)`** — the long-
+  planned F1 soften; slot 6 poison bites at +3 instead of +5.
+
+**Individual enemies** (data/enemies.js): late-wave burst leaders trimmed by
+1 base damage — death_champion Deathblow 8, hollow_centurion Officer's
+Strike 7, hollow_equites Ghost Charge 7, forest_wraith Life Drain 8 /
+Spectral Touch 6, spirit_wolf Phase Strike 7, fate_weaver Doom Thread 7,
+heartwood_sentinel Ironbark Slam 8, warden Tidal Crush 7. blood_druid
+Crimson Ward 4, Hemorrhage poison 2 (she anchored both heart problem cells).
+
+**Encounters** (data/gamedata.js): The Rotting Core → 2 rot_spawn + wraith +
+druid (was the 64% wipe machine; now 93%). Heart Guardians → the trio of
+death_champion + wraith + druid (was 4 bodies at 75%, half the region's
+wipes). Boss gates: Bone Speaker / Fog Weaver / Leech Mound content 4 → 5
+(slot gate 3 → 4), so slot 3 draws the gentler roster. Threshold pool grown
+from 5 to 8 with the drowned-ruins encounters (sunken halls at the
+threshold), diluting the Elder's Court draw.
+
+**Story bosses** re-anchored after the scaling cuts: Arminius 95 HP / Blade
+18; Varus 145 HP, Lash 19 @ 0.45; Spirits 56/50 HP, Phantom Blade 13,
+Death's Verdict 17.
+
+**Pushover regular bosses raised** (never appear at slot 1, tutorial
+untouched): Serpent Shaman 50 HP / Fang Strike 9, Bone Speaker 60 HP / Soul
+Shackle 17, Fog Weaver 64 HP / Mind Shatter 13, Leech Mound 62 HP / Drain 9.
+They move from 91–100% fresh to **86–89%** at slot 4 (~70–80% against worn
+parties). Note the regular-boss target is deliberately NOT the tuner's old
+45–70% band — mid-run bosses are checkpoints fought by attrited parties;
+judge them through march completion, not fresh-party duels.
+
+## Measured result (n=110 per march cell, n=100 per boss)
+
+March completion by (slot, region), real march lengths:
+
+```
+slot 1  ambush trail      99%     slot 4  old forest      66-72%
+slot 2  hunting grounds   98%     slot 4  blood grove       70%
+slot 2  poisoned bog      99%     slot 4  drowned vale    72-77%
+slot 3  old forest        81%     slot 5  haunted march   66-68%
+slot 3  blood grove       82%     slot 5  heart forest      59%
+slot 3  drowned vale      80%     slot 6  threshold         47%
+
+curve: 99 / 99 / 81 / 73 / 63 / 47   →  full-run completion ≈ 15-17%
+```
+
+Final-boss ladder at slot 6 (fresh party): **Arminius 68-70% → Varus 63% →
+Spirits 57%** — descending as the rotation unlocks.
+
+The curve now descends smoothly instead of flat-then-cliff, sibling regions
+at the same slot sit within ~7 points of each other (was 22), and the run is
+decided across the whole back half rather than at one wall. The estimate is
+for the naive sim AI; treat ~15% as the tuning anchor, not a prediction of
+human completion rates.

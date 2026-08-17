@@ -290,8 +290,8 @@ class CombatEngine {
     const blockScale = 1.25;
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.5)) : 0,
-      poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.45)) : 0,
+      poisonTarget: a.poisonTarget ? a.poisonTarget + Math.ceil(diffBonus / 2) : undefined,
       blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + diffBonus) * blockScale) : undefined,
       blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + diffBonus) * blockScale) : undefined,
       blockSelf: a.blockSelf ? Math.round((a.blockSelf + diffBonus) * blockScale) : undefined,
@@ -317,10 +317,13 @@ class CombatEngine {
       justSpawned: true,
     };
     // Scale passive effects with difficulty
-    if (enemy.turnDamageAll) enemy.turnDamageAll = Math.round(enemy.turnDamageAll * (1 + diffBonus * 0.5));
-    if (enemy.deathDamageEnemy) enemy.deathDamageEnemy = Math.round(enemy.deathDamageEnemy * (1 + diffBonus * 0.5));
+    if (enemy.turnDamageAll) enemy.turnDamageAll = Math.round(enemy.turnDamageAll * (1 + diffBonus * 0.45));
+    if (enemy.deathDamageEnemy) enemy.deathDamageEnemy = Math.round(enemy.deathDamageEnemy * (1 + diffBonus * 0.45));
     if (enemy.aura && enemy.aura.damageReduction) {
-      enemy.aura = { ...enemy.aura, damageReduction: enemy.aura.damageReduction + diffBonus };
+      // Half-step scaling: a flat reduction is the single strongest stat in
+      // the game against many small hits, and at +diffBonus it silently
+      // doubled fight length in the warden/heartwood regions.
+      enemy.aura = { ...enemy.aura, damageReduction: enemy.aura.damageReduction + Math.ceil(diffBonus / 2) };
     }
     this.enemies.push(enemy);
     // Ironbound Champion: starts with block equal to half HP
@@ -357,7 +360,7 @@ class CombatEngine {
           const stolen = nonStarter[Math.floor(Math.random() * nonStarter.length)];
           // Convert player skill to an enemy action
           const baseDmg = stolen.effects.damage || stolen.effects.damageAll || 0;
-          const scaledDmg = Math.max(3, Math.round(baseDmg * (1 + diffBonus * 0.5)));
+          const scaledDmg = Math.max(3, Math.round(baseDmg * (1 + diffBonus * 0.45)));
           stolenActions.push({
             name: `Stolen: ${stolen.name}`,
             damage: scaledDmg,
@@ -1026,7 +1029,7 @@ class CombatEngine {
           const spectralHp = Math.round(data.maxHp * this.getHpScale(diffBonus) / 3);
           const spectralActions = data.actions.map(a => ({
             ...a,
-            damage: a.damage > 0 ? Math.max(1, Math.round(a.damage * (1 + diffBonus * 0.5) / 3)) : 0,
+            damage: a.damage > 0 ? Math.max(1, Math.round(a.damage * (1 + diffBonus * 0.45) / 3)) : 0,
           }));
           const spectral = {
             index: this.enemies.length,
@@ -3779,9 +3782,9 @@ class CombatEngine {
               const scaledMaxHp = Math.round(formDef.maxHp * this.getHpScale(diffBonus));
               const scaledActions = formDef.actions.map(a => ({
                 ...a,
-                damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.5)) : 0,
+                damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.45)) : 0,
                 morale: a.morale ? Math.round(a.morale * (1 + diffBonus * 0.15)) : undefined,
-                poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus * 0.5) : undefined,
+                poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus * 0.45) : undefined,
                 blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
                 blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
               }));
@@ -3793,7 +3796,7 @@ class CombatEngine {
                 maxHp: scaledMaxHp,
                 hp: scaledMaxHp,
                 row: formDef.row,
-                damage: formDef.damage.map(d => Math.round(d * (1 + diffBonus * 0.5))),
+                damage: formDef.damage.map(d => Math.round(d * (1 + diffBonus * 0.45))),
                 speed: formDef.speed,
                 xpValue: formDef.xpValue,
                 isBoss: true,
@@ -3976,8 +3979,8 @@ class CombatEngine {
         const blockScale = 1.25;
         const scaledActions = lesserDef.actions.map(a => ({
           ...a,
-          damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.5)) : 0,
-          poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
+          damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.45)) : 0,
+          poisonTarget: a.poisonTarget ? a.poisonTarget + Math.ceil(diffBonus / 2) : undefined,
           blockSelf: a.blockSelf ? Math.round((a.blockSelf + diffBonus) * blockScale) : undefined,
         }));
         const lesser = {
@@ -5201,10 +5204,13 @@ class CombatEngine {
 
   afterEncounter() {
     const hasDefiance = this.getActiveBoons().includes('arminius_defiance');
-    const revivePct = hasDefiance ? 0.7 : 0.5;
+    const revivePct = hasDefiance ? 0.7 : 0.55;
     const difficulty = (window.game && window.game.difficulty) || 1;
     const hasSupport = this.party.some(u => CLASS_DATA[u.classId] && CLASS_DATA[u.classId].tags.includes('support'));
-    const postCombatHeal = 3 + Math.floor(difficulty / 2) + (hasSupport ? 0 : 2);
+    // Attrition valve: marches die to accumulated chip damage, not to single
+    // fights (slot-3 completion measured 54% while its encounters sat at
+    // 95-100%). Scales with the slot so late marches stay recoverable too.
+    const postCombatHeal = 4 + difficulty + (hasSupport ? 0 : 2);
     this.party.forEach(u => {
       if (u.downed) {
         u.downed = false;
@@ -5407,8 +5413,8 @@ class CombatEngine {
     const blockScale = 1.25;
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.5)) : 0,
-      poisonTarget: a.poisonTarget ? a.poisonTarget + diffBonus : undefined,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.45)) : 0,
+      poisonTarget: a.poisonTarget ? a.poisonTarget + Math.ceil(diffBonus / 2) : undefined,
       blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + diffBonus) * blockScale) : undefined,
       blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + diffBonus) * blockScale) : undefined,
       blockSelf: a.blockSelf ? Math.round((a.blockSelf + diffBonus) * blockScale) : undefined,
@@ -5490,7 +5496,7 @@ class CombatEngine {
   // is steeper than the old 8-march curve so slot 6 lands at the old march-8
   // power (5.5x vs 5.35x). Damage steps 0.5, heals 0.35 for the same reason.
   getHpScale(diffBonus) {
-    return 1 + diffBonus * 0.9;
+    return 1 + diffBonus * 0.85;
   }
 
   getActiveCurses() {

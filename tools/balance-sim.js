@@ -206,9 +206,10 @@ function runMarch(seed, classIds, difficulty, { combats = null, collect = null, 
     if (res.result !== 'victory') {
       return { completed: false, diedAt: fights, fights, turns, downs, engine, startHp };
     }
-    engine.party.forEach(u => {
-      if (u.downed) { u.downed = false; u.hp = Math.floor(u.maxHp * 0.5); }
-    });
+    // Between fights the real game runs afterEncounter(): revive, post-combat
+    // heal, and status clears. The sim previously modelled only a 50% revive,
+    // which understated march completion.
+    engine.afterEncounter();
     if (c === Math.floor(combats * 0.66)) {
       engine.party.forEach(u => { u.hp = Math.min(u.maxHp, u.hp + Math.floor(u.maxHp * 0.15)); });
     }
@@ -653,10 +654,9 @@ function reportMarchLength() {
           const res = runEncounter(g, engine, enc, { maxTurns: 40 });
           fightIdx++;
           if (res.result !== 'victory') { alive = false; break; }
-          // Between fights: downed units revive at 50%, survivors keep their HP.
-          engine.party.forEach(u => {
-            if (u.downed) { u.downed = false; u.hp = Math.floor(u.maxHp * 0.5); }
-          });
+          // Between fights the real game runs afterEncounter(): revive,
+          // post-combat heal, and status clears.
+          engine.afterEncounter();
           // A rest node heals 15% two-thirds of the way through.
           if (c === Math.floor(combats * 0.66)) {
             engine.party.forEach(u => {
@@ -752,9 +752,7 @@ function runMarchScaled(seed, classIds, difficulty, combats, progressionMult, en
     applyBuff();
     const res = runEncounterLoop(g, engine);
     if (res !== 'victory') return false;
-    engine.party.forEach(u => {
-      if (u.downed) { u.downed = false; u.hp = Math.floor(u.maxHp * 0.5); }
-    });
+    engine.afterEncounter();
     // Rest nodes also get cut by a shorter march — scale the heal with length.
     if (c === rest) {
       engine.party.forEach(u => { u.hp = Math.min(u.maxHp, u.hp + Math.floor(u.maxHp * 0.15)); });

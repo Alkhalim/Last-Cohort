@@ -680,7 +680,7 @@ const REGIONS = {
     theme: 'threshold', music: 'assets/Spirits at the Teutoburg Gate.mp3',
     introKey: '10', contentDiff: 8,
     pool: ['Threshold Guardians', 'The Last Veil', 'Ghost Pack', 'Woven Doom',
-           "The Elder's Court"],
+           "The Elder's Court", 'Sunken Court', 'Drowned Wardens', "Warden's Stand"],
   },
 };
 
