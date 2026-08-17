@@ -568,3 +568,56 @@ at the same slot sit within ~7 points of each other (was 22), and the run is
 decided across the whole back half rather than at one wall. The estimate is
 for the naive sim AI; treat ~15% as the tuning anchor, not a prediction of
 human completion rates.
+
+---
+
+# Enemy region-exclusivity pass (2026-08-17, owner decision)
+
+## 15. Enemies are region-exclusive, not just encounters
+
+Every region now carries a **curated encounter pool** (the contentDiff
+filters are a dead fallback), and every enemy has a declared home:
+
+- **Commons** (may appear anywhere): the generic tribesfolk and beasts —
+  raider, slinger, wolf, viper, leech, seer, guardian, shieldbearer,
+  berserker, spear thrower, war hound, oak shield, runecarver, ironbound,
+  war boar, youngling.
+- **Shared groups** (sibling regions only): forest_wraith + death_champion
+  across the three spectral regions (haunted/heart/threshold);
+  plague_bearer + shadow_stalker across the two water regions
+  (bog/drowned); blood_druid across grove+heart; cursed_warrior across
+  grove+haunted.
+- **Signatures** (one home): warden_of_the_deep + elder_seer → Drowned
+  Vale; raven_caller + **moss_idol (new)** → Old Forest; ironhide_boar +
+  wicker_man → Blood Grove; the hollow Romans → Haunted March; dryad,
+  rot_spawn, heartwood → Heart; fate_weaver, spirit_wolf → Threshold.
+
+**The Moss-Grown Idol** is a new Old-Forest enemy — a mechanical twin of
+the warden (same stats/actions, ancient-stone flavor) so the region keeps
+its measured tank profile after the warden went home to the vale. Six
+old-forest encounters re-flavored around it (Twin Wardens → Twin Idols,
+Deep Warden → The Mossbound Idol).
+
+Rebuilt to satisfy the rule: haunted lost ravens and dryads (Carrion
+Watch → Cold Watch, Thorn Volley → The Silent Ranks, Waldgeist Ambush and
+Spectral Patrol re-comped); the drowned intro tables lost the hollow
+Romans (Drowned Legion → The Drowned Dead, Drowned Officers → Keepers of
+the Deep); the threshold lost elder seers, heartwood and druids (Last
+Veil, Woven Doom, Wolves Between Worlds, Court of Whispers, The
+Unraveling re-comped; The Elder's Court retired — Sunken Court is its
+drowned twin). Three new drowned encounters (Flooded Crossing, Black
+Water Rising, Drowned Watch) and three new heart encounters (Pulsing
+Grove, Thorn Sisters, Heartrot) fill the exclusive pools. Heart Guardians
+is now rot + spirit + druid. Orphaned warcamp encounters (Iron Wall,
+Warded Warband, Runed Shield Line, Ironbound Vanguard, War Hound Pack)
+were homed in hunting grounds / old forest.
+
+Three new regression tests enforce all of it: the enemy-home matrix, the
+one-region-per-encounter rule, and orphan detection (an encounter in no
+pool fails the suite). 112 tests passing.
+
+Measured after the pass: curve **99 / 96 / 78 / 75 / 60 / 50**, full-run
+≈ 16%, story ladder unchanged (70/63/57). Known follow-up: within-slot
+spreads widened a little — old forest (82–90) is the gentle mid draw vs
+blood grove (68–70), haunted (67) vs heart (52). Regions now have
+difficulty personalities; tighten only if draw-luck feels unfair in play.

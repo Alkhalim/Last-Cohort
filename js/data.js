@@ -625,65 +625,80 @@ function contentToSlotGate(d) {
 
 const STORY_BOSS_NAMES = ['Corpse of Arminius', 'Corpse of Varus', 'Spirits of Arminius & Varus'];
 
+// Every region carries a curated encounter pool: encounters are exclusive to
+// one region, and enemies are exclusive to their home region except declared
+// commons (generic tribesfolk/beasts everywhere; wraith + wiedergangr across
+// the three spectral regions; plague_bearer/shadow_stalker across the two
+// water regions; blood_druid across grove+heart; cursed_warrior across
+// grove+haunted).
 const REGIONS = {
   ambush_trail: {
     name: 'The Ambush Trail', subtitle: 'The forest closes behind you.',
     theme: 'forest', music: 'assets/Cohort Defiant.mp3',
     introKey: '1', contentDiff: 1,
+    pool: ['Forest Scouts', 'Lone Wolves', 'Eerie Chanting', 'Viper Nest',
+           'Swamp Crawlers', 'Guarded Scouts', 'Shield and Fang'],
   },
   hunting_grounds: {
     name: 'The Hunting Grounds', subtitle: 'They know these woods. You do not.',
     theme: 'forest-dark', music: 'assets/Hunters in the Canopy.mp3',
     introKey: '2', contentDiff: 2,
+    pool: ['Ambush on the Trail', 'Raiding Party', 'Wolf Pack', 'Cursed Hollow',
+           'Wolves and Whispers', 'Shield Line', 'Guardian Formation', 'Spear Rain',
+           'Berserker Charge', 'The Clearing', 'War Band', 'The Oak Shield',
+           'The Hunting Party', 'Shield Wall', 'Javelin Ambush', 'Berserker Warband',
+           'The Iron Wall', 'Warded Warband', 'Runed Shield Line', 'Ironbound Vanguard'],
   },
   poisoned_bog: {
     name: 'The Poisoned Bog', subtitle: 'The ground turns to black water.',
     theme: 'bog', music: 'assets/Black Mire Pulse.mp3',
     introKey: '4', contentDiff: 4,
+    pool: ['Venomous Ambush', 'Leech Swarm', 'Swamp Horror', 'Poison Grove',
+           'Toxic Shallows', 'Plague Pit', 'Swamp Ambush', 'Shadow Ambush'],
   },
   old_forest: {
     name: 'The Old Forest', subtitle: 'Ancient things stir between the roots.',
     theme: 'ancient', music: 'assets/Roots Remember Blood.mp3',
     introKey: '5', contentDiff: 5,
+    pool: ['Forest Fortress', 'Root Guardians', 'The Old Growth', 'Raven Flock',
+           'The Kennels', 'Ritual Guard', "The Sow's Fury", 'War Hound Pack'],
   },
   blood_grove: {
     name: 'The Blood Grove', subtitle: 'Altars stained red. The druids watch.',
     theme: 'blood', music: 'assets/Crimson Ritual.mp3',
     introKey: '6', contentDiff: 6,
+    pool: ['Blood Circle', 'Altar Guard', 'Ritual Warband', 'Iron Stampede',
+           'The Burning Effigy', 'Boar Stampede', 'Bone Court'],
   },
   drowned_vale: {
     name: 'The Drowned Vale', subtitle: 'The water remembers the drowned.',
     theme: 'bog', music: 'assets/Black Mire Pulse.mp3',
     introKey: '8', contentDiff: 8,
-    pool: ['Sunken Court', 'Drowned Wardens', "Warden's Stand", 'Toxic Shallows',
-           'Swamp Horror', 'Forest Fortress', 'Root Guardians', 'The Old Growth',
-           'Plague Pit', 'Leech Swarm'],
+    pool: ['Sunken Court', 'Drowned Wardens', "Warden's Stand",
+           'The Flooded Crossing', 'Black Water Rising', 'The Drowned Watch'],
   },
   haunted_march: {
     name: 'The Haunted March', subtitle: 'The dead walk in Roman formation.',
     theme: 'haunted', music: 'assets/Eagle of the Unremembered.mp3',
     introKey: '7', contentDiff: 7,
     pool: ['The Haunted Trail', 'The Fallen Century', 'Cavalry Ghost',
-           "The Officer's Grave", 'Spectral Patrol', 'Dead Legion', 'Bone Court',
+           "The Officer's Grave", 'Spectral Patrol', 'Dead Legion',
            'Cursed Patrol', 'The Broken Standard', 'The Last Muster',
-           'Carrion Watch', 'Grave Escort', 'Procession of the Dead'],
+           'Cold Watch', 'Grave Escort', 'Procession of the Dead'],
   },
   heart_forest: {
     name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.',
     theme: 'heart', music: 'assets/Root-Rot Cathedral.mp3',
     introKey: '9', contentDiff: 7,
     pool: ['The Living Wall', 'Fungal Bloom', 'The Rotting Core', 'The Thorn Canopy',
-           'Heart Guardians', 'Blood Circle', 'Altar Guard', 'Ritual Warband'],
+           'Heart Guardians', 'The Pulsing Grove', 'Thorn Sisters', 'Heartrot'],
   },
   threshold: {
     name: 'The Threshold', subtitle: 'Between worlds. The spirits await.',
     theme: 'threshold', music: 'assets/Spirits at the Teutoburg Gate.mp3',
-    // Threshold-native only — the drowned encounters belong to the Drowned
-    // Vale now that it is its own region.
     introKey: '10', contentDiff: 8,
     pool: ['Threshold Guardians', 'The Last Veil', 'Ghost Pack', 'Woven Doom',
-           "The Elder's Court", 'The Severed Thread', 'Wolves Between Worlds',
-           'Court of Whispers'],
+           'The Severed Thread', 'Wolves Between Worlds', 'Court of Whispers'],
   },
 };
 

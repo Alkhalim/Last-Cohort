@@ -72,43 +72,48 @@ const RAW_ENCOUNTERS = {
       { "name": "The Sow's Fury", "minDifficulty": 3, "enemies": ["war_boar", "war_boar", "boar_youngling", "boar_youngling"], "intro": "Two massive boars and their young block the trail. The ground shakes with their fury." },
       { "name": "Shadow Ambush", "minDifficulty": 4, "maxDifficulty": 4, "enemies": ["shadow_stalker", "shadow_stalker", "cheruscan_raider"], "intro": "Blades flash from the shadows. Assassins strike at your weakest." },
       { "name": "Plague Pit", "minDifficulty": 4, "maxDifficulty": 5, "enemies": ["plague_bearer", "plague_bearer", "bog_seer"], "intro": "The stench hits you first. Diseased warriors stumble from a mass grave." },
-      { "name": "Forest Fortress", "minDifficulty": 5, "maxDifficulty": 5, "enemies": ["warden_of_the_deep", "cheruscan_shieldbearer", "raven_caller"], "intro": "An ancient guardian blocks the path, flanked by a shield wall and a caller of ravens." },
-      { "name": "Raven Flock", "minDifficulty": 5, "enemies": ["raven_caller", "raven_caller", "shadow_stalker", "germanic_berserker"], "intro": "Two raven callers command the skies while assassins and berserkers close in." },
+      { "name": "Forest Fortress", "minDifficulty": 5, "maxDifficulty": 5, "enemies": ["moss_idol", "cheruscan_shieldbearer", "raven_caller"], "intro": "An ancient idol blocks the path, flanked by a shield wall and a caller of ravens." },
+      { "name": "Raven Flock", "minDifficulty": 5, "enemies": ["raven_caller", "raven_caller", "marsh_wolf", "germanic_berserker"], "intro": "Two raven callers command the skies while wolves and berserkers close in." },
       { "name": "Blood Circle", "minDifficulty": 6, "enemies": ["blood_druid", "ironhide_boar", "cursed_warrior"], "intro": "A druid chants in a circle of blood. A monstrous boar guards the ritual." },
       { "name": "Iron Stampede", "minDifficulty": 6, "enemies": ["ironhide_boar", "ironhide_boar", "war_hound"], "intro": "The ground trembles. Two ironhide boars crash through the undergrowth." },
       { "name": "The Haunted Trail", "minDifficulty": 7, "enemies": ["forest_wraith", "hollow_legionary", "hollow_legionary"], "intro": "The air turns cold. Forest spirits guide hollow legionaries through the mist." },
       { "name": "Dead Legion", "minDifficulty": 7, "enemies": ["death_champion", "cursed_warrior", "cursed_warrior", "cursed_warrior"], "intro": "The dead walk in formation — ancient warriors risen from shallow graves. They still remember how to fight." },
       { "name": "The Broken Standard", "minDifficulty": 7, "enemies": ["hollow_centurion", "hollow_legionary", "cursed_warrior", "cursed_warrior"], "intro": "A shredded legion standard rises above the mist — carried by dead hands, followed by cursed feet." },
       { "name": "The Last Muster", "minDifficulty": 7, "enemies": ["hollow_centurion", "hollow_centurion", "hollow_legionary", "hollow_legionary"], "intro": "Two dead centurions call a muster that never ends. The fallen answer, rank upon rank." },
-      { "name": "Carrion Watch", "minDifficulty": 7, "enemies": ["raven_caller", "raven_caller", "hollow_legionary", "forest_wraith"], "intro": "Ravens gorged on the battlefield dead circle a silent sentry. Something colder drifts behind them." },
+      { "name": "Cold Watch", "minDifficulty": 7, "enemies": ["forest_wraith", "forest_wraith", "hollow_legionary", "bog_seer"], "intro": "A dead sentry keeps his post. Cold shapes drift at his shoulders while a seer chants to the dead." },
       { "name": "Grave Escort", "minDifficulty": 7, "enemies": ["hollow_equites", "hollow_equites", "cursed_warrior", "bog_seer"], "intro": "Spectral riders flank a procession of the cursed. A seer chants the dead onward." },
       { "name": "Procession of the Dead", "minDifficulty": 7, "enemies": ["cursed_warrior", "cursed_warrior", "cursed_warrior", "bog_seer"], "intro": "Black-veined corpses shamble in single file behind a chanting seer. They do not stop for the living." },
       { "name": "The Thorn Canopy", "minDifficulty": 7, "enemies": ["dryad_huntress", "dryad_huntress", "forest_wraith"], "intro": "Arrows rain from the canopy. Twisted nymphs lurk in the branches, thorns nocked and ready." },
-      { "name": "The Elder's Court", "minDifficulty": 8, "enemies": ["elder_seer", "death_champion", "blood_druid", "shadow_stalker"], "intro": "An elder seer holds court among the dead. Her word is law, her curse is absolute." },
-      { "name": "Warden's Stand", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "blood_druid"], "intro": "Two ancient wardens block the path, healed endlessly by a blood druid behind them." },
+      { "name": "Warden's Stand", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "elder_seer"], "intro": "Two ancient wardens block the flooded path. An elder seer chants behind them." },
       { "name": "Toxic Shallows", "minDifficulty": 4, "enemies": ["plague_bearer", "plague_bearer", "shadow_stalker"], "intro": "The bog water bubbles with poison. Diseased warriors and an assassin emerge from the toxic shallows." },
       { "name": "Swamp Ambush", "minDifficulty": 4, "maxDifficulty": 5, "enemies": ["shadow_stalker", "plague_bearer", "bog_seer"], "intro": "A figure lunges from the murk. Behind it, a diseased warrior and a chanting seer." },
-      { "name": "Root Guardians", "minDifficulty": 5, "maxDifficulty": 5, "enemies": ["warden_of_the_deep", "raven_caller", "cheruscan_guardian"], "intro": "Ancient root guardians block the overgrown path. A curse raven circles overhead." },
-      { "name": "The Old Growth", "minDifficulty": 5, "maxDifficulty": 5, "enemies": ["warden_of_the_deep", "war_hound", "war_hound", "bog_seer"], "intro": "A massive bark-bound guardian stands among ancient trees. Hounds snarl at its feet." },
+      { "name": "Root Guardians", "minDifficulty": 5, "maxDifficulty": 5, "enemies": ["moss_idol", "raven_caller", "cheruscan_guardian"], "intro": "An idol bound in roots blocks the overgrown path. A curse raven circles overhead." },
+      { "name": "The Old Growth", "minDifficulty": 5, "maxDifficulty": 5, "enemies": ["moss_idol", "war_hound", "war_hound", "bog_seer"], "intro": "A moss-grown idol stands among ancient trees. Hounds snarl at its feet." },
       { "name": "Altar Guard", "minDifficulty": 6, "enemies": ["blood_druid", "blood_druid", "ironhide_boar"], "intro": "Two druids chant over a blood-stained altar. An ironhide boar guards the approach." },
-      { "name": "Ritual Warband", "minDifficulty": 6, "enemies": ["blood_druid", "cursed_warrior", "cursed_warrior", "shadow_stalker"], "intro": "Cursed warriors guard a druid performing a dark ritual. An assassin watches from the shadows." },
-      { "name": "Spectral Patrol", "minDifficulty": 7, "enemies": ["forest_wraith", "forest_wraith", "dryad_huntress", "cursed_warrior"], "intro": "Forest spirits drift alongside a huntress and a shambling corpse. The dead patrol these woods." },
+      { "name": "Ritual Warband", "minDifficulty": 6, "enemies": ["blood_druid", "cursed_warrior", "cursed_warrior", "war_hound"], "intro": "Cursed warriors guard a druid performing a dark ritual. A war hound circles the stones." },
+      { "name": "Spectral Patrol", "minDifficulty": 7, "enemies": ["forest_wraith", "forest_wraith", "cursed_warrior", "cursed_warrior"], "intro": "Forest spirits drift alongside shambling black-veined corpses. The dead patrol these woods." },
       { "name": "The Fallen Century", "minDifficulty": 7, "enemies": ["hollow_centurion", "hollow_legionary", "hollow_legionary", "hollow_legionary"], "intro": "A century of dead Roman soldiers marches in formation. A hollow centurion commands them in silence." },
       { "name": "Cavalry Ghost", "minDifficulty": 7, "enemies": ["hollow_equites", "hollow_equites", "hollow_legionary", "forest_wraith"], "intro": "Spectral horsemen ride through the mist. Roman cavalry, dead for years, still charges on command." },
-      { "name": "The Officer's Grave", "minDifficulty": 7, "enemies": ["hollow_centurion", "hollow_equites", "hollow_legionary", "dryad_huntress"], "intro": "An entire Roman command — centurion, cavalryman, legionary — risen from a mass grave. A huntress drives them forward." },
+      { "name": "The Officer's Grave", "minDifficulty": 7, "enemies": ["hollow_centurion", "hollow_equites", "hollow_legionary", "forest_wraith"], "intro": "An entire Roman command — centurion, cavalryman, legionary — risen from a mass grave. A cold spirit drives them forward." },
       { "name": "Sunken Court", "minDifficulty": 8, "enemies": ["elder_seer", "warden_of_the_deep", "shadow_stalker", "plague_bearer"], "intro": "In the ruins of a sunken hall, an elder seer holds court among wardens and assassins." },
       { "name": "Drowned Wardens", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "plague_bearer", "plague_bearer", "elder_seer"], "intro": "Wardens draped in algae guard the flooded passages. An elder seer commands from the depths." },
-      { "name": "Heart Guardians", "minDifficulty": 7, "enemies": ["death_champion", "forest_wraith", "blood_druid"], "intro": "The forest's inner sanctum is defended by its most terrible servants — the dead, the spirits, and the druids who feed them." },
+      { "name": "Heart Guardians", "minDifficulty": 7, "enemies": ["rot_spawn", "forest_wraith", "blood_druid"], "intro": "The forest's inner sanctum is defended by its most terrible servants — the rot, the spirits, and the druids who feed them." },
       { "name": "The Living Wall", "minDifficulty": 7, "enemies": ["heartwood_sentinel", "dryad_huntress", "dryad_huntress"], "intro": "A massive sentinel of living wood blocks the path. Huntresses lurk in its branches." },
       { "name": "Fungal Bloom", "minDifficulty": 7, "enemies": ["rot_spawn", "rot_spawn", "heartwood_sentinel"], "intro": "The ground pulses with fungal growth. Rot spawns shamble forward, shielded by a sentinel of heartwood." },
       { "name": "The Rotting Core", "minDifficulty": 7, "enemies": ["rot_spawn", "rot_spawn", "forest_wraith", "blood_druid"], "intro": "At the forest's pulsing core, rot and death intertwine. A druid feeds the corruption." },
       { "name": "Threshold Guardians", "minDifficulty": 8, "enemies": ["fate_weaver", "death_champion", "spirit_wolf", "spirit_wolf"], "intro": "At the boundary between worlds, a fate weaver twists destiny while spectral wolves circle." },
-      { "name": "The Last Veil", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "elder_seer", "heartwood_sentinel"], "intro": "Two fate weavers unravel the threads of reality. An elder seer and a sentinel guard the final threshold." },
+      { "name": "The Last Veil", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "forest_wraith", "spirit_wolf"], "intro": "Two fate weavers unravel the threads of reality. A wraith and a spectral wolf guard the final threshold." },
       { "name": "Ghost Pack", "minDifficulty": 8, "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "forest_wraith"], "intro": "A pack of spectral wolves hunts between worlds. A forest spirit drives them forward." },
-      { "name": "Woven Doom", "minDifficulty": 8, "enemies": ["fate_weaver", "spirit_wolf", "death_champion", "blood_druid"], "intro": "Fate itself conspires against you. The threshold's guardians are woven from death and prophecy." },
+      { "name": "Woven Doom", "minDifficulty": 8, "enemies": ["fate_weaver", "spirit_wolf", "death_champion", "forest_wraith"], "intro": "Fate itself conspires against you. The threshold's guardians are woven from death and prophecy." },
       { "name": "The Severed Thread", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "spirit_wolf", "spirit_wolf"], "intro": "Two fate weavers hold a glowing thread between them — yours. A wolf of mist circles, waiting for the cut." },
-      { "name": "Wolves Between Worlds", "minDifficulty": 8, "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "elder_seer"], "intro": "Spectral wolves flicker in and out of being. An elder seer speaks, and the pack obeys." },
-      { "name": "Court of Whispers", "minDifficulty": 8, "enemies": ["elder_seer", "elder_seer", "spirit_wolf", "spirit_wolf"], "intro": "Two ancient seers whisper across the veil. Spectral wolves pad silently at the edge of hearing." }
+      { "name": "Wolves Between Worlds", "minDifficulty": 8, "enemies": ["spirit_wolf", "spirit_wolf", "spirit_wolf", "fate_weaver"], "intro": "Spectral wolves flicker in and out of being. A fate weaver holds their leashes of thread." },
+      { "name": "The Flooded Crossing", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "mire_leech", "mire_leech", "plague_bearer"], "intro": "The ford is gone \u2014 black water covers the path, and things move beneath it." },
+      { "name": "Black Water Rising", "minDifficulty": 8, "enemies": ["mire_leech", "mire_leech", "mire_leech", "elder_seer"], "intro": "The water climbs as the seer chants. Leeches pour over the banks in a living tide." },
+      { "name": "The Drowned Watch", "minDifficulty": 8, "enemies": ["warden_of_the_deep", "warden_of_the_deep", "shadow_stalker"], "intro": "Two wardens rise from the sunken hall, water sheeting from their scales. A shadow slips between them." },
+      { "name": "The Pulsing Grove", "minDifficulty": 7, "enemies": ["heartwood_sentinel", "rot_spawn", "rot_spawn", "dryad_huntress"], "intro": "The grove breathes. Fungal growths swell and burst in rhythm with the sentinel\u2019s heart." },
+      { "name": "Thorn Sisters", "minDifficulty": 7, "enemies": ["dryad_huntress", "dryad_huntress", "dryad_huntress"], "intro": "Three sisters draw their bows as one. The canopy hides them; the thorns do not miss." },
+      { "name": "Heartrot", "minDifficulty": 7, "enemies": ["rot_spawn", "rot_spawn", "dryad_huntress", "forest_wraith"], "intro": "The rot has reached the heart. What the fungus takes, the spirits keep." },
+      { "name": "Court of Whispers", "minDifficulty": 8, "enemies": ["fate_weaver", "fate_weaver", "death_champion", "spirit_wolf"], "intro": "The weavers hold court across the veil. Death itself stands in attendance." }
     ]
   },
   "marchIntroEncounters": {
@@ -133,9 +138,9 @@ const RAW_ENCOUNTERS = {
       { "name": "Stalker's Trap", "enemies": ["shadow_stalker", "shadow_stalker"], "intro": "Shadows move between the dead trees. The bog stalkers have been waiting." }
     ],
     "5": [
-      { "name": "Ancient Sentinels", "enemies": ["warden_of_the_deep", "raven_caller"], "intro": "A bark-bound guardian and a curse raven bar the way into the old forest." },
+      { "name": "Ancient Sentinels", "enemies": ["moss_idol", "raven_caller"], "intro": "A moss-grown idol and a curse raven bar the way into the old forest." },
       { "name": "Raven Murder", "enemies": ["raven_caller", "raven_caller", "war_hound"], "intro": "Black feathers fill the air. The ravens screech and dive." },
-      { "name": "Deep Warden", "enemies": ["warden_of_the_deep", "cheruscan_guardian", "bog_seer"], "intro": "An ancient guardian stands between massive roots, flanked by forest kin." }
+      { "name": "The Mossbound Idol", "enemies": ["moss_idol", "cheruscan_guardian", "bog_seer"], "intro": "An ancient idol stands between massive roots, flanked by forest kin." }
     ],
     "6": [
       { "name": "Blood Offering", "enemies": ["blood_druid", "cursed_warrior", "cursed_warrior"], "intro": "The grove reeks of iron. A druid and his cursed thralls guard a fresh altar." },
@@ -145,11 +150,11 @@ const RAW_ENCOUNTERS = {
     "7": [
       { "name": "Ghosts of the March", "enemies": ["hollow_legionary", "hollow_legionary", "hollow_equites"], "intro": "Roman soldiers block the trail — your countrymen, risen from their graves." },
       { "name": "Haunted Patrol", "enemies": ["hollow_centurion", "hollow_legionary", "forest_wraith"], "intro": "A ghostly centurion leads the dead. A forest wraith drifts in their wake." },
-      { "name": "Waldgeist Ambush", "enemies": ["forest_wraith", "forest_wraith", "dryad_huntress"], "intro": "The trees themselves seem to move. Spectral shapes coalesce from the mist." }
+      { "name": "Waldgeist Ambush", "enemies": ["forest_wraith", "forest_wraith", "cursed_warrior"], "intro": "The trees themselves seem to move. Spectral shapes coalesce from the mist around a black-veined corpse." }
     ],
     "8": [
       { "name": "The Flooded Gate", "enemies": ["elder_seer", "warden_of_the_deep", "plague_bearer"], "intro": "An ancient seer guards the flooded gate. Her curses echo off the drowned walls." },
-      { "name": "Drowned Legion", "enemies": ["hollow_legionary", "hollow_centurion", "elder_seer"], "intro": "Dead legionaries stand in the flooded ruins, commanded by a seer." },
+      { "name": "The Drowned Dead", "enemies": ["elder_seer", "plague_bearer", "plague_bearer"], "intro": "Waterlogged corpses shamble from the flooded ruins, driven by a whispering seer." },
       { "name": "Seer's Court", "enemies": ["elder_seer", "elder_seer"], "intro": "Two ancient seers chant in unison. The air crackles with doom." }
     ],
     "9": [
@@ -186,23 +191,23 @@ const RAW_ENCOUNTERS = {
     ],
     "5": [
       { "name": "Raven's Watch", "enemies": ["raven_caller", "cheruscan_guardian", "war_hound"], "intro": "A curse raven shrieks from the branches. A guardian and war hound block the old path." },
-      { "name": "Twin Wardens", "enemies": ["warden_of_the_deep", "warden_of_the_deep"], "intro": "Two bark-bound wardens rise from the roots, ancient and unyielding." },
-      { "name": "Curse Flock", "enemies": ["raven_caller", "bog_seer", "shadow_stalker"], "intro": "Ravens circle overhead as a seer chants. An assassin moves in the peripheral darkness." }
+      { "name": "Twin Idols", "enemies": ["moss_idol", "moss_idol"], "intro": "Two moss-grown idols rise from the roots, ancient and unyielding." },
+      { "name": "Curse Flock", "enemies": ["raven_caller", "bog_seer", "war_hound"], "intro": "Ravens circle overhead as a seer chants. A war hound stalks the treeline." }
     ],
     "6": [
       { "name": "Boar Guard", "enemies": ["ironhide_boar", "cursed_warrior", "blood_druid"], "intro": "An armored boar snorts before a bloodied altar. A cursed warrior and druid stand behind it." },
-      { "name": "Crimson Sentries", "enemies": ["blood_druid", "shadow_stalker", "war_hound"], "intro": "A druid paints sigils in blood. Her sentries — a stalker and a war hound — move to intercept." },
+      { "name": "Crimson Sentries", "enemies": ["blood_druid", "cursed_warrior", "war_hound"], "intro": "A druid paints sigils in blood. Her sentries — a cursed thrall and a war hound — move to intercept." },
       { "name": "Tusked Fury", "enemies": ["ironhide_boar", "ironhide_boar"], "intro": "Two ironhide boars lower their tusks and charge. The ground shakes beneath them." }
     ],
     "7": [
       { "name": "Centurion's Command", "enemies": ["hollow_centurion", "hollow_equites", "hollow_legionary"], "intro": "A ghostly centurion barks orders. Dead cavalrymen and legionaries fall into formation." },
-      { "name": "Thorn Volley", "enemies": ["dryad_huntress", "dryad_huntress", "hollow_legionary"], "intro": "Thorn arrows rain from the canopy. A hollow legionary guards the huntresses' perch." },
+      { "name": "The Silent Ranks", "enemies": ["hollow_legionary", "hollow_legionary", "forest_wraith"], "intro": "Dead legionaries stand in perfect formation. A cold shape drifts between their ranks." },
       { "name": "Spectral Riders", "enemies": ["hollow_equites", "hollow_equites", "forest_wraith"], "intro": "Ghostly riders thunder through the mist. A forest wraith drifts in their wake." }
     ],
     "8": [
-      { "name": "Sunken Patrol", "enemies": ["elder_seer", "hollow_legionary", "hollow_legionary"], "intro": "An elder seer commands drowned legionaries through the flooded halls." },
+      { "name": "Sunken Patrol", "enemies": ["elder_seer", "shadow_stalker", "plague_bearer"], "intro": "An elder seer glides through the flooded halls, her drowned servants at her side." },
       { "name": "Warden's Flood", "enemies": ["warden_of_the_deep", "warden_of_the_deep", "elder_seer"], "intro": "Two wardens block the flooded passage. An elder seer chants behind the rising water." },
-      { "name": "Drowned Officers", "enemies": ["hollow_centurion", "hollow_centurion", "plague_bearer"], "intro": "Two hollow centurions march from the drowned ruins, disease trailing in their wake." }
+      { "name": "Keepers of the Deep", "enemies": ["warden_of_the_deep", "plague_bearer", "mire_leech"], "intro": "Something vast stirs beneath the black water. Disease and hunger follow in its wake." }
     ],
     "9": [
       { "name": "Corrupted Roots", "enemies": ["heartwood_sentinel", "heartwood_sentinel", "blood_druid"], "intro": "Two massive sentinels of corrupted wood rise. A blood druid feeds them with crimson light." },
@@ -212,7 +217,7 @@ const RAW_ENCOUNTERS = {
     "10": [
       { "name": "Fate's Puppets", "enemies": ["fate_weaver", "fate_weaver", "death_champion"], "intro": "Two fate weavers twist the threads of destiny. A wiedergangr guards them with dead eyes." },
       { "name": "Wolf Hunt", "enemies": ["spirit_wolf", "spirit_wolf", "death_champion", "death_champion"], "intro": "Spectral wolves and wiedergangr hunt in pairs. They have found you." },
-      { "name": "The Unraveling", "enemies": ["fate_weaver", "spirit_wolf", "elder_seer", "heartwood_sentinel"], "intro": "Reality frays at the seams. The threshold's guardians converge from every direction." }
+      { "name": "The Unraveling", "enemies": ["fate_weaver", "fate_weaver", "spirit_wolf", "death_champion"], "intro": "Reality frays at the seams. The threshold's guardians converge from every direction." }
     ]
   },
   "dropTables": {
@@ -369,6 +374,11 @@ const RAW_ENCOUNTERS = {
       { "chance": 0.25, "items": ["oak_splinter", "shieldbearers_grip", "boar_tusk_pauldron"] },
       { "chance": 0.15, "items": ["thorn_mantle", "champions_helm"] },
       { "chance": 0.10, "items": ["bone_speakers_skull"] }
+    ] },
+    "moss_idol": { "nothingChance": 0.10, "tiers": [
+      { "chance": 0.25, "items": ["oak_splinter", "shieldbearers_grip", "boar_tusk_pauldron"] },
+      { "chance": 0.15, "items": ["thorn_mantle", "champions_helm"] },
+      { "chance": 0.10, "items": ["runic_stone"] }
     ] },
     "raven_caller": { "nothingChance": 0.20, "tiers": [
       { "chance": 0.30, "items": ["seers_eye", "spotters_lens", "night_owl_pendant"] },

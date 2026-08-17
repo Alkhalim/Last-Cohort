@@ -1218,6 +1218,83 @@ section('2.11 — six-march run structure');
     }
   });
 
+  check('enemies stay in their home regions (commons excepted)', () => {
+    // The exclusivity rule: encounters belong to exactly one region, and every
+    // non-common enemy appears only in its home region's content. Commons are
+    // the generic tribesfolk/beasts; a few groups deliberately span sibling
+    // regions (spectral, waterborne, ritual). Boss encounters are exempt —
+    // bosses travel across slots by design.
+    const COMMON = new Set(['cheruscan_raider', 'sling_hunter', 'marsh_wolf', 'fen_viper',
+      'mire_leech', 'bog_seer', 'cheruscan_guardian', 'cheruscan_shieldbearer',
+      'germanic_berserker', 'spear_thrower', 'war_hound', 'oak_shield', 'runecarver',
+      'ironbound_champion', 'war_boar', 'boar_youngling']);
+    const HOME = {
+      warden_of_the_deep: ['drowned_vale'],
+      elder_seer: ['drowned_vale'],
+      plague_bearer: ['poisoned_bog', 'drowned_vale'],
+      shadow_stalker: ['poisoned_bog', 'drowned_vale'],
+      moss_idol: ['old_forest'],
+      raven_caller: ['old_forest'],
+      ironhide_boar: ['blood_grove'],
+      wicker_man: ['blood_grove'],
+      blood_druid: ['blood_grove', 'heart_forest'],
+      cursed_warrior: ['blood_grove', 'haunted_march'],
+      hollow_legionary: ['haunted_march'],
+      hollow_centurion: ['haunted_march'],
+      hollow_equites: ['haunted_march'],
+      forest_wraith: ['haunted_march', 'heart_forest', 'threshold'],
+      death_champion: ['haunted_march', 'heart_forest', 'threshold'],
+      dryad_huntress: ['heart_forest'],
+      rot_spawn: ['heart_forest'],
+      heartwood_sentinel: ['heart_forest'],
+      fate_weaver: ['threshold'],
+      spirit_wolf: ['threshold'],
+    };
+    const T = M.RAW_ENCOUNTERS.threatLevels;
+    const all = [...T.easy, ...T.mid, ...T.hard];
+    const violations = [];
+    for (const [regionId, region] of Object.entries(M.REGIONS)) {
+      const encs = [];
+      (region.pool || []).forEach(n => { const e = all.find(x => x.name === n); if (e) encs.push(e); });
+      (M.RAW_ENCOUNTERS.marchIntroEncounters[region.introKey] || []).forEach(e => encs.push(e));
+      (M.RAW_ENCOUNTERS.marchSecondEncounters[region.introKey] || []).forEach(e => encs.push(e));
+      for (const enc of encs) {
+        for (const eid of enc.enemies) {
+          if (COMMON.has(eid)) continue;
+          const homes = HOME[eid];
+          if (!homes) { violations.push(`${eid} (in "${enc.name}") has no declared home`); continue; }
+          if (!homes.includes(regionId)) {
+            violations.push(`${eid} in "${enc.name}" (${regionId}) — home: ${homes.join('/')}`);
+          }
+        }
+      }
+    }
+    assert(violations.length === 0, 'region leaks:\n        ' + violations.join('\n        '));
+  });
+
+  check('every region pool is curated and no encounter appears in two regions', () => {
+    const seen = {};
+    for (const [regionId, region] of Object.entries(M.REGIONS)) {
+      assert(Array.isArray(region.pool) && region.pool.length >= 6,
+        `${regionId} has no curated pool (or it is too small)`);
+      for (const name of region.pool) {
+        assert(!seen[name], `encounter "${name}" is in both ${seen[name]} and ${regionId}`);
+        seen[name] = regionId;
+      }
+    }
+  });
+
+  check('every threat-tier encounter belongs to some region pool', () => {
+    // Curation replaced the difficulty filters — an encounter in no pool is
+    // dead content. (The legacy `templates` array is exempt.)
+    const T = M.RAW_ENCOUNTERS.threatLevels;
+    const pooled = new Set(Object.values(M.REGIONS).flatMap(r => r.pool || []));
+    const orphans = [...T.easy, ...T.mid, ...T.hard]
+      .map(e => e.name)
+      .filter(n => !pooled.has(n));
+    assert(orphans.length === 0, `encounters in no region pool: ${[...new Set(orphans)].join(', ')}`);
+  });
+
   check('every curated region pool resolves to real encounters', () => {
     const T = M.RAW_ENCOUNTERS.threatLevels;
     const all = new Set([...T.easy, ...T.mid, ...T.hard].map(e => e.name));

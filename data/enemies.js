@@ -488,6 +488,20 @@ const RAW_ENEMIES = {
       { "name": "Drowning Coil", "damage": 5, "morale": -3, "chance": 0.25, "text": "drags a soldier beneath the surface" }
     ]
   },
+  "moss_idol": {
+    "id": "moss_idol", "name": "Moss-Grown Idol",
+    "maxHp": 28, "row": "front", "damage": [6, 11], "speed": 1, "xpValue": 8,
+    "minDifficulty": 5,
+    "description": "An ancient stone idol of a forgotten god, sunk deep in moss and lichen. The old rites still move it. Reduces damage to all nearby enemies.",
+    "ai": "defensive",
+    "aura": { "damageReduction": 2 },
+    "startWithSelfBlock": true,
+    "actions": [
+      { "name": "Stone Fist", "damage": 7, "chance": 0.4, "text": "swings a fist of ancient stone" },
+      { "name": "Lichen Ward", "damage": 0, "chance": 0.35, "text": "the old runes glow \u2014 moss hardens like iron across all allies", "blockAllEnemies": 4, "blockSelf": 6 },
+      { "name": "Crushing Grip", "damage": 5, "morale": -3, "chance": 0.25, "text": "seizes a soldier in a grip of ancient stone" }
+    ]
+  },
   "raven_caller": {
     "id": "raven_caller", "name": "Curse Raven",
     "maxHp": 14, "row": "back", "damage": [3, 6], "speed": 2, "xpValue": 7,
