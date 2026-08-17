@@ -18,8 +18,20 @@ const ONLY_BOSSES = argv.includes('--bosses');
 const ONLY_NORMALS = argv.includes('--normals');
 const REPS = argv.includes('--fast') ? 24 : 60;
 
-// Progression the party actually reaches on the shortened march.
-const PROGRESSION = 0.79;
+// Party progression relative to the in-game test scaler. The 6-march scaler
+// already encodes real per-march growth, so tune at full power (the old 0.79
+// anticipated a march-length cut that never shipped).
+const PROGRESSION = 1.0;
+
+// Which regions can occupy each slot — mirrors generateRoute() in js/data.js.
+const REGIONS_BY_SLOT = {
+  1: ['ambush_trail'],
+  2: ['hunting_grounds', 'poisoned_bog'],
+  3: ['old_forest', 'blood_grove', 'drowned_vale'],
+  4: ['old_forest', 'blood_grove', 'drowned_vale'],
+  5: ['haunted_march', 'heart_forest'],
+  6: ['threshold'],
+};
 
 // Target bands. A boss should be a real fight; a normal encounter should be
 // winnable but not free.
@@ -36,8 +48,8 @@ const TEAMS = [
 function build(g, e, team, diff, prog) {
   e.difficulty = diff; g.ctx.game.difficulty = diff; e.initParty(team);
   const CD = g.api.CLASS_DATA, ID = g.api.ITEM_DATA;
-  const itemLevel = Math.max(0, Math.floor(diff * 0.4)), hpBonus = Math.floor(diff * 4);
-  let epic = diff >= 7 ? 3 : diff >= 5 ? 1 : 0;
+  const itemLevel = Math.max(0, Math.floor(diff * 0.55)), hpBonus = Math.floor(diff * 5.5);
+  let epic = diff >= 5 ? 3 : diff >= 4 ? 1 : 0;
   e.party.forEach(u => {
     const st = u.allSkills.filter(s => s.starter), ns = u.allSkills.filter(s => !s.starter).slice();
     for (let i = ns.length - 1; i > 0; i--) { const j = Math.floor(g.rng() * (i + 1));[ns[i], ns[j]] = [ns[j], ns[i]]; }
@@ -47,11 +59,11 @@ function build(g, e, team, diff, prog) {
     const ex = Math.max(0, hpBonus + Math.floor(u.maxHp * 0.35) - (sq ? 10 : 5));
     u.maxHp += ex; u.baseMaxHp += ex; u.hp = u.maxHp;
     const me = t.includes('melee'), ra = t.includes('ranged'), su = t.includes('support'), co = t.includes('command');
-    u.bonusDamage = Math.floor(diff * (me ? 4.9 : ra ? 3.85 : 2.1) * prog);
-    u.bonusBlock = Math.floor(diff * (co ? 2.6 : me ? 2.08 : 1.04) * prog);
-    u.bonusHeal = Math.floor(diff * (su ? 3.36 : 0.84) * prog);
-    u.bonusPoison = Math.floor(diff * (ra ? 1.05 : su ? 0.7 : 0) * prog);
-    const rar = diff >= 7 ? ['uncommon', 'rare'] : diff >= 4 ? ['common', 'uncommon'] : ['common'];
+    u.bonusDamage = Math.floor(diff * (me ? 6.5 : ra ? 5.1 : 2.8) * prog);
+    u.bonusBlock = Math.floor(diff * (co ? 3.5 : me ? 2.8 : 1.4) * prog);
+    u.bonusHeal = Math.floor(diff * (su ? 4.5 : 1.1) * prog);
+    u.bonusPoison = Math.floor(diff * (ra ? 1.4 : su ? 0.95 : 0) * prog);
+    const rar = diff >= 5 ? ['uncommon', 'rare'] : diff >= 3 ? ['common', 'uncommon'] : ['common'];
     for (const slot of ['weapon', 'armor', 'trinket']) for (let si = 0; si < u.equipment[slot].length; si++) {
       if (g.rng() > prog) continue;
       const ue = epic > 0 && g.rng() < 0.3; const sr = ue ? ['epic'] : rar;
@@ -135,9 +147,19 @@ if (!ONLY_NORMALS) {
   console.log('boss'.padEnd(30) + '  now   scalar   tuned   suggestion');
   console.log('-'.repeat(78));
   const out = [];
+  const STORY = g0.api.STORY_BOSS_NAMES;
   for (const b of R.bossEncounters) {
-    const diffs = [4, 5, 6, 7, 8].filter(d => !b.minDifficulty || b.minDifficulty <= d);
-    if (!diffs.length) continue;
+    // Story bosses only ever appear at the final march; regular bosses at the
+    // slots their translated gate allows (measure the upper half, where they
+    // are supposed to bite).
+    let diffs;
+    if (STORY.includes(b.name)) {
+      diffs = [g0.api.FINAL_MARCH];
+    } else {
+      const gate = b.minDifficulty ? g0.api.contentToSlotGate(b.minDifficulty) : 1;
+      diffs = [3, 4, 5].filter(d => d >= gate);
+      if (!diffs.length) diffs = [gate];
+    }
     const r = solve(b, diffs, BOSS_TARGET);
     out.push({ name: b.name, ...r });
   }
@@ -153,38 +175,66 @@ if (!ONLY_NORMALS) {
 
 if (!ONLY_BOSSES) {
   console.log('\n\nNORMAL ENCOUNTERS — target ' + pct(NORMAL_TARGET.lo) + '-' + pct(NORMAL_TARGET.hi) + '\n');
+  // An encounter's reachable slots come from the region system: for each
+  // slot, each legal region serves either its curated pool or the threat
+  // tiers at its contentDiff (mirrors generateEncounterForRegion).
+  const REGIONS = g0.api.REGIONS;
+  const T = R.threatLevels;
+  const poolFor = (slot, regionId) => {
+    const region = REGIONS[regionId];
+    if (region.pool) {
+      const all = [...T.easy, ...T.mid, ...T.hard];
+      return region.pool.map(n => all.find(e => e.name === n)).filter(Boolean);
+    }
+    const cd = region.contentDiff;
+    const fits = e => (!e.minDifficulty || e.minDifficulty <= cd) &&
+                      (!e.maxDifficulty || e.maxDifficulty >= cd);
+    if (slot <= 1) return [...T.easy, ...T.mid, ...T.hard].filter(fits);
+    if (slot === 2) return [...T.mid, ...T.hard].filter(fits);
+    return T.hard.filter(fits);
+  };
+  const slotsByEncounter = {};
+  const regionsByEncounter = {};
+  for (const [slot, regionIds] of Object.entries(REGIONS_BY_SLOT)) {
+    for (const regionId of regionIds) {
+      for (const enc of poolFor(Number(slot), regionId)) {
+        (slotsByEncounter[enc.name] = slotsByEncounter[enc.name] || new Set()).add(Number(slot));
+        (regionsByEncounter[enc.name] = regionsByEncounter[enc.name] || new Set()).add(regionId);
+      }
+    }
+  }
+
   const seen = new Set();
   const rows = [];
   for (const tier of ['easy', 'mid', 'hard']) {
     for (const enc of R.threatLevels[tier]) {
       if (seen.has(enc.name)) continue;
       seen.add(enc.name);
-      // Real mapping (js/map.js:59 + js/data.js:579): threat rises with
-      // difficulty and is capped at 3, and threat 3 draws from `hard`. So the
-      // easy tier is only ever seen at march 1-2, mid at 1-4, and `hard` covers
-      // marches 3-8 — a very wide band for one pool to serve.
-      const tierLo = tier === 'easy' ? 1 : tier === 'mid' ? 1 : 3;
-      const tierHi = tier === 'easy' ? 2 : tier === 'mid' ? 4 : 8;
-      const lo = Math.max(enc.minDifficulty || 1, tierLo);
-      const hi = Math.min(enc.maxDifficulty || 8, tierHi);
-      const diffs = [];
-      for (let d = lo; d <= hi; d++) diffs.push(d);
-      if (!diffs.length) continue;
-      // Sample across the whole legal range, not just its lowest marches.
-      const sampled = diffs.length <= 3 ? diffs
-        : [diffs[0], diffs[Math.floor(diffs.length / 2)], diffs[diffs.length - 1]];
+      const slots = [...(slotsByEncounter[enc.name] || [])].sort((a, b) => a - b);
+      if (!slots.length) { rows.push({ name: enc.name, tier: 'UNREACHABLE', base: NaN, diffs: [] }); continue; }
+      const sampled = slots.length <= 3 ? slots
+        : [slots[0], slots[Math.floor(slots.length / 2)], slots[slots.length - 1]];
       const base = winRate(enc, sampled, 1);
-      rows.push({ name: enc.name, tier, base, diffs: sampled });
+      const regions = [...(regionsByEncounter[enc.name] || [])].join(',');
+      rows.push({ name: enc.name, tier: regions, base, diffs: sampled });
     }
   }
-  rows.sort((a, b) => a.base - b.base);
-  const tooHard = rows.filter(r => r.base < NORMAL_TARGET.lo);
-  const tooEasy = rows.filter(r => r.base > NORMAL_TARGET.hi);
-  console.log(`${rows.length} encounters: ${rows.length - tooHard.length - tooEasy.length} in band, ` +
-    `${tooHard.length} too hard, ${tooEasy.length} too easy\n`);
+  const unreachable = rows.filter(r => Number.isNaN(r.base));
+  const live = rows.filter(r => !Number.isNaN(r.base)).sort((a, b) => a.base - b.base);
+  const tooHard = live.filter(r => r.base < NORMAL_TARGET.lo);
+  const tooEasy = live.filter(r => r.base > NORMAL_TARGET.hi);
+  console.log(`${live.length} reachable encounters: ${live.length - tooHard.length - tooEasy.length} in band, ` +
+    `${tooHard.length} too hard, ${tooEasy.length} too easy` +
+    (unreachable.length ? `; ${unreachable.length} unreachable` : '') + '\n');
+  const line = r => '  ' + r.name.padEnd(28) + pct(r.base).padStart(5) +
+    `   slots ${r.diffs.join(',')}`.padEnd(14) + ` ${r.tier}`;
   console.log('TOO HARD (below ' + pct(NORMAL_TARGET.lo) + ')');
-  tooHard.forEach(r => console.log('  ' + r.name.padEnd(34) + `[${r.tier}]`.padEnd(8) + pct(r.base).padStart(5)));
+  tooHard.forEach(r => console.log(line(r)));
   console.log('\nTOO EASY (above ' + pct(NORMAL_TARGET.hi) + ')');
-  tooEasy.slice(0, 25).forEach(r => console.log('  ' + r.name.padEnd(34) + `[${r.tier}]`.padEnd(8) + pct(r.base).padStart(5)));
-  if (tooEasy.length > 25) console.log(`  ... and ${tooEasy.length - 25} more`);
+  tooEasy.slice(0, 30).forEach(r => console.log(line(r)));
+  if (tooEasy.length > 30) console.log(`  ... and ${tooEasy.length - 30} more`);
+  if (unreachable.length) {
+    console.log('\nUNREACHABLE (in no region pool)');
+    unreachable.forEach(r => console.log('  ' + r.name));
+  }
 }

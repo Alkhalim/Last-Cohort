@@ -19,16 +19,26 @@ const ONLY = (() => {
 })();
 
 const N = FAST ? 40 : 160;          // samples per cell
-const DIFFICULTIES = FAST ? [1, 4, 7] : [1, 2, 3, 4, 5, 6, 7, 8];
+// Runs are FINAL_MARCH (6) slots long. The slot drives scaling; the REGION
+// drives content (see REGIONS in js/data.js). These are the march slots.
+const DIFFICULTIES = FAST ? [1, 3, 5] : [1, 2, 3, 4, 5, 6];
+
+// Which regions can occupy each slot — mirrors generateRoute() in js/data.js.
+const REGIONS_BY_SLOT = {
+  1: ['ambush_trail'],
+  2: ['hunting_grounds', 'poisoned_bog'],
+  3: ['old_forest', 'blood_grove', 'drowned_vale'],
+  4: ['old_forest', 'blood_grove', 'drowned_vale'],
+  5: ['haunted_march', 'heart_forest'],
+  6: ['threshold'],
+};
 
 // --- Party construction --------------------------------------------------
 // Mirrors the in-game test scaler: learn skills, grow HP, equip leveled gear
 // appropriate to the march, so classes are compared at realistic power.
 // Deliberately mirrors startTestRun() in js/main.js — the project's own answer
-// to "what does a party look like at march N". Reproducing it rather than
-// inventing a curve keeps absolute win rates meaningful; an earlier version
-// gave one item per slot and no training bonuses, which made every march past
-// 3 look unwinnable.
+// to "what does a party look like at slot N" (per-march growth at 8/6 of the
+// old 8-march rates, so slot 6 matches the old march-8 party).
 function buildParty(g, engine, classIds, difficulty, rng, { allSkills = false } = {}) {
   const diff = difficulty;
   engine.difficulty = diff;
@@ -38,9 +48,9 @@ function buildParty(g, engine, classIds, difficulty, rng, { allSkills = false } 
   const CLASS_DATA = g.api.CLASS_DATA;
   const ITEM_DATA = g.api.ITEM_DATA;
   const skillCount = allSkills ? 99 : 5;
-  const itemLevel = Math.max(0, Math.floor(diff * 0.4));
-  const hpBonus = Math.floor(diff * 4);
-  let epicBudget = diff >= 7 ? 3 : diff >= 5 ? 1 : 0;
+  const itemLevel = Math.max(0, Math.floor(diff * 0.55));
+  const hpBonus = Math.floor(diff * 5.5);
+  let epicBudget = diff >= 5 ? 3 : diff >= 4 ? 1 : 0;
 
   engine.party.forEach(u => {
     const starters = u.allSkills.filter(s => s.starter);
@@ -64,13 +74,13 @@ function buildParty(g, engine, classIds, difficulty, rng, { allSkills = false } 
     const isSupport = tags.includes('support');
     const isCommand = tags.includes('command');
     const isElite = tags.includes('elite');
-    u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 4.9 : isRanged ? 3.85 : 2.1));
-    u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 2.6 : isMelee ? 2.08 : 1.04));
-    u.bonusHeal = Math.floor(diff * (isSupport ? 3.36 : 0.84));
-    u.bonusPoison = Math.floor(diff * (isRanged ? 1.05 : isSupport ? 0.7 : 0));
+    u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 6.5 : isRanged ? 5.1 : 2.8));
+    u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 3.5 : isMelee ? 2.8 : 1.4));
+    u.bonusHeal = Math.floor(diff * (isSupport ? 4.5 : 1.1));
+    u.bonusPoison = Math.floor(diff * (isRanged ? 1.4 : isSupport ? 0.95 : 0));
 
     // Fill every slot, matching the in-game scaler.
-    const rarities = diff >= 7 ? ['uncommon', 'rare'] : diff >= 4 ? ['common', 'uncommon'] : ['common'];
+    const rarities = diff >= 5 ? ['uncommon', 'rare'] : diff >= 3 ? ['common', 'uncommon'] : ['common'];
     for (const slot of ['weapon', 'armor', 'trinket']) {
       for (let si = 0; si < u.equipment[slot].length; si++) {
         const useEpic = epicBudget > 0 && rng() < 0.3;
@@ -96,18 +106,43 @@ function buildParty(g, engine, classIds, difficulty, rng, { allSkills = false } 
   engine.morale = 50;
 }
 
-// Encounters legal at this difficulty.
-function encountersFor(g, difficulty, kind) {
+// Encounters the real game can serve at this slot — mirrors map.js/data.js.
+// kind 'boss': slots 1-5 draw the regular pool (story bosses excluded, gates
+// translated to slots); slot 6 is the story rotation (all three, i.e. a
+// fully-unlocked player). kind 'normal': the region's pool — curated list if
+// it has one, otherwise the threat tiers at the region's contentDiff (threat
+// is 3 from slot 3 on, 2-3 at slot 2, 1-3 at slot 1).
+function encountersFor(g, slot, kind, regionId = null) {
   const R = g.api.RAW_ENCOUNTERS;
+  const REGIONS = g.api.REGIONS;
   if (kind === 'boss') {
-    return R.bossEncounters.filter(b =>
-      (!b.minDifficulty || b.minDifficulty <= difficulty) &&
-      (!b.maxDifficulty || b.maxDifficulty >= difficulty));
+    if (slot >= g.api.FINAL_MARCH) {
+      return R.bossEncounters.filter(b => g.api.STORY_BOSS_NAMES.includes(b.name));
+    }
+    return R.bossEncounters.filter(b => {
+      if (g.api.STORY_BOSS_NAMES.includes(b.name)) return false;
+      const gate = b.minDifficulty ? g.api.contentToSlotGate(b.minDifficulty) : 1;
+      return gate <= slot;
+    });
   }
-  const tier = difficulty <= 2 ? 'easy' : difficulty <= 5 ? 'mid' : 'hard';
-  return R.threatLevels[tier].filter(e =>
-    (!e.minDifficulty || e.minDifficulty <= difficulty) &&
-    (!e.maxDifficulty || e.maxDifficulty >= difficulty));
+  const region = REGIONS[regionId || REGIONS_BY_SLOT[slot][0]];
+  const T = R.threatLevels;
+  if (region.pool) {
+    const all = [...T.easy, ...T.mid, ...T.hard];
+    return region.pool.map(n => all.find(e => e.name === n)).filter(Boolean);
+  }
+  const cd = region.contentDiff;
+  const fits = e => (!e.minDifficulty || e.minDifficulty <= cd) &&
+                    (!e.maxDifficulty || e.maxDifficulty >= cd);
+  if (slot <= 1) return [...T.easy, ...T.mid, ...T.hard].filter(fits);
+  if (slot === 2) return [...T.mid, ...T.hard].filter(fits);
+  return T.hard.filter(fits);
+}
+
+// A random region legal at this slot.
+function regionForSlot(slot, rng) {
+  const options = REGIONS_BY_SLOT[slot] || REGIONS_BY_SLOT[6];
+  return options[Math.floor(rng() * options.length)];
 }
 
 // --- One sample ----------------------------------------------------------
@@ -137,10 +172,13 @@ function sample(seed, classIds, difficulty, encounter, collect, opts = {}) {
 // Single encounters saturate near 97% win for a properly scaled party, so they
 // cannot separate classes. Attrition across a march is where power actually
 // shows, because HP and cooldowns carry over.
-function runMarch(seed, classIds, difficulty, { combats = 6, collect = null, forceItem = null } = {}) {
+function runMarch(seed, classIds, difficulty, { combats = null, collect = null, forceItem = null, region = null } = {}) {
   const g = createGame(seed);
   const engine = new g.api.CombatEngine();
   buildParty(g, engine, classIds, difficulty, g.rng);
+  // The final march map is shorter (maxMidDepth 4): ~4 fights before the boss.
+  if (combats === null) combats = difficulty >= g.api.FINAL_MARCH ? 4 : 6;
+  const regionId = region || regionForSlot(difficulty, g.rng);
 
   if (forceItem) {
     const it = g.api.ITEM_DATA[forceItem];
@@ -153,7 +191,7 @@ function runMarch(seed, classIds, difficulty, { combats = 6, collect = null, for
     }
   }
 
-  const normalPool = encountersFor(g, difficulty, 'normal');
+  const normalPool = encountersFor(g, difficulty, 'normal', regionId);
   const bossPool = encountersFor(g, difficulty, 'boss');
   if (!normalPool.length || !bossPool.length) return null;
 
@@ -226,7 +264,7 @@ function reportClasses() {
 
   let seed = 1000;
   const rngSel = createGame(7).rng;
-  const diffs = FAST ? [3, 6] : [3, 5, 7];
+  const diffs = FAST ? [2, 5] : [2, 4, 5, 6];
   const per = FAST ? 40 : 150;
 
   for (const diff of diffs) {
@@ -309,7 +347,7 @@ function reportCombos() {
         combos.push([CLASSES[a], CLASSES[b], CLASSES[c]]);
 
   const per = FAST ? 2 : 6;
-  const diffs = FAST ? [5] : [4, 6];
+  const diffs = FAST ? [4] : [3, 5];
   let seed = 50000;
 
   const results = combos.map(team => {
@@ -360,22 +398,25 @@ function reportEncounters() {
 
   for (const kind of ['boss', 'normal']) {
     for (const diff of DIFFICULTIES) {
-      const pool = encountersFor(createGame(1), diff, kind);
-      for (const enc of pool) {
-        let wins = 0, fights = 0, turns = 0, timeouts = 0;
-        const reps = kind === 'boss' ? (FAST ? 8 : 24) : (FAST ? 4 : 10);
-        for (let i = 0; i < reps; i++) {
-          const team = randomParty(rngSel);
-          const r = sample(seed++, team, diff, enc);
-          if (r.result === 'timeout') { timeouts++; continue; }
-          fights++; turns += r.turns;
-          if (r.result === 'victory') wins++;
+      const regions = kind === 'boss' ? [null] : REGIONS_BY_SLOT[diff];
+      for (const regionId of regions) {
+        const pool = encountersFor(createGame(1), diff, kind, regionId);
+        for (const enc of pool) {
+          let wins = 0, fights = 0, turns = 0, timeouts = 0;
+          const reps = kind === 'boss' ? (FAST ? 8 : 40) : (FAST ? 4 : 25);
+          for (let i = 0; i < reps; i++) {
+            const team = randomParty(rngSel);
+            const r = sample(seed++, team, diff, enc);
+            if (r.result === 'timeout') { timeouts++; continue; }
+            fights++; turns += r.turns;
+            if (r.result === 'victory') wins++;
+          }
+          if (fights === 0) continue;
+          rows.push({
+            kind, diff, region: regionId, name: enc.name,
+            win: wins / fights, turns: turns / fights, fights, timeouts,
+          });
         }
-        if (fights === 0) continue;
-        rows.push({
-          kind, diff, name: enc.name,
-          win: wins / fights, turns: turns / fights, fights, timeouts,
-        });
       }
     }
   }
@@ -407,12 +448,13 @@ function reportEncounters() {
   if (flagged === 0) console.log('  (none)');
 
   const norm = rows.filter(r => r.kind === 'normal').sort((a, b) => a.win - b.win);
+  const regTag = r => (r.region || '').replace(/_/g, ' ').padEnd(16);
   console.log('\nHARDEST NORMAL ENCOUNTERS');
-  norm.slice(0, 12).forEach(r => console.log(
-    `  march ${r.diff}  ${r.name.padEnd(32)} ${(r.win * 100).toFixed(0).padStart(4)}%  ${r.turns.toFixed(1)} turns`));
+  norm.slice(0, 14).forEach(r => console.log(
+    `  slot ${r.diff}  ${regTag(r)} ${r.name.padEnd(28)} ${(r.win * 100).toFixed(0).padStart(4)}%  ${r.turns.toFixed(1)} turns`));
   console.log('\nEASIEST NORMAL ENCOUNTERS');
-  norm.slice(-8).reverse().forEach(r => console.log(
-    `  march ${r.diff}  ${r.name.padEnd(32)} ${(r.win * 100).toFixed(0).padStart(4)}%  ${r.turns.toFixed(1)} turns`));
+  norm.slice(-10).reverse().forEach(r => console.log(
+    `  slot ${r.diff}  ${regTag(r)} ${r.name.padEnd(28)} ${(r.win * 100).toFixed(0).padStart(4)}%  ${r.turns.toFixed(1)} turns`));
 
   console.log('\nDIFFICULTY CURVE BY MARCH');
   for (const diff of DIFFICULTIES) {
@@ -437,7 +479,7 @@ function reportSkills() {
   // Give every unit its full kit, otherwise "never chosen" would really mean
   // "never learned" — buildParty normally teaches only a handful of skills.
   for (const diff of DIFFICULTIES) {
-    const pool = encountersFor(createGame(1), diff, 'normal');
+    const pool = REGIONS_BY_SLOT[diff].flatMap(r => encountersFor(createGame(1), diff, 'normal', r));
     for (let i = 0; i < (FAST ? 30 : 90); i++) {
       const team = randomParty(rngSel);
       const enc = pool[Math.floor(rngSel() * pool.length)];
@@ -513,14 +555,14 @@ function reportSkills() {
 // 5. Item impact
 // ============================================================
 function reportItems() {
-  heading('5. ITEM IMPACT  (march-7 completion with the item forced onto the party)');
+  heading('5. ITEM IMPACT  (slot-5 march completion with the item forced onto the party)');
   const g0 = createGame(1);
   const items = Object.values(g0.api.ITEM_DATA).filter(i => !i.baseId);
   const rngSel = createGame(19).rng;
   let seed = 300000;
-  // March 7: single encounters saturate at 100% win, so item differences only
-  // show where the game is actually pushing back.
-  const diff = FAST ? 6 : 7;
+  // Slot 5: single encounters saturate at 100% win earlier, so item
+  // differences only show where the game is actually pushing back.
+  const diff = FAST ? 4 : 5;
   const reps = FAST ? 6 : 22;
 
   let baseWins = 0, baseRuns = 0;
@@ -581,17 +623,19 @@ function reportMarchLength() {
   const rngSel = createGame(23).rng;
   let seed = 400000;
   const reps = FAST ? 25 : 90;
-  const marches = FAST ? [2, 5] : [1, 3, 5, 7];
+  const marches = FAST ? [2, 5] : [1, 3, 5, 6];
 
   console.log('\nCurrent map: depths 0-6 plus a rest and a boss, with 2 mid nodes');
-  console.log('converted to events — about 6 fights per march before the boss.\n');
+  console.log('converted to events — about 6 fights per march before the boss');
+  console.log('(the final march runs shorter, ~4 fights).\n');
 
   for (const diff of marches) {
-    const normalPool = encountersFor(createGame(1), diff, 'normal');
+    const regionId = regionForSlot(diff, rngSel);
+    const normalPool = encountersFor(createGame(1), diff, 'normal', regionId);
     const bossPool = encountersFor(createGame(1), diff, 'boss');
     if (!normalPool.length || !bossPool.length) continue;
 
-    console.log(`MARCH ${diff}`);
+    console.log(`SLOT ${diff}  (region: ${regionId})`);
     console.log('  combats   complete%   wiped before boss%   died at fight (avg)');
     for (const combats of [3, 4, 5, 6, 7]) {
       let completed = 0, wipedEarly = 0, deathIdxSum = 0, deaths = 0, runs = 0;
@@ -682,7 +726,7 @@ function runMarchScaled(seed, classIds, difficulty, combats, progressionMult, en
   const engine = new g.api.CombatEngine();
   buildPartyScaled(g, engine, classIds, difficulty, g.rng, progressionMult);
 
-  const normalPool = encountersFor(g, difficulty, 'normal');
+  const normalPool = encountersFor(g, difficulty, 'normal', regionForSlot(difficulty, g.rng));
   const bossPool = encountersFor(g, difficulty, 'boss');
   if (!normalPool.length || !bossPool.length) return null;
 
@@ -750,7 +794,7 @@ function reportLengthVsProgression() {
   const rngSel = createGame(31).rng;
   let seed = 600000;
   const reps = FAST ? 40 : 140;
-  const marches = FAST ? [4, 7] : [2, 4, 6, 7, 8];
+  const marches = FAST ? [3, 5] : [2, 3, 4, 5, 6];
 
   console.log('\nmeasured from the real map generator:');
   console.log('  current  maxMidDepth 6/4 -> 5.40 fights per march');

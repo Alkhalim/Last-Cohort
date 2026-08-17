@@ -76,6 +76,7 @@ function createGame(seed = 1) {
       CombatEngine, CLASS_DATA, ENEMY_DATA, ITEM_DATA, RAW_ENCOUNTERS,
       getItemData, canEquipItem, createLeveledItem, poisonTotalDamage,
       TARGET, PHASE,
+      REGIONS, FINAL_MARCH, STORY_BOSS_NAMES, contentToSlotGate, generateRoute,
     };
   `, ctx);
 
