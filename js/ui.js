@@ -2258,12 +2258,19 @@ class GameUI {
       } else {
         title.textContent = 'TEUTOBURG FOREST';
       }
+      let sub = document.getElementById('map-subtitle');
+      if (!sub) {
+        sub = document.createElement('div');
+        sub.id = 'map-subtitle';
+        title.insertAdjacentElement('afterend', sub);
+      }
+      sub.textContent = (theme && theme.subtitle) ? theme.subtitle : '';
     }
 
     // March progress bar
     const progressBar = document.getElementById('march-progress-bar');
     if (progressBar && !this._inHiddenMarch) {
-      const totalMarches = 8;
+      const totalMarches = (typeof FINAL_MARCH !== 'undefined') ? FINAL_MARCH : 8;
       const currentMarch = this.difficulty || 1;
       let pips = '';
       for (let i = 1; i <= totalMarches; i++) {
@@ -2328,7 +2335,7 @@ class GameUI {
 
     // Calculate dimensions
     const maxDepth = Math.max(...this.mapNodes.map(n => n.depth));
-    const nodeSpacing = 110;
+    const nodeSpacing = 134;
     const topPadding = 60;
     const bottomPadding = 60;
     const totalHeight = topPadding + (maxDepth + 1) * nodeSpacing + bottomPadding;
@@ -2444,6 +2451,21 @@ class GameUI {
       ctx.translate(-x, -y);
     };
 
+    // Layer 0: Ground wash — the region's floor, not a black void
+    const washColors = {
+      'forest': '#0f1a0d', 'forest-dark': '#0c150c', 'warcamp': '#171208',
+      'bog': '#0c1713', 'ancient': '#131807', 'blood': '#170c0a',
+      'haunted': '#0e0e1a', 'drowned': '#0a141a', 'heart': '#190e06',
+      'threshold': '#120a18', 'dragon': '#170f06',
+    };
+    ctx.globalAlpha = 1;
+    const wash = ctx.createLinearGradient(0, 0, 0, totalHeight);
+    wash.addColorStop(0, '#08080a');
+    wash.addColorStop(0.5, washColors[marchTheme] || '#0f1a0d');
+    wash.addColorStop(1, '#0a0a0c');
+    ctx.fillStyle = wash;
+    ctx.fillRect(0, 0, wrapperWidth, totalHeight);
+
     // Layer 1: Ground patches — irregular organic blobs using bezier curves
     const patchCount = 12 + Math.floor(tRand(800) * 6);
     const patchColors = {
@@ -2456,7 +2478,7 @@ class GameUI {
       const px = tX(i * 7 + 100);
       const py = tY(i * 7 + 101);
       const pr = 25 + tRand(i * 7 + 102) * 55;
-      ctx.globalAlpha = 0.05 + tRand(i * 7 + 103) * 0.07;
+      ctx.globalAlpha = 0.11 + tRand(i * 7 + 103) * 0.10;
       ctx.fillStyle = patchColors[marchTheme] || '#2a3a20';
       // Draw organic blob using bezier curves (no sharp angles)
       ctx.beginPath();
@@ -2491,7 +2513,7 @@ class GameUI {
       const sx = tX(i * 11 + 500);
       const sy = tY(i * 11 + 501);
       if (nearPath(sx, sy, 15)) continue;
-      ctx.globalAlpha = 0.08 + tRand(i * 11 + 502) * 0.08;
+      ctx.globalAlpha = 0.13 + tRand(i * 11 + 502) * 0.10;
       ctx.fillStyle = scatterColors[marchTheme] || '#3a5a20';
       const kind = tRand(i * 11 + 503);
       if (kind < 0.4) {
@@ -2582,16 +2604,16 @@ class GameUI {
     }
 
     // Layer 3: Detail decorations — high density, avoid paths
-    const decoCount = 55 + Math.floor(tRand(999) * 24);
+    const decoCount = 62 + Math.floor(tRand(999) * 26);
     for (let i = 0; i < decoCount; i++) {
       const tx = tX(i * 3);
       const ty = tY(i * 3 + 1);
-      const size = 5 + tRand(i * 3 + 2) * 10;
+      const size = 7 + tRand(i * 3 + 2) * 14;
 
       // Skip decorations that would overlap paths or nodes
       if (nearPath(tx, ty, size + 12)) continue;
 
-      ctx.globalAlpha = 0.12 + tRand(i * 5) * 0.10;
+      ctx.globalAlpha = 0.20 + tRand(i * 5) * 0.14;
 
       switch (marchTheme) {
         case 'forest':
@@ -3050,6 +3072,44 @@ class GameUI {
       ctx.stroke();
     };
 
+    // Dense silhouette growth framing the corridor's edges
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < 30; i++) {
+      const side = i % 2;
+      const band = wrapperWidth * 0.13;
+      const sx = side === 0 ? tRand(i * 61 + 700) * band : wrapperWidth - tRand(i * 61 + 700) * band;
+      const sy = tRand(i * 61 + 701) * totalHeight;
+      const size = 10 + tRand(i * 61 + 702) * 16;
+      ctx.globalAlpha = 0.45 + tRand(i * 61 + 703) * 0.25;
+      ctx.fillStyle = '#050607';
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - size * 1.6);
+      ctx.lineTo(sx - size * 0.7, sy + size * 0.4);
+      ctx.lineTo(sx + size * 0.7, sy + size * 0.4);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Corridor shading: dark flanks pull the eye to the trail
+    ctx.globalAlpha = 1;
+    const flank = ctx.createLinearGradient(0, 0, wrapperWidth, 0);
+    flank.addColorStop(0, 'rgba(0, 0, 0, 0.42)');
+    flank.addColorStop(0.22, 'rgba(0, 0, 0, 0)');
+    flank.addColorStop(0.78, 'rgba(0, 0, 0, 0)');
+    flank.addColorStop(1, 'rgba(0, 0, 0, 0.42)');
+    ctx.fillStyle = flank;
+    ctx.fillRect(0, 0, wrapperWidth, totalHeight);
+
+    // Worn trail beneath the route markings
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.setLineDash([]);
+    for (const edge of edges) {
+      ctx.strokeStyle = 'rgba(122, 102, 72, 0.10)';
+      ctx.lineWidth = 14;
+      drawWigglyPath(ctx, edge.from, edge.to, edgeOffsets.get(edge) || 0);
+    }
+    ctx.restore();
+
     // Draw all edges
     for (const edge of edges) {
       const { from, to, nodeId, childId } = edge;
@@ -3096,16 +3156,16 @@ class GameUI {
       // no icon, no threat information.
       if (isShadow(node)) {
         el.className = `map-node shadow${isUnreachable ? ' unreachable' : ''}`;
-        el.style.left = (pos.x - 32) + 'px';
-        el.style.top = (pos.y - 32) + 'px';
+        el.style.left = (pos.x - 42) + 'px';
+        el.style.top = (pos.y - 42) + 'px';
         el.innerHTML = '<span class="map-node-icon map-node-shadow-mark">?</span>';
         nodesLayer.appendChild(el);
         continue;
       }
 
       el.className = `map-node${node.visited ? ' visited' : ''}${isReachableNode ? ' reachable' : ''}${isCurrent ? ' current' : ''}${isUnreachable ? ' unreachable' : ''}${isFuture ? ' future' : ''} type-${node.type}`;
-      el.style.left = (pos.x - 32) + 'px';
-      el.style.top = (pos.y - 32) + 'px';
+      el.style.left = (pos.x - 42) + 'px';
+      el.style.top = (pos.y - 42) + 'px';
 
       let icon = '';
       const iconImg = (src) => `<img src="assets/map-icons/${src}" class="map-node-img">`;
@@ -3125,7 +3185,22 @@ class GameUI {
         case 'boss': icon = iconImg('bossFight.png'); break;
       }
 
-      el.innerHTML = `<span class="map-node-icon">${icon}</span>`;
+      let label = '';
+      if (node.type === 'combat') {
+        label = node.threat >= 3 ? 'Battle' : node.threat >= 2 ? 'Skirmish' : 'Scouts';
+      } else if (node.type === 'rest') {
+        label = 'Camp';
+      } else if (node.type === 'boss') {
+        const bossEnemy = node.encounter && node.encounter.enemies &&
+          node.encounter.enemies.map(id => ENEMY_DATA[id]).find(e => e && e.isBoss);
+        label = bossEnemy ? bossEnemy.name : 'The Enemy';
+      } else if (node.type === 'event') {
+        const t = node.encounter && node.encounter.type;
+        label = t === 'item_trade' ? 'Merchant' : t === 'item_upgrade' ? 'Forge'
+          : t === 'skill_upgrade' ? 'Mentor' : 'Omen';
+      }
+      el.innerHTML = `<span class="map-node-icon">${icon}</span>` +
+        (label ? `<span class="map-node-label">${label}</span>` : '');
 
       if (isReachableNode && !node.visited) {
         el.addEventListener('click', () => this.onMapNodeClick(node));

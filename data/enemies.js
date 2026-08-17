@@ -480,7 +480,7 @@ const RAW_ENEMIES = {
     "minDifficulty": 5,
     "description": "A many-headed serpent lurking in the still, black waters. Immensely tough. Reduces damage to all nearby enemies.",
     "ai": "defensive",
-    "aura": { "damageReduction": 2 },
+    "aura": { "damageReduction": 1 },
     "startWithSelfBlock": true,
     "actions": [
       { "name": "Tidal Crush", "damage": 7, "chance": 0.4, "text": "surges forward with crushing force" },

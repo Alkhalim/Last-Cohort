@@ -3075,6 +3075,16 @@ html, body {
   font-size: 0.9rem;
   color: var(--gold);
   letter-spacing: 0.15em;
+  white-space: nowrap;
+}
+
+/* The header is one row (title | pips | morale) with the region's flavor
+   line wrapping onto a full-width second row. */
+#map-header { flex-wrap: wrap; }
+#map-morale-label { white-space: nowrap; }
+#map-subtitle {
+  width: 100%;
+  order: 4;
 }
 
 #march-progress-bar {
@@ -3133,8 +3143,8 @@ html, body {
 
 .map-node {
   position: absolute;
-  width: 64px;
-  height: 64px;
+  width: 84px;
+  height: 84px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3156,15 +3166,16 @@ html, body {
 }
 
 .map-node .map-node-img {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
   pointer-events: none;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.7));
 }
 
 .map-node.type-boss .map-node-img {
-  width: 64px;
-  height: 64px;
+  width: 84px;
+  height: 84px;
 }
 
 .map-node.visited {
@@ -3201,6 +3212,38 @@ html, body {
   filter: saturate(0.5);
 }
 
+/* What each stop on the trail is — small carved caption under the icon */
+.map-node-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: -6px;
+  width: 96px;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  line-height: 1.25;
+}
+.map-node.reachable .map-node-label { color: var(--gold); }
+.map-node.current .map-node-label { color: var(--text-bright); }
+.map-node.visited .map-node-label { opacity: 0.45; }
+.map-node.type-boss .map-node-label { color: var(--red-bright); font-size: 0.62rem; }
+
+#map-subtitle {
+  font-size: 0.62rem;
+  font-style: italic;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
 .map-node.future:hover {
   opacity: 0.6;
   filter: saturate(0.7) drop-shadow(0 0 4px rgba(150, 150, 150, 0.3));
@@ -3216,8 +3259,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: rgba(10, 10, 14, 0.8);
   border: 1px dashed rgba(140, 140, 150, 0.5);
