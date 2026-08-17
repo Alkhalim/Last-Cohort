@@ -1309,13 +1309,15 @@ html, body {
   border-bottom: 1px solid var(--border);
 }
 
-/* phase-label base — overridden by dramatic rules below */
+/* phase-label base — overridden by dramatic rules below.
+   Bottom margin leaves room for the Centurion's die-adjust buttons, which
+   sit 20px above the dice row and overlapped the label. */
 #phase-label {
   font-family: 'Cinzel', serif;
   font-size: 1rem;
   color: var(--gold);
   letter-spacing: 0.2em;
-  margin-bottom: 12px;
+  margin-bottom: 26px;
 }
 
 #dice-pool {
