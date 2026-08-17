@@ -7,8 +7,17 @@
 :root {
   --bg-deep: #0a0a0c;
   --bg-dark: #12141a;
-  --bg-card: #1a1d26;
-  --bg-card-hover: #242836;
+  /* Shared textures: a faint grain and a Roman meander strip, both inline so
+     nothing external loads. Cards are worn iron: grain over a lit-from-above
+     gradient. --bg-card is only ever used as `background:`, so it can carry
+     the full layered value. */
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.8 0 0 0 0 0.75 0 0 0 0 0.62 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --meander: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 6.5 H2.5 V1.5 H8.5 V4.5 H5.5 V6.5 H16' fill='none' stroke='%238a7020' stroke-width='1.3'/%3E%3C/svg%3E");
+  --card-face: linear-gradient(180deg, #232733 0%, #1a1d26 55%, #14161e 100%);
+  --card-face-hover: linear-gradient(180deg, #2c3140 0%, #242836 55%, #1c1f2a 100%);
+  --bg-card: var(--noise), var(--card-face);
+  --bg-card-hover: var(--noise), var(--card-face-hover);
+  --iron-edge: inset 0 1px 0 rgba(232, 228, 216, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
   --border: #2a2e3a;
   --border-highlight: #4a4e5a;
   --text: #c8c4b8;
@@ -86,7 +95,9 @@ html, body {
 #title-screen {
   justify-content: flex-start;
   align-items: center;
-  background: linear-gradient(180deg, #0a0a0c 0%, #141820 40%, #1a1410 100%);
+  background: radial-gradient(ellipse 120% 55% at 50% 108%, rgba(201, 140, 40, 0.10), transparent 60%),
+              var(--noise),
+              linear-gradient(180deg, #0a0a0c 0%, #141820 40%, #1a1410 100%);
   overflow-y: auto;
 }
 
@@ -104,6 +115,8 @@ html, body {
   letter-spacing: 0.3em;
   text-shadow: 0 2px 20px rgba(201, 162, 39, 0.3);
   margin-bottom: 0.5rem;
+  padding-bottom: 14px;
+  background: var(--meander) bottom center repeat-x;
 }
 
 .subtitle {
@@ -336,9 +349,12 @@ html, body {
   font-family: 'Cinzel', serif;
   font-size: 1rem;
   padding: 0.8rem 2.5rem;
-  background: linear-gradient(180deg, #3a2a14 0%, #2a1a0a 100%);
+  background: var(--noise), linear-gradient(180deg, #4a3618 0%, #33230e 45%, #241606 100%);
   color: var(--gold);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   border: 1px solid var(--gold-dim);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 140, 0.18), inset 0 -2px 3px rgba(0, 0, 0, 0.4), 0 2px 5px rgba(0, 0, 0, 0.5);
   cursor: pointer;
   letter-spacing: 0.1em;
   transition: all 0.2s;
@@ -356,7 +372,8 @@ html, body {
 
 /* --- Combat Screen Layout --- */
 #combat-screen {
-  background: var(--bg-deep);
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(ellipse 135% 95% at 50% 38%, transparent 55%, rgba(0, 0, 0, 0.55) 100%), var(--noise);
   gap: 0;
   overflow: hidden;
 }
@@ -367,8 +384,8 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--bg-dark);
-  border-bottom: 1px solid var(--border);
+  background: var(--noise), linear-gradient(180deg, #171a22 0%, #12141a 100%);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.22);
   flex-shrink: 0;
   position: relative;
 }
@@ -1045,9 +1062,10 @@ html, body {
   width: 90px;
   min-width: 70px;
   flex-shrink: 1;
-  background: #201a1e;
+  background: var(--noise), linear-gradient(180deg, #2a2128 0%, #201a1e 55%, #171216 100%);
   border: 1px solid #3a2830;
-  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(232, 216, 216, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
   padding: 6px 8px;
   transition: all 0.2s;
   display: flex;
@@ -1226,11 +1244,12 @@ html, body {
 
 .hp-bar {
   height: 5px;
-  background: #1a1a1a;
-  border-radius: 3px;
+  background: #100d0b;
+  border-radius: 2px;
   overflow: hidden;
   margin-bottom: 0;
   position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(232, 228, 216, 0.05);
 }
 
 .hp-drain {
@@ -1322,18 +1341,21 @@ html, body {
   font-family: 'Cinzel', serif;
   font-size: 1.4rem;
   font-weight: 700;
-  background: var(--die-bg);
-  border: 2px solid var(--die-border);
+  background: var(--noise), linear-gradient(145deg, #ece4d0 0%, #d6cbb1 55%, #b7aa8d 100%);
+  border: 1px solid #4a3f2c;
   border-radius: 8px;
-  color: var(--text-bright);
+  color: #33291c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 4px rgba(90, 74, 42, 0.35), 0 2px 4px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
 }
 
 .die.empty {
+  background: rgba(0, 0, 0, 0.35);
   color: var(--text-dim);
-  border-style: dashed;
+  border: 2px dashed var(--die-border);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
   cursor: default;
 }
 
@@ -1352,23 +1374,24 @@ html, body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+  background: radial-gradient(circle at 35% 30%, #1f1a12 25%, currentColor 80%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 1px 1px rgba(0, 0, 0, 0.6);
 }
 
 .die.selected {
   border-color: var(--die-selected);
-  box-shadow: 0 0 14px rgba(201, 162, 39, 0.5);
+  box-shadow: 0 0 14px rgba(201, 162, 39, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transform: translateY(-5px);
-  background: #3a2e18;
+  background: var(--noise), linear-gradient(145deg, #f7ecca 0%, #e5d5a4 55%, #c7b280 100%);
 }
 
 .die.used {
-  background: var(--die-used);
-  border-color: transparent;
-  color: #555;
+  background: var(--noise), linear-gradient(145deg, #7d7666 0%, #5f594c 100%);
+  border-color: #3a3527;
+  color: #3a352b;
+  box-shadow: none;
   cursor: default;
-  opacity: 0.4;
+  opacity: 0.45;
 }
 
 /* A die this skill's cost can never accept. Distinct from .used: the die is
@@ -1573,7 +1596,8 @@ html, body {
   flex: 1;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  box-shadow: var(--iron-edge);
+  border-radius: 3px;
   padding: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -1782,7 +1806,8 @@ html, body {
   margin-bottom: 4px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  box-shadow: var(--iron-edge);
+  border-radius: 3px;
   cursor: pointer;
   transition: all 0.15s;
   min-height: 44px;
@@ -2068,9 +2093,9 @@ html, body {
 }
 
 @keyframes unit-hit {
-  0% { background: var(--bg-card); }
-  20% { background: rgba(160, 48, 48, 0.4); border-color: var(--red-bright); }
-  100% { background: var(--bg-card); }
+  0% { box-shadow: var(--iron-edge); }
+  20% { box-shadow: inset 0 0 0 999px rgba(160, 48, 48, 0.4); border-color: var(--red-bright); }
+  100% { box-shadow: var(--iron-edge); }
 }
 
 /* --- Damage number popup --- */
@@ -2171,6 +2196,8 @@ html, body {
   letter-spacing: 0.2em;
   text-align: center;
   margin-bottom: 0.5rem;
+  padding-bottom: 12px;
+  background: var(--meander) bottom center repeat-x;
 }
 
 #summary-text {
@@ -2915,9 +2942,9 @@ html, body {
 }
 
 @keyframes unit-heal {
-  0% { background: var(--bg-card); }
-  25% { background: rgba(74, 122, 58, 0.35); border-color: var(--green-bright); }
-  100% { background: var(--bg-card); }
+  0% { box-shadow: var(--iron-edge); }
+  25% { box-shadow: inset 0 0 0 999px rgba(74, 122, 58, 0.35); border-color: var(--green-bright); }
+  100% { box-shadow: var(--iron-edge); }
 }
 
 /* --- Unit block flash --- */
@@ -2926,9 +2953,9 @@ html, body {
 }
 
 @keyframes unit-block {
-  0% { background: var(--bg-card); }
-  25% { background: rgba(58, 90, 138, 0.35); border-color: var(--blue-bright); }
-  100% { background: var(--bg-card); }
+  0% { box-shadow: var(--iron-edge); }
+  25% { box-shadow: inset 0 0 0 999px rgba(58, 90, 138, 0.35); border-color: var(--blue-bright); }
+  100% { box-shadow: var(--iron-edge); }
 }
 
 /* --- Morale flash --- */
@@ -3447,6 +3474,8 @@ html, body {
   letter-spacing: 0.25em;
   text-shadow: 0 2px 20px rgba(201, 162, 39, 0.4);
   margin-bottom: 1rem;
+  padding-bottom: 14px;
+  background: var(--meander) bottom center repeat-x;
 }
 
 #run-complete-text {
@@ -3537,9 +3566,12 @@ html, body {
   padding: 10px;
   font-family: 'Cinzel', serif;
   font-size: 0.85rem;
-  background: linear-gradient(180deg, #1e2230 0%, #161a24 100%);
+  background: var(--noise), linear-gradient(180deg, #232839 0%, #1a1e2b 50%, #12151f 100%);
   color: var(--text-bright);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   border: 1px solid var(--border-highlight);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(232, 228, 216, 0.08), inset 0 -2px 3px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.45);
   cursor: pointer;
   letter-spacing: 0.08em;
   min-height: 48px;
@@ -4097,8 +4129,9 @@ html, body {
    ================================================================ */
 
 #dice-area {
-  background: linear-gradient(180deg, #0e0e12 0%, #0a0a0e 100%);
-  border-top: 1px solid rgba(42, 46, 58, 0.6);
+  background: radial-gradient(ellipse 95% 80% at 50% 118%, rgba(201, 140, 40, 0.13), transparent 65%),
+              var(--noise), linear-gradient(180deg, #0e0e12 0%, #0a0a0e 100%);
+  border-top: 1px solid rgba(201, 162, 39, 0.14);
   border-bottom: 1px solid rgba(42, 46, 58, 0.6);
 }
 
@@ -4111,8 +4144,8 @@ html, body {
 }
 
 @keyframes enemy-turn-throb {
-  0%, 100% { background: var(--bg-deep); }
-  50% { background: #0e0808; }
+  0%, 100% { background-color: var(--bg-deep); }
+  50% { background-color: #0e0808; }
 }
 
 /* Don't let the throb override shake */
@@ -5048,7 +5081,10 @@ html, body {
 
 .march-title-content {
   text-align: center;
-  padding: 20px 40px;
+  padding: 30px 40px;
+  background-image: var(--meander), var(--meander);
+  background-position: top center, bottom center;
+  background-repeat: repeat-x, repeat-x;
 }
 
 .march-title-march {
