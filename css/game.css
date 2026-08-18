@@ -5946,3 +5946,79 @@ html, body {
   filter: saturate(1);
   transition: opacity 0.25s ease-out, filter 0.25s ease-out;
 }
+
+/* ============================================================
+   Rough-hewn enemy boards: no two planks cut alike
+   ============================================================ */
+.enemy-card {
+  --tilt: 0deg;
+  --drop: 0px;
+  transform: rotate(var(--tilt)) translateY(var(--drop));
+  clip-path: var(--hew, none);
+}
+
+/* Four hews, cycled so neighbours never match */
+.enemy-slots .enemy-card:nth-child(4n+1) {
+  --tilt: -1.1deg; --drop: 1px;
+  width: 98px;
+  --hew: polygon(1% 5%, 12% 1%, 38% 3%, 63% 0%, 88% 3%, 99% 1%, 100% 32%, 97% 55%, 100% 79%, 97% 99%, 71% 97%, 45% 100%, 18% 97%, 2% 100%, 0% 71%, 3% 44%, 0% 21%);
+}
+.enemy-slots .enemy-card:nth-child(4n+2) {
+  --tilt: 0.9deg; --drop: -2px;
+  width: 102px;
+  --hew: polygon(0% 2%, 24% 0%, 52% 3%, 79% 0%, 100% 4%, 98% 24%, 100% 51%, 98% 76%, 100% 96%, 82% 100%, 55% 97%, 29% 100%, 1% 97%, 3% 68%, 0% 38%, 2% 16%);
+}
+.enemy-slots .enemy-card:nth-child(4n+3) {
+  --tilt: -0.5deg; --drop: 2px;
+  width: 99px;
+  --hew: polygon(3% 1%, 31% 2%, 58% 0%, 84% 3%, 100% 0%, 97% 28%, 100% 46%, 97% 72%, 99% 100%, 74% 98%, 47% 100%, 21% 98%, 0% 99%, 2% 74%, 0% 49%, 3% 26%);
+}
+.enemy-slots .enemy-card:nth-child(4n+4) {
+  --tilt: 1.3deg; --drop: 0px;
+  width: 97px;
+  --hew: polygon(0% 4%, 18% 0%, 44% 2%, 70% 0%, 97% 2%, 100% 22%, 97% 43%, 100% 68%, 98% 97%, 78% 100%, 51% 98%, 24% 100%, 3% 98%, 0% 80%, 2% 55%, 0% 30%);
+}
+
+/* The dead slump deeper into the mud */
+.enemy-card.dead {
+  --drop: 5px;
+  transform: rotate(calc(var(--tilt) * 2.5)) translateY(var(--drop));
+}
+
+/* Bosses stand square and huge — only great chips out of the timber */
+.enemy-card.boss {
+  --tilt: -0.4deg; --drop: 0px;
+  --hew: polygon(0% 3%, 21% 0%, 55% 2%, 83% 0%, 100% 2%, 98% 35%, 100% 66%, 98% 98%, 66% 100%, 34% 98%, 2% 100%, 0% 64%, 2% 33%);
+  /* the purple glow follows the hewn edge */
+  box-shadow: none;
+  filter: drop-shadow(0 0 8px rgba(90, 58, 106, 0.55));
+}
+
+/* Outer glows must follow the clipped silhouette: drop-shadow, not box-shadow */
+.enemy-card.targetable {
+  box-shadow: none;
+  filter: drop-shadow(0 0 5px rgba(208, 64, 64, 0.5));
+}
+.enemy-card.preview {
+  box-shadow: none;
+  filter: drop-shadow(0 0 4px rgba(208, 64, 64, 0.35));
+}
+#combat-screen.enemy-turn-active .enemy-card:not(.dead) {
+  box-shadow: inset 0 0 8px rgba(160, 30, 30, 0.1);
+  filter: drop-shadow(0 0 6px rgba(160, 30, 30, 0.4));
+}
+/* keep the iron band + poison stain (inset shadows clip fine) */
+.enemy-card.has-block {
+  box-shadow: inset 0 -6px 8px rgba(95, 107, 124, 0.18), inset 0 -1px 0 rgba(200, 210, 225, 0.25);
+}
+.enemy-card.has-poison {
+  box-shadow: inset 0 0 12px rgba(80, 180, 30, 0.3);
+}
+
+/* Attack flash glow, re-declared with drop-shadow so it isn't clipped */
+@keyframes enemy-attack-enhanced {
+  0% { transform: scale(1) rotate(var(--tilt)); filter: none; }
+  15% { transform: scale(1.15) translateY(5px) rotate(var(--tilt)); filter: drop-shadow(0 0 14px rgba(208, 64, 64, 0.7)); border-color: var(--red-bright); background: rgba(160, 48, 48, 0.25); }
+  30% { transform: scale(1.08) translateY(2px) rotate(var(--tilt)); filter: drop-shadow(0 0 9px rgba(208, 64, 64, 0.5)); }
+  100% { transform: scale(1) rotate(var(--tilt)); filter: none; }
+}
