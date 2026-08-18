@@ -102,10 +102,6 @@ html, body {
   overflow: hidden;
 }
 
-.hp-fill, .boss-hp-fill, #morale-fill, .camp-hp-fill, .map-party-hp-fill {
-  background-image: repeating-linear-gradient(115deg, rgba(0, 0, 0, 0.16) 0 2px, transparent 2px 5px);
-}
-
 /* --- Screens --- */
 .screen {
   display: none;
@@ -5478,24 +5474,24 @@ html, body {
 .map-party-hp-bar { height: 7px; }
 .camp-hp-bar { height: 8px; }
 
-/* The fill: enamel liquid — bright meniscus, shaded base, faint grain */
+/* The fill: enamel liquid — bright meniscus, shaded base */
 .hp-fill, .boss-hp-fill, .camp-hp-fill, .map-party-hp-fill {
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.1) 32%, transparent 55%, rgba(0, 0, 0, 0.35) 100%),
-    repeating-linear-gradient(115deg, rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 5px);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.1) 32%, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
   border-radius: 1px;
 }
 
-/* Quarter gradations carved into the channel */
+/* Three quarter-marks carved into the channel — quiet gradations */
 .hp-bar::after, .boss-hp-track::after, .camp-hp-bar::after, .map-party-hp-bar::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 4;
-  background: repeating-linear-gradient(90deg,
-    transparent 0, transparent calc(25% - 1px),
-    rgba(0, 0, 0, 0.55) calc(25% - 1px), rgba(0, 0, 0, 0.55) 25%);
+  background:
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(0, 0, 0, 0.4) calc(25% - 1px) 25%, transparent 25%),
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(0, 0, 0, 0.4) calc(50% - 1px) 50%, transparent 50%),
+    linear-gradient(90deg, transparent calc(75% - 1px), rgba(0, 0, 0, 0.4) calc(75% - 1px) 75%, transparent 75%);
 }
 
 /* Morale is the legion standard: crimson cloth burning into gold,

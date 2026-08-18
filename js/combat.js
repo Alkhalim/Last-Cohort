@@ -705,6 +705,7 @@ class CombatEngine {
         u._deepCoverBlockNext = 0;
       }
       // Bone Totem stun: skip this turn
+      u._extraActions = 0;
       u._stunnedThisTurn = false;
       if (u._stunNextTurn) {
         u.actedThisTurn = true;
@@ -4029,6 +4030,7 @@ class CombatEngine {
         this.enemies.forEach(e => {
           if (!e.dead && e.poison > 0) {
             const poisonDmg = e.poison;
+            const hpBeforeTick = e.hp;
             e.hp = Math.max(0, e.hp - poisonDmg);
             const poisoner = this.party.filter(u => !u.downed && u.stats.poisonInflicted > 0)
               .sort((a, b) => b.stats.poisonInflicted - a.stats.poisonInflicted)[0];
@@ -4048,6 +4050,29 @@ class CombatEngine {
               e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
               this.poisonKills = (this.poisonKills || 0) + 1;
               this.addLog(`${e.name} falls to poison!`);
+              // Poison overkill mirrors attack overkill: a tick far beyond
+              // the remaining HP rallies the men like a crushing blow would.
+              // Without this, poison builds could never reach high morale.
+              const pOverkill = (poisonDmg - hpBeforeTick) / poisonDmg;
+              if (pOverkill >= 0.75) {
+                this.morale = Math.min(100, this.morale + 2);
+                if (poisoner) {
+                  const okHeal = Math.min(2, poisoner.maxHp - poisoner.hp);
+                  if (okHeal > 0) { poisoner.hp += okHeal; poisoner.stats.healingDone += okHeal; if (this.onVisual) this.onVisual('unitHeal', { unitIndex: poisoner.index, amount: okHeal }); }
+                }
+                this.addLog('VENOM OVERKILL! (+2 Morale)');
+                if (this.onVisual) this.onVisual('statusText', { enemyIndex: e.index, text: 'OVERKILL!', color: 'var(--gold)' });
+                if (this.onVisual) this.onVisual('morale', { amount: 2 });
+              } else if (pOverkill >= 0.6) {
+                this.morale = Math.min(100, this.morale + 1);
+                if (poisoner) {
+                  const okHeal = Math.min(1, poisoner.maxHp - poisoner.hp);
+                  if (okHeal > 0) { poisoner.hp += okHeal; poisoner.stats.healingDone += okHeal; if (this.onVisual) this.onVisual('unitHeal', { unitIndex: poisoner.index, amount: okHeal }); }
+                }
+                this.addLog('Venom overkill! (+1 Morale)');
+                if (this.onVisual) this.onVisual('statusText', { enemyIndex: e.index, text: 'OVERKILL!', color: 'var(--gold)' });
+                if (this.onVisual) this.onVisual('morale', { amount: 1 });
+              }
               const baseHp = ENEMY_DATA[e.id] ? ENEMY_DATA[e.id].maxHp : e.maxHp;
               const diffBonusKill = Math.floor((this.difficulty || 1) / 3);
               let moraleRestore = (baseHp > 10 ? 3 : 2) + diffBonusKill;
