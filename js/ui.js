@@ -95,9 +95,10 @@ class GameUI {
     }, ms);
   }
 
-  // Spent dice fly into the skill that consumed them
-  flyDiceToSkill(diceIds) {
-    const targetBtn = document.querySelector('.skill-btn.confirm-ready') ||
+  // Spent dice fly to the soldier who used them
+  flyDiceToSkill(diceIds, unitIndex) {
+    const targetBtn = document.getElementById(`unit-${unitIndex}`) ||
+      document.querySelector('.skill-btn.confirm-ready') ||
       document.querySelector('.skill-btn.staged');
     if (!targetBtn) return;
     const tRect = targetBtn.getBoundingClientRect();
@@ -949,8 +950,10 @@ class GameUI {
         !this.isDieSelectable(stagedSkillDef, die);
       const el = document.createElement('div');
       el.className = `die${die.used ? ' used' : ''}${isStaged ? ' selected' : ''}${ineligible ? ' ineligible' : ''}`;
-      el.appendChild(this.makeDieFace(die.value));
-      el.title = String(die.value);
+      if (!die.used) {
+        el.appendChild(this.makeDieFace(die.value));
+        el.title = String(die.value);
+      }
       el.dataset.dieId = die.id;
 
       if (!die.used && this.engine.phase === PHASE.PLAYER_TURN && this.stagedSkill && !ineligible) {
@@ -2026,7 +2029,7 @@ class GameUI {
 
     const diceIds = [...this.stagedSkill.diceIds];
     const unitIndex = this.selectedUnitIndex;
-    this.flyDiceToSkill(diceIds);
+    this.flyDiceToSkill(diceIds, unitIndex);
     this.stagedSkill = null;
 
     // For self/all-target/random skills, route through beginSkillTarget

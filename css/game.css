@@ -1511,12 +1511,13 @@ html, body {
 }
 
 .die.used {
-  background: var(--bone-tex), linear-gradient(145deg, #77705f 0%, #595347 100%);
-  border-color: #3a3527;
-  color: #3a352b;
-  box-shadow: none;
+  /* The bone left the table — only its socket remains */
+  background: rgba(0, 0, 0, 0.32);
+  border: 2px dashed rgba(90, 74, 42, 0.4);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
   cursor: default;
-  opacity: 0.45;
+  opacity: 0.8;
+  transform: none !important;
 }
 
 /* A die this skill's cost can never accept. Distinct from .used: the die is
@@ -4525,9 +4526,10 @@ html, body {
 }
 
 .ps-class-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  background: var(--scroll-face);
+  border: 1px solid #4a3d24;
+  box-shadow: var(--iron-edge);
+  border-radius: 3px;
   padding: 10px 12px;
   text-align: left;
   cursor: pointer;
@@ -4535,13 +4537,13 @@ html, body {
 }
 
 .ps-class-card:hover {
-  background: var(--bg-card-hover);
+  background: var(--scroll-face-lit);
 }
 
 .ps-class-card.selected {
   border-color: var(--gold);
   box-shadow: 0 0 10px rgba(201, 162, 39, 0.3);
-  background: #1e2230;
+  background: linear-gradient(rgba(201, 162, 39, 0.08), rgba(201, 162, 39, 0.08)), var(--scroll-face);
 }
 
 .ps-class-card.selected.class-melee { border-color: var(--class-melee); box-shadow: 0 0 10px rgba(196, 74, 58, 0.3); }
