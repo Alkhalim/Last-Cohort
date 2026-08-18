@@ -1447,11 +1447,17 @@ html, body {
   font-family: 'Cinzel', serif;
   font-size: 1.4rem;
   font-weight: 700;
-  background: var(--bone-tex), linear-gradient(145deg, #e2d5b8 0%, #c8ba98 55%, #a2926f 100%);
-  border: 1px solid #40351f;
-  border-radius: 6px 10px 7px 9px;
-  color: #33291c;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -4px 6px rgba(74, 58, 30, 0.5), inset 2px 0 4px rgba(90, 74, 42, 0.28), inset -2px 1px 3px rgba(70, 56, 30, 0.2), 0 2px 4px rgba(0, 0, 0, 0.55);
+  background:
+    radial-gradient(circle 6px at 100% 26%, rgba(58, 46, 24, 0.55), transparent 62%),
+    radial-gradient(circle 5px at 12% 100%, rgba(58, 46, 24, 0.45), transparent 62%),
+    radial-gradient(circle 4px at 62% 0%, rgba(58, 46, 24, 0.38), transparent 62%),
+    var(--bone-tex),
+    radial-gradient(ellipse 70% 60% at 32% 26%, rgba(255, 252, 240, 0.28), transparent 65%),
+    linear-gradient(150deg, #d9cfb8 0%, #c1b499 45%, #97896c 100%);
+  border: 1px solid #3a3019;
+  border-radius: 5px 9px 4px 8px;
+  color: #2e2515;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 0 8px rgba(80, 62, 36, 0.45), inset 0 -4px 6px rgba(70, 55, 28, 0.5), inset 2px 0 4px rgba(90, 74, 42, 0.3), 0 2px 4px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
@@ -1469,9 +1475,12 @@ html, body {
 #dice-pool .die:nth-child(3n+1) .die-face { transform: rotate(-2deg); }
 #dice-pool .die:nth-child(3n+2) .die-face { transform: rotate(1.5deg); }
 #dice-pool .die:nth-child(4n+3) .die-face { transform: rotate(2.5deg); }
-#dice-pool .die:nth-child(2n) { background-position: 47px 23px, 0 0; border-radius: 9px 6px 10px 7px; }
-#dice-pool .die:nth-child(3n) { background-position: 88px 61px, 0 0; border-radius: 7px 8px 6px 10px; }
-#dice-pool .die:nth-child(5n+2) { background-position: 25px 104px, 0 0; }
+#dice-pool .die:nth-child(2n) { border-radius: 8px 4px 9px 5px; width: 50px; height: 54px; transform: rotate(1.4deg); }
+#dice-pool .die:nth-child(2n+1) { transform: rotate(-1.2deg); }
+#dice-pool .die:nth-child(3n) { border-radius: 4px 7px 5px 9px; width: 54px; height: 51px; transform: rotate(2deg); }
+#dice-pool .die:nth-child(2n) .die,
+#dice-pool .die:nth-child(2n) { background-position: 47px 23px, 47px 23px, 47px 23px, 47px 23px, 0 0, 0 0; }
+#dice-pool .die:nth-child(3n) { background-position: 88px 61px, 88px 61px, 88px 61px, 88px 61px, 0 0, 0 0; }
 
 /* Pip face: 3×3 grid, pips drawn in currentColor so used/dim states inherit */
 .die-face {
@@ -1485,11 +1494,12 @@ html, body {
 .die-face span { display: flex; align-items: center; justify-content: center; }
 .die-pip::before {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #1f1a12 25%, currentColor 80%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 1px 1px rgba(0, 0, 0, 0.6);
+  border: 1.3px solid rgba(46, 36, 18, 0.85);
+  background: radial-gradient(circle, #241c0e 1.7px, transparent 2px);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .die.selected {
@@ -4392,12 +4402,12 @@ html, body {
 @media (max-height: 600px) {
   #dice-area { min-height: 100px; padding: 8px; }
   .die { width: 44px; height: 44px; font-size: 1.2rem; }
-  .die-pip::before { width: 7px; height: 7px; }
+  .die-pip::before { width: 8px; height: 8px; border-width: 1.1px; }
 }
 
 @media (min-width: 481px) {
   .die { width: 58px; height: 58px; font-size: 1.6rem; }
-  .die-pip::before { width: 9px; height: 9px; }
+  .die-pip::before { width: 10px; height: 10px; border-width: 1.4px; }
   .enemy-card { width: 120px; }
 }
 
