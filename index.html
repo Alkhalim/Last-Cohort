@@ -13,12 +13,14 @@
   <div id="game">
     <!-- Home Screen -->
     <div id="title-screen" class="screen active">
+      <div class="home-keyart" aria-hidden="true"></div>
       <div class="home-content">
         <h1 class="home-title">LAST COHORT</h1>
         <p class="subtitle">Teutoburg Forest, 9 AD</p>
         <div class="home-renown">
           <span class="home-renown-label">LIFETIME RENOWN</span>
           <span id="home-renown-value" class="home-renown-value">0</span>
+          <span id="home-next-unlock" class="home-next-unlock"></span>
         </div>
         <div class="home-buttons">
           <button id="btn-continue" class="btn-primary home-start-btn" style="display:none">Continue Run</button>
@@ -119,6 +121,24 @@
             <span id="opt-fast-mode-val" class="option-value">Off</span>
           </label>
           <p class="option-hint">Skip portrait animations and speed up enemy turns.</p>
+          <label class="option-label option-toggle">
+            <span class="option-name">Screen Shake</span>
+            <input type="checkbox" id="opt-screen-shake">
+            <span id="opt-screen-shake-val" class="option-value">On</span>
+          </label>
+          <p class="option-hint">Camera impact on heavy hits.</p>
+          <label class="option-label option-toggle">
+            <span class="option-name">Reduced Motion</span>
+            <input type="checkbox" id="opt-reduced-motion">
+            <span id="opt-reduced-motion-val" class="option-value">Off</span>
+          </label>
+          <p class="option-hint">Minimize animations throughout the game.</p>
+          <label class="option-label option-toggle">
+            <span class="option-name">High-Contrast Bars</span>
+            <input type="checkbox" id="opt-cb-bars">
+            <span id="opt-cb-bars-val" class="option-value">Off</span>
+          </label>
+          <p class="option-hint">Blue health bars — easier to read with red-green colorblindness.</p>
           <label class="option-label option-toggle" style="display:none">
             <span class="option-name">Usage Analytics</span>
             <input type="checkbox" id="opt-tracking">

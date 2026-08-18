@@ -1504,6 +1504,21 @@ section('2.12 — extra-action banking & Thusnelda\'s Standard');
 }
 
 // ============================================================
+section('2.12b — unlock conditions fit the 6-march structure');
+// ============================================================
+{
+  const classes = fs.readFileSync(path.join(ROOT, 'data/classes.js'), 'utf8');
+  check('no unlockCondition references a march past 6', () => {
+    const conds = classes.match(/"unlockCondition": "[^"]*"/g) || [];
+    const bad = conds.filter(c => {
+      const m = c.match(/March (\d+)/);
+      return m && parseInt(m[1], 10) > 6;
+    });
+    assert(bad.length === 0, `impossible unlock gates: ${bad.join(', ')}`);
+  });
+}
+
+// ============================================================
 section('2.13 — skill description rewrites match actual descriptions');
 // ============================================================
 {

@@ -40,6 +40,61 @@ class GameUI {
     this.engine.onUpdate = () => this.render();
     this.engine.onVisual = (type, data) => this.handleVisual(type, data);
     this.bindMoraleTooltip();
+    this.bindKeywordTooltips();
+  }
+
+  // --- Keyword glossary: tap any highlighted status word for an explanation ---
+  static KEYWORDS = {
+    poison:   { title: 'Poison',   text: 'Deals its value as damage at the end of the unit\'s turn, then decreases by 1.' },
+    stun:     { title: 'Stun',     text: 'The stunned unit skips its next action.' },
+    mark:     { title: 'Mark',     text: 'Marked enemies take +20% damage from all attacks.' },
+    condemn:  { title: 'Condemn',  text: 'Condemned enemies take +30% damage from all sources while it lasts.' },
+    block:    { title: 'Block',    text: 'Absorbs incoming damage before HP. Unused block fades between turns.' },
+    taunt:    { title: 'Taunt',    text: 'Enemies must target the taunting soldier while the taunt holds.' },
+    suppress: { title: 'Suppress', text: 'Suppressed enemies deal 40% less damage.' },
+    weaken:   { title: 'Weaken',   text: 'The weakened unit deals reduced damage with its attacks.' },
+    pierce:   { title: 'Pierce',   text: 'Piercing damage ignores some or all of the target\'s Block.' },
+    deafen:   { title: 'Deafen',   text: 'Deafened enemies cannot use morale attacks.' },
+    overkill: { title: 'Overkill', text: 'Killing with heavy excess damage rallies the cohort: bonus morale for the legion.' },
+  };
+
+  // Wrap known keywords (outside HTML tags) in tappable spans
+  annotateKeywords(html) {
+    const re = /\b(poisons?|poisoned|stuns?|stunned|marks?|marked|condemns?|condemned|block|taunts?|taunted|suppress(?:es|ed)?|weakens?|weakened|pierces?|piercing|deafens?|deafened|overkill)\b/gi;
+    const root = { poisons: 'poison', poisoned: 'poison', stuns: 'stun', stunned: 'stun', marks: 'mark', marked: 'mark', condemns: 'condemn', condemned: 'condemn', taunts: 'taunt', taunted: 'taunt', suppresses: 'suppress', suppressed: 'suppress', weakens: 'weaken', weakened: 'weaken', pierces: 'pierce', piercing: 'pierce', deafens: 'deafen', deafened: 'deafen' };
+    return html.split(/(<[^>]+>)/).map(part => {
+      if (part.startsWith('<')) return part;
+      return part.replace(re, m => {
+        const kw = root[m.toLowerCase()] || m.toLowerCase();
+        return `<span class="kw" data-kw="${kw}">${m}</span>`;
+      });
+    }).join('');
+  }
+
+  bindKeywordTooltips() {
+    const game = document.getElementById('game');
+    if (!game) return;
+    game.addEventListener('click', (e) => {
+      const existing = document.querySelector('.kw-popup');
+      const kwEl = e.target.closest ? e.target.closest('.kw') : null;
+      if (existing) existing.remove();
+      if (!kwEl) return;
+      // No stopPropagation: the underlying tap (e.g. staging a skill) still
+      // goes through — the glossary rides along instead of blocking play.
+      const entry = GameUI.KEYWORDS[kwEl.dataset.kw];
+      if (!entry) return;
+      const pop = document.createElement('div');
+      pop.className = 'kw-popup';
+      pop.innerHTML = `<div class="kw-popup-title">${entry.title}</div><div class="kw-popup-text">${entry.text}</div>`;
+      game.appendChild(pop);
+      // anchor above the tapped word, clamped to the viewport
+      const r = kwEl.getBoundingClientRect();
+      const g = game.getBoundingClientRect();
+      pop.style.left = Math.max(8, Math.min(g.width - 228, r.left - g.left + r.width / 2 - 110)) + 'px';
+      pop.style.top = Math.max(8, r.top - g.top - pop.offsetHeight - 10) + 'px';
+      requestAnimationFrame(() => pop.classList.add('show'));
+      setTimeout(() => { if (pop.parentNode) { pop.classList.remove('show'); setTimeout(() => pop.remove(), 250); } }, 4200);
+    }, true);
   }
 
   bindMoraleTooltip() {
@@ -84,10 +139,20 @@ class GameUI {
     bar.addEventListener('touchcancel', () => { clearTimeout(holdTimer); hide(); });
   }
 
+  // Short vibration on mobile for heavy moments (respects reduced motion)
+  haptic(ms = 30) {
+    try {
+      if (navigator.vibrate && !(window.game && window.game.settings && window.game.settings.reducedMotion)) {
+        navigator.vibrate(ms);
+      }
+    } catch (e) { /* not supported */ }
+  }
+
   // A blink of frozen time on heavy impacts — the classic weight trick
   triggerHitstop(ms = 60) {
     const g = document.getElementById('game');
     if (!g || this._hitstopTimer) return;
+    this.haptic(35);
     g.classList.add('hitstop');
     this._hitstopTimer = setTimeout(() => {
       g.classList.remove('hitstop');
@@ -204,6 +269,7 @@ class GameUI {
 
   // Screen shake proportional to damage
   screenShake(damage) {
+    if (window.game && window.game.settings && window.game.settings.screenShake === false) return;
     const screen = document.getElementById('combat-screen');
     if (!screen) return;
 
@@ -309,6 +375,9 @@ class GameUI {
   showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    // Camp atmosphere is opt-in per visit; showCampScreen re-adds it after this
+    const evScr = document.getElementById('event-screen');
+    if (evScr) evScr.classList.remove('camp-mode');
     // The region's palette follows the party into battle
     if (id === 'combat-screen') {
       const scr = document.getElementById('combat-screen');
@@ -666,7 +735,7 @@ class GameUI {
       if (a.text && (details.length === 0 || enemy.isStructure)) {
         desc += `<div class="enemy-tooltip-action-text">${a.text}</div>`;
       }
-      return `<div class="enemy-tooltip-action">${desc}</div>`;
+      return `<div class="enemy-tooltip-action">${this.annotateKeywords(desc)}</div>`;
     }).join('');
 
     const tags = [];
@@ -1852,7 +1921,7 @@ class GameUI {
       const dicePips = this.getDicePips(skill.cost);
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${dicePips}${this.getRangeBadge(skill)} ${cdText}</div>
-        <div class="skill-desc">${desc}</div>
+        <div class="skill-desc">${this.annotateKeywords(desc)}</div>
         ${cooldownOverlay}
       `;
 
@@ -2170,8 +2239,23 @@ class GameUI {
 
   renderLog() {
     const content = document.getElementById('log-content');
-    content.innerHTML = this.engine.log.map(l => `<div class="log-line">${l}</div>`).join('');
+    content.innerHTML = this.engine.log.map(l => {
+      const cls = this.classifyLogLine(l);
+      return `<div class="log-line ${cls}">${l}</div>`;
+    }).join('');
     content.scrollTop = content.scrollHeight;
+  }
+
+  // Color-class a combat log line by what happened in it
+  classifyLogLine(l) {
+    if (/^— Turn \d+ —/.test(l)) return 'log-turn';
+    if (/overkill|falls|dies|slain|is downed|defeated/i.test(l)) return 'log-kill';
+    if (/poison|venom/i.test(l)) return 'log-poison';
+    if (/heal|revive|restores? \d+ hp|hp restored/i.test(l)) return 'log-heal';
+    if (/block|absorbs|fortif/i.test(l)) return 'log-block';
+    if (/morale|rall/i.test(l)) return 'log-morale';
+    if (/damage|hits|strikes|attack/i.test(l)) return 'log-dmg';
+    return 'log-sys';
   }
 
   // --- Visual effects ---
@@ -3499,6 +3583,11 @@ class GameUI {
     document.getElementById('event-title').textContent = event.name;
     document.getElementById('event-intro').textContent = event.intro;
     document.getElementById('event-outcome').classList.add('hidden');
+    const staleVig = document.getElementById('event-vignette');
+    if (staleVig) staleVig.style.display = 'none';
+    // The party-status block belongs to the camp; hide it on story events
+    const campStatus = document.getElementById('camp-party-status');
+    if (campStatus) campStatus.style.display = 'none';
 
     const choicesEl = document.getElementById('event-choices');
     choicesEl.innerHTML = '';
@@ -3529,11 +3618,39 @@ class GameUI {
         btn.innerHTML = `${choice.text} <span class="event-requires">(Requires ${requirementLabel})</span>`;
         btn.disabled = true;
       } else {
-        btn.textContent = choice.text;
+        btn.innerHTML = `${choice.text}${this.choiceStakeTag(choice)}`;
         btn.addEventListener('click', () => this.resolveEventChoice(event, choice));
       }
       choicesEl.appendChild(btn);
     });
+
+    // Faint vignette of the threat behind the text, if this event can turn to combat
+    const combatEnemy = (event.choices || []).flatMap(c => c.outcomes || [])
+      .map(o => o.effects && o.effects.triggerCombat && o.effects.triggerCombat.enemies && o.effects.triggerCombat.enemies[0])
+      .find(Boolean);
+    let vig = document.getElementById('event-vignette');
+    if (combatEnemy) {
+      if (!vig) {
+        vig = document.createElement('div');
+        vig.id = 'event-vignette';
+        document.getElementById('event-screen').prepend(vig);
+      }
+      vig.style.backgroundImage = `url('${typeof getEnemyPortrait === 'function' ? getEnemyPortrait(combatEnemy) : `assets/enemy_${combatEnemy}.png`}')`;
+      vig.style.display = 'block';
+    } else if (vig) {
+      vig.style.display = 'none';
+    }
+  }
+
+  // Telegraph a choice's stakes: guaranteed combat, gamble, or steady outcome
+  choiceStakeTag(choice) {
+    const outcomes = choice.outcomes || [];
+    if (outcomes.length === 0) return '';
+    const combatAlways = outcomes.every(o => o.effects && o.effects.triggerCombat);
+    if (combatAlways) return ' <span class="stake-tag stake-combat">⚔ combat</span>';
+    const combatPossible = outcomes.some(o => o.effects && o.effects.triggerCombat);
+    if (combatPossible || outcomes.length > 1) return ' <span class="stake-tag stake-risky">🎲 uncertain</span>';
+    return '';
   }
 
   resolveEventChoice(event, choice) {
@@ -4261,13 +4378,18 @@ class GameUI {
   showCampScreen() {
     if (window.game) window.game.triggerHint('first_camp');
     this.showScreen('event-screen');
+    document.getElementById('event-screen').classList.add('camp-mode');
+    const campVig = document.getElementById('event-vignette');
+    if (campVig) campVig.style.display = 'none';
     const isLairFeastTitle = this._isLairFeast;
     const isThreshold = this._isThresholdRest;
-    document.getElementById('event-title').textContent = isThreshold
-      ? `THE LAST CAMP (${this.campActionsLeft} actions left)`
+    const torches = Array.from({ length: 2 }, (_, i) =>
+      `<span class="camp-torch${i < this.campActionsLeft ? '' : ' spent'}"></span>`).join('');
+    document.getElementById('event-title').innerHTML = (isThreshold
+      ? 'THE LAST CAMP'
       : isLairFeastTitle
-        ? `LAIR FEAST (${this.campActionsLeft} actions left)`
-        : `CAMP (${this.campActionsLeft} actions left)`;
+        ? 'LAIR FEAST'
+        : 'CAMP') + `<span class="camp-torches">${torches}</span>`;
 
     // Build intro with camp log
     let introText = isThreshold
@@ -4289,6 +4411,7 @@ class GameUI {
       const introEl = document.getElementById('event-intro');
       introEl.parentNode.insertBefore(statusEl, introEl.nextSibling);
     }
+    statusEl.style.display = '';
     const moraleBand = getMoraleBand(this.engine.morale);
     let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale}/100 (${moraleBand.label})</span></div>`;
     statusHtml += '<div class="camp-units">';
@@ -4296,8 +4419,9 @@ class GameUI {
       const tag = getPrimaryTag(u.classId);
       const hpPct = Math.round((u.hp / u.maxHp) * 100);
       const hpColor = hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
-      statusHtml += `<div class="camp-unit-status">
-        <span class="camp-unit-name" style="color:var(--class-${tag})">${u.title}</span>
+      statusHtml += `<div class="camp-unit-status${u.downed ? ' downed' : ''}">
+        <span class="unit-roundel camp-roundel ring-${tag}">${gicon(ROLE_ICON[tag] || 'shield')}</span>
+        <span class="camp-unit-name" style="color:var(--class-${tag})">${u.name}</span>
         <span class="camp-unit-hp" style="color:${hpColor}">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp}`}</span>
         <div class="camp-hp-bar"><div class="camp-hp-fill" style="width:${u.downed ? 0 : hpPct}%;background:${hpColor}"></div></div>
       </div>`;
@@ -4333,6 +4457,7 @@ class GameUI {
     const campActions = [
       {
         name: isLairFeast ? 'Desperate Surgery' : 'Tend Wounds',
+        icon: 'leaf',
         desc: `Heal all soldiers for ${healLabel} max HP.`,
         action: () => {
           this.engine.party.forEach(u => {
@@ -4346,6 +4471,7 @@ class GameUI {
       },
       ...(!isLairFeast ? [{
         name: 'Rally the Men',
+        icon: 'banner',
         desc: 'Restore 8 Morale.',
         action: () => {
           this.engine.morale = Math.min(100, this.engine.morale + 8);
@@ -4354,6 +4480,7 @@ class GameUI {
       }] : []),
       {
         name: isLairFeast ? 'Furious Sharpening' : 'Sharpen Weapons',
+        icon: 'sword',
         desc: `All soldiers gain +${bonusDmg} damage for next ${bonusAtk} attacks.`,
         action: () => {
           this.engine.party.forEach(u => {
@@ -4364,6 +4491,7 @@ class GameUI {
       },
       {
         name: isLairFeast ? 'Barricade the Tunnel' : 'Fortify Position',
+        icon: 'shield',
         desc: `All soldiers start the next fight with ${blockAmt} Block.`,
         action: () => {
           this.engine.party.forEach(u => {
@@ -4376,8 +4504,8 @@ class GameUI {
 
     campActions.forEach(ca => {
       const btn = document.createElement('button');
-      btn.className = 'btn-event-choice';
-      btn.innerHTML = `<strong>${ca.name}</strong><br><span style="font-size:0.75rem;color:var(--text-dim)">${ca.desc}</span>`;
+      btn.className = 'btn-event-choice camp-action';
+      btn.innerHTML = `<span class="camp-action-icon">${gicon(ca.icon)}</span><span class="camp-action-body"><strong>${ca.name}</strong><br><span style="font-size:0.75rem;color:var(--text-dim)">${ca.desc}</span></span>`;
       btn.addEventListener('click', () => {
         ca.action();
         this.campActionsLeft--;
@@ -4649,7 +4777,8 @@ class GameUI {
       : `<div class="loot-training"><span class="loot-training-text none">XP: ${xpPips}</span></div>`;
 
     if (this.pendingLoot.length === 0) {
-      lootText.textContent = this._lootHadItems ? 'The spoils are claimed.' : 'Nothing of value was found.';
+      lootText.textContent = this._lootHadItems ? 'The spoils are claimed.'
+        : 'No spoils — but the men earn their pay in scars.';
       itemDisplay.innerHTML = trainingLine;
       unitDisplay.innerHTML = '';
       actionsEl.innerHTML = '';
@@ -5544,6 +5673,7 @@ class GameUI {
       const introEl = document.getElementById('event-intro');
       introEl.parentNode.insertBefore(statusEl, introEl.nextSibling);
     }
+    statusEl.style.display = '';
     const moraleBand = getMoraleBand(this.engine.morale);
     let statusHtml = `<div class="camp-morale">Morale: <span style="color:${moraleBand.color}">${this.engine.morale}/100 (${moraleBand.label})</span> | All soldiers healed 15%</div>`;
     statusHtml += '<div class="camp-units">';

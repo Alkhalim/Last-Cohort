@@ -92,6 +92,7 @@ class Game {
     this.ui = new GameUI(this.engine);
     this.lifetimeRenown = this.loadLifetimeRenown();
     this.settings = this.loadSettings();
+    this.applySettingsClasses();
     this.stats = this.loadStats();
     this.achievements = this.loadAchievements();
     this.difficulty = 1;
@@ -126,11 +127,24 @@ class Game {
 
   // --- Settings ---
   loadSettings() {
+    const defaults = {
+      musicVolume: 15, soundVolume: 50, trackingEnabled: false,
+      fullSoundtrack: false, reducedArt: false, fastMode: false,
+      screenShake: true, reducedMotion: false, cbBars: false,
+    };
     try {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (stored) return JSON.parse(stored);
+      if (stored) return { ...defaults, ...JSON.parse(stored) };
     } catch (e) {}
-    return { musicVolume: 15, soundVolume: 50, trackingEnabled: false, fullSoundtrack: false, reducedArt: false, fastMode: false };
+    return defaults;
+  }
+
+  // Reflect display-affecting settings as classes on the game root
+  applySettingsClasses() {
+    const g = document.getElementById('game');
+    if (!g) return;
+    g.classList.toggle('reduced-motion', !!this.settings.reducedMotion);
+    g.classList.toggle('cb-bars', !!this.settings.cbBars);
   }
 
   saveSettings() {
@@ -474,7 +488,27 @@ class Game {
     const renownEl = document.getElementById('home-renown-value');
     if (renownEl) renownEl.textContent = this.lifetimeRenown;
     const continueBtn = document.getElementById('btn-continue');
-    if (continueBtn) continueBtn.style.display = this.hasSavedRun() ? 'block' : 'none';
+    if (continueBtn) {
+      const saved = this.hasSavedRun();
+      continueBtn.style.display = saved ? 'block' : 'none';
+      if (saved) {
+        // Show where the saved run stands: march + region
+        try {
+          const run = JSON.parse(localStorage.getItem(SAVED_RUN_STORAGE_KEY));
+          const regionId = run.route && run.route[run.difficulty - 1];
+          const region = regionId && typeof REGIONS !== 'undefined' && REGIONS[regionId];
+          continueBtn.innerHTML = `Continue Run<span class="continue-context">March ${run.difficulty}${region ? ` — ${region.name}` : ''}</span>`;
+        } catch (e) { continueBtn.textContent = 'Continue Run'; }
+      }
+    }
+    // Next-unlock tracker: the first still-locked class and how to earn it
+    const nextEl = document.getElementById('home-next-unlock');
+    if (nextEl) {
+      const locked = Object.entries(CLASS_DATA).find(([id, d]) => d.hidden && !this.achievements[d.unlockKey || id]);
+      nextEl.innerHTML = locked
+        ? `Next unlock: <b>${locked[1].name}</b> — ${locked[1].unlockCondition}`
+        : 'All classes unlocked. The legion stands complete.';
+    }
     if (this.musicStarted) this.startMenuMusic();
   }
 
@@ -722,6 +756,12 @@ class Game {
     const fastModeCheckbox = document.getElementById('opt-fast-mode');
     fastModeCheckbox.checked = !!this.settings.fastMode;
     document.getElementById('opt-fast-mode-val').textContent = this.settings.fastMode ? 'On' : 'Off';
+    for (const [id, key] of [['opt-screen-shake', 'screenShake'], ['opt-reduced-motion', 'reducedMotion'], ['opt-cb-bars', 'cbBars']]) {
+      const cb = document.getElementById(id);
+      if (!cb) continue;
+      cb.checked = !!this.settings[key];
+      document.getElementById(id + '-val').textContent = this.settings[key] ? 'On' : 'Off';
+    }
   }
 
   // --- Bindings ---
@@ -785,6 +825,7 @@ class Game {
         `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
       ).join('');
       html += `<div class="ps-class-card ${selected ? 'selected' : ''} class-${primaryTag}" data-class-id="${classId}">
+        <img class="classes-bust" src="${getPlayerPortrait(data.title)}" alt="${data.name}">
         <div class="ps-class-header">
           <span class="ps-class-name">${renderClassName(classId, data.name)}</span>
           <span class="ps-class-title">${data.title}</span>
@@ -977,6 +1018,18 @@ class Game {
       this.saveSettings();
     });
 
+    // Display toggles: screen shake, reduced motion, colorblind bars
+    for (const [id, key] of [['opt-screen-shake', 'screenShake'], ['opt-reduced-motion', 'reducedMotion'], ['opt-cb-bars', 'cbBars']]) {
+      const cb = document.getElementById(id);
+      if (!cb) continue;
+      cb.addEventListener('change', () => {
+        this.settings[key] = cb.checked;
+        document.getElementById(id + '-val').textContent = cb.checked ? 'On' : 'Off';
+        this.saveSettings();
+        this.applySettingsClasses();
+      });
+    }
+
     // Reduced art toggle
     const reducedArtCheckbox = document.getElementById('opt-reduced-art');
     const reducedArtVal = document.getElementById('opt-reduced-art-val');
@@ -1037,6 +1090,11 @@ class Game {
       this.stats.totalBlockGenerated += u.stats.blockGenerated || 0;
       this.stats.totalDamageTaken += u.stats.damageTaken || 0;
       this.stats.totalMoraleRestored += u.stats.moraleRestored || 0;
+      // Lifetime records
+      if ((u.stats.maxSingleHit || 0) > (this.stats.recordSingleHit || 0)) {
+        this.stats.recordSingleHit = u.stats.maxSingleHit;
+        this.stats.recordSingleHitBy = u.name;
+      }
     });
     this.engine.killedEnemies.forEach(eid => {
       this.stats.enemiesKilled[eid] = (this.stats.enemiesKilled[eid] || 0) + 1;
@@ -1424,8 +1482,14 @@ class Game {
     const discovered = allEnemies.filter(e => (s.enemiesKilled[e.id] || 0) >= 1);
     counter.textContent = `${discovered.length} / ${allEnemies.length} discovered`;
 
+    // Undiscovered enemies render as a grid of empty slots — the player sees
+    // the size of the collection they are filling
+    const slotGrid = (n) => n <= 0 ? '' :
+      `<div class="bestiary-grid">${Array.from({ length: n }, () => '<div class="bestiary-slot">?</div>').join('')}</div>`;
+
     if (discovered.length === 0) {
-      content.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px;">No enemies encountered yet. Begin your march to fill the bestiary.</div>';
+      content.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:14px 20px;">The forest keeps its monsters hidden. Begin your march to fill these pages.</div>'
+        + slotGrid(allEnemies.length);
       return;
     }
 
@@ -1494,7 +1558,7 @@ class Game {
 
       const undiscovered = allEnemies.length - discovered.length;
       if (filter === 'all' && undiscovered > 0) {
-        html += `<div class="bestiary-entry undiscovered"><div class="bestiary-header"><span class="bestiary-name">??? (${undiscovered} more)</span></div><div class="bestiary-locked">Defeat new enemies to discover them.</div></div>`;
+        html += `<div class="bestiary-grid-label">${undiscovered} still hidden in the forest</div>` + slotGrid(undiscovered);
       }
       return html;
     };
@@ -1566,10 +1630,12 @@ class Game {
       ]},
     ];
 
+    const sectionIcons = { 'DICE COSTS': 'helm', 'STATUS EFFECTS': 'leaf', 'MORALE': 'banner', 'EQUIPMENT': 'shield', 'COMBAT FLOW': 'sword' };
     content.innerHTML = sections.map(s => {
       const entriesHtml = s.entries.map(e => `<div class="codex-entry">${e}</div>`).join('');
+      const icon = typeof gicon === 'function' ? gicon(sectionIcons[s.title] || 'shield') : '';
       return `<div class="codex-section collapsed">
-        <h3 class="codex-heading">${s.title}</h3>
+        <h3 class="codex-heading"><span class="codex-heading-icon">${icon}</span>${s.title}</h3>
         <div class="codex-body">${entriesHtml}</div>
       </div>`;
     }).join('');
@@ -1587,7 +1653,11 @@ class Game {
     const history = this.loadRunHistory();
 
     if (history.length === 0) {
-      content.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No runs recorded yet.</div>';
+      content.innerHTML = `
+        <div class="ghost-rows">
+          ${[1, 2, 3].map(n => `<div class="ghost-row"><span class="ghost-rank">${['I', 'II', 'III'][n - 1]}</span><span class="ghost-text">— No legion has returned —</span></div>`).join('')}
+        </div>
+        <div style="color:var(--text-dim);text-align:center;padding:14px;font-style:italic;">Complete a march to carve your name here.</div>`;
       return;
     }
 
@@ -1758,6 +1828,23 @@ class Game {
     html += `<div class="stats-row"><span>Total Damage Taken</span><span>${s.totalDamageTaken}</span></div>`;
     html += `<div class="stats-row"><span>Total Morale Restored</span><span>${s.totalMoraleRestored}</span></div>`;
     html += '</div>';
+
+    // Records — personal bests with a face on them
+    const records = [];
+    if (s.recordSingleHit) records.push(['Hardest Single Blow', `${s.recordSingleHit}${s.recordSingleHitBy ? ` (${s.recordSingleHitBy})` : ''}`]);
+    if (s.highestDifficulty > 1) records.push(['Deepest March', `March ${s.highestDifficulty}`]);
+    const killIds = Object.keys(s.enemiesKilled || {});
+    if (killIds.length > 0) {
+      const nemesis = killIds.reduce((a, b) => s.enemiesKilled[a] >= s.enemiesKilled[b] ? a : b);
+      const nData = ENEMY_DATA[nemesis];
+      records.push(['Old Enemy', `${nData ? nData.name : nemesis} (${s.enemiesKilled[nemesis]} slain)`]);
+    }
+    if (s.classesUsed) records.push(['Classes Fielded', `${Object.keys(s.classesUsed).length} / ${Object.keys(CLASS_DATA).length}`]);
+    if (records.length > 0) {
+      html += '<div class="stats-section-title">RECORDS</div><div class="stats-section">';
+      records.forEach(([k, v]) => { html += `<div class="stats-row stats-record"><span>${k}</span><span>${v}</span></div>`; });
+      html += '</div>';
+    }
 
     // Enemy kill counts
     const enemyIds = Object.keys(s.enemiesKilled).sort((a, b) => s.enemiesKilled[b] - s.enemiesKilled[a]);
@@ -2128,6 +2215,7 @@ class Game {
           `<span class="complexity-pip${i < complexity ? ' filled' : ''}"></span>`
         ).join('');
         html += `<div class="classes-card unlocked class-${primaryTag}" data-class-id="${classId}">
+          <img class="classes-bust" src="${getPlayerPortrait(data.title)}" alt="${data.name}">
           <div class="classes-header">
             <span class="classes-name">${renderClassName(classId, data.name)}</span>
             <span class="classes-title">${data.title}</span>
@@ -2142,7 +2230,10 @@ class Game {
           <div class="classes-slots">Slots: ${data.equipSlots.weapon}W / ${data.equipSlots.armor}A / ${data.equipSlots.trinket}T</div>
         </div>`;
       } else {
-        html += `<div class="classes-card locked">
+        // Spotlight the first locked class as the player's next goal
+        const isNext = !html.includes('next-unlock');
+        html += `<div class="classes-card locked${isNext ? ' next-unlock' : ''}">
+          ${isNext ? '<div class="next-unlock-ribbon">NEXT UNLOCK</div>' : ''}
           <div class="classes-header">
             <span class="classes-name" style="opacity:0.5">${data.name}</span>
             <span class="classes-tags">${tagPips}</span>
@@ -2305,7 +2396,7 @@ class Game {
       section.defs.forEach(def => {
         const unlocked = !!a[def.key];
         if (def.hidden && !unlocked) {
-          html += `<div class="achievement-slot locked hidden-achievement"><div class="achievement-name">???</div><div class="achievement-desc">Hidden</div></div>`;
+          html += `<div class="achievement-slot locked hidden-achievement"><div class="achievement-medal">?</div><div class="achievement-body"><div class="achievement-name">???</div><div class="achievement-desc">Hidden</div></div></div>`;
           return;
         }
         const rewards = [];
@@ -2316,11 +2407,19 @@ class Game {
         if (boon) rewards.push(`<span style="color:var(--green-bright)">Boon: ${boon.name}</span>`);
         if (curse) rewards.push(`<span style="color:var(--red-bright)">Curse: ${curse.name}</span>`);
 
+        const progText = String(def.progress());
+        const pm = progText.match(/(\d+)\s*\/\s*(\d+)/);
+        const pct = unlocked || /^Done/i.test(progText) ? 100
+          : pm ? Math.min(100, Math.round((parseInt(pm[1], 10) / Math.max(1, parseInt(pm[2], 10))) * 100)) : 0;
         html += `<div class="achievement-slot ${unlocked ? 'unlocked' : 'locked'}">
-          <div class="achievement-name">${unlocked ? '★ ' : ''}${def.name}</div>
-          <div class="achievement-desc">${def.desc}</div>
-          ${rewards.length > 0 ? `<div class="achievement-rewards">${rewards.join(' · ')}</div>` : ''}
-          <div class="achievement-progress">${def.progress()}</div>
+          <div class="achievement-medal${unlocked ? ' earned' : ''}">★</div>
+          <div class="achievement-body">
+            <div class="achievement-name">${def.name}</div>
+            <div class="achievement-desc">${def.desc}</div>
+            ${rewards.length > 0 ? `<div class="achievement-rewards">${rewards.join(' · ')}</div>` : ''}
+            <div class="achievement-progress-track"><div class="achievement-progress-fill" style="width:${pct}%"></div></div>
+            <div class="achievement-progress">${progText}</div>
+          </div>
         </div>`;
       });
     });
