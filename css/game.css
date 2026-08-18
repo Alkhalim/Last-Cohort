@@ -5,16 +5,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
 
 :root {
-  --bg-deep: #0a0a0c;
-  --bg-dark: #12141a;
+  --bg-deep: #0b0a08;
+  --bg-dark: #14110c;
   /* Shared textures: a faint grain and a laurel garland strip, both inline so
      nothing external loads. Cards are worn iron: grain over a lit-from-above
      gradient. --bg-card is only ever used as `background:`, so it can carry
      the full layered value. */
   --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.8 0 0 0 0 0.75 0 0 0 0 0.62 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   --laurel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='10' viewBox='0 0 26 10'%3E%3Cpath d='M0 5 C8 4 18 6 26 5' fill='none' stroke='%238a7020' stroke-width='1'/%3E%3Cpath d='M5 5 Q8 0.5 13 1.5 Q9 4.5 5 5 Z' fill='%238a7020'/%3E%3Cpath d='M15 5 Q18 9.5 23 8.5 Q19 5.5 15 5 Z' fill='%238a7020'/%3E%3C/svg%3E");
-  --card-face: linear-gradient(180deg, #232733 0%, #1a1d26 55%, #14161e 100%);
-  --card-face-hover: linear-gradient(180deg, #2c3140 0%, #242836 55%, #1c1f2a 100%);
+  --card-face: linear-gradient(180deg, #272219 0%, #1c1813 55%, #14110c 100%);
+  --card-face-hover: linear-gradient(180deg, #322b1f 0%, #272219 55%, #1d1913 100%);
   --bg-card: var(--noise), var(--card-face);
   --bg-card-hover: var(--noise), var(--card-face-hover);
   --iron-edge: inset 0 1px 0 rgba(232, 228, 216, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
@@ -43,8 +43,8 @@
     linear-gradient(180deg, #2b2013 0%, #21180d 50%, #161007 100%);
   --rough-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M6 5.2 C16 3.6 32 6.2 42 4.6 C44.6 14 43 30 43.4 42.2 C32 44.6 16 43 5.6 43.4 C3.6 32 4.8 16 6 5.2 Z' fill='none' stroke='%238a7020' stroke-width='1.6' opacity='0.75'/%3E%3C/svg%3E");
   --legion-seal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='54' fill='none' stroke='%23a03030' stroke-width='3.5'/%3E%3Ccircle cx='60' cy='60' r='45' fill='none' stroke='%23a03030' stroke-width='1.6'/%3E%3Ctext x='60' y='71' text-anchor='middle' font-family='Georgia, serif' font-size='30' font-weight='bold' letter-spacing='4' fill='%23a03030'%3ESPQR%3C/text%3E%3Ccircle cx='60' cy='24' r='2.4' fill='%23a03030'/%3E%3Ccircle cx='60' cy='96' r='2.4' fill='%23a03030'/%3E%3C/svg%3E");
-  --border: #2a2e3a;
-  --border-highlight: #4a4e5a;
+  --border: #3a3325;
+  --border-highlight: #5c5340;
   --text: #c8c4b8;
   --text-dim: #7a7868;
   --text-bright: #e8e4d8;
@@ -149,7 +149,7 @@ html, body {
   align-items: center;
   background: radial-gradient(ellipse 120% 55% at 50% 108%, rgba(201, 140, 40, 0.10), transparent 60%),
               var(--noise),
-              linear-gradient(180deg, #0a0a0c 0%, #141820 40%, #1a1410 100%);
+              linear-gradient(180deg, #0b0a08 0%, #161310 40%, #1a1410 100%);
   overflow-y: auto;
 }
 
@@ -443,7 +443,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--noise), linear-gradient(180deg, #171a22 0%, #12141a 100%);
+  background: var(--noise), linear-gradient(180deg, #1a160f 0%, #13100a 100%);
   border-bottom: 1px solid rgba(201, 162, 39, 0.22);
   flex-shrink: 0;
   position: relative;
@@ -814,8 +814,29 @@ html, body {
 }
 
 /* Compact "what this enemy does next" badge on the enemy card. */
+.enemy-card-portrait {
+  display: block;
+  width: calc(100% + 16px);
+  height: 54px;
+  margin: -6px -8px 5px;
+  object-fit: cover;
+  object-position: center 18%;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  filter: saturate(0.88) contrast(1.03) brightness(0.92);
+  pointer-events: none;
+}
+
+.enemy-card .enemy-name {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .enemy-intent-badge {
-  margin-top: 3px;
+  margin-top: auto;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 0 rgba(216, 190, 140, 0.07);
   font-size: 0.58rem;
   display: flex;
   gap: 4px;
@@ -1118,9 +1139,10 @@ html, body {
 
 .enemy-card {
   position: relative;
-  width: 90px;
-  min-width: 70px;
+  width: 96px;
+  min-width: 76px;
   flex-shrink: 1;
+  overflow: hidden;
   background: var(--wood-face);
   border: 1px solid #3f2d1c;
   box-shadow: inset 0 2px 0 rgba(205, 165, 120, 0.06), inset 0 -2px 3px rgba(0, 0, 0, 0.6);
@@ -1188,10 +1210,10 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(0deg, transparent 30%, rgba(74, 138, 191, 0.15) 60%, rgba(74, 138, 191, 0.3) 100%);
-  border-top: 3px solid rgba(74, 138, 191, 0.7);
-  border-left: 1px solid rgba(74, 138, 191, 0.25);
-  border-right: 1px solid rgba(74, 138, 191, 0.25);
+  background: linear-gradient(0deg, transparent 30%, rgba(148, 158, 172, 0.10) 60%, rgba(148, 158, 172, 0.22) 100%);
+  border-top: 3px solid rgba(150, 162, 178, 0.65);
+  border-left: 1px solid rgba(148, 158, 172, 0.22);
+  border-right: 1px solid rgba(148, 158, 172, 0.22);
   border-bottom: none;
   border-radius: 4px;
   pointer-events: none;
@@ -1735,9 +1757,29 @@ html, body {
   background: var(--scroll-face-lit);
 }
 
+.unit-portrait {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 20%;
+  border: 2px solid var(--border-highlight);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.unit-portrait.ring-melee { border-color: var(--class-melee); }
+.unit-portrait.ring-command { border-color: var(--class-command); }
+.unit-portrait.ring-support { border-color: var(--class-support); }
+.unit-portrait.ring-ranged { border-color: var(--class-ranged); }
+.unit-portrait.ring-elite { border-color: var(--class-elite); }
+.unit-portrait.ring-germanic { border-color: var(--class-germanic); }
+.unit-portrait.ring-roman { border-color: var(--class-roman); }
+
 .unit-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  gap: 5px;
   gap: 4px;
   margin-bottom: 4px;
 }
@@ -4297,7 +4339,7 @@ html, body {
   position: relative;
   overflow: hidden;
   background: radial-gradient(ellipse 95% 80% at 50% 118%, rgba(201, 140, 40, 0.13), transparent 65%),
-              var(--noise), linear-gradient(180deg, #0e0e12 0%, #0a0a0e 100%);
+              var(--noise), linear-gradient(180deg, #100d08 0%, #0b0906 100%);
   border-top: 1px solid rgba(201, 162, 39, 0.14);
   border-bottom: 1px solid rgba(42, 46, 58, 0.6);
 }

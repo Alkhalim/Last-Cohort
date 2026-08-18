@@ -482,8 +482,11 @@ class GameUI {
       const drainPct = (prevHp / enemy.maxHp) * 100;
       this.prevEnemyHp[i] = enemy.hp;
 
+      const portraitSrc = (typeof getEnemyPortrait === 'function')
+        ? getEnemyPortrait(enemy.id) : 'assets/enemy_portrait.png';
       el.innerHTML = `
         ${enemy._skipNextAction ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
+        <img class="enemy-card-portrait" src="${portraitSrc}" alt="" onerror="this.onerror=null;this.src='assets/enemy_portrait.png'">
         <div class="enemy-name">${enemy.name}${enemy.isBoss ? ` <span class="boss-icon">${gicon('skull')}</span>` : ''}</div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
@@ -1096,7 +1099,7 @@ class GameUI {
         ${unit.poison > 0 ? '<div class="unit-poison-overlay"></div>' : ''}
         ${isStunned ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
         <div class="unit-header">
-          <span class="unit-title">${renderClassName(unit.classId, unit.title)}</span>
+          <img class="unit-portrait ring-${primaryTag}" src="assets/${unit.title}.png" alt="" onerror="this.style.display='none'">
           <span class="unit-name">${unit.name}</span>
         </div>
         <div class="hp-bar-container">
