@@ -1,4 +1,14 @@
 // ============================================================
+// Inline icon set — one carved-line style for combat glyphs, so intent
+// badges and stat lines match the game's hand instead of emoji.
+const GICONS = {
+  sword: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M10.4 1.6 L4.9 7.1 M3.3 4.7 L7.3 8.7 M4.9 7.1 L2.7 9.3 M1.9 8.5 L3.5 10.1" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+  skull: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 5.2 a3.4 3.4 0 1 1 6.8 0 c0 1.3 -0.8 1.9 -1.3 2.3 l0 1.7 -4.2 0 0 -1.7 c-0.5 -0.4 -1.3 -1 -1.3 -2.3 Z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="4.6" cy="5.1" r="0.8" fill="currentColor"/><circle cx="7.4" cy="5.1" r="0.8" fill="currentColor"/></svg>`,
+  shield: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.1 L10.2 2.6 V6.1 c0 2.6 -1.9 4 -4.2 4.8 C3.7 10.1 1.8 8.7 1.8 6.1 V2.6 Z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 3 V9" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></svg>`,
+};
+function gicon(name) { return GICONS[name] || ''; }
+
+// ============================================================
 // Last Cohort – UI Renderer
 // ============================================================
 
@@ -239,6 +249,14 @@ class GameUI {
   showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    // The region's palette follows the party into battle
+    if (id === 'combat-screen') {
+      const scr = document.getElementById('combat-screen');
+      const theme = this._inHiddenMarch && this._hiddenMarchData
+        ? (this._hiddenMarchData.theme || 'forest')
+        : ((window.game && window.game.currentRegion && window.game.currentRegion().theme) || 'forest');
+      scr.dataset.theme = theme;
+    }
     // Stop map sway when leaving map
     if (id !== 'map-screen') this._stopMapSway();
     // Clean up any stray tooltips
@@ -422,7 +440,7 @@ class GameUI {
       if (textLine) {
         const label = document.createElement('span');
         label.className = `hp-preview-label damage${lethal ? ' lethal' : ''}`;
-        label.textContent = toHp === 0 ? ' blocked' : (lethal ? ` -${toHp} ☠` : ` -${toHp}`);
+        label.innerHTML = toHp === 0 ? ' blocked' : (lethal ? ` -${toHp} ${gicon('skull')}` : ` -${toHp}`);
         textLine.appendChild(label);
       }
     } else if (target.kind === 'ally' && p.heal > 0) {
@@ -466,12 +484,12 @@ class GameUI {
 
       el.innerHTML = `
         ${enemy._skipNextAction ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
-        <div class="enemy-name">${enemy.name}${enemy.isBoss ? ' <span class="boss-icon">\u2620</span>' : ''}</div>
+        <div class="enemy-name">${enemy.name}${enemy.isBoss ? ` <span class="boss-icon">${gicon('skull')}</span>` : ''}</div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
-        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">&#x1F6E1;${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon" title="Poison ${enemy.poison} — ${poisonTotalDamage(enemy.poison)} damage over ${enemy.poison} turns">&#x2620;${enemy.poison}</span>` : ''}</div>
+        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">${gicon('shield')}${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon" title="Poison ${enemy.poison} — ${poisonTotalDamage(enemy.poison)} damage over ${enemy.poison} turns">${gicon('skull')}${enemy.poison}</span>` : ''}</div>
         ${this.renderIntentBadge(enemy)}
       `;
 
@@ -544,9 +562,9 @@ class GameUI {
     const parts = [];
 
     if (dmg > 0) {
-      parts.push(`<span class="intent-dmg">⚔ ${dmg}${hits > 1 ? `×${hits}` : ''}</span>`);
+      parts.push(`<span class="intent-dmg">${gicon('sword')} ${dmg}${hits > 1 ? `×${hits}` : ''}</span>`);
     }
-    if (action.poisonTarget) parts.push(`<span class="intent-poison">☠ ${action.poisonTarget}</span>`);
+    if (action.poisonTarget) parts.push(`<span class="intent-poison">${gicon('skull')} ${action.poisonTarget}</span>`);
     if (action.boarCharge) parts.push('<span class="intent-stun">STUN</span>');
     if (action.aoe) parts.push('<span class="intent-aoe">AOE</span>');
 
@@ -1092,9 +1110,9 @@ class GameUI {
         <div class="unit-stats">
           <span class="hp-text">${unit.hp}/${unit.maxHp}</span>
           ${threatLabel}
-          ${unit.block > 0 ? `<span class="block-icon" title="Block">&#x1F6E1;${unit.block}</span>` : ''}
-          ${unit.poison > 0 ? `<span class="poison-icon" title="Poison ${unit.poison} — ticks for its value each turn then decays by 1, so ${poisonTotalDamage(unit.poison)} damage over ${unit.poison} turns">&#x2620;${unit.poison}</span>` : ''}
-          ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg}\u2694(${minAtk})</span>`; })() : ''}
+          ${unit.block > 0 ? `<span class="block-icon" title="Block">${gicon('shield')}${unit.block}</span>` : ''}
+          ${unit.poison > 0 ? `<span class="poison-icon" title="Poison ${unit.poison} — ticks for its value each turn then decays by 1, so ${poisonTotalDamage(unit.poison)} damage over ${unit.poison} turns">${gicon('skull')}${unit.poison}</span>` : ''}
+          ${unit.buffs && unit.buffs.length > 0 ? (() => { const totalDmg = unit.buffs.reduce((s, b) => s + (b.damage || 0), 0); const minAtk = Math.min(...unit.buffs.map(b => b.attacksLeft)); return `<span class="buff-text">+${totalDmg}${gicon('sword')}(${minAtk})</span>`; })() : ''}
           ${unit.downed ? '<span class="downed-text">DOWNED</span>' : ''}
           ${unit.actedThisTurn && !unit.downed ? '<span class="acted-text">DONE</span>' : ''}
         </div>
@@ -2081,7 +2099,7 @@ class GameUI {
     } else if (type === 'block') {
       popup.textContent = `+${amount}`;
     } else if (type === 'poison') {
-      popup.textContent = `+${amount}☠`;
+      popup.innerHTML = `+${amount}${gicon('skull')}`;
     } else if (type === 'morale') {
       popup.textContent = amount > 0 ? `+${amount}` : `${amount}`;
     }
