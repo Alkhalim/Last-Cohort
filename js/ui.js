@@ -2173,12 +2173,26 @@ class GameUI {
       popup.textContent = amount > 0 ? `+${amount}` : `${amount}`;
     }
 
+    // Simultaneous popups on the same element (damage + poison from one
+    // attack) fan out sideways and stagger down instead of overlapping.
+    if (!this._popupSlots) this._popupSlots = {};
+    const now = performance.now();
+    const prev = this._popupSlots[elementId];
+    const slot = prev && (now - prev.t) < 900 ? prev.n + 1 : 0;
+    this._popupSlots[elementId] = { t: now, n: slot };
+    const dx = slot === 0 ? 0 : (slot % 2 === 1 ? 1 : -1) * Math.ceil(slot / 2) * 28;
+    const dy = slot * 14;
+
     const rect = target.getBoundingClientRect();
-    popup.style.left = (rect.left + rect.width / 2 - 20) + 'px';
-    popup.style.top = (rect.top) + 'px';
+    popup.style.left = (rect.left + rect.width / 2 - 20 + dx) + 'px';
+    popup.style.top = (rect.top + dy) + 'px';
+    if (slot > 0) {
+      popup.style.animationDelay = (slot * 80) + 'ms';
+      popup.style.animationFillMode = 'backwards';
+    }
     document.body.appendChild(popup);
 
-    setTimeout(() => popup.remove(), 1000);
+    setTimeout(() => popup.remove(), 1000 + slot * 80);
   }
 
   showStatusPopup(elementId, text, color) {
