@@ -5,7 +5,15 @@ const GICONS = {
   sword: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M10.4 1.6 L4.9 7.1 M3.3 4.7 L7.3 8.7 M4.9 7.1 L2.7 9.3 M1.9 8.5 L3.5 10.1" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
   skull: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 5.2 a3.4 3.4 0 1 1 6.8 0 c0 1.3 -0.8 1.9 -1.3 2.3 l0 1.7 -4.2 0 0 -1.7 c-0.5 -0.4 -1.3 -1 -1.3 -2.3 Z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="4.6" cy="5.1" r="0.8" fill="currentColor"/><circle cx="7.4" cy="5.1" r="0.8" fill="currentColor"/></svg>`,
   shield: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.1 L10.2 2.6 V6.1 c0 2.6 -1.9 4 -4.2 4.8 C3.7 10.1 1.8 8.7 1.8 6.1 V2.6 Z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 3 V9" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></svg>`,
+  arrow: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.8 10.2 L9.6 2.4 M10.3 5.6 L10.3 1.7 6.4 1.7 M3.4 7.4 L1.8 7 M5 8.9 L4.6 10.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+  banner: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.2 1.2 V10.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3.2 2.2 H9.6 L8 4.1 9.6 6 H3.2 Z" fill="currentColor"/></svg>`,
+  leaf: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 11 C6 8 6 5 6 2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M6 6.6 C6 4.4 4.6 3.2 2.6 3 C2.8 5.2 4.2 6.5 6 6.6 Z" fill="currentColor"/><path d="M6 9.2 C6 7 7.4 5.8 9.4 5.6 C9.2 7.8 7.8 9.1 6 9.2 Z" fill="currentColor"/></svg>`,
+  helm: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.8 9.8 V6 a3.2 3.2 0 0 1 6.4 0 V9.8 M4.6 9.8 V7.4 M7.4 9.8 V7.4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3.6 3.2 C5 1.3 7 1.3 8.4 3.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+  axe: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.4 10.8 L8.6 5.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M6.9 1.8 C9.4 2.1 10.4 4.4 9.9 6.6 C8.5 5.9 7.2 4.6 6.9 1.8 Z" fill="currentColor"/></svg>`,
 };
+
+// Which sigil marks each role's roundel on the party cards
+const ROLE_ICON = { melee: 'sword', ranged: 'arrow', command: 'banner', support: 'leaf', elite: 'helm', germanic: 'axe', roman: 'shield' };
 function gicon(name) { return GICONS[name] || ''; }
 
 // ============================================================
@@ -482,11 +490,8 @@ class GameUI {
       const drainPct = (prevHp / enemy.maxHp) * 100;
       this.prevEnemyHp[i] = enemy.hp;
 
-      const portraitSrc = (typeof getEnemyPortrait === 'function')
-        ? getEnemyPortrait(enemy.id) : 'assets/enemy_portrait.png';
       el.innerHTML = `
         ${enemy._skipNextAction ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
-        <img class="enemy-card-portrait" src="${portraitSrc}" alt="" onerror="this.onerror=null;this.src='assets/enemy_portrait.png'">
         <div class="enemy-name">${enemy.name}${enemy.isBoss ? ` <span class="boss-icon">${gicon('skull')}</span>` : ''}</div>
         <div class="hp-bar">
           <div class="hp-drain" style="width:${drainPct}%"></div>
@@ -1099,7 +1104,7 @@ class GameUI {
         ${unit.poison > 0 ? '<div class="unit-poison-overlay"></div>' : ''}
         ${isStunned ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
         <div class="unit-header">
-          <img class="unit-portrait ring-${primaryTag}" src="assets/${unit.title}.png" alt="" onerror="this.style.display='none'">
+          <span class="unit-roundel ring-${primaryTag}">${gicon(ROLE_ICON[primaryTag] || 'sword')}</span>
           <span class="unit-name">${unit.name}</span>
         </div>
         <div class="hp-bar-container">

@@ -38,7 +38,7 @@
   --btn-bronze: var(--noise),
     linear-gradient(100deg, transparent 28%, rgba(255, 220, 140, 0.06) 48%, transparent 66%),
     linear-gradient(180deg, #52391a 0%, #382610 45%, #251707 100%);
-  --bone-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.055 0.075' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.46 0 0 0 0 0.36 0 0 0 0 0.18 0 0 0 0.16 0'/%3E%3C/filter%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='14' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 0 0.06 0 0 0 0.10 0'/%3E%3C/filter%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.5' numOctaves='2' seed='19' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.24 0 0 0 0 0.12 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23s)'/%3E%3Crect width='90' height='90' filter='url(%23p)'/%3E%3Crect width='90' height='90' filter='url(%23k)'/%3E%3C/svg%3E");
+  --bone-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.07' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.32 0 0 0 0 0.14 0 0 0 0.28 0'/%3E%3C/filter%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='14' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.12 0 0 0 0 0.05 0 0 0 0.16 0'/%3E%3C/filter%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.025 0.45' numOctaves='2' seed='19' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.28 0 0 0 0 0.22 0 0 0 0 0.1 0 0 0 0.13 0'/%3E%3C/filter%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.12 0.14' numOctaves='2' seed='31' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.4 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23s)'/%3E%3Crect width='140' height='140' filter='url(%23p)'/%3E%3Crect width='140' height='140' filter='url(%23k)'/%3E%3Crect width='140' height='140' filter='url(%23m)'/%3E%3C/svg%3E");
   --btn-oak: var(--wood-tex),
     linear-gradient(180deg, #2b2013 0%, #21180d 50%, #161007 100%);
   --rough-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M6 5.2 C16 3.6 32 6.2 42 4.6 C44.6 14 43 30 43.4 42.2 C32 44.6 16 43 5.6 43.4 C3.6 32 4.8 16 6 5.2 Z' fill='none' stroke='%238a7020' stroke-width='1.6' opacity='0.75'/%3E%3C/svg%3E");
@@ -814,18 +814,6 @@ html, body {
 }
 
 /* Compact "what this enemy does next" badge on the enemy card. */
-.enemy-card-portrait {
-  display: block;
-  width: calc(100% + 16px);
-  height: 54px;
-  margin: -6px -8px 5px;
-  object-fit: cover;
-  object-position: center 18%;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
-  filter: saturate(0.88) contrast(1.03) brightness(0.92);
-  pointer-events: none;
-}
-
 .enemy-card .enemy-name {
   font-family: 'Cinzel', serif;
   font-weight: 700;
@@ -1459,11 +1447,11 @@ html, body {
   font-family: 'Cinzel', serif;
   font-size: 1.4rem;
   font-weight: 700;
-  background: var(--bone-tex), linear-gradient(145deg, #e7dcc2 0%, #cfc2a2 55%, #ab9c7c 100%);
-  border: 1px solid #453a26;
-  border-radius: 7px 9px 7px 8px;
+  background: var(--bone-tex), linear-gradient(145deg, #e2d5b8 0%, #c8ba98 55%, #a2926f 100%);
+  border: 1px solid #40351f;
+  border-radius: 6px 10px 7px 9px;
   color: #33291c;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -3px 5px rgba(80, 64, 36, 0.45), inset 2px 0 3px rgba(90, 74, 42, 0.18), 0 2px 4px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -4px 6px rgba(74, 58, 30, 0.5), inset 2px 0 4px rgba(90, 74, 42, 0.28), inset -2px 1px 3px rgba(70, 56, 30, 0.2), 0 2px 4px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
@@ -1477,10 +1465,13 @@ html, body {
   cursor: default;
 }
 
-/* Hand-cut bone: no two dice sit perfectly square */
+/* Hand-cut bone: no two dice sit square, and no two are stained alike */
 #dice-pool .die:nth-child(3n+1) .die-face { transform: rotate(-2deg); }
 #dice-pool .die:nth-child(3n+2) .die-face { transform: rotate(1.5deg); }
 #dice-pool .die:nth-child(4n+3) .die-face { transform: rotate(2.5deg); }
+#dice-pool .die:nth-child(2n) { background-position: 47px 23px, 0 0; border-radius: 9px 6px 10px 7px; }
+#dice-pool .die:nth-child(3n) { background-position: 88px 61px, 0 0; border-radius: 7px 8px 6px 10px; }
+#dice-pool .die:nth-child(5n+2) { background-position: 25px 104px, 0 0; }
 
 /* Pip face: 3×3 grid, pips drawn in currentColor so used/dim states inherit */
 .die-face {
@@ -1757,24 +1748,26 @@ html, body {
   background: var(--scroll-face-lit);
 }
 
-.unit-portrait {
-  width: 24px;
-  height: 24px;
+.unit-roundel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
   border-radius: 50%;
-  object-fit: cover;
-  object-position: center 20%;
-  border: 2px solid var(--border-highlight);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  border: 1.5px solid var(--border-highlight);
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(232, 216, 160, 0.06);
   flex-shrink: 0;
-  pointer-events: none;
 }
-.unit-portrait.ring-melee { border-color: var(--class-melee); }
-.unit-portrait.ring-command { border-color: var(--class-command); }
-.unit-portrait.ring-support { border-color: var(--class-support); }
-.unit-portrait.ring-ranged { border-color: var(--class-ranged); }
-.unit-portrait.ring-elite { border-color: var(--class-elite); }
-.unit-portrait.ring-germanic { border-color: var(--class-germanic); }
-.unit-portrait.ring-roman { border-color: var(--class-roman); }
+.unit-roundel .gicon { width: 12px; height: 12px; vertical-align: 0; }
+.unit-roundel.ring-melee { border-color: var(--class-melee); color: var(--class-melee); }
+.unit-roundel.ring-command { border-color: var(--class-command); color: var(--class-command); }
+.unit-roundel.ring-support { border-color: var(--class-support); color: var(--class-support); }
+.unit-roundel.ring-ranged { border-color: var(--class-ranged); color: var(--class-ranged); }
+.unit-roundel.ring-elite { border-color: var(--class-elite); color: var(--class-elite); }
+.unit-roundel.ring-germanic { border-color: var(--class-germanic); color: var(--class-germanic); }
+.unit-roundel.ring-roman { border-color: var(--class-roman); color: var(--class-roman); }
 
 .unit-header {
   display: flex;
