@@ -1206,7 +1206,7 @@ class GameUI {
         if (isEligible) {
           el.classList.add('targetable');
           el.addEventListener('click', () => {
-            unit.actedThisTurn = false;
+            this.engine.grantExtraAction(unit);
             this.engine.addLog(`${unit.name} is inspired to act again!`);
             this.engine._pendingExtraAction = null;
             this.selectedUnitIndex = i;

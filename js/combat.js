@@ -192,6 +192,20 @@ class CombatEngine {
 
   spawnNextEnemy() {
     if (this.spawnIndex >= this.enemyDefs.length) {
+      // Thusnelda's Standard: allies gain 3 Block per living enemy.
+      // Applied before the ambush branch so the banner guards against ambushes too.
+      if (this.party.some(u => !u.downed && this.unitHasItem(u, 'thusneldas_standard'))) {
+        const foeCount = this.enemies.filter(e => !e.dead).length;
+        const standardBlock = foeCount * 3;
+        if (standardBlock > 0) {
+          this.party.forEach(u => {
+            if (u.downed) return;
+            u.block = (u.block || 0) + standardBlock;
+            u.stats.blockGenerated += standardBlock;
+          });
+          this.addLog(`Thusnelda's Standard rallies the line — allies gain ${standardBlock} Block (${foeCount} enemies).`);
+        }
+      }
       // Ambush: enemies strike first before the player gets dice
       if (this.isAmbush) {
         this.isAmbush = false;
@@ -383,6 +397,17 @@ class CombatEngine {
       enemy.justSpawned = false;
       this.spawnNextEnemy();
     }, 500);
+  }
+
+  // Grant a unit an extra action: if they already acted, they can act again
+  // now; if they haven't acted yet, the action banks and is consumed when
+  // their normal action would end their turn.
+  grantExtraAction(target) {
+    if (target.actedThisTurn) {
+      target.actedThisTurn = false;
+    } else {
+      target._extraActions = (target._extraActions || 0) + 1;
+    }
   }
 
   // --- Logging ---
@@ -704,8 +729,9 @@ class CombatEngine {
         this.addLog(`${u.name} stays in cover — +${u._deepCoverBlockNext} Block.`);
         u._deepCoverBlockNext = 0;
       }
-      // Bone Totem stun: skip this turn
+      // Banked extra actions don't carry across turns
       u._extraActions = 0;
+      // Bone Totem stun: skip this turn
       u._stunnedThisTurn = false;
       if (u._stunNextTurn) {
         u.actedThisTurn = true;
@@ -1599,9 +1625,18 @@ class CombatEngine {
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: unit.index, amount: gwBlock });
     }
 
-    // Mark unit as acted (unless free action was granted)
+    // Mark unit as acted (unless free action was granted).
+    // A banked extra action (Stimulant/Litany cast before the unit acted)
+    // is consumed here instead of ending the unit's turn.
     if (!result.freeAction) {
-      unit.actedThisTurn = true;
+      if (unit._extraActions > 0) {
+        unit._extraActions--;
+        unit.actedThisTurn = false;
+        this.addLog(`${unit.name} acts again!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: unit.index, text: 'Acts again!', color: 'var(--green-bright)' });
+      } else {
+        unit.actedThisTurn = true;
+      }
     }
 
     if (result.noKillMorale) this._noKillMorale = true;
@@ -2650,7 +2685,7 @@ class CombatEngine {
 
     // Stimulant: target ally can act again
     if (result.stimulant && result.target) {
-      result.target.actedThisTurn = false;
+      this.grantExtraAction(result.target);
       parts.push(`${result.target.name} is reinvigorated! Can act again this turn.`);
       if (this.onVisual) this.onVisual('statusText', { unitIndex: result.target.index, text: 'Stimulant!', color: 'var(--green-bright)' });
     }
@@ -3300,11 +3335,12 @@ class CombatEngine {
       this.morale = Math.min(100, this.morale + moraleGain);
       parts.push(`+${moraleGain} Morale.`);
       if (this.onVisual) this.onVisual('morale', { amount: moraleGain });
-      // Let the player choose which acted ally gets the extra action
-      const others = this.party.filter(u => !u.downed && u !== unit && u.actedThisTurn);
+      // Let the player choose which ally gets the extra action.
+      // Unacted allies are valid too — the action banks until they act.
+      const others = this.party.filter(u => !u.downed && u !== unit);
       if (others.length === 1) {
         // Only one option — auto-pick
-        others[0].actedThisTurn = false;
+        this.grantExtraAction(others[0]);
         parts.push(`${others[0].name} is inspired to act again!`);
       } else if (others.length > 1) {
         // Multiple options — defer to player choice

@@ -1428,5 +1428,81 @@ section('2.9 — Brief Respite shows full skill info');
 }
 
 // ============================================================
+section('2.12 — extra-action banking & Thusnelda\'s Standard');
+// ============================================================
+{
+  const combat = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+  const items = fs.readFileSync(path.join(ROOT, 'data/items.js'), 'utf8');
+
+  const ctx = {
+    console, window: {}, document: {},
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    setTimeout, clearTimeout, requestAnimationFrame: () => {},
+  };
+  vm.createContext(ctx);
+  for (const f of ['data/classes.js', 'data/enemies.js', 'data/items.js',
+                   'data/events.js', 'data/gamedata.js', 'js/data.js',
+                   'js/dice.js', 'js/combat.js']) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  }
+  vm.runInContext('loadGameData(); globalThis.__CE = CombatEngine;', ctx);
+  const CombatEngine = ctx.__CE;
+
+  check('grantExtraAction on an acted unit un-acts them', () => {
+    const e = Object.create(CombatEngine.prototype);
+    const u = { actedThisTurn: true };
+    e.grantExtraAction(u);
+    assertEqual(u.actedThisTurn, false, 'acted unit was not un-acted');
+    assert(!u._extraActions, 'acted unit should not bank');
+  });
+
+  check('grantExtraAction on an unacted unit banks the action', () => {
+    const e = Object.create(CombatEngine.prototype);
+    const u = { actedThisTurn: false };
+    e.grantExtraAction(u);
+    assertEqual(u.actedThisTurn, false, 'flag should stay clear');
+    assertEqual(u._extraActions, 1, 'extra action was not banked');
+  });
+
+  check('mark-acted path consumes a banked action', () => {
+    // The regression that motivated this: the consumption edit was lost once.
+    const m = combat.match(/if \(!result\.freeAction\) \{([\s\S]*?)\n    \}/);
+    assert(m, 'mark-acted block missing');
+    assert(/unit\._extraActions--/.test(m[1]), 'banked action is never consumed');
+    assert(/actedThisTurn = false/.test(m[1]), 'consuming a bank must un-act the unit');
+  });
+
+  check('banked extra actions reset at turn start', () => {
+    assert(/u\._extraActions = 0;/.test(combat), 'per-turn reset of _extraActions missing');
+  });
+
+  check('Litany can target unacted allies (no acted filter)', () => {
+    const m = combat.match(/result\.litanyOfCourage[\s\S]{0,600}?const others = ([^;]+);/);
+    assert(m, 'litany candidate filter not found');
+    assert(!/actedThisTurn/.test(m[1]),
+      'litany still filters to acted allies — cast early it grants nothing');
+    assert(/grantExtraAction/.test(
+      combat.slice(combat.indexOf('result.litanyOfCourage'), combat.indexOf('result.litanyOfCourage') + 900)),
+      'litany auto-pick does not use grantExtraAction');
+  });
+
+  check('Thusnelda\'s Standard grants 3 block per enemy at spawn end', () => {
+    const m = combat.match(/spawnIndex >= this\.enemyDefs\.length\) \{([\s\S]{0,900})/);
+    assert(m, 'spawn-complete block not found');
+    assert(/thusneldas_standard/.test(m[1]), 'standard start-of-combat block missing');
+    assert(/\* 3/.test(m[1]), 'standard should grant 3 block per living enemy');
+    const ambushIdx = m[1].indexOf('this.isAmbush');
+    const standardIdx = m[1].indexOf('thusneldas_standard');
+    assert(standardIdx >= 0 && (ambushIdx < 0 || standardIdx < ambushIdx),
+      'standard must apply before the ambush early-return');
+  });
+
+  check('Thusnelda\'s Standard text says +3 block', () => {
+    assert(/Allies gain \+3 Block at start of combat per living enemy/.test(items),
+      'item text does not match the implemented +3');
+  });
+}
+
+// ============================================================
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed > 0 ? 1 : 0);
