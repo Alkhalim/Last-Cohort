@@ -18,21 +18,27 @@
   --bg-card: var(--noise), var(--card-face);
   --bg-card-hover: var(--noise), var(--card-face-hover);
   --iron-edge: inset 0 1px 0 rgba(232, 228, 216, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
-  /* Party surfaces read as unrolled papyrus: horizontal fibers and curled
-     roll-shadows at both ends. Enemy surfaces are carved wood tablets. */
-  --scroll-face: var(--noise),
-    repeating-linear-gradient(0deg, rgba(74, 58, 28, 0.14) 0 1px, transparent 1px 3px),
+  /* Party surfaces read as unrolled papyrus: an anisotropic fiber weave
+     (stretched turbulence, horizontal tan strips crossed by faint vertical
+     ones) with curled roll-shadows at both ends. Enemy surfaces are
+     weathered wood: strong vertical grain, silvered dry streaks, blotches. */
+  --papyrus-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='120'%3E%3Cfilter id='h'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008 0.5' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.72 0 0 0 0 0.45 0 0 0 0.15 0'/%3E%3C/filter%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45 0.012' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0 0.01 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='180' height='120' filter='url(%23h)'/%3E%3Crect width='180' height='120' filter='url(%23v)'/%3E%3C/svg%3E");
+  --wood-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5 0.012' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.04 0 0 0 0 0.025 0 0 0 0 0.01 0 0 0 0.26 0'/%3E%3C/filter%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.4 0.008' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.58 0 0 0 0 0.52 0 0 0 0 0.42 0 0 0 0.07 0'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.09' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.02 0 0 0 0 0.015 0 0 0 0 0.005 0 0 0 0.14 0'/%3E%3C/filter%3E%3Crect width='120' height='180' filter='url(%23g)'/%3E%3Crect width='120' height='180' filter='url(%23w)'/%3E%3Crect width='120' height='180' filter='url(%23b)'/%3E%3C/svg%3E");
+  --scroll-face: var(--papyrus-tex),
     linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0px, rgba(216, 190, 140, 0.10) 2px, rgba(0, 0, 0, 0.28) 5px, transparent 9px),
     linear-gradient(270deg, rgba(0, 0, 0, 0.55) 0px, rgba(216, 190, 140, 0.10) 2px, rgba(0, 0, 0, 0.28) 5px, transparent 9px),
-    linear-gradient(180deg, #2d2617 0%, #262013 55%, #1e190d 100%);
-  --scroll-face-lit: var(--noise),
-    repeating-linear-gradient(0deg, rgba(74, 58, 28, 0.14) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #2f2816 0%, #282112 55%, #1f1a0c 100%);
+  --scroll-face-lit: var(--papyrus-tex),
     linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0px, rgba(216, 190, 140, 0.10) 2px, rgba(0, 0, 0, 0.28) 5px, transparent 9px),
     linear-gradient(270deg, rgba(0, 0, 0, 0.55) 0px, rgba(216, 190, 140, 0.10) 2px, rgba(0, 0, 0, 0.28) 5px, transparent 9px),
-    linear-gradient(180deg, #372e1b 0%, #2e2716 55%, #241e10 100%);
-  --wood-face: var(--noise),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.20) 0 1px, transparent 1px 4px, rgba(0, 0, 0, 0.10) 4px 5px, transparent 5px 9px),
-    linear-gradient(180deg, #2c2015 0%, #241a11 50%, #19110b 100%);
+    linear-gradient(180deg, #3a301c 0%, #302816 55%, #262010 100%);
+  --wood-face: var(--wood-tex),
+    linear-gradient(180deg, #2e2114 0%, #251a10 50%, #18100a 100%);
+  --btn-bronze: var(--noise),
+    linear-gradient(100deg, transparent 28%, rgba(255, 220, 140, 0.06) 48%, transparent 66%),
+    linear-gradient(180deg, #52391a 0%, #382610 45%, #251707 100%);
+  --btn-oak: var(--wood-tex),
+    linear-gradient(180deg, #2b2013 0%, #21180d 50%, #161007 100%);
   --rough-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M6 5.2 C16 3.6 32 6.2 42 4.6 C44.6 14 43 30 43.4 42.2 C32 44.6 16 43 5.6 43.4 C3.6 32 4.8 16 6 5.2 Z' fill='none' stroke='%238a7020' stroke-width='1.6' opacity='0.75'/%3E%3C/svg%3E");
   --legion-seal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='54' fill='none' stroke='%23a03030' stroke-width='3.5'/%3E%3Ccircle cx='60' cy='60' r='45' fill='none' stroke='%23a03030' stroke-width='1.6'/%3E%3Ctext x='60' y='71' text-anchor='middle' font-family='Georgia, serif' font-size='30' font-weight='bold' letter-spacing='4' fill='%23a03030'%3ESPQR%3C/text%3E%3Ccircle cx='60' cy='24' r='2.4' fill='%23a03030'/%3E%3Ccircle cx='60' cy='96' r='2.4' fill='%23a03030'/%3E%3C/svg%3E");
   --border: #2a2e3a;
@@ -393,9 +399,7 @@ html, body {
   font-family: 'Cinzel', serif;
   font-size: 1rem;
   padding: 0.8rem 2.5rem;
-  background: var(--noise),
-    linear-gradient(100deg, transparent 32%, rgba(255, 220, 140, 0.12) 46%, transparent 58%),
-    linear-gradient(180deg, #52391a 0%, #382610 45%, #251707 100%);
+  background: var(--btn-bronze);
   color: var(--gold);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   border: 1px solid #a8862c;
@@ -404,12 +408,17 @@ html, body {
   cursor: pointer;
   letter-spacing: 0.1em;
   transition: all 0.2s;
+  transition-property: background, border-color, filter, opacity;
   min-height: 48px;
+}
+.btn-primary, .btn-secondary {
+  transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.15s, border-color 0.15s;
 }
 
 .btn-primary:active {
-  background: linear-gradient(180deg, #4a3a24 0%, #3a2a14 100%);
-  transform: scale(0.97);
+  background: linear-gradient(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.28)), var(--btn-bronze);
+  transform: translateY(2px) scale(0.985);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 -1px 0 rgba(255, 220, 140, 0.05), 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .hidden {
@@ -3711,9 +3720,7 @@ html, body {
   padding: 10px;
   font-family: 'Cinzel', serif;
   font-size: 0.85rem;
-  background: var(--noise),
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 4px),
-    linear-gradient(180deg, #2b2013 0%, #21180d 50%, #161007 100%);
+  background: var(--btn-oak);
   color: var(--text-bright);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   border: 1px solid #4a3820;
@@ -3726,8 +3733,10 @@ html, body {
 }
 
 .btn-secondary:active {
-  background: linear-gradient(180deg, #2a2e3a 0%, #1e2230 100%);
+  background: linear-gradient(rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.26)), var(--btn-oak);
   border-color: var(--gold-dim);
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .btn-secondary.hidden {
