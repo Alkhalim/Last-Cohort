@@ -5,11 +5,11 @@ const GICONS = {
   sword: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M10.4 1.6 L4.9 7.1 M3.3 4.7 L7.3 8.7 M4.9 7.1 L2.7 9.3 M1.9 8.5 L3.5 10.1" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
   skull: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 5.2 a3.4 3.4 0 1 1 6.8 0 c0 1.3 -0.8 1.9 -1.3 2.3 l0 1.7 -4.2 0 0 -1.7 c-0.5 -0.4 -1.3 -1 -1.3 -2.3 Z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="4.6" cy="5.1" r="0.8" fill="currentColor"/><circle cx="7.4" cy="5.1" r="0.8" fill="currentColor"/></svg>`,
   shield: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.1 L10.2 2.6 V6.1 c0 2.6 -1.9 4 -4.2 4.8 C3.7 10.1 1.8 8.7 1.8 6.1 V2.6 Z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 3 V9" stroke="currentColor" stroke-width="0.8" opacity="0.6"/></svg>`,
-  arrow: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.8 10.2 L9.6 2.4 M10.3 5.6 L10.3 1.7 6.4 1.7 M3.4 7.4 L1.8 7 M5 8.9 L4.6 10.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
-  banner: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.2 1.2 V10.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3.2 2.2 H9.6 L8 4.1 9.6 6 H3.2 Z" fill="currentColor"/></svg>`,
-  leaf: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 11 C6 8 6 5 6 2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M6 6.6 C6 4.4 4.6 3.2 2.6 3 C2.8 5.2 4.2 6.5 6 6.6 Z" fill="currentColor"/><path d="M6 9.2 C6 7 7.4 5.8 9.4 5.6 C9.2 7.8 7.8 9.1 6 9.2 Z" fill="currentColor"/></svg>`,
-  helm: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.8 9.8 V6 a3.2 3.2 0 0 1 6.4 0 V9.8 M4.6 9.8 V7.4 M7.4 9.8 V7.4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3.6 3.2 C5 1.3 7 1.3 8.4 3.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
-  axe: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.4 10.8 L8.6 5.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M6.9 1.8 C9.4 2.1 10.4 4.4 9.9 6.6 C8.5 5.9 7.2 4.6 6.9 1.8 Z" fill="currentColor"/></svg>`,
+  arrow: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.7 L8.4 3.9 H6.7 V8.4 H5.3 V3.9 H3.6 Z" fill="currentColor"/><path d="M3.9 8.8 L6 11 L8.1 8.8 L6 9.7 Z" fill="currentColor"/></svg>`,
+  banner: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M5.5 1 H6.5 V11 H5.5 Z" fill="currentColor"/><path d="M2.4 1.9 H9.6 V2.9 H2.4 Z" fill="currentColor"/><path d="M3 3.4 H9 V7.6 L7.5 6.8 6 7.6 4.5 6.8 3 7.6 Z" fill="currentColor"/></svg>`,
+  leaf: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M5.5 2 H6.5 V11 H5.5 Z" fill="currentColor"/><path d="M5.8 6.8 C5.6 4.4 4.2 3 1.9 2.7 C2.1 5.1 3.6 6.6 5.8 6.8 Z" fill="currentColor"/><path d="M6.2 9.4 C6.4 7 7.8 5.6 10.1 5.3 C9.9 7.7 8.4 9.2 6.2 9.4 Z" fill="currentColor"/></svg>`,
+  helm: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 10 V6 a3.4 3.4 0 0 1 6.8 0 V10 H7.2 V7.4 H4.8 V10 Z" fill="currentColor"/><path d="M3.2 3.3 C4.4 1.1 7.6 1.1 8.8 3.3 L7.9 4 C6.9 2.4 5.1 2.4 4.1 4 Z" fill="currentColor"/></svg>`,
+  axe: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.2 11 L4.2 10.6 L8 5.4 L7 4.8 Z" fill="currentColor"/><path d="M6.2 1.4 C9.2 1.6 10.6 4.2 10 6.9 C8.3 6.1 6.7 4.7 6.2 1.4 Z" fill="currentColor"/></svg>`,
 };
 
 // Which sigil marks each role's roundel on the party cards
@@ -899,11 +899,11 @@ class GameUI {
         el.addEventListener('click', () => this.onDieClickStaged(die));
       }
 
-      // Centurion adjust buttons — kept available while a skill is staged, since
-      // nudging a die is exactly how a player makes an unaffordable cost work.
+      // All die tools live in one aligned strip above the die, so adjusters
+      // (Centurion) and reroll (Cornicen) never scatter around the bone.
+      const dieTools = document.createElement('div');
+      dieTools.className = 'die-tools';
       if (!die.used && this.engine.canAdjustDie() && this.engine.phase === PHASE.PLAYER_TURN) {
-        const adjustContainer = document.createElement('div');
-        adjustContainer.className = 'die-adjust';
         if (die.value > 1) {
           const down = document.createElement('button');
           down.className = 'adjust-btn';
@@ -916,7 +916,7 @@ class GameUI {
             this.pruneStagedDice();
             this.render();
           });
-          adjustContainer.appendChild(down);
+          dieTools.appendChild(down);
         }
         if (die.value < 6) {
           const up = document.createElement('button');
@@ -930,12 +930,9 @@ class GameUI {
             this.pruneStagedDice();
             this.render();
           });
-          adjustContainer.appendChild(up);
+          dieTools.appendChild(up);
         }
-        el.appendChild(adjustContainer);
       }
-
-      // Cornicen reroll button — also kept available while a skill is staged.
       if (!die.used && this.engine.canRerollDie() && this.engine.phase === PHASE.PLAYER_TURN) {
         const rerollBtn = document.createElement('button');
         rerollBtn.className = 'reroll-btn';
@@ -946,8 +943,9 @@ class GameUI {
           this.pruneStagedDice();
           this.render();
         });
-        el.appendChild(rerollBtn);
+        dieTools.appendChild(rerollBtn);
       }
+      if (dieTools.children.length > 0) el.appendChild(dieTools);
 
       pool.appendChild(el);
     });
