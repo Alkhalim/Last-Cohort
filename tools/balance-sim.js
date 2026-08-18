@@ -48,9 +48,9 @@ function buildParty(g, engine, classIds, difficulty, rng, { allSkills = false } 
   const CLASS_DATA = g.api.CLASS_DATA;
   const ITEM_DATA = g.api.ITEM_DATA;
   const skillCount = allSkills ? 99 : 5;
-  const itemLevel = Math.max(0, Math.floor(diff * 0.55));
-  const hpBonus = Math.floor(diff * 5.5);
-  let epicBudget = diff >= 5 ? 3 : diff >= 4 ? 1 : 0;
+  const itemLevel = Math.max(0, Math.floor(diff * 0.45));
+  const hpBonus = Math.floor(diff * 3.2);
+  let epicBudget = diff >= 5 ? 1 : 0;
 
   engine.party.forEach(u => {
     const starters = u.allSkills.filter(s => s.starter);
@@ -74,15 +74,17 @@ function buildParty(g, engine, classIds, difficulty, rng, { allSkills = false } 
     const isSupport = tags.includes('support');
     const isCommand = tags.includes('command');
     const isElite = tags.includes('elite');
-    u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 6.5 : isRanged ? 5.1 : 2.8));
-    u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 3.5 : isMelee ? 2.8 : 1.4));
-    u.bonusHeal = Math.floor(diff * (isSupport ? 4.5 : 1.1));
-    u.bonusPoison = Math.floor(diff * (isRanged ? 1.4 : isSupport ? 0.95 : 0));
+    u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 3.2 : isRanged ? 2.6 : 1.4));
+    u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 1.8 : isMelee ? 1.5 : 0.8));
+    u.bonusHeal = Math.floor(diff * (isSupport ? 2.4 : 0.6));
+    u.bonusPoison = Math.floor(diff * (isRanged ? 0.8 : isSupport ? 0.55 : 0));
 
     // Fill every slot, matching the in-game scaler.
     const rarities = diff >= 5 ? ['uncommon', 'rare'] : diff >= 3 ? ['common', 'uncommon'] : ['common'];
+    const fillChance = Math.min(1, 0.5 + diff * 0.09);
     for (const slot of ['weapon', 'armor', 'trinket']) {
       for (let si = 0; si < u.equipment[slot].length; si++) {
+        if (rng() > fillChance) continue;
         const useEpic = epicBudget > 0 && rng() < 0.3;
         const slotRarities = useEpic ? ['epic'] : rarities;
         const eligible = Object.values(ITEM_DATA).filter(item => {

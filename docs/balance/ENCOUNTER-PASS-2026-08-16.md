@@ -675,3 +675,40 @@ The finale keeps its 20-point drop (the Threshold should be the peak).
 Run completion drifted 16→19% with the tightening; if that reads too
 generous after play, the single cleanest pull-back is the post-combat
 heal (`4 + slot` → `3 + slot`). 115 tests passing.
+
+## 17. The realism re-anchor (2026-08-19) — "I lost my last 15 runs"
+
+The designer reported 15 consecutive run losses. Root cause: every sweep in
+sections 0-16 used the test-scaler party (dmg 6.5/slot melee, full item
+slots, 3 epics late). Auditing the real reward cadence — ~2 skill picks per
+march shared across 3 soldiers at +1-2 stat each, drops lagging the march
+level, slots filling gradually — the attainable party has roughly HALF that
+power (a melee soldier reaches ~+15-20 equip damage by march 4, not +40).
+
+Re-anchored the scaler (sim + march-sweep + startTestEncounter) to the
+realistic model: dmg 3.2/2.6/1.4 per slot, block 1.8/1.5/0.8, heal 2.4/0.6,
+poison 0.8/0.55, HP +3.2/slot, item level 0.45/slot, epics 1 at slot 5+,
+slot-fill chance 0.5+0.09/slot.
+
+**Measured with the realistic party, the old tuning gave 0.0% full-run
+completion** (curve 93/33/20/8/16/2; story bosses 4-15%). March 2 alone
+wiped 2/3 of parties.
+
+Enemy scaling loosened to compensate:
+- HP scale: 1 + d*0.85 → 1 + d*0.44
+- damage: 1 + d*0.45 → 1 + d*0.27
+- heals: 1 + d*0.35 → 1 + d*0.25
+- poison growth: +ceil(d/2) → +floor(d/3)
+- aura growth: +ceil(d/2) → +floor(d/3)
+- block: additive +d → +ceil(d/2), multiplier 1.25 → 1.12
+- post-combat heal 4+diff → 5+diff; revive 55% → 60%
+
+Result (naive AI, realistic party, n=110/cell):
+- Curve: 95 / 79 / 81 / 65 / 86 / 65 — slot 4 is the deliberate wall,
+  slot 5 the breather before the finale.
+- Full-run estimate: 22% naive AI (humans play far better; the designer
+  should land ~40-60%).
+- Story bosses: Arminius 79%, Varus 66%, Spirits 79%.
+
+Weakest cells if further softening is wanted: poisoned_bog slot 2 (76%),
+drowned_vale slot 4 (61%), threshold pre-boss attrition (18% wipes).

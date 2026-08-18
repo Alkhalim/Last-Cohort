@@ -577,9 +577,9 @@ class Game {
     // Per-march growth on the 6-march scale: ~8/6 of the old 8-march rates,
     // so a slot-6 party matches the old march-8 party.
     const skillCount = 5;
-    const itemLevel = Math.max(0, Math.floor(diff * 0.55)); // bonus levels on items (conservative)
-    const hpBonus = Math.floor(diff * 5.5); // simulated HP growth from training
-    this._testEpicBudget = diff >= 5 ? 3 : diff >= 4 ? 1 : 0;
+    const itemLevel = Math.max(0, Math.floor(diff * 0.45)); // bonus levels on items (realistic drop lag)
+    const hpBonus = Math.floor(diff * 3.2); // simulated HP growth from training
+    this._testEpicBudget = diff >= 5 ? 1 : 0;
 
     this.engine.party.forEach(u => {
       // Learn skills (starters + random unlocks)
@@ -604,10 +604,10 @@ class Game {
       const isSupport = tags.includes('support');
       const isCommand = tags.includes('command');
       const isElite = tags.includes('elite');
-      u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 6.5 : isRanged ? 5.1 : 2.8));
-      u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 3.5 : isMelee ? 2.8 : 1.4));
-      u.bonusHeal = Math.floor(diff * (isSupport ? 4.5 : 1.1));
-      u.bonusPoison = Math.floor(diff * (isRanged ? 1.4 : isSupport ? 0.95 : 0));
+      u.bonusDamage = Math.floor(diff * ((isMelee || isElite) ? 3.2 : isRanged ? 2.6 : 1.4));
+      u.bonusBlock = Math.floor(diff * ((isCommand || isElite) ? 1.8 : isMelee ? 1.5 : 0.8));
+      u.bonusHeal = Math.floor(diff * (isSupport ? 2.4 : 0.6));
+      u.bonusPoison = Math.floor(diff * (isRanged ? 0.8 : isSupport ? 0.55 : 0));
 
       // Equip items — fill all slots with appropriate rarity (tuned down for testing)
       // Epic budget: slot 5+ = 3 epics per team, slot 4 = 1 per team
