@@ -3187,7 +3187,7 @@ class GameUI {
 
       let label = '';
       if (node.type === 'combat') {
-        label = node.threat >= 3 ? 'Battle' : node.threat >= 2 ? 'Skirmish' : 'Scouts';
+        label = 'Skirmish';
       } else if (node.type === 'rest') {
         label = 'Camp';
       } else if (node.type === 'boss') {
@@ -4503,6 +4503,9 @@ class GameUI {
 
     this.lootScreenFinal = isBossVictory;
     this.lootReturnToMap = !isBossVictory;
+    // Remember whether this screen ever had loot: the empty state after the
+    // last item is claimed must not read "nothing was found".
+    this._lootHadItems = this.pendingLoot.length > 0;
 
     this.showScreen('loot-screen');
     this.renderLootScreen();
@@ -4525,7 +4528,7 @@ class GameUI {
       : `<div class="loot-training"><span class="loot-training-text none">XP: ${xpPips}</span></div>`;
 
     if (this.pendingLoot.length === 0) {
-      lootText.textContent = 'Nothing of value was found.';
+      lootText.textContent = this._lootHadItems ? 'The spoils are claimed.' : 'Nothing of value was found.';
       itemDisplay.innerHTML = trainingLine;
       unitDisplay.innerHTML = '';
       actionsEl.innerHTML = '';
