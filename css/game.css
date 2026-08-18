@@ -5914,3 +5914,35 @@ html, body {
 }
 .stake-combat { color: var(--red-bright); border: 1px solid rgba(180, 50, 40, 0.5); background: rgba(120, 30, 20, 0.15); }
 .stake-risky { color: var(--gold); border: 1px solid rgba(201, 162, 39, 0.4); background: rgba(140, 110, 30, 0.12); }
+
+/* --- Cohort/class cards: hover reveals the bust, carved structure lines --- */
+/* No transition on the base state: fade in on hover, snap back on leave */
+.ps-class-card:hover .classes-bust,
+.classes-card:hover .classes-bust {
+  opacity: 0.85;
+  filter: saturate(1);
+  transition: opacity 0.25s ease-out, filter 0.25s ease-out;
+}
+
+/* carved hairline under the name row */
+.ps-class-header, .classes-header {
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(46, 34, 14, 0.55);
+  box-shadow: 0 1px 0 rgba(232, 216, 160, 0.07);
+}
+
+/* carved hairline above the passive */
+.ps-class-passive, .classes-passive {
+  padding-top: 7px;
+  margin-top: 5px;
+  border-top: 1px solid rgba(46, 34, 14, 0.55);
+  box-shadow: 0 -1px 0 rgba(232, 216, 160, 0.07);
+}
+
+/* Selected classes keep their bust revealed */
+.ps-class-card.selected .classes-bust {
+  opacity: 0.85;
+  filter: saturate(1);
+  transition: opacity 0.25s ease-out, filter 0.25s ease-out;
+}
