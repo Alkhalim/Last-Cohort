@@ -84,6 +84,45 @@ class GameUI {
     bar.addEventListener('touchcancel', () => { clearTimeout(holdTimer); hide(); });
   }
 
+  // A blink of frozen time on heavy impacts — the classic weight trick
+  triggerHitstop(ms = 60) {
+    const g = document.getElementById('game');
+    if (!g || this._hitstopTimer) return;
+    g.classList.add('hitstop');
+    this._hitstopTimer = setTimeout(() => {
+      g.classList.remove('hitstop');
+      this._hitstopTimer = null;
+    }, ms);
+  }
+
+  // Spent dice fly into the skill that consumed them
+  flyDiceToSkill(diceIds) {
+    const targetBtn = document.querySelector('.skill-btn.confirm-ready') ||
+      document.querySelector('.skill-btn.staged');
+    if (!targetBtn) return;
+    const tRect = targetBtn.getBoundingClientRect();
+    diceIds.forEach((id, i) => {
+      const dieEl = document.querySelector(`.die[data-die-id="${id}"]`);
+      if (!dieEl) return;
+      const r = dieEl.getBoundingClientRect();
+      const ghost = document.createElement('div');
+      ghost.className = 'die-ghost';
+      ghost.style.left = r.left + 'px';
+      ghost.style.top = r.top + 'px';
+      ghost.style.width = r.width + 'px';
+      ghost.style.height = r.height + 'px';
+      ghost.style.transitionDelay = (i * 30) + 'ms';
+      document.body.appendChild(ghost);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const dx = tRect.left + tRect.width / 2 - r.left - r.width / 2;
+        const dy = tRect.top + tRect.height / 2 - r.top - r.height / 2;
+        ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.22) rotate(150deg)`;
+        ghost.style.opacity = '0';
+      }));
+      setTimeout(() => ghost.remove(), 500 + i * 30);
+    });
+  }
+
   handleVisual(type, data) {
     switch (type) {
       case 'enemyAttack':
@@ -93,7 +132,18 @@ class GameUI {
         this.flashElement(`unit-${data.unitIndex}`, 'hit', 600);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
         this.screenShake(data.damage);
+        if (data.damage >= 8) this.triggerHitstop(60);
         break;
+      case 'blockClang': {
+        const icon = document.querySelector(`#unit-${data.unitIndex} .block-icon`);
+        if (icon) {
+          icon.classList.remove('clang');
+          void icon.offsetWidth;
+          icon.classList.add('clang');
+          setTimeout(() => icon.classList.remove('clang'), 500);
+        }
+        break;
+      }
       case 'unitHeal':
         this.flashElement(`unit-${data.unitIndex}`, 'healed', 600);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'heal');
@@ -122,6 +172,7 @@ class GameUI {
       case 'enemyHit':
         this.flashElement(`enemy-${data.enemyIndex}`, 'hit', 400);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.damage, 'damage');
+        if (data.damage >= 10) this.triggerHitstop(55);
         break;
       case 'unitPoison':
         this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'poison');
@@ -841,6 +892,14 @@ class GameUI {
   renderDicePool() {
     const pool = document.getElementById('dice-pool');
     pool.innerHTML = '';
+
+    // Nudge End Turn once nothing affordable remains
+    const endBtn = document.querySelector('.btn-end-turn');
+    if (endBtn) {
+      const nudge = this.engine.phase === PHASE.PLAYER_TURN &&
+        typeof this.engine.shouldAutoEndTurn === 'function' && this.engine.shouldAutoEndTurn();
+      endBtn.classList.toggle('nudge', nudge);
+    }
 
     // Reset hint slot
     const hintSlot = document.getElementById('dice-hint-slot');
@@ -1967,6 +2026,7 @@ class GameUI {
 
     const diceIds = [...this.stagedSkill.diceIds];
     const unitIndex = this.selectedUnitIndex;
+    this.flyDiceToSkill(diceIds);
     this.stagedSkill = null;
 
     // For self/all-target/random skills, route through beginSkillTarget

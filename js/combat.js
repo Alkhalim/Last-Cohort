@@ -4378,6 +4378,7 @@ class CombatEngine {
         if (absorbed > 0) {
           target.stats.blockAbsorbed += absorbed;
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
+          if (this.onVisual) this.onVisual('blockClang', { unitIndex: target.index, full: dmg <= 0 });
           // Ironblood Salve: heal 1 HP when block absorbs damage
           if (this.unitHasItem(target, 'ironblood_salve') && target.hp < target.maxHp) {
             target.hp = Math.min(target.maxHp, target.hp + 1);
