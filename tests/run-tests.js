@@ -1504,5 +1504,63 @@ section('2.12 — extra-action banking & Thusnelda\'s Standard');
 }
 
 // ============================================================
+section('2.13 — skill description rewrites match actual descriptions');
+// ============================================================
+{
+  // The UI rewrites skill descriptions with live numbers via regexes keyed to
+  // the exact description text. When a description is reworded, the rewrite
+  // silently dies and the player sees wrong damage (the Momentum Strike bug).
+  // This cross-checks every effect-gated rewrite against the data.
+  const ui = fs.readFileSync(path.join(ROOT, 'js/ui.js'), 'utf8');
+  const ctx = { console, window: {}, document: {} };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'data/classes.js'), 'utf8'), ctx, { filename: 'classes.js' });
+  vm.runInContext('globalThis.__C = RAW_CLASSES;', ctx);
+  const allSkills = [];
+  for (const cid of Object.keys(ctx.__C)) {
+    for (const s of ctx.__C[cid].skills || []) allSkills.push({ classId: cid, ...s });
+  }
+
+  // Collect effect-gated rewrite blocks: if (skill.effects && skill.effects.KEY) { ... desc.replace(/RX/...) ... }
+  const blocks = [];
+  const blockRe = /if \(skill\.effects && skill\.effects\.(\w+)\)/g;
+  let bm;
+  while ((bm = blockRe.exec(ui)) !== null) {
+    let i = ui.indexOf('{', bm.index);
+    let depth = 0, end = i;
+    for (; end < ui.length; end++) {
+      if (ui[end] === '{') depth++;
+      else if (ui[end] === '}') { depth--; if (depth === 0) break; }
+    }
+    const body = ui.slice(i, end);
+    const regexes = [];
+    const rre = /\.replace\(\/((?:[^\/\\]|\\.)+)\/g?/g;
+    let rm;
+    while ((rm = rre.exec(body)) !== null) regexes.push(rm[1]);
+    if (regexes.length) blocks.push({ key: bm[1], regexes });
+  }
+
+  check('found the effect-gated rewrite blocks', () => {
+    assert(blocks.length >= 10, `only ${blocks.length} rewrite blocks parsed from ui.js`);
+  });
+
+  for (const { key, regexes } of blocks) {
+    const affected = allSkills.filter(s => s.effects && s.effects[key]);
+    for (const s of affected) {
+      // Exact-cost skills always use the same die value, so die-scaling
+      // phrasing is intentionally absent from their flat descriptions.
+      if (key.startsWith('dieScale') && s.cost && s.cost.type === 'exact') continue;
+      check(`rewrite for effect '${key}' matches ${s.id}`, () => {
+        const anyMatch = regexes.some(rx => {
+          try { return new RegExp(rx).test(s.description); } catch (e) { return false; }
+        });
+        assert(anyMatch,
+          `no rewrite variant matches "${s.description}" — the player sees stale numbers`);
+      });
+    }
+  }
+}
+
+// ============================================================
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed > 0 ? 1 : 0);

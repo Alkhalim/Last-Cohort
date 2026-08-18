@@ -464,6 +464,20 @@ class GameUI {
       if (fx.moraleScaling) {
         damage = Math.round(damage * (0.5 + ((this.engine.morale || 0) / 100) * 2.0));
       }
+      // Overrun: bonus per die matching the staged one (engine adds it to result.damage)
+      if (fx.overrun && this.stagedSkill.diceIds.length >= 1) {
+        const stagedDie = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[0]);
+        if (stagedDie) {
+          const matches = this.engine.dicePool.dice.filter(d => d !== stagedDie && d.value === stagedDie.value).length;
+          damage += matches * (1 + (this.engine.difficulty || 1));
+        }
+      }
+    }
+    // Momentum Strike: engine path ignores aura reduction and counts this cast
+    if (fx.momentumStrike) {
+      const perAction = 1 + Math.floor((this.engine.difficulty || 1) * 0.2);
+      const used = this.engine._totalSkillsUsed || 0;
+      damage = Math.min(30, (used + 1) * perAction) + Math.floor((equipDmg + moraleMod + buffDmg) * 0.35);
     }
 
     let heal = 0;
@@ -1583,13 +1597,26 @@ class GameUI {
             const matches = this.engine.dicePool.dice.filter(d => d !== stagedDie && d.value === matchVal).length;
             const overrunBonus = matches * (1 + (this.engine.difficulty || 1));
             const total = overrunBase + overrunBonus;
-            desc = desc.replace(/Deals 3 damage\. Deals bonus damage for each other die matching the one used\./g,
-              `Deals <span class="stat-dmg" style="color:var(--gold)">${total}</span> damage${matches > 0 ? ` <span class="stat-breakdown">(3+${orBonusDmg}+${overrunBonus} overrun)</span>` : ` <span class="stat-breakdown">(3+${orBonusDmg})</span>`}.`);
+            desc = desc.replace(/Deal 3 damage\. Bonus damage per matching die\./g,
+              `Deal <span class="stat-dmg" style="color:var(--gold)">${total}</span> damage${matches > 0 ? ` <span class="stat-breakdown">(3+${orBonusDmg}+${overrunBonus} overrun)</span>` : ` <span class="stat-breakdown">(3+${orBonusDmg})</span>`}.`);
           }
         } else {
-          desc = desc.replace(/Deals 3 damage\. Deals bonus damage for each other die matching the one used\./g,
-            `Deals <span class="stat-dmg">${overrunBase}+</span> damage <span class="stat-breakdown">(3+${orBonusDmg}+overrun)</span>. Bonus per matching die.`);
+          desc = desc.replace(/Deal 3 damage\. Bonus damage per matching die\./g,
+            `Deal <span class="stat-dmg">${overrunBase}+</span> damage <span class="stat-breakdown">(3+${orBonusDmg}+overrun)</span>. Bonus per matching die.`);
         }
+      }
+
+      // Momentum Strike: show the damage of THIS cast (the engine counts the
+      // cast itself, so current = skills used + 1). Must run before the
+      // generic damage replace, which would otherwise mangle the sentence.
+      if (skill.effects && skill.effects.momentumStrike) {
+        const perAction = 1 + Math.floor((this.engine.difficulty || 1) * 0.2);
+        const used = this.engine._totalSkillsUsed || 0;
+        const momentumBonus = Math.floor(totalBonusDmg * 0.35);
+        const total = Math.min(30, (used + 1) * perAction) + momentumBonus;
+        const nextTotal = Math.min(30, (used + 2) * perAction) + momentumBonus;
+        desc = desc.replace(/Deal 1 damage per skill used this combat\./g,
+          `Deal <span class="stat-dmg">${total}</span> damage now <span class="stat-breakdown">(+${perAction} per skill used)</span>. Next use: <span class="stat-dmg">${nextTotal}</span>.`);
       }
 
       // Replace "Deals/Deal X damage" — these are actual attacks that get equipment bonuses
@@ -1634,11 +1661,16 @@ class GameUI {
           return `+<span class="stat-dmg">${total}</span> <span class="stat-breakdown">(${b}+${halfEquipDmg})</span> damage`;
         });
       }
-      // Trample splash preview: show actual trample damage number
+      // Splash preview: show the actual splash damage number for each of the
+      // phrasings used in skill descriptions
       if (skill.effects && skill.effects.splashAdjacentPct) {
         const mainDmg = (skill.effects.damage || 0) + skillBonusDmg + (cavalryCharge ? Math.floor((skill.effects.damage || 0) * 0.5) : 0);
         const trampleDmg = Math.max(2, Math.round(mainDmg * skill.effects.splashAdjacentPct));
-        desc = desc.replace(/\d+% trample damage/g, `<span class="stat-dmg">${trampleDmg}</span> trample damage`);
+        const splashSpan = `<span class="stat-dmg">${trampleDmg}</span>`;
+        desc = desc
+          .replace(/half to adjacent/g, `${splashSpan} to adjacent`)
+          .replace(/\d+% splash to adjacent/g, `${splashSpan} splash to adjacent`)
+          .replace(/Splash to adjacent/g, `${splashSpan} splash to adjacent`);
       }
       // Color-code remaining "X damage" (that hasn't been wrapped in spans already)
       desc = desc.replace(/(?<!">)(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
@@ -1727,18 +1759,6 @@ class GameUI {
           const hi = 12 + Math.floor(effectiveBonusDmg * 1.3);
           desc = desc.replace(/their sum as damage/g, `<span class="stat-dmg">${lo}-${hi}</span>${effectiveBonusDmg !== 0 ? ` <span class="stat-breakdown">(dice+${Math.floor(effectiveBonusDmg * 1.3)})</span>` : ''} damage`);
         }
-      }
-
-      // Momentum Strike: show current momentum + 0.35 equipment scaling (scales with difficulty)
-      if (skill.effects && skill.effects.momentumStrike) {
-        const perAction = 1 + Math.floor((this.engine.difficulty || 1) * 0.2);
-        const momentum = Math.min(30, (this.engine._totalSkillsUsed || 0) * perAction);
-        const momentumBonus = Math.floor(effectiveBonusDmg * 0.35);
-        const total = momentum + momentumBonus;
-        const nextMomentum = Math.min(30, ((this.engine._totalSkillsUsed || 0) + 1) * perAction);
-        const nextTotal = nextMomentum + momentumBonus;
-        desc = desc.replace(/Deal 1 damage per skill used this combat\. Grows stronger each action\./g,
-          `<span class="stat-dmg">${total}</span> damage now <span class="stat-breakdown">(${momentum} momentum+${momentumBonus})</span>. Next use: <span class="stat-dmg">${nextTotal}</span>.`);
       }
 
       // All-In Charge: show base + equipment + expected reroll range
