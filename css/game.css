@@ -23,7 +23,7 @@
      ones) with curled roll-shadows at both ends. Enemy surfaces are
      weathered wood: strong vertical grain, silvered dry streaks, blotches. */
   --papyrus-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='120'%3E%3Cfilter id='h'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008 0.5' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.72 0 0 0 0 0.45 0 0 0 0.15 0'/%3E%3C/filter%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45 0.012' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0 0.01 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='180' height='120' filter='url(%23h)'/%3E%3Crect width='180' height='120' filter='url(%23v)'/%3E%3C/svg%3E");
-  --wood-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5 0.012' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.04 0 0 0 0 0.025 0 0 0 0 0.01 0 0 0 0.26 0'/%3E%3C/filter%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.4 0.008' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.58 0 0 0 0 0.52 0 0 0 0 0.42 0 0 0 0.07 0'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.09' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.02 0 0 0 0 0.015 0 0 0 0 0.005 0 0 0 0.14 0'/%3E%3C/filter%3E%3Crect width='120' height='180' filter='url(%23g)'/%3E%3Crect width='120' height='180' filter='url(%23w)'/%3E%3Crect width='120' height='180' filter='url(%23b)'/%3E%3C/svg%3E");
+  --wood-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5 0.012' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.03 0 0 0 0 0.02 0 0 0 0 0.008 0 0 0 0.38 0'/%3E%3C/filter%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.02' numOctaves='2' seed='23' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.01 0 0 0 0 0.005 0 0 0 0 0 0 0 0 0.16 0'/%3E%3C/filter%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35 0.006' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.56 0 0 0 0 0.44 0 0 0 0.11 0'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.09' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.015 0 0 0 0 0.01 0 0 0 0 0.004 0 0 0 0.24 0'/%3E%3C/filter%3E%3Crect width='120' height='180' filter='url(%23g)'/%3E%3Crect width='120' height='180' filter='url(%23c)'/%3E%3Crect width='120' height='180' filter='url(%23w)'/%3E%3Crect width='120' height='180' filter='url(%23b)'/%3E%3C/svg%3E");
   --scroll-face: var(--papyrus-tex),
     linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0px, rgba(216, 190, 140, 0.10) 2px, rgba(0, 0, 0, 0.28) 5px, transparent 9px),
     linear-gradient(270deg, rgba(0, 0, 0, 0.55) 0px, rgba(216, 190, 140, 0.10) 2px, rgba(0, 0, 0, 0.28) 5px, transparent 9px),
@@ -33,10 +33,12 @@
     linear-gradient(270deg, rgba(0, 0, 0, 0.55) 0px, rgba(216, 190, 140, 0.10) 2px, rgba(0, 0, 0, 0.28) 5px, transparent 9px),
     linear-gradient(180deg, #3a301c 0%, #302816 55%, #262010 100%);
   --wood-face: var(--wood-tex),
-    linear-gradient(180deg, #2e2114 0%, #251a10 50%, #18100a 100%);
+    radial-gradient(ellipse 120% 90% at 50% 30%, rgba(90, 66, 40, 0.10), transparent 70%),
+    linear-gradient(180deg, #302113 0%, #24190e 50%, #140d07 100%);
   --btn-bronze: var(--noise),
     linear-gradient(100deg, transparent 28%, rgba(255, 220, 140, 0.06) 48%, transparent 66%),
     linear-gradient(180deg, #52391a 0%, #382610 45%, #251707 100%);
+  --bone-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.055 0.075' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.46 0 0 0 0 0.36 0 0 0 0 0.18 0 0 0 0.16 0'/%3E%3C/filter%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='14' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 0 0.06 0 0 0 0.10 0'/%3E%3C/filter%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.5' numOctaves='2' seed='19' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.24 0 0 0 0 0.12 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23s)'/%3E%3Crect width='90' height='90' filter='url(%23p)'/%3E%3Crect width='90' height='90' filter='url(%23k)'/%3E%3C/svg%3E");
   --btn-oak: var(--wood-tex),
     linear-gradient(180deg, #2b2013 0%, #21180d 50%, #161007 100%);
   --rough-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M6 5.2 C16 3.6 32 6.2 42 4.6 C44.6 14 43 30 43.4 42.2 C32 44.6 16 43 5.6 43.4 C3.6 32 4.8 16 6 5.2 Z' fill='none' stroke='%238a7020' stroke-width='1.6' opacity='0.75'/%3E%3C/svg%3E");
@@ -1250,8 +1252,9 @@ html, body {
 
 /* Enemy cards: shield faces downward (toward player) */
 .enemy-card.has-block {
-  border-bottom: 3px solid rgba(74, 138, 191, 0.7);
-  box-shadow: inset 0 -4px 8px rgba(74, 138, 191, 0.2);
+  /* A hammered iron band bolted along the tablet's base — armored, not neon */
+  border-bottom: 4px solid #5f6b7c;
+  box-shadow: inset 0 -6px 8px rgba(95, 107, 124, 0.18), inset 0 -1px 0 rgba(200, 210, 225, 0.25);
 }
 
 .enemy-card.has-poison {
@@ -1434,11 +1437,11 @@ html, body {
   font-family: 'Cinzel', serif;
   font-size: 1.4rem;
   font-weight: 700;
-  background: var(--noise), linear-gradient(145deg, #ece4d0 0%, #d6cbb1 55%, #b7aa8d 100%);
-  border: 1px solid #4a3f2c;
-  border-radius: 8px;
+  background: var(--bone-tex), linear-gradient(145deg, #e7dcc2 0%, #cfc2a2 55%, #ab9c7c 100%);
+  border: 1px solid #453a26;
+  border-radius: 7px 9px 7px 8px;
   color: #33291c;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 4px rgba(90, 74, 42, 0.35), 0 2px 4px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -3px 5px rgba(80, 64, 36, 0.45), inset 2px 0 3px rgba(90, 74, 42, 0.18), 0 2px 4px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
@@ -1451,6 +1454,11 @@ html, body {
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
   cursor: default;
 }
+
+/* Hand-cut bone: no two dice sit perfectly square */
+#dice-pool .die:nth-child(3n+1) .die-face { transform: rotate(-2deg); }
+#dice-pool .die:nth-child(3n+2) .die-face { transform: rotate(1.5deg); }
+#dice-pool .die:nth-child(4n+3) .die-face { transform: rotate(2.5deg); }
 
 /* Pip face: 3×3 grid, pips drawn in currentColor so used/dim states inherit */
 .die-face {
@@ -1475,11 +1483,11 @@ html, body {
   border-color: var(--die-selected);
   box-shadow: 0 0 14px rgba(201, 162, 39, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transform: translateY(-5px);
-  background: var(--noise), linear-gradient(145deg, #f7ecca 0%, #e5d5a4 55%, #c7b280 100%);
+  background: var(--bone-tex), linear-gradient(145deg, #f2e6bf 0%, #ddcc9a 55%, #bfa878 100%);
 }
 
 .die.used {
-  background: var(--noise), linear-gradient(145deg, #7d7666 0%, #5f594c 100%);
+  background: var(--bone-tex), linear-gradient(145deg, #77705f 0%, #595347 100%);
   border-color: #3a3527;
   color: #3a352b;
   box-shadow: none;

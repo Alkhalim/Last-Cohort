@@ -891,7 +891,7 @@ const RAW_EVENTS = [
     "minDifficulty": 8, "maxDifficulty": 8,
     "oncePerRun": true,
     "weight": 3,
-    "intro": "A Roman soldier sits against a tree, very much alive. His armor is from Varus's time — seventeen years ago. He should be old, or dead. He is neither. 'I ran,' he says simply. 'At Teutoburg. I ran into the forest and I never stopped. The forest wouldn't let me die. It wouldn't let me leave. It just... kept me.' He looks at your cohort. 'You're the first Romans I've seen in seventeen years.'",
+    "intro": "A Roman sits against a tree. His armor is rotted, his beard grey, his eyes old — yet the massacre was only days ago. 'I ran. Same as you,' he says. 'But the forest kept me. In here, it keeps you as long as it likes.'",
     "choices": [
       { "text": "Welcome him. Every sword counts.", "outcomes": [
         { "weight": 0.6, "text": "He weeps. Then he picks up his gladius. He knows these woods better than anyone alive. His knowledge is worth a legion.", "effects": { "grantDamage": { "amount": 2, "count": 1 }, "grantMaxHp": { "amount": 3, "count": 3 }, "morale": 8 } },
