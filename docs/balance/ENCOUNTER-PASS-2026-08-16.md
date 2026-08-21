@@ -712,3 +712,36 @@ Result (naive AI, realistic party, n=110/cell):
 
 Weakest cells if further softening is wanted: poisoned_bog slot 2 (76%),
 drowned_vale slot 4 (61%), threshold pre-boss attrition (18% wipes).
+
+### 17b. Designer feedback nudge (2026-08-21)
+
+Playtest feedback on the re-anchor: "enemy block was cut too hard and the
+others slightly too much. a lot better than before though!" Adjusted:
+- block additive: +ceil(d/2) → +ceil(d*0.75); multiplier 1.12 → 1.2
+- HP: 1+d*0.44 → 1+d*0.47; damage: 0.27 → 0.28; heals: 0.25 → 0.28
+- poison growth: floor(d/3) → ceil(d/3)
+New curve: 92/66/70/57/81/55, ~11% naive-AI full-run (designer ≈ 35-45%).
+Story bosses: Arminius 70%, Varus 59%, Spirits 72%.
+
+## 18. Item pass (2026-08-21) — making rarity mean something
+
+Weighted stat-budget audit (dmg 3.0 / poison 2.6 / block-heal 2.2 / HP 1.0
+per point). Weapons laddered cleanly (u10 → r15 → e18) but two breaks:
+
+1. Five no-special rares out-budgeted the epic average and blurred tiers —
+   trimmed into the rare band: Bloodstone Pendant 18.4→11, Windreader's
+   Charm 17.2→11.6 (re-identified toward poison), Aquila Spearhead
+   17.2→14, Apothecary's Mortar 16.8→13.6, Boar Tusk Pauldron 15.6→13.6.
+2. Epic trinkets averaged 10.2 vs rare trinkets 10.1 — statistically
+   identical tier. Raised under-statted epics whose specials aren't
+   build-arounds: Heartwood Charm hp2→4, Serpent's Coil poison2→3, Crown
+   of Thorns +hp+block, Howl of Defiance +block, Thusnelda's Standard
+   hp5→6. Build-around epics (Lupa's Fang, Mars's Denarius, Pact of
+   Wolves) intentionally left stat-light.
+3. Early poison premium: Slinger's Eye / Throwing Stone poison 2→1,
+   Toxic Needle Kit loses its off-stat heal.
+
+After: budget bands common 4.6 / uncommon 6.9 / rare 11.2 / epic 13.7,
+specials 33% / 49% / 78% / 100% — each tier now buys clearly more stats
+AND a higher chance of a special. Remaining "HIGH" rares all carry
+specials or are intended chase items (Runic Stone's +1 die).
