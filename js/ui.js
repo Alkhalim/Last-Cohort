@@ -3642,15 +3642,33 @@ class GameUI {
     }
   }
 
-  // Telegraph combat stakes only — every choice is a gamble, so a generic
-  // "uncertain" tag was pure noise. Warn when steel is certain or possible.
+  // Telegraph what a choice guarantees. Guaranteed rewards are named
+  // (stat +, heal, morale +); choices that can sour get "risk"; steel gets ⚔.
   choiceStakeTag(choice) {
     const outcomes = choice.outcomes || [];
     if (outcomes.length === 0) return '';
-    const combatCount = outcomes.filter(o => o.effects && o.effects.triggerCombat).length;
+    const fx = outcomes.map(o => o.effects || {});
+    const STAT_KEYS = ['grantDamage', 'grantBlock', 'grantMaxHp', 'grantPoison', 'grantHeal', 'maxHpAll'];
+    const isBad = e => (e.damageAll > 0) || (e.poisonParty > 0) || (e.morale < 0);
+    const isGood = e => (e.morale > 0) || (e.healAll > 0) || e.grantItem || e.loot ||
+      (e.extraDiceNext > 0) || (e.buffDamage > 0) || STAT_KEYS.some(k => e[k]);
+
+    const combatCount = fx.filter(e => e.triggerCombat).length;
     if (combatCount === outcomes.length) return ' <span class="stake-tag stake-combat">⚔ combat</span>';
-    if (combatCount > 0) return ' <span class="stake-tag stake-risky">⚔ risk of battle</span>';
-    return '';
+    const tags = [];
+    if (combatCount > 0) {
+      tags.push('<span class="stake-tag stake-risky">⚔ risk of battle</span>');
+    } else if (fx.every(isBad)) {
+      tags.push('<span class="stake-tag stake-danger">danger</span>');
+    } else if (fx.some(isBad)) {
+      tags.push('<span class="stake-tag stake-risky">risk</span>');
+    } else {
+      // Only promise what EVERY outcome delivers
+      if (fx.every(e => STAT_KEYS.some(k => e[k]))) tags.push('<span class="stake-tag stake-good">stat</span>');
+      if (fx.every(e => e.healAll > 0)) tags.push('<span class="stake-tag stake-good">heal</span>');
+      if (fx.every(e => e.morale > 0)) tags.push('<span class="stake-tag stake-good">morale</span>');
+    }
+    return tags.length ? ' ' + tags.join(' ') : '';
   }
 
   resolveEventChoice(event, choice) {

@@ -5913,7 +5913,8 @@ html, body {
   font-family: 'Cinzel', serif;
 }
 .stake-combat { color: var(--red-bright); border: 1px solid rgba(180, 50, 40, 0.5); background: rgba(120, 30, 20, 0.15); }
-.stake-risky { color: var(--gold); border: 1px solid rgba(201, 162, 39, 0.4); background: rgba(140, 110, 30, 0.12); }
+.stake-risky { color: var(--text); border: 1px solid rgba(200, 195, 180, 0.35); background: rgba(160, 155, 140, 0.1); }
+.stake-danger { color: var(--red-bright); border: 1px solid rgba(180, 50, 40, 0.5); background: rgba(120, 30, 20, 0.15); }
 
 /* --- Cohort/class cards: hover reveals the bust, carved structure lines --- */
 /* No transition on the base state: fade in on hover, snap back on leave */
@@ -6139,4 +6140,11 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .loot-card, .xp-pip.filled, #levelup-title, #levelup-content > *,
   .loot-training-text.gained, #event-outcome { animation: none !important; }
+}
+
+/* Guaranteed-benefit stake tags */
+.stake-good {
+  color: var(--green-bright);
+  border: 1px solid rgba(90, 170, 90, 0.45);
+  background: rgba(50, 110, 50, 0.14);
 }
