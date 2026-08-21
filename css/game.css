@@ -6022,3 +6022,34 @@ html, body {
   30% { transform: scale(1.08) translateY(2px) rotate(var(--tilt)); filter: drop-shadow(0 0 9px rgba(208, 64, 64, 0.5)); }
   100% { transform: scale(1) rotate(var(--tilt)); filter: none; }
 }
+
+/* --- Epic drops announce themselves: gilded pulse on the loot card --- */
+.loot-card.rarity-epic {
+  border-color: #b040d0;
+  animation: loot-deal 0.28s ease-out, epic-gleam 2.2s ease-in-out 0.3s infinite;
+  position: relative;
+  overflow: hidden;
+}
+.loot-card.rarity-epic::after {
+  content: '';
+  position: absolute;
+  top: -60%; bottom: -60%;
+  width: 34%;
+  left: -50%;
+  background: linear-gradient(100deg, transparent 15%, rgba(220, 140, 255, 0.16) 48%, rgba(255, 230, 160, 0.2) 52%, transparent 85%);
+  transform: rotate(8deg);
+  animation: epic-sweep 2.6s ease-in-out 0.5s infinite;
+  pointer-events: none;
+}
+@keyframes epic-gleam {
+  0%, 100% { box-shadow: 0 0 6px rgba(176, 64, 208, 0.25); }
+  50% { box-shadow: 0 0 16px rgba(176, 64, 208, 0.5), 0 0 30px rgba(176, 64, 208, 0.15); }
+}
+@keyframes epic-sweep {
+  0% { left: -50%; }
+  55%, 100% { left: 120%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loot-card.rarity-epic, .loot-card.rarity-epic::after { animation: none; }
+  .loot-card.rarity-epic { box-shadow: 0 0 10px rgba(176, 64, 208, 0.4); }
+}
