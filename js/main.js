@@ -1110,6 +1110,7 @@ class Game {
     if (!aa.flawless_encounter && this.engine.party.every(u => (u.stats.damageTaken || 0) === 0)) {
       aa.flawless_encounter = true;
       this.addNotification('Achievement: Flawless Victory!');
+      this.notifyItemUnlocks('flawless_encounter');
     }
     // Boss killed within 3 turns
     if (!aa.kill_boss_turn3 && this.engine.hasBossEnemy() && this.engine.turn <= 3) {
@@ -1138,6 +1139,7 @@ class Game {
     if (!aa.overkill_30 && this.engine.party.some(u => (u.stats.maxSingleHit || 0) >= 30)) {
       aa.overkill_30 = true;
       this.addNotification('Achievement: Excessive Force — 30+ damage in one hit!');
+      this.notifyItemUnlocks('overkill_30');
     }
     // Track classes used
     if (!this.stats.classesUsed) this.stats.classesUsed = {};
@@ -1901,6 +1903,7 @@ class Game {
         a[sb.key] = true;
         const data = ENEMY_DATA[sb.id];
         this.addNotification(`Achievement: ${data ? data.name : sb.id} defeated!`);
+        this.notifyItemUnlocks(sb.key);
       }
     });
     // Ariovistus event boss
@@ -2024,6 +2027,7 @@ class Game {
     if (!a.first_boss_kill && (s.bossesKilled || 0) >= 1) {
       a.first_boss_kill = true;
       this.addNotification('Achievement: First Boss Defeated!');
+      this.notifyItemUnlocks('first_boss_kill');
     }
     if (!a.first_elite_kill && s.enemiesKilled) {
       const eliteIds = ['oak_shield', 'wicker_man', 'ironbound_champion'];
@@ -2190,6 +2194,18 @@ class Game {
       first_item_drop: 'Equip items to boost your soldiers. Match items to the right class tags for best results.',
     };
     if (hints[id]) this.showHint(id, hints[id]);
+  }
+
+  // Items gated behind this achievement key (new spoils entering the pool)
+  itemUnlocksFor(key) {
+    return Object.values(ITEM_DATA).filter(i => i.unlockKey === key && !i.baseId);
+  }
+
+  notifyItemUnlocks(key) {
+    const items = this.itemUnlocksFor(key);
+    if (items.length > 0) {
+      this.addNotification(`New spoils enter the forest: ${items.length} item${items.length > 1 ? 's' : ''} can now drop!`);
+    }
   }
 
   showAchievementsScreen() {
@@ -2404,6 +2420,8 @@ class Game {
         const boon = BOON_DEFS.find(b => b.achievement === def.key);
         const classUnlock = Object.entries(CLASS_DATA).find(([id, d]) => d.unlockKey === def.key);
         if (classUnlock) rewards.push(`<span style="color:var(--class-${classUnlock[1].tags.find(t=>t!=='roman'&&t!=='germanic')||'roman'})">Class: ${classUnlock[1].name}</span>`);
+        const itemUnlocks = this.itemUnlocksFor(def.key);
+        if (itemUnlocks.length > 0) rewards.push(`<span style="color:var(--gold)">Spoils: ${itemUnlocks.map(i => i.name).join(', ')}</span>`);
         if (boon) rewards.push(`<span style="color:var(--green-bright)">Boon: ${boon.name}</span>`);
         if (curse) rewards.push(`<span style="color:var(--red-bright)">Curse: ${curse.name}</span>`);
 

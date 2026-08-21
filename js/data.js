@@ -775,6 +775,16 @@ function getOwnedItemBaseIds(party) {
 }
 
 // --- Drop / loot helpers ---
+// Meta-progression gate: items with an unlockKey only drop once the
+// matching achievement is earned. Outside the real game (sims), all
+// items count as unlocked.
+function isItemUnlocked(item) {
+  if (!item || !item.unlockKey) return true;
+  const g = typeof window !== 'undefined' && window.game;
+  if (!g || !g.achievements) return true;
+  return !!g.achievements[item.unlockKey];
+}
+
 function rollDrop(enemyId, party, difficulty) {
   const table = DROP_TABLES[enemyId];
   if (!table) return null;
@@ -796,6 +806,7 @@ function rollDrop(enemyId, party, difficulty) {
         if (!item) return true;
         if (item.minDifficulty && item.minDifficulty > diff) return false;
         if (item.maxDifficulty && item.maxDifficulty < diff) return false;
+        if (!isItemUnlocked(item)) return false;
         return true;
       });
       if (candidates.length === 0) candidates = tier.items.filter(itemId => {

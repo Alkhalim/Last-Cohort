@@ -4294,6 +4294,7 @@ class GameUI {
           if (candidate.id === itemId) return false;
           // Check class tag compatibility
           if (!candidate.classTags.some(ct => ct === 'roman' || unitTags.includes(ct))) return false;
+          if (!isItemUnlocked(candidate)) return false;
           // Trader ignores minDifficulty — gambling should circumvent restrictions
           return true;
         });
@@ -4766,7 +4767,7 @@ class GameUI {
     if (isBossVictory && this.pendingLoot.length === 0) {
       const usableBossItems = BOSS_DROP_POOL.filter(id => {
         const item = getItemData(id);
-        return item && this.engine.party.some(u => canEquipItem(u, item));
+        return item && isItemUnlocked(item) && this.engine.party.some(u => canEquipItem(u, item));
       });
       if (usableBossItems.length > 0) {
         const bossItemId = usableBossItems[Math.floor(Math.random() * usableBossItems.length)];
