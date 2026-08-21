@@ -4063,10 +4063,9 @@ class CombatEngine {
   endPlayerTurn() {
     if (this.phase !== PHASE.PLAYER_TURN) return;
 
-    // Centurion's Whistle: restraint is also an order
+    // Centurion's Whistle: restraint is also an order — every held pip counts
     if (this.partyHasItem('centurions_whistle')) {
-      const heldPips = this.dicePool.dice.filter(d => !d.used).reduce((sum2, d) => sum2 + d.value, 0);
-      const wMorale = Math.floor(heldPips / 5);
+      const wMorale = this.dicePool.dice.filter(d => !d.used).reduce((sum2, d) => sum2 + d.value, 0);
       if (wMorale > 0) {
         this.morale = Math.min(100, this.morale + wMorale);
         this.addLog(`The whistle sounds — held dice steady the men. (+${wMorale} Morale)`);
@@ -4962,6 +4961,26 @@ class CombatEngine {
       enemy.block = (enemy.block || 0) + action.blockSelf;
       this.addLog(`${enemy.name} ${action.text}. Gains ${action.blockSelf} Block.`);
       if (this.onVisual) this.onVisual('enemyBlock', { enemyIndex: enemy.index, amount: action.blockSelf });
+    }
+
+    // Self-heal (healSelf actions were scaled but never applied — fixed)
+    if (action.healSelf && enemy.hp < enemy.maxHp) {
+      let selfCap = action.healSelf;
+      // Witch's Finger Bones: what her hands cursed, no salve may mend
+      if (enemy.poison > 0 && this.partyHasItem('witchs_finger_bones')) selfCap = Math.floor(selfCap / 2);
+      const selfHeal = Math.min(selfCap, enemy.maxHp - enemy.hp);
+      if (selfHeal > 0) {
+        enemy.hp += selfHeal;
+        this.addLog(`${enemy.name} ${action.text}. Heals ${selfHeal} HP.`);
+        // Hexwood Effigy: siphon a share of enemy healing
+        if (this.partyHasItem('hexwood_effigy')) {
+          const hxW = this.party.filter(x => !x.downed && x.hp < x.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+          if (hxW) {
+            hxW.hp = Math.min(hxW.maxHp, hxW.hp + 2);
+            if (this.onVisual) this.onVisual('unitHeal', { unitIndex: hxW.index, amount: 2 });
+          }
+        }
+      }
     }
 
     // Heal ally: heal the most wounded non-dead ally
