@@ -779,10 +779,21 @@ function getOwnedItemBaseIds(party) {
 // matching achievement is earned. Outside the real game (sims), all
 // items count as unlocked.
 function isItemUnlocked(item) {
-  if (!item || !item.unlockKey) return true;
+  if (!item) return true;
   const g = typeof window !== 'undefined' && window.game;
-  if (!g || !g.achievements) return true;
-  return !!g.achievements[item.unlockKey];
+  if (!g) return true;
+  if (item.unlockKey) {
+    if (!g.achievements) return true;
+    if (!g.achievements[item.unlockKey]) return false;
+  }
+  // Boss trophies: gated on kills of a specific enemy (default 1, e.g. 3
+  // for the second trophy — mirrors the x3 achievements)
+  if (item.unlockKill) {
+    if (!g.stats || !g.stats.enemiesKilled) return true;
+    const need = item.unlockKillCount || 1;
+    if ((g.stats.enemiesKilled[item.unlockKill] || 0) < need) return false;
+  }
+  return true;
 }
 
 function rollDrop(enemyId, party, difficulty) {

@@ -1097,7 +1097,16 @@ class Game {
       }
     });
     this.engine.killedEnemies.forEach(eid => {
-      this.stats.enemiesKilled[eid] = (this.stats.enemiesKilled[eid] || 0) + 1;
+      const before = this.stats.enemiesKilled[eid] || 0;
+      this.stats.enemiesKilled[eid] = before + 1;
+      // Boss trophies: announce when a kill threshold opens new spoils
+      Object.values(ITEM_DATA).forEach(item => {
+        if (item.baseId || item.unlockKill !== eid) return;
+        const need = item.unlockKillCount || 1;
+        if (before < need && before + 1 >= need) {
+          this.addNotification(`Trophy claimed: ${item.name} can now drop!`);
+        }
+      });
     });
     this.stats.poisonKills = (this.stats.poisonKills || 0) + (this.engine.poisonKills || 0);
     this.stats.encountersWon++;

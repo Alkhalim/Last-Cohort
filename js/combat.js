@@ -37,6 +37,7 @@ class CombatEngine {
 
   // --- Setup ---
   initParty(classIds) {
+    this._vestalEmberUsed = false;
     this.party = classIds.map((cid, i) => {
       const data = CLASS_DATA[cid];
       return {
@@ -87,6 +88,9 @@ class CombatEngine {
     this._heartwoodTriggered = false;
     this._heartwoodBonusDice = 0;
     this._lupaFangUsed = false;
+    this._antlerUsed = false;
+    this._partyDamagedThisRound = false;
+    this._ambushCombat = false;
     this._eagleUsed = false;
     this._marsSkillCount = 0;
     this._aquilaCuirassUsed = false;
@@ -100,6 +104,14 @@ class CombatEngine {
       u.poison = 0;
       u.passiveTriggered = false;
       u._wolfPeltUsed = false;
+      u._veilUsed = false;
+      u._signetUsed = false;
+      u._caulTriggered = false;
+      u._draughtUsed = false;
+      u._quiverUsed = false;
+      u._hitsThisTurn = 0;
+      u._varusBladeBonus = 0;
+      u._plateBlockNext = 0;
       u._mushroomRage = 0;
       u._ironVanguardUsed = false;
       u._intNetUsed = false;
@@ -206,9 +218,24 @@ class CombatEngine {
           this.addLog(`Thusnelda's Standard rallies the line — allies gain ${standardBlock} Block (${foeCount} enemies).`);
         }
       }
+      // Turtle-Shell Amulet: the testudo forms before first blood
+      if (this.party.some(u => !u.downed && this.unitHasItem(u, 'turtle_shell_amulet'))) {
+        const tsBlock = 4 * (this.difficulty || 1);
+        this.party.forEach(u => {
+          if (!u.downed) { u.block = (u.block || 0) + tsBlock; u.stats.blockGenerated += tsBlock; }
+        });
+        this.addLog(`The testudo forms — all soldiers gain ${tsBlock} Block.`);
+      }
+      // Broken Chieftain's Torc: the fury of the first clash
+      this.party.forEach(u => {
+        if (!u.downed && this.unitHasItem(u, 'broken_chieftains_torc')) {
+          u.buffs.push({ damage: 2, attacksLeft: 2 });
+        }
+      });
       // Ambush: enemies strike first before the player gets dice
       if (this.isAmbush) {
         this.isAmbush = false;
+        this._ambushCombat = true;
         this._ambushDamageHalved = true; // enemies deal half damage this turn
         this._ambushTargeted = new Set(); // spread targets during ambush
         this._ambushStunCount = 0; // limit stuns during ambush turn
@@ -657,6 +684,9 @@ class CombatEngine {
         // Varus's Shield: retain up to 5 block between turns
         if (this.unitHasItem(u, 'varus_shield')) {
           u.block = Math.min(u.block || 0, 5);
+        // Wicker Shield-Backing: what holds once, holds again (retain up to 4)
+        } else if (this.unitHasItem(u, 'wicker_shield_backing')) {
+          u.block = Math.min(u.block || 0, 4);
         // Destrier's Barding: retain up to 2 block between turns
         } else if (this.unitHasItem(u, 'destriers_barding')) {
           u.block = Math.min(u.block || 0, 2);
@@ -731,6 +761,14 @@ class CombatEngine {
       }
       // Banked extra actions don't carry across turns
       u._extraActions = 0;
+      u._hitsThisTurn = 0;
+      // Vetera Veteran's Plate: the promised wall arrives
+      if (u._plateBlockNext > 0) {
+        u.block = (u.block || 0) + u._plateBlockNext;
+        u.stats.blockGenerated += u._plateBlockNext;
+        this.addLog(`${u.name}'s plate holds firm. (+${u._plateBlockNext} Block)`);
+        u._plateBlockNext = 0;
+      }
       // Bone Totem stun: skip this turn
       u._stunnedThisTurn = false;
       if (u._stunNextTurn) {
@@ -794,11 +832,28 @@ class CombatEngine {
         this._firstBloodTurn = undefined;
       }
     }
+    // The Last Order: discipline held — no blood spilled last round
+    if (this.turn > 1 && !this._partyDamagedThisRound && this.partyHasItem('the_last_order')) {
+      this.morale = Math.min(100, this.morale + 6);
+      this.addLog('The Last Order holds: HOLD. (+6 Morale)');
+      if (this.onVisual) this.onVisual('morale', { amount: 6 });
+    }
+    this._partyDamagedThisRound = false;
+    // Ambusher's Leathers: never caught sleeping
+    if (this.turn === 1 && this._ambushCombat && this.partyHasItem('ambushers_leathers')) {
+      // extraDice is accumulated below alongside the other dice bonuses
+      this._eventBonusDiceAmbush = 2;
+    }
     // Bonus dice from abilities (Tactical Preparation, etc.)
     if (this._bonusDiceNext) {
       extraDice += this._bonusDiceNext;
       this.addLog(`Tactical preparation grants ${this._bonusDiceNext} extra dice!`);
       this._bonusDiceNext = 0;
+    }
+    if (this._eventBonusDiceAmbush) {
+      extraDice += this._eventBonusDiceAmbush;
+      this.addLog("Ambusher's Leathers — +2 dice! Never caught sleeping.");
+      this._eventBonusDiceAmbush = 0;
     }
     // Heartwood Charm: +3 dice next turn after first damage taken
     if (this._heartwoodBonusDice) {
@@ -1199,7 +1254,17 @@ class CombatEngine {
     });
   }
 
+  // Bandage Roll of the X Legion: revive skills need 1 less on the die
+  effectiveCost(unit, skill) {
+    if (skill.effects && skill.effects.revive && unit && this.unitHasItem(unit, 'legion_bandage_roll')) {
+      const c = { ...skill.cost };
+      if (typeof c.min === 'number' && c.min > 1) { c.min = c.min - 1; return c; }
+    }
+    return skill.cost;
+  }
+
   canUseSkill(unitIndex, skill, available) {
+    skill = { ...skill, cost: this.effectiveCost(this.party[unitIndex], skill) };
     // Cooldown check
     if (skill.cooldownLeft && skill.cooldownLeft > 0) return false;
 
@@ -1432,7 +1497,7 @@ class CombatEngine {
     const skill = unit.skills.find(s => s.id === skillId);
     if (!skill) return;
 
-    if (!this.dicePool.canPayCost(skill.cost, diceIds)) {
+    if (!this.dicePool.canPayCost(this.effectiveCost(unit, skill), diceIds)) {
       this.addLog('Invalid dice for this skill.');
       this.update();
       return;
@@ -1547,6 +1612,7 @@ class CombatEngine {
     const key = `${unit.classId}:${skillId}`;
     this.skillUsageStats[key] = (this.skillUsageStats[key] || 0) + 1;
     this._totalSkillsUsed = (this._totalSkillsUsed || 0) + 1;
+    this._lastActingUnit = unit;
 
     const usedDice = diceIds.map(id => this.dicePool.dice.find(d => d.id === id));
     diceIds.forEach(id => this.dicePool.useDie(id));
@@ -1710,6 +1776,13 @@ class CombatEngine {
       unit.passiveTriggered = true;
       parts.push('Cavalry Charge!');
     }
+    // Trophy and relic damage bonuses
+    if (isDealingDamage) {
+      if (unit._varusBladeBonus) bonusDmg += unit._varusBladeBonus;
+      if (unit.hp < unit.maxHp / 2 && this.unitHasItem(unit, 'great_bear_pelt')) bonusDmg += 2;
+      if (this.unitHasItem(unit, 'trophy_rack')) bonusDmg += (this.runKilledBosses || []).length;
+      if (this.unitHasItem(unit, 'notched_spatha')) bonusDmg += Math.min(5, Math.floor((unit._runKills || 0) / 5));
+    }
 
     const bonusBlock = unit.equipBlock || 0;
     // bonusHealScale: reduce equipment heal scaling for certain abilities (e.g. Wulfswestr)
@@ -1799,6 +1872,17 @@ class CombatEngine {
         parts.push('EXECUTE!');
         if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Execute!', color: 'var(--red-bright)' });
       }
+      // Huntsman's Hood: the first arrow is silent (+3 vs unhurt)
+      if (result.target.hp === result.target.maxHp && this.unitHasItem(unit, 'huntsmans_hood')) {
+        total += 3;
+        parts.push("Huntsman's Hood! (+3 vs unhurt)");
+      }
+      // Ashwood Longbow: shields are just slower wood (+40% vs Block)
+      if (result.target.block > 0 && this.unitHasItem(unit, 'ashwood_longbow')) {
+        const ashBonus = Math.floor(total * 0.4);
+        total += ashBonus;
+        parts.push(`Ashwood arrow punches the shield! (+${ashBonus})`);
+      }
       // Gladius Thrust: +50% damage vs targets with Block, stun, or mark
       if (result.gladiusThrust && result.target) {
         const hasDebuff = (result.target.block && result.target.block > 0) ||
@@ -1830,7 +1914,8 @@ class CombatEngine {
         parts.push(`Shoulder Charge crushes back-row target! (+${scBonus})`);
       }
       // Aura damage reduction (e.g. Wicker Man protects other enemies)
-      const auraReduction = this.getAuraDamageReduction(result.target);
+      let auraReduction = this.getAuraDamageReduction(result.target);
+      if (auraReduction > 0 && this.unitHasItem(unit, 'lantern_true_sight')) auraReduction = 0;
       if (auraReduction > 0) total = Math.max(1, total - auraReduction);
       // Packleader's Bow: +4 damage vs enemies with no block
       if (this.unitHasItem(unit, 'packleaders_bow') && (!result.target.block || result.target.block <= 0)) {
@@ -1860,6 +1945,20 @@ class CombatEngine {
       result.target.hp = Math.max(0, result.target.hp - total);
       unit.stats.damageDealt += total;
       if (total > unit.stats.maxSingleHit) unit.stats.maxSingleHit = total;
+      // Pulsing Nodule: feeding on the poisoned
+      if (total > 0 && result.target.poison > 0 && this.unitHasItem(unit, 'pulsing_nodule') && unit.hp < unit.maxHp) {
+        unit.hp = Math.min(unit.maxHp, unit.hp + 1);
+      }
+      // Torchbearer's Brand: the hit keeps burning (30% at the target's next action)
+      if (total > 0 && this.unitHasItem(unit, 'torchbearers_brand')) {
+        result.target._burn = Math.max(result.target._burn || 0, Math.round(total * 0.3));
+      }
+      // Quiver of Marked Shafts: the first shaft marks the prey
+      if (total > 0 && !unit._quiverUsed && this.unitHasItem(unit, 'quiver_marked_shafts')) {
+        unit._quiverUsed = true;
+        result.target._marked = 2;
+        parts.push(`${result.target.name} is marked!`);
+      }
       if (total > 0 && this.onVisual) this.onVisual('enemyHit', { enemyIndex: result.target.index, damage: total });
       const bonusStr = bonusDmg !== 0 ? ` (${result.damage}${bonusDmg >= 0 ? '+' : ''}${bonusDmg}${auraReduction > 0 ? `-${auraReduction}aura` : ''})` : (auraReduction > 0 ? ` (-${auraReduction} aura)` : '');
       parts.push(`${unit.name} uses ${skill.name} on ${result.target.name} for ${total}${bonusStr} damage.`);
@@ -1883,6 +1982,7 @@ class CombatEngine {
           const okHeal = Math.min(2, unit.maxHp - unit.hp);
           if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
           parts.push(`OVERKILL! (+2 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
+          if (this.partyHasItem('bear_claw_necklace')) { this.morale = Math.min(100, this.morale + 2); parts.push('Bear-Claw roar! (+2 more)'); }
           if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
           if (this.onVisual) this.onVisual('morale', { amount: 2 });
           if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
@@ -1891,6 +1991,7 @@ class CombatEngine {
           const okHeal = Math.min(1, unit.maxHp - unit.hp);
           if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
           parts.push(`Overkill! (+1 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
+          if (this.partyHasItem('bear_claw_necklace')) this.morale = Math.min(100, this.morale + 1);
           if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'OVERKILL!', color: 'var(--gold)' });
           if (this.onVisual) this.onVisual('morale', { amount: 1 });
           if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
@@ -2125,6 +2226,28 @@ class CombatEngine {
       }
     }
     if (result.heal && result.target) {
+      // Serpent-Fang Aspergill / Censer of Bitter Herbs: healing spreads venom
+      const venomHits = (this.unitHasItem(unit, 'censer_bitter_herbs') ? 2 : 0)
+        + (this.unitHasItem(unit, 'serpent_fang_aspergill') ? 1 : 0);
+      if (venomHits > 0) {
+        const vAlive = this.enemies.filter(e => !e.dead);
+        for (let vi = 0; vi < venomHits && vAlive.length > 0; vi++) {
+          const vTarget = vAlive[Math.floor(Math.random() * vAlive.length)];
+          vTarget.poison = (vTarget.poison || 0) + 1;
+          if (this.onVisual) this.onVisual('enemyPoison', { enemyIndex: vTarget.index, amount: 1 });
+        }
+        if (vAlive.length > 0) parts.push('The healing smoke chokes the enemy. (+1 Poison)');
+      }
+      // Leech-Jar: drain a foe into the healed
+      if (this.unitHasItem(unit, 'leech_jar')) {
+        const ljAlive = this.enemies.filter(e => !e.dead);
+        if (ljAlive.length > 0) {
+          const ljTarget = ljAlive[Math.floor(Math.random() * ljAlive.length)];
+          ljTarget.hp = Math.max(0, ljTarget.hp - 1);
+          result.heal += 1;
+          this.checkEnemyDeaths();
+        }
+      }
       let scaledBonusHeal = bonusHeal;
       if (result._dieScaleFactor != null) scaledBonusHeal = Math.floor(bonusHeal * result._dieScaleFactor);
       let totalHeal = result.heal + scaledBonusHeal;
@@ -2234,6 +2357,11 @@ class CombatEngine {
         parts.push(`${unit.name} uses ${skill.name} \u2014 ${totalBlock}${bonusStr} Block.`);
       }
       if (this.onVisual) this.onVisual('unitBlock', { unitIndex: blockTarget.index, amount: totalBlock });
+      // Legate's Dispatch: as long as the wall stands, the men believe
+      if (totalBlock > 0 && this.unitHasItem(blockTarget, 'legates_dispatch')) {
+        this.morale = Math.min(100, this.morale + 2);
+        parts.push('+2 Morale (Dispatch).');
+      }
       // Shield Brace: store block and heal to also apply next turn
       if (result.shieldBrace) {
         blockTarget._blockNextTurn = (blockTarget._blockNextTurn || 0) + totalBlock;
@@ -2373,6 +2501,11 @@ class CombatEngine {
       const multiplied = (result.triplePoison || result.doublePoison) && alreadyPoisoned;
       result.target.poison = (result.target.poison || 0) + totalPoison;
       unit.stats.poisonInflicted += totalPoison;
+      // Tongue of the Lindwurm: deep venom saps the will to swing
+      if (result.target.poison >= 8 && !result.target._enemyWeaken && this.partyHasItem('tongue_of_lindwurm')) {
+        result.target._enemyWeaken = 2;
+        parts.push(`${result.target.name} is weakened by the deep venom!`);
+      }
       if (this.onVisual) this.onVisual('enemyPoison', { enemyIndex: result.target.index, amount: totalPoison });
       const bonusStr = unit.equipPoison > 0 ? ` (${result.poison}+${unit.equipPoison})` : '';
       const doubledStr = multiplied ? (result.triplePoison ? ' TRIPLED!' : ' Doubled!') : '';
@@ -2520,6 +2653,7 @@ class CombatEngine {
         const okHeal = Math.min(2, unit.maxHp - unit.hp);
         if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
         parts.push(`OVERKILL! (+2 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
+        if (this.partyHasItem('bear_claw_necklace')) { this.morale = Math.min(100, this.morale + 2); parts.push('Bear-Claw roar! (+2 more)'); }
         if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
         if (this.onVisual) this.onVisual('morale', { amount: 2 });
         if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
@@ -2528,6 +2662,7 @@ class CombatEngine {
         const okHeal = Math.min(1, unit.maxHp - unit.hp);
         if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
         parts.push(`Overkill! (+1 Morale${okHeal > 0 ? `, +${okHeal} HP` : ''})`);
+        if (this.partyHasItem('bear_claw_necklace')) this.morale = Math.min(100, this.morale + 1);
         if (bestOverkillIdx >= 0 && this.onVisual) this.onVisual('statusText', { enemyIndex: bestOverkillIdx, text: 'OVERKILL!', color: 'var(--gold)' });
         if (this.onVisual) this.onVisual('morale', { amount: 1 });
         if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
@@ -3567,6 +3702,26 @@ class CombatEngine {
           this.killedEnemies.push(e.id);
           this.totalEnemiesKilled++;
           this.addLog(`${e.name} falls!`);
+          // Kill attribution for trophies
+          if (this._lastActingUnit && !this._lastActingUnit.downed) {
+            this._lastActingUnit._runKills = (this._lastActingUnit._runKills || 0) + 1;
+            if ((this.difficulty || 1) >= 4 && this.unitHasItem(this._lastActingUnit, 'warlords_war_braid')) {
+              this.morale = Math.min(100, this.morale + 4);
+              this.addLog("The Warlord's braid burns — +4 Morale!");
+            }
+          }
+          // Antler Crown: first blood belongs to the herd
+          if (!this._antlerUsed && this.partyHasItem('antler_crown')) {
+            this._antlerUsed = true;
+            this.party.forEach(u2 => { if (!u2.downed) u2.buffs.push({ damage: 1, attacksLeft: 2 }); });
+            this.addLog('Antler Crown! All allies gain +1 damage for 2 attacks.');
+          }
+          // Chattering Fetish: the bones betray their masters
+          if (this.partyHasItem('chattering_fetish')) {
+            this.enemies.forEach(e2 => {
+              if (!e2.dead && e2 !== e && e2.block > 0) e2.block = Math.max(0, e2.block - 2);
+            });
+          }
 
           // Spectral killed — permanently remove from future story boss fights
           if (e._isSpectral && e._spectralOf && this._runSpectralDefeated) {
@@ -3908,6 +4063,17 @@ class CombatEngine {
   endPlayerTurn() {
     if (this.phase !== PHASE.PLAYER_TURN) return;
 
+    // Centurion's Whistle: restraint is also an order
+    if (this.partyHasItem('centurions_whistle')) {
+      const heldPips = this.dicePool.dice.filter(d => !d.used).reduce((sum2, d) => sum2 + d.value, 0);
+      const wMorale = Math.floor(heldPips / 5);
+      if (wMorale > 0) {
+        this.morale = Math.min(100, this.morale + wMorale);
+        this.addLog(`The whistle sounds — held dice steady the men. (+${wMorale} Morale)`);
+        if (this.onVisual) this.onVisual('morale', { amount: wMorale });
+      }
+    }
+
     // Morale decay — escalates each turn, applied at end of player turn
     const helmCarrier = this.party.find(u => !u.downed && this.unitHasItem(u, 'champions_helm'));
     const helmReduction = helmCarrier ? this.getItemLevel(helmCarrier, 'champions_helm') : 0;
@@ -3924,6 +4090,7 @@ class CombatEngine {
 
     // Poison tick on allies at end of player turn
     this._lastAttackerName = 'Poison';
+    this._lastAttackerRef = null;
     this.party.forEach(u => {
       if (!u.downed && u.poison > 0) {
         const poisonDmg = u.poison;
@@ -4081,11 +4248,17 @@ class CombatEngine {
                 if (this.onVisual) this.onVisual('unitHeal', { unitIndex: wounded.index, amount: 1 });
               }
             }
-            e.poison = Math.max(0, e.poison - 1);
+            if (!this.partyHasItem('grinding_ring')) e.poison = Math.max(0, e.poison - 1);
             if (e.hp <= 0) {
               e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
               this.poisonKills = (this.poisonKills || 0) + 1;
               this.addLog(`${e.name} falls to poison!`);
+              // Mushroom Pouch: the men cheer when the toxin finishes the work
+              if (this.partyHasItem('mushroom_pouch')) {
+                this.morale = Math.min(100, this.morale + 3);
+                this.party.forEach(u2 => { if (!u2.downed) u2.hp = Math.min(u2.maxHp, u2.hp + 2); });
+                this.addLog('Mushroom Pouch! (+3 Morale, party mends 2 HP)');
+              }
               // Poison overkill mirrors attack overkill: a tick far beyond
               // the remaining HP rallies the men like a crushing blow would.
               // Without this, poison builds could never reach high morale.
@@ -4097,6 +4270,7 @@ class CombatEngine {
                   if (okHeal > 0) { poisoner.hp += okHeal; poisoner.stats.healingDone += okHeal; if (this.onVisual) this.onVisual('unitHeal', { unitIndex: poisoner.index, amount: okHeal }); }
                 }
                 this.addLog('VENOM OVERKILL! (+2 Morale)');
+                if (this.partyHasItem('bear_claw_necklace')) this.morale = Math.min(100, this.morale + 2);
                 if (this.onVisual) this.onVisual('statusText', { enemyIndex: e.index, text: 'OVERKILL!', color: 'var(--gold)' });
                 if (this.onVisual) this.onVisual('morale', { amount: 2 });
               } else if (pOverkill >= 0.6) {
@@ -4106,6 +4280,7 @@ class CombatEngine {
                   if (okHeal > 0) { poisoner.hp += okHeal; poisoner.stats.healingDone += okHeal; if (this.onVisual) this.onVisual('unitHeal', { unitIndex: poisoner.index, amount: okHeal }); }
                 }
                 this.addLog('Venom overkill! (+1 Morale)');
+                if (this.partyHasItem('bear_claw_necklace')) this.morale = Math.min(100, this.morale + 1);
                 if (this.onVisual) this.onVisual('statusText', { enemyIndex: e.index, text: 'OVERKILL!', color: 'var(--gold)' });
                 if (this.onVisual) this.onVisual('morale', { amount: 1 });
               }
@@ -4204,6 +4379,19 @@ class CombatEngine {
 
   executeEnemySingleAction(enemy) {
     this._lastAttackerName = enemy.name;
+    this._lastAttackerRef = enemy;
+    // Torchbearer's Brand: the fire bites at the enemy's next action
+    if (enemy._burn > 0 && !enemy.dead) {
+      const burnDmg = enemy._burn;
+      enemy._burn = 0;
+      enemy.hp = Math.max(0, enemy.hp - burnDmg);
+      this.addLog(`${enemy.name} burns for ${burnDmg}!`);
+      if (this.onVisual) this.onVisual('enemyHit', { enemyIndex: enemy.index, damage: burnDmg });
+      if (enemy.hp <= 0) {
+        this.checkEnemyDeaths();
+        if (enemy.dead) return;
+      }
+    }
 
     // Pending spawn: boss uses their turn to summon instead of attacking
     if (enemy._pendingSpawn && enemy._pendingSpawn.length > 0) {
@@ -4332,6 +4520,10 @@ class CombatEngine {
         }
       }
       let actionDamage = action.damage || 0;
+      // Deep venom saps the will to swing (Tongue of the Lindwurm)
+      if (enemy._enemyWeaken > 0 && actionDamage > 0) {
+        actionDamage = Math.max(1, actionDamage - enemy._enemyWeaken);
+      }
       // Ramping enemies hit harder every round they stand
       if (enemy.rampDamage && actionDamage > 0) {
         const rampBonus = enemy.rampDamage * Math.max(0, (enemy._rampTurns || 1) - 1);
@@ -4425,6 +4617,20 @@ class CombatEngine {
         this.addLog(`Marked target! +${markBonus} bonus damage!`);
         if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Marked!', color: 'var(--red-bright)' });
       }
+      // Weaver's Veil: the first enemy attack on this soldier each combat misses
+      if (dmg > 0 && !target._veilUsed && this.unitHasItem(target, 'weavers_veil')) {
+        target._veilUsed = true;
+        dmg = 0;
+        this.addLog(`The veil swallows the blow — ${target.name} is untouched!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Veil!', color: 'var(--gold)' });
+      }
+      // Traitor's Signet: cancel the first 10+ damage attack once per combat
+      if (dmg >= 10 && !target._signetUsed && this.unitHasItem(target, 'traitors_signet')) {
+        target._signetUsed = true;
+        dmg = 0;
+        this.addLog(`${target.name} read the blow before it fell — cancelled!`);
+        if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: 'Signet!', color: '#cc44ff' });
+      }
       if (target.block > 0) {
         const absorbed = Math.min(target.block, dmg);
         // Legionary's Lorica: deal difficulty damage back when hit while having block
@@ -4440,6 +4646,15 @@ class CombatEngine {
           target.stats.blockAbsorbed += absorbed;
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
           if (this.onVisual) this.onVisual('blockClang', { unitIndex: target.index, full: dmg <= 0 });
+          // Knotted Rope Belt: holding the line holds them all together
+          if (this.unitHasItem(target, 'knotted_rope_belt')) {
+            const kAllies = this.party.filter(x => !x.downed && x.hp < x.maxHp);
+            if (kAllies.length > 0) {
+              const kA = kAllies[Math.floor(Math.random() * kAllies.length)];
+              kA.hp = Math.min(kA.maxHp, kA.hp + 2);
+              if (this.onVisual) this.onVisual('unitHeal', { unitIndex: kA.index, amount: 2 });
+            }
+          }
           // Ironblood Salve: heal 1 HP when block absorbs damage
           if (this.unitHasItem(target, 'ironblood_salve') && target.hp < target.maxHp) {
             target.hp = Math.min(target.maxHp, target.hp + 1);
@@ -4500,9 +4715,44 @@ class CombatEngine {
         this.addLog('Heartwood Charm pulses — bonus dice next turn!');
         if (this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: '+3 Dice!', color: 'var(--green-bright)' });
       }
+      // Twin-Shade Diadem: below half HP, split the blow with the healthiest ally
+      if (dmg > 1 && target.hp < target.maxHp / 2 && this.unitHasItem(target, 'twin_shade_diadem')) {
+        const shadeAlly = this.party.filter(x => !x.downed && x !== target).sort((a, b) => b.hp - a.hp)[0];
+        if (shadeAlly) {
+          const share = Math.floor(dmg / 2);
+          dmg -= share;
+          shadeAlly.hp = Math.max(0, shadeAlly.hp - share);
+          shadeAlly.stats.damageTaken += share;
+          this.addLog(`The twin shades share the wound — ${shadeAlly.name} takes ${share}.`);
+          if (this.onVisual) this.onVisual('unitHit', { unitIndex: shadeAlly.index, damage: share });
+        }
+      }
       target.hp = Math.max(0, target.hp - dmg);
       target.stats.damageTaken += dmg;
       if (dmg > 0) target._wasHitThisTurn = true;
+      if (dmg > 0) {
+        this._partyDamagedThisRound = true;
+        target._hitsThisTurn = (target._hitsThisTurn || 0) + 1;
+        // Vetera Veteran's Plate: a bad turn teaches — +9 Block next turn
+        if (target._hitsThisTurn === 3 && this.unitHasItem(target, 'vetera_veterans_plate')) {
+          target._plateBlockNext = 9;
+          this.addLog(`${target.name}'s plate braces for the next assault. (+9 Block next turn)`);
+        }
+        // Mire Mother's Caul: the first fall below 30% is cushioned
+        if (!target._caulTriggered && target.hp > 0 && target.hp < target.maxHp * 0.3 && this.unitHasItem(target, 'mire_mothers_caul')) {
+          target._caulTriggered = true;
+          target.block = (target.block || 0) + 4;
+          this.addLog(`The caul tightens around ${target.name} — +4 Block.`);
+        }
+        // Cloak of Nettles / Bog-Iron Amulet: attackers pay in venom
+        let thorns = 0;
+        if (this.unitHasItem(target, 'cloak_of_nettles') && enemy.row === 'front') thorns += 2;
+        if (this.unitHasItem(target, 'bog_iron_amulet')) thorns += 2;
+        if (thorns > 0 && !enemy.dead) {
+          enemy.poison = (enemy.poison || 0) + thorns;
+          this.addLog(`${enemy.name} is poisoned by the strike! (+${thorns} Poison)`);
+        }
+      }
       const totalActionDmg = actionDamage + curseBonusDmg;
       this.addLog(`${enemy.name} ${action.text} at ${target.name} for ${totalActionDmg} damage${dmg < totalActionDmg ? ` (${dmg} after block)` : ''}.`);
 
@@ -4574,7 +4824,14 @@ class CombatEngine {
     }
 
     // Weaken target: reduce target's equipDamage for the rest of combat
-    if (action.weakenTarget && target) {
+    if (action.weakenTarget && target && this.unitHasItem(target, 'eagle_eye_lens')) {
+      this.addLog(`${target.name}'s eye stays clear — weaken has no hold!`);
+    } else if (action.weakenTarget && target) {
+      let weakenAmt = action.weakenTarget;
+      // Hollow Idol: it eats the curses meant for you
+      if (this.partyHasItem('hollow_idol')) weakenAmt = Math.max(0, Math.floor(weakenAmt / 2));
+      action = { ...action, weakenTarget: weakenAmt };
+      if (weakenAmt <= 0) { /* fully absorbed */ } else
       target.equipDamage = (target.equipDamage || 0) - action.weakenTarget;
       this.addLog(`${enemy.name} ${action.text}! ${target.name}'s damage reduced by ${action.weakenTarget}.`);
       if (target.index !== undefined && this.onVisual) this.onVisual('statusText', { unitIndex: target.index, text: `-${action.weakenTarget} Dmg`, color: '#aa66aa' });
@@ -4597,6 +4854,10 @@ class CombatEngine {
       // Cornicen passive: Demoralizing Horn — enemy morale attacks deal 3 less morale damage
       if (moraleDelta < 0 && this.party.some(u => !u.downed && u.classId === 'cornicen')) {
         moraleDelta = Math.min(0, moraleDelta + 3);
+      }
+      // Speaker's Jaw: the dead speak quieter now
+      if (moraleDelta < 0 && this.partyHasItem('speakers_jaw')) {
+        moraleDelta = Math.ceil(moraleDelta / 2);
       }
       if (moraleDelta !== 0) {
         this.morale = Math.max(0, Math.min(100, this.morale + moraleDelta));
@@ -4709,9 +4970,20 @@ class CombatEngine {
         .sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp));
       if (wounded.length > 0) {
         const ally = wounded[0];
-        const healAmt = Math.min(action.healAlly, ally.maxHp - ally.hp);
+        let healCap = action.healAlly;
+        // Witch's Finger Bones: what her hands cursed, no salve may mend
+        if (ally.poison > 0 && this.partyHasItem('witchs_finger_bones')) healCap = Math.floor(healCap / 2);
+        const healAmt = Math.min(healCap, ally.maxHp - ally.hp);
         ally.hp += healAmt;
         this.addLog(`${enemy.name} ${action.text}. ${ally.name} heals ${healAmt} HP.`);
+        // Hexwood Effigy: siphon a share of enemy healing
+        if (healAmt > 0 && this.partyHasItem('hexwood_effigy')) {
+          const hxW = this.party.filter(x => !x.downed && x.hp < x.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+          if (hxW) {
+            hxW.hp = Math.min(hxW.maxHp, hxW.hp + 2);
+            if (this.onVisual) this.onVisual('unitHeal', { unitIndex: hxW.index, amount: 2 });
+          }
+        }
       }
       if (action.selfDamage) {
         enemy.hp = Math.max(1, enemy.hp - action.selfDamage);
@@ -5006,6 +5278,14 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('screenShake', {});
           return;
         }
+        // Stag-Blood Draught: refuse the ground (once per combat)
+        if (!u._draughtUsed && this.unitHasItem(u, 'stag_blood_draught')) {
+          u._draughtUsed = true;
+          u.hp = 6;
+          this.addLog(`${u.name} drinks deep — the stag's blood refuses the ground!`);
+          if (this.onVisual) this.onVisual('statusText', { unitIndex: u.index, text: 'Draught!', color: 'var(--red-bright)' });
+          return;
+        }
         // Lupa's Fang: first downing prevented (once per combat)
         if (!this._lupaFangUsed && this.partyHasItem('lupas_fang')) {
           this._lupaFangUsed = true;
@@ -5029,6 +5309,30 @@ class CombatEngine {
             this.addLog(`${ally.name}'s Wolfsmother Pelt blazes — vengeance! (+4 damage, 3 attacks)`);
           }
         });
+        // Arminius's Deathmask: the killer pays in kind
+        if (this.partyHasItem('arminius_deathmask') && this._lastAttackerRef && !this._lastAttackerRef.dead) {
+          const dmKiller = this._lastAttackerRef;
+          dmKiller.hp = Math.max(0, dmKiller.hp - 10);
+          this.addLog(`The deathmask turns its hatred — ${dmKiller.name} takes 10 damage!`);
+          if (this.onVisual) this.onVisual('enemyHit', { enemyIndex: dmKiller.index, damage: 10 });
+          this.checkEnemyDeaths();
+        }
+        // Varus's Broken Gladius: grief becomes edge
+        this.party.forEach(ally => {
+          if (!ally.downed && ally !== u && this.unitHasItem(ally, 'varus_broken_gladius')) {
+            ally._varusBladeBonus = (ally._varusBladeBonus || 0) + 5;
+            this.addLog(`${ally.name}'s broken gladius remembers. (+5 damage for the rest of combat)`);
+          }
+        });
+        // Pale Coin of Charon: they died well
+        if (this.partyHasItem('pale_coin_charon')) {
+          this.morale = Math.min(100, this.morale + 15);
+          this.party.forEach(ally => {
+            if (!ally.downed && ally !== u) ally.hp = Math.min(ally.maxHp, ally.hp + 4);
+          });
+          this.addLog('The pale coin is spent — +15 Morale, and the living mend 4 HP.');
+          if (this.onVisual) this.onVisual('morale', { amount: 15 });
+        }
       }
     });
     if (this.party.every(u => u.downed)) {
@@ -5185,6 +5489,15 @@ class CombatEngine {
 
   // Clamp morale — Vestalis passive prevents dropping below 25
   clampMorale() {
+    // Vestal Ember: the first time morale would gutter below 20 this run,
+    // the flame answers — restored to 50, party +3 damage next attack
+    if (this.morale < 20 && !this._vestalEmberUsed && this.partyHasItem('vestal_ember')) {
+      this._vestalEmberUsed = true;
+      this.morale = 50;
+      this.party.forEach(u => { if (!u.downed) u.buffs.push({ damage: 3, attacksLeft: 1 }); });
+      this.addLog('The Vestal Ember flares — morale restored to 50, +3 damage next attack!');
+      if (this.onVisual) this.onVisual('morale', { amount: 30 });
+    }
     const hasVestalis = this.party.some(u => u.classId === 'vestalis' && !u.downed);
     const floor = hasVestalis ? 25 : 0;
     this.morale = Math.max(floor, Math.min(100, this.morale));
@@ -5292,12 +5605,20 @@ class CombatEngine {
     // Attrition valve: marches die to accumulated chip damage, not to single
     // fights (slot-3 completion measured 54% while its encounters sat at
     // 95-100%). Scales with the slot so late marches stay recoverable too.
-    const postCombatHeal = 5 + difficulty + (hasSupport ? 0 : 2);
+    // Brood Talisman: the bog keeps its children breathing
+    const broodBonus = this.partyHasItem('brood_talisman') ? 3 : 0;
+    const postCombatHeal = 5 + difficulty + (hasSupport ? 0 : 2) + broodBonus;
     this.party.forEach(u => {
       if (u.downed) {
         u.downed = false;
-        u.hp = Math.floor(u.maxHp * revivePct);
-        this.addLog(`${u.name} recovers at ${u.hp} HP.`);
+        // Peace of the Dead: the spirits owe your dead a debt of rest
+        if (this.partyHasItem('peace_of_the_dead')) {
+          u.hp = u.maxHp;
+          this.addLog(`${u.name} rises rested — the dead kept their peace. (full HP)`);
+        } else {
+          u.hp = Math.floor(u.maxHp * revivePct);
+          this.addLog(`${u.name} recovers at ${u.hp} HP.`);
+        }
       } else {
         const healed = Math.min(postCombatHeal, u.maxHp - u.hp);
         if (healed > 0) {
