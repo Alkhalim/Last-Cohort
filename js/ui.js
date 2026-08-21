@@ -3642,14 +3642,14 @@ class GameUI {
     }
   }
 
-  // Telegraph a choice's stakes: guaranteed combat, gamble, or steady outcome
+  // Telegraph combat stakes only — every choice is a gamble, so a generic
+  // "uncertain" tag was pure noise. Warn when steel is certain or possible.
   choiceStakeTag(choice) {
     const outcomes = choice.outcomes || [];
     if (outcomes.length === 0) return '';
-    const combatAlways = outcomes.every(o => o.effects && o.effects.triggerCombat);
-    if (combatAlways) return ' <span class="stake-tag stake-combat">⚔ combat</span>';
-    const combatPossible = outcomes.some(o => o.effects && o.effects.triggerCombat);
-    if (combatPossible || outcomes.length > 1) return ' <span class="stake-tag stake-risky">🎲 uncertain</span>';
+    const combatCount = outcomes.filter(o => o.effects && o.effects.triggerCombat).length;
+    if (combatCount === outcomes.length) return ' <span class="stake-tag stake-combat">⚔ combat</span>';
+    if (combatCount > 0) return ' <span class="stake-tag stake-risky">⚔ risk of battle</span>';
     return '';
   }
 
@@ -5000,14 +5000,14 @@ class GameUI {
       const equipBtn = document.createElement('button');
       equipBtn.className = 'btn-primary';
       equipBtn.textContent = `Equip on ${unit.title}`;
-      equipBtn.onclick = () => this._equipCurrentLoot(unit.index);
+      equipBtn.onclick = () => this._claimLoot(() => this._equipCurrentLoot(unit.index));
       actionsEl.appendChild(equipBtn);
     } else if (this._replaceSlotIdx !== undefined) {
       const replacedItem = getItemData(slots[this._replaceSlotIdx]);
       const replBtn = document.createElement('button');
       replBtn.className = 'btn-primary';
       replBtn.textContent = `Replace ${replacedItem ? replacedItem.name : 'item'}`;
-      replBtn.onclick = () => this._equipCurrentLoot(unit.index, this._replaceSlotIdx);
+      replBtn.onclick = () => this._claimLoot(() => this._equipCurrentLoot(unit.index, this._replaceSlotIdx));
       actionsEl.appendChild(replBtn);
     } else {
       const hint = document.createElement('div');
@@ -5185,6 +5185,15 @@ class GameUI {
     return diffs.length > 0 ? `<div class="loot-stat-diff">${diffs.join(' ')}</div>` : '';
   }
 
+  // A beat of gold before the item vanishes into the pack — claiming should feel like claiming
+  _claimLoot(fn) {
+    if (this._lootClaiming) return;
+    this._lootClaiming = true;
+    const card = document.querySelector('.loot-card');
+    if (card) card.classList.add('claimed');
+    setTimeout(() => { this._lootClaiming = false; fn(); }, 300);
+  }
+
   _equipCurrentLoot(unitIndex, replaceSlotIdx) {
     const itemId = this.pendingLoot[this._currentLootIdx];
     if (!itemId) return;
@@ -5342,14 +5351,20 @@ class GameUI {
         <div class="skill-desc">${enhancedDesc}</div>
       `;
       card.addEventListener('click', () => {
-        this._cachedSkillChoicesMap = null;
-        this.engine.teachSkill(unitIndex, skill.id);
-        this.engine.pendingSkillPicks--;
-        if (this.engine.pendingSkillPicks > 0) {
-          this.showLevelUpScreen();
-        } else {
-          this.afterLevelUps();
-        }
+        if (this._levelupPicking) return;
+        this._levelupPicking = true;
+        card.classList.add('picked');
+        setTimeout(() => {
+          this._levelupPicking = false;
+          this._cachedSkillChoicesMap = null;
+          this.engine.teachSkill(unitIndex, skill.id);
+          this.engine.pendingSkillPicks--;
+          if (this.engine.pendingSkillPicks > 0) {
+            this.showLevelUpScreen();
+          } else {
+            this.afterLevelUps();
+          }
+        }, 340);
       });
       content.appendChild(card);
     });
@@ -5420,6 +5435,9 @@ class GameUI {
       btn.className = 'btn-primary levelup-unit-btn';
       btn.innerHTML = `<span style="color:${opt.color}">${opt.label}</span> <span style="font-size:0.75rem;opacity:0.7">${opt.desc}</span>`;
       btn.addEventListener('click', () => {
+        if (this._levelupPicking) return;
+        this._levelupPicking = true;
+        btn.classList.add('picked');
         const amt = opt.amount;
         if (opt.key === 'hp') {
           unit.maxHp += amt; unit.baseMaxHp += amt; unit.hp += amt;
@@ -5446,11 +5464,15 @@ class GameUI {
         this._cachedStatPicksMap = null;
         this._cachedSkillChoicesMap = null;
         this.engine.pendingSkillPicks--;
-        if (this.engine.pendingSkillPicks > 0) {
-          this.showLevelUpScreen();
-        } else {
-          this.afterLevelUps();
-        }
+        // Let the golden flash land before the screen moves on
+        setTimeout(() => {
+          this._levelupPicking = false;
+          if (this.engine.pendingSkillPicks > 0) {
+            this.showLevelUpScreen();
+          } else {
+            this.afterLevelUps();
+          }
+        }, 340);
       });
       content.appendChild(btn);
     });

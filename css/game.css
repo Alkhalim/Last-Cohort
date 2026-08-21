@@ -6053,3 +6053,90 @@ html, body {
   .loot-card.rarity-epic, .loot-card.rarity-epic::after { animation: none; }
   .loot-card.rarity-epic { box-shadow: 0 0 10px rgba(176, 64, 208, 0.4); }
 }
+
+/* ============================================================
+   Reward-feel pass: loot claims, level-ups, event outcomes
+   ============================================================ */
+
+/* Loot card arrives with spring, not a slide */
+@keyframes loot-deal {
+  0% { transform: translateY(18px) rotate(-2deg) scale(0.92); opacity: 0; }
+  65% { transform: translateY(-2px) rotate(0.4deg) scale(1.03); opacity: 1; }
+  100% { transform: translateY(0) rotate(0) scale(1); opacity: 1; }
+}
+.loot-card { animation-duration: 0.38s; }
+
+/* Claiming an item: a burst of gold before it vanishes into the pack */
+.loot-card.claimed {
+  animation: loot-claim 0.3s ease-out forwards !important;
+}
+@keyframes loot-claim {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(240, 208, 112, 0); filter: brightness(1); }
+  40% { transform: scale(1.05); box-shadow: 0 0 26px rgba(240, 208, 112, 0.55); filter: brightness(1.5); }
+  100% { transform: scale(0.97); box-shadow: 0 0 8px rgba(240, 208, 112, 0.2); filter: brightness(1.15); opacity: 0.85; }
+}
+
+/* XP pips pop as they fill; the training banner glows */
+.xp-pip.filled {
+  animation: pip-pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
+  box-shadow: 0 0 6px rgba(201, 162, 39, 0.5);
+}
+@keyframes pip-pop {
+  0% { transform: scale(0.4); }
+  60% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+.loot-training-text.gained {
+  animation: training-glow 1.6s ease-in-out infinite;
+}
+@keyframes training-glow {
+  0%, 100% { text-shadow: 0 0 4px rgba(201, 162, 39, 0.3); }
+  50% { text-shadow: 0 0 12px rgba(240, 208, 112, 0.8); }
+}
+
+/* Level-up: title breathes gold, options march in one by one */
+#levelup-title {
+  animation: levelup-title-glow 2.4s ease-in-out infinite;
+}
+@keyframes levelup-title-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(201, 162, 39, 0.25); }
+  50% { text-shadow: 0 0 22px rgba(240, 208, 112, 0.6); }
+}
+#levelup-content > * {
+  animation: option-rise 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+}
+#levelup-content > *:nth-child(1) { animation-delay: 0.03s; }
+#levelup-content > *:nth-child(2) { animation-delay: 0.1s; }
+#levelup-content > *:nth-child(3) { animation-delay: 0.17s; }
+#levelup-content > *:nth-child(4) { animation-delay: 0.24s; }
+#levelup-content > *:nth-child(5) { animation-delay: 0.31s; }
+#levelup-content > *:nth-child(6) { animation-delay: 0.38s; }
+@keyframes option-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* The chosen option flashes gold before the screen advances */
+.levelup-skill-card.picked, .levelup-unit-btn.picked {
+  animation: pick-flash 0.34s ease-out forwards !important;
+  pointer-events: none;
+}
+@keyframes pick-flash {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(240, 208, 112, 0); }
+  40% { transform: scale(1.04); box-shadow: 0 0 24px rgba(240, 208, 112, 0.6); border-color: var(--gold); }
+  100% { transform: scale(1.01); box-shadow: 0 0 10px rgba(240, 208, 112, 0.3); border-color: var(--gold); }
+}
+
+/* Event outcomes punch in instead of appearing */
+#event-outcome {
+  animation: outcome-punch 0.4s cubic-bezier(0.2, 1.1, 0.35, 1);
+}
+@keyframes outcome-punch {
+  0% { opacity: 0; transform: translateY(10px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loot-card, .xp-pip.filled, #levelup-title, #levelup-content > *,
+  .loot-training-text.gained, #event-outcome { animation: none !important; }
+}
