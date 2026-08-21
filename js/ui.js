@@ -3618,7 +3618,7 @@ class GameUI {
         btn.innerHTML = `${choice.text} <span class="event-requires">(Requires ${requirementLabel})</span>`;
         btn.disabled = true;
       } else {
-        btn.innerHTML = `${choice.text}${this.choiceStakeTag(choice)}`;
+        btn.innerHTML = `${choice.text}${this.choiceStakeTag(choice, event, ci)}`;
         btn.addEventListener('click', () => this.resolveEventChoice(event, choice));
       }
       choicesEl.appendChild(btn);
@@ -3642,36 +3642,59 @@ class GameUI {
     }
   }
 
-  // Telegraph what a choice guarantees. Guaranteed rewards are named
-  // (stat +, heal, morale +); choices that can sour get "risk"; steel gets ⚔.
-  choiceStakeTag(choice) {
+  // Which event choices this player has walked before — knowledge earned
+  // the hard way persists across runs
+  _seenChoices() {
+    try { return JSON.parse(localStorage.getItem('lc_choices_seen') || '{}'); } catch (e) { return {}; }
+  }
+
+  markChoiceSeen(eventId, idx) {
+    if (!eventId) return;
+    try {
+      const seen = this._seenChoices();
+      seen[eventId + ':' + idx] = true;
+      localStorage.setItem('lc_choices_seen', JSON.stringify(seen));
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  isChoiceSeen(eventId, idx) {
+    return !!this._seenChoices()[(eventId || '') + ':' + idx];
+  }
+
+  // Telegraph a choice's stakes. Steel (⚔) is always visible — scouts can
+  // see warriors. Everything else must be LEARNED: the tag only appears
+  // once the player has picked this choice before, so exploring a risky
+  // path today buys information for every future run.
+  choiceStakeTag(choice, event, choiceIdx) {
     const outcomes = choice.outcomes || [];
     if (outcomes.length === 0) return '';
     const fx = outcomes.map(o => o.effects || {});
     const STAT_KEYS = ['grantDamage', 'grantBlock', 'grantMaxHp', 'grantPoison', 'grantHeal', 'maxHpAll'];
     const isBad = e => (e.damageAll > 0) || (e.poisonParty > 0) || (e.morale < 0);
-    const isGood = e => (e.morale > 0) || (e.healAll > 0) || e.grantItem || e.loot ||
-      (e.extraDiceNext > 0) || (e.buffDamage > 0) || STAT_KEYS.some(k => e[k]);
 
     const combatCount = fx.filter(e => e.triggerCombat).length;
     if (combatCount === outcomes.length) return ' <span class="stake-tag stake-combat">⚔ combat</span>';
     const tags = [];
     if (combatCount > 0) {
       tags.push('<span class="stake-tag stake-risky">⚔ risk of battle</span>');
-    } else if (fx.every(isBad)) {
-      tags.push('<span class="stake-tag stake-danger">danger</span>');
-    } else if (fx.some(isBad)) {
-      tags.push('<span class="stake-tag stake-risky">risk</span>');
-    } else {
-      // Only promise what EVERY outcome delivers
-      if (fx.every(e => STAT_KEYS.some(k => e[k]))) tags.push('<span class="stake-tag stake-good">stat</span>');
-      if (fx.every(e => e.healAll > 0)) tags.push('<span class="stake-tag stake-good">heal</span>');
-      if (fx.every(e => e.morale > 0)) tags.push('<span class="stake-tag stake-good">morale</span>');
+    } else if (this.isChoiceSeen(event && event.id, choiceIdx)) {
+      if (fx.every(isBad)) {
+        tags.push('<span class="stake-tag stake-danger">danger</span>');
+      } else if (fx.some(isBad)) {
+        tags.push('<span class="stake-tag stake-risky">risk</span>');
+      } else {
+        // Only promise what EVERY outcome delivers
+        if (fx.every(e => STAT_KEYS.some(k => e[k]))) tags.push('<span class="stake-tag stake-good">stat</span>');
+        if (fx.every(e => e.healAll > 0)) tags.push('<span class="stake-tag stake-good">heal</span>');
+        if (fx.every(e => e.morale > 0)) tags.push('<span class="stake-tag stake-good">morale</span>');
+        if (fx.every(e => e.grantItem || e.loot)) tags.push('<span class="stake-tag stake-good">item</span>');
+      }
     }
     return tags.length ? ' ' + tags.join(' ') : '';
   }
 
   resolveEventChoice(event, choice) {
+    this.markChoiceSeen(event.id, event.choices.indexOf(choice));
     // Weighted random outcome
     const roll = Math.random();
     let cumulative = 0;
