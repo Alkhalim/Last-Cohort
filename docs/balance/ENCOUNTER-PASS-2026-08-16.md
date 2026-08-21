@@ -745,3 +745,17 @@ After: budget bands common 4.6 / uncommon 6.9 / rare 11.2 / epic 13.7,
 specials 33% / 49% / 78% / 100% — each tier now buys clearly more stats
 AND a higher chance of a special. Remaining "HIGH" rares all carry
 specials or are intended chase items (Runic Stone's +1 die).
+
+### 18b. Vanilla-vs-special correction (designer feedback)
+
+Correct principle: within a rarity band, NO-SPECIAL items sit at the TOP
+of the stat band; special carriers sit below it, the special filling the
+gap. Section 18's first cut had this half-backwards. Fixed:
+- Vanilla rares back up to band top: Bloodstone Pendant 14.2, Windreader's
+  Charm 13.6, Aquila Spearhead 15, Apothecary's Mortar 14.6, Boar Tusk
+  Pauldron 13.6 (already correct).
+- Over-statted SPECIAL rares trimmed instead: Wicker Ash 15.6→10.4 (its
+  passive AoE is the payload), Vanguard's Banner 15.6→12.6, Stormcaller
+  Bow 16→13, Corpsebloom 14.4→12.2.
+Rare trinket ladder now: vanillas 13.6-14.2 on top, specials 4-12.6
+roughly inverse to special strength. Bands: 4.6 / 6.9 / 11.0 / 13.7.
