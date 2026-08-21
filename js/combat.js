@@ -301,20 +301,20 @@ class CombatEngine {
     if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
       scaledMaxHp = Math.round(scaledMaxHp * 1.2);
     }
-    const blockScale = 1.12;
+    const blockScale = 1.2;
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.27)) : 0,
-      poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus / 3) : undefined,
-      blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + Math.ceil(diffBonus / 2)) * blockScale) : undefined,
-      blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + Math.ceil(diffBonus / 2)) * blockScale) : undefined,
-      blockSelf: a.blockSelf ? Math.round((a.blockSelf + Math.ceil(diffBonus / 2)) * blockScale) : undefined,
-      healSelf: a.healSelf ? Math.round(a.healSelf * (1 + diffBonus * 0.25)) : undefined,
-      healAlly: a.healAlly ? Math.round(a.healAlly * (1 + diffBonus * 0.25)) : undefined,
-      healBoss: a.healBoss ? Math.round(a.healBoss * (1 + diffBonus * 0.25)) : undefined,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.28)) : 0,
+      poisonTarget: a.poisonTarget ? a.poisonTarget + Math.ceil(diffBonus / 3) : undefined,
+      blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + Math.ceil(diffBonus * 0.75)) * blockScale) : undefined,
+      blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + Math.ceil(diffBonus * 0.75)) * blockScale) : undefined,
+      blockSelf: a.blockSelf ? Math.round((a.blockSelf + Math.ceil(diffBonus * 0.75)) * blockScale) : undefined,
+      healSelf: a.healSelf ? Math.round(a.healSelf * (1 + diffBonus * 0.28)) : undefined,
+      healAlly: a.healAlly ? Math.round(a.healAlly * (1 + diffBonus * 0.28)) : undefined,
+      healBoss: a.healBoss ? Math.round(a.healBoss * (1 + diffBonus * 0.28)) : undefined,
     }));
     // Determine starting block from blockSelf action (e.g., Cheruscan Guardian) or flat startBlock
-    let startBlock = data.startBlock ? Math.round((data.startBlock + Math.ceil(diffBonus / 2)) * blockScale) : 0;
+    let startBlock = data.startBlock ? Math.round((data.startBlock + Math.ceil(diffBonus * 0.75)) * blockScale) : 0;
     if (data.startWithSelfBlock) {
       const selfBlockAction = scaledActions.find(a => a.blockSelf);
       if (selfBlockAction) startBlock = selfBlockAction.blockSelf;
@@ -331,8 +331,8 @@ class CombatEngine {
       justSpawned: true,
     };
     // Scale passive effects with difficulty
-    if (enemy.turnDamageAll) enemy.turnDamageAll = Math.round(enemy.turnDamageAll * (1 + diffBonus * 0.27));
-    if (enemy.deathDamageEnemy) enemy.deathDamageEnemy = Math.round(enemy.deathDamageEnemy * (1 + diffBonus * 0.27));
+    if (enemy.turnDamageAll) enemy.turnDamageAll = Math.round(enemy.turnDamageAll * (1 + diffBonus * 0.28));
+    if (enemy.deathDamageEnemy) enemy.deathDamageEnemy = Math.round(enemy.deathDamageEnemy * (1 + diffBonus * 0.28));
     if (enemy.aura && enemy.aura.damageReduction) {
       // Half-step scaling: a flat reduction is the single strongest stat in
       // the game against many small hits, and at +diffBonus it silently
@@ -374,7 +374,7 @@ class CombatEngine {
           const stolen = nonStarter[Math.floor(Math.random() * nonStarter.length)];
           // Convert player skill to an enemy action
           const baseDmg = stolen.effects.damage || stolen.effects.damageAll || 0;
-          const scaledDmg = Math.max(3, Math.round(baseDmg * (1 + diffBonus * 0.27)));
+          const scaledDmg = Math.max(3, Math.round(baseDmg * (1 + diffBonus * 0.28)));
           stolenActions.push({
             name: `Stolen: ${stolen.name}`,
             damage: scaledDmg,
@@ -1056,7 +1056,7 @@ class CombatEngine {
           const spectralHp = Math.round(data.maxHp * this.getHpScale(diffBonus) / 3);
           const spectralActions = data.actions.map(a => ({
             ...a,
-            damage: a.damage > 0 ? Math.max(1, Math.round(a.damage * (1 + diffBonus * 0.27) / 3)) : 0,
+            damage: a.damage > 0 ? Math.max(1, Math.round(a.damage * (1 + diffBonus * 0.28) / 3)) : 0,
           }));
           const spectral = {
             index: this.enemies.length,
@@ -3819,9 +3819,9 @@ class CombatEngine {
               const scaledMaxHp = Math.round(formDef.maxHp * this.getHpScale(diffBonus));
               const scaledActions = formDef.actions.map(a => ({
                 ...a,
-                damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.27)) : 0,
+                damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.28)) : 0,
                 morale: a.morale ? Math.round(a.morale * (1 + diffBonus * 0.15)) : undefined,
-                poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus * 0.27) : undefined,
+                poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus * 0.28) : undefined,
                 blockSelf: a.blockSelf ? a.blockSelf + diffBonus : undefined,
                 blockAllEnemies: a.blockAllEnemies ? a.blockAllEnemies + diffBonus : undefined,
               }));
@@ -3833,7 +3833,7 @@ class CombatEngine {
                 maxHp: scaledMaxHp,
                 hp: scaledMaxHp,
                 row: formDef.row,
-                damage: formDef.damage.map(d => Math.round(d * (1 + diffBonus * 0.27))),
+                damage: formDef.damage.map(d => Math.round(d * (1 + diffBonus * 0.28))),
                 speed: formDef.speed,
                 xpValue: formDef.xpValue,
                 isBoss: true,
@@ -4016,9 +4016,9 @@ class CombatEngine {
         const blockScale = 1.25;
         const scaledActions = lesserDef.actions.map(a => ({
           ...a,
-          damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.27)) : 0,
-          poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus / 3) : undefined,
-          blockSelf: a.blockSelf ? Math.round((a.blockSelf + Math.ceil(diffBonus / 2)) * blockScale) : undefined,
+          damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.28)) : 0,
+          poisonTarget: a.poisonTarget ? a.poisonTarget + Math.ceil(diffBonus / 3) : undefined,
+          blockSelf: a.blockSelf ? Math.round((a.blockSelf + Math.ceil(diffBonus * 0.75)) * blockScale) : undefined,
         }));
         const lesser = {
           index: this.enemies.length, ...lesserDef,
@@ -5498,14 +5498,14 @@ class CombatEngine {
     const blockScale = 1.25;
     const scaledActions = data.actions.map(a => ({
       ...a,
-      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.27)) : 0,
-      poisonTarget: a.poisonTarget ? a.poisonTarget + Math.floor(diffBonus / 3) : undefined,
-      blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + Math.ceil(diffBonus / 2)) * blockScale) : undefined,
-      blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + Math.ceil(diffBonus / 2)) * blockScale) : undefined,
-      blockSelf: a.blockSelf ? Math.round((a.blockSelf + Math.ceil(diffBonus / 2)) * blockScale) : undefined,
-      healSelf: a.healSelf ? Math.round(a.healSelf * (1 + diffBonus * 0.25)) : undefined,
-      healAlly: a.healAlly ? Math.round(a.healAlly * (1 + diffBonus * 0.25)) : undefined,
-      healBoss: a.healBoss ? Math.round(a.healBoss * (1 + diffBonus * 0.25)) : undefined,
+      damage: a.damage > 0 ? Math.round(a.damage * (1 + diffBonus * 0.28)) : 0,
+      poisonTarget: a.poisonTarget ? a.poisonTarget + Math.ceil(diffBonus / 3) : undefined,
+      blockAllEnemies: a.blockAllEnemies ? Math.round((a.blockAllEnemies + Math.ceil(diffBonus * 0.75)) * blockScale) : undefined,
+      blockFrontRow: a.blockFrontRow ? Math.round((a.blockFrontRow + Math.ceil(diffBonus * 0.75)) * blockScale) : undefined,
+      blockSelf: a.blockSelf ? Math.round((a.blockSelf + Math.ceil(diffBonus * 0.75)) * blockScale) : undefined,
+      healSelf: a.healSelf ? Math.round(a.healSelf * (1 + diffBonus * 0.28)) : undefined,
+      healAlly: a.healAlly ? Math.round(a.healAlly * (1 + diffBonus * 0.28)) : undefined,
+      healBoss: a.healBoss ? Math.round(a.healBoss * (1 + diffBonus * 0.28)) : undefined,
     }));
     const enemy = {
       index: this.enemies.length,
@@ -5581,7 +5581,7 @@ class CombatEngine {
   // is steeper than the old 8-march curve so slot 6 lands at the old march-8
   // power (5.5x vs 5.35x). Damage steps 0.5, heals 0.35 for the same reason.
   getHpScale(diffBonus) {
-    return 1 + diffBonus * 0.44;
+    return 1 + diffBonus * 0.47;
   }
 
   getActiveCurses() {
