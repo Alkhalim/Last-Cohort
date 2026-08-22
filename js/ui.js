@@ -12,6 +12,7 @@ const GICONS = {
   axe: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.2 11 L4.2 10.6 L8 5.4 L7 4.8 Z" fill="currentColor"/><path d="M6.2 1.4 C9.2 1.6 10.6 4.2 10 6.9 C8.3 6.1 6.7 4.7 6.2 1.4 Z" fill="currentColor"/></svg>`,
   heart: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10.6 C2.6 8.2 1.1 6.1 1.1 4.4 a2.5 2.5 0 0 1 4.9 -0.7 a2.5 2.5 0 0 1 4.9 0.7 C10.9 6.1 9.4 8.2 6 10.6 Z" fill="currentColor"/></svg>`,
   die: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="4.2" cy="4.2" r="0.9" fill="currentColor"/><circle cx="7.8" cy="7.8" r="0.9" fill="currentColor"/></svg>`,
+  cross: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.6 1.4 H7.4 V4.6 H10.6 V7.4 H7.4 V10.6 H4.6 V7.4 H1.4 V4.6 H4.6 Z" fill="currentColor"/></svg>`,
 };
 
 // Replace stat-word mentions ("3 Poison", "5 Block", "4 damage") with the
@@ -29,10 +30,11 @@ function iconizeStatWords(html) {
     hp: I('heart', 'icon-heal', 'HP'),
     morale: I('banner', 'icon-morale', 'Morale'),
   };
+  MAP.dmg = MAP.damage;
   const swap = (m, pre, w) => pre + ' ' + MAP[w.toLowerCase()];
   return html
-    .replace(/(<\/span>) (Poison|poison|Block|block|damage|HP|Morale|morale)\b/g, swap)
-    .replace(/(\d) (Poison|poison|Block|block|damage|HP|Morale|morale)\b/g, swap);
+    .replace(/(<\/span>) (Poison|poison|Block|block|damage|dmg|HP|Morale|morale)\b/g, swap)
+    .replace(/(\d) (Poison|poison|Block|block|damage|dmg|HP|Morale|morale)\b/g, swap);
 }
 
 const sfx = (n, v) => { if (window.game && window.game.playSfx) window.game.playSfx(n, v); };
@@ -76,7 +78,7 @@ class GameUI {
     condemn:  { title: 'Condemn',  text: 'Condemned enemies take +30% damage from all sources while it lasts.' },
     block:    { title: 'Block',    text: 'Absorbs incoming damage before HP. Unused block fades between turns.' },
     taunt:    { title: 'Taunt',    text: 'Enemies must target the taunting soldier while the taunt holds.' },
-    suppress: { title: 'Suppress', text: 'Suppressed enemies deal 40% less damage.' },
+    suppress: { title: 'Suppress', text: 'Suppressed enemies deal 40-60% less damage, depending on the source.' },
     weaken:   { title: 'Weaken',   text: 'The weakened unit deals reduced damage with its attacks.' },
     pierce:   { title: 'Pierce',   text: 'Piercing damage ignores some or all of the target\'s Block.' },
     deafen:   { title: 'Deafen',   text: 'Deafened enemies cannot use morale attacks.' },
@@ -364,6 +366,12 @@ class GameUI {
           this.showStatusPopup(`unit-${data.unitIndex}`, data.text, data.color || 'var(--gold)');
         } else if (data.enemyIndex !== undefined) {
           this.showStatusPopup(`enemy-${data.enemyIndex}`, data.text, data.color || 'var(--gold)');
+          // The card reacts in kind: a stun jolt, or a debuff shiver
+          const st = (data.text || '').toLowerCase();
+          if (st.includes('stun')) this.flashElement(`enemy-${data.enemyIndex}`, 'stun-hit', 650);
+          else if (st.includes('weaken') || st.includes('suppress') || st.includes('marked') || st.includes('condemn')) {
+            this.flashElement(`enemy-${data.enemyIndex}`, 'debuff-hit', 600);
+          }
         }
         break;
       case 'passiveProc': {
@@ -386,7 +394,7 @@ class GameUI {
         sfx('blocked', 0.5);
         break;
       case 'enemyHit':
-        this.flashElement(`enemy-${data.enemyIndex}`, 'hit', 400);
+        this.flashElement(`enemy-${data.enemyIndex}`, data.damage >= 10 ? 'hit-heavy' : 'hit', data.damage >= 10 ? 550 : 400);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.damage, 'damage');
         if (data.damage > 0) { this.spawnImpact(`enemy-${data.enemyIndex}`, 'slash'); sfx('hit', data.damage >= 10 ? 1 : 0.8); }
         else sfx('blocked', 0.7);
@@ -398,6 +406,7 @@ class GameUI {
         break;
       case 'enemyPoison':
         sfx('spell', 0.55);
+        this.flashElement(`enemy-${data.enemyIndex}`, 'poison-hit', 550);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.amount, 'poison');
         if (window.game) window.game.triggerHint('first_poison');
         break;
@@ -470,6 +479,16 @@ class GameUI {
         const img = new Image();
         img.src = src;
         this._preloadedPortraits[u.title] = img;
+      }
+    });
+    // Enemy art was only fetched at attack time, so the first enemy cut-in
+    // of a fight flickered in late (or not at all on slow storage).
+    if (!this._preloadedEnemyArt) this._preloadedEnemyArt = {};
+    (this.engine.enemyDefs || []).concat(this.engine.enemies.map(e => e.id)).forEach(id => {
+      if (id && !this._preloadedEnemyArt[id]) {
+        const img = new Image();
+        img.src = typeof getEnemyPortrait === 'function' ? getEnemyPortrait(id) : `assets/portraits/enemies/enemy_${id}.png`;
+        this._preloadedEnemyArt[id] = img;
       }
     });
   }
@@ -686,7 +705,7 @@ class GameUI {
   // onto the enemy's HP bar (or projected healing onto an ally's), plus a
   // number next to the HP text. Mirrors the skill-card maths so the card and
   // the bar can never disagree.
-  getStagedSkillPreview() {
+  getStagedSkillPreview(target = null) {
     // Source: a staged skill, or an in-progress target selection (e.g. the
     // second target of Twin Slash after the first is locked in)
     let srcUnitIndex = null, srcSkillId = null, srcDiceIds = null;
@@ -756,6 +775,33 @@ class GameUI {
       damage = Math.min(30, (used + 1) * perAction) + Math.floor((equipDmg + moraleMod + buffDmg) * 0.35);
     }
 
+    // Per-target conditional modifiers, in the engine's application order —
+    // without these Gladius Thrust (and marks, condemns, executes, ...) lied
+    // on the projected HP bar whenever the condition held.
+    if (target && target.kind === 'enemy' && damage > 0) {
+      if (target._marked && target._marked > 0) damage = Math.round(damage * 1.2);
+      if (target._condemned && target._condemned > 0) damage = Math.round(damage * 1.3);
+      if (this.engine.unitHasItem(unit, 'blade_of_ariovistus') && this.engine.killedEnemies.length > 0) {
+        damage += this.engine.killedEnemies.length;
+      }
+      if (target.row === 'back' && this.engine.unitHasItem(unit, 'night_owl_pendant')) {
+        damage += 2 + (this.engine.getItemLevel(unit, 'night_owl_pendant') - 1);
+      }
+      if (fx.execute && target.hp <= target.maxHp * 0.25) damage *= 2;
+      if (target.hp === target.maxHp && this.engine.unitHasItem(unit, 'huntsmans_hood')) damage += 3;
+      if (target.block > 0 && this.engine.unitHasItem(unit, 'ashwood_longbow')) {
+        damage += Math.floor(damage * 0.4);
+      }
+      if (fx.gladiusThrust) {
+        const vulnerable = (target.block && target.block > 0) || target._skipNextAction ||
+          (target._marked && target._marked > 0) || (target._condemned && target._condemned > 0);
+        if (vulnerable) damage += Math.floor(damage * 0.5);
+      }
+      if (fx.aimedShot && target.row === 'back') damage += 3 + Math.floor(skillBonusDmg * 0.2);
+      if (fx.killShot && ((target._marked && target._marked > 0) || (target.poison && target.poison > 0))) damage *= 2;
+      if (fx.shoulderCharge && target.row === 'back') damage += Math.round(damage * 0.2);
+    }
+
     let heal = 0;
     const baseHeal = fx.heal || fx.healAll || 0;
     if (baseHeal > 0 || fx.dieScaleHeal) {
@@ -769,7 +815,7 @@ class GameUI {
   }
 
   showTargetPreview(el, target) {
-    const p = this.getStagedSkillPreview();
+    const p = this.getStagedSkillPreview(target);
     if (!p) return;
     this.hideTargetPreview(el);
     const bar = el.querySelector('.hp-bar');
@@ -854,7 +900,7 @@ class GameUI {
         el.addEventListener('click', () => this.onEnemyClick(enemy));
         // Staged-skill damage preview on the enemy's HP bar
         el.addEventListener('mouseenter', () => {
-          if (this.stagedSkill || this.engine.targetMode) this.showTargetPreview(el, { kind: 'enemy', hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block });
+          if (this.stagedSkill || this.engine.targetMode) this.showTargetPreview(el, { ...enemy, kind: 'enemy' });
         });
         el.addEventListener('mouseleave', () => this.hideTargetPreview(el));
       }
@@ -1522,7 +1568,7 @@ class GameUI {
           });
           // Staged-skill healing preview on the ally's HP bar
           el.addEventListener('mouseenter', () => {
-            if (this.stagedSkill) this.showTargetPreview(el, { kind: 'ally', hp: unit.hp, maxHp: unit.maxHp });
+            if (this.stagedSkill) this.showTargetPreview(el, { ...unit, kind: 'ally' });
           });
           el.addEventListener('mouseleave', () => this.hideTargetPreview(el));
         } else if (!unit.downed) {
@@ -2833,7 +2879,8 @@ class GameUI {
     const currentDepth = currentNode ? currentNode.depth : 0;
     const visibleRange = 3;
     const typedRange = 2;
-    const isShadow = (node) => !node.visited && node.depth > currentDepth + typedRange;
+    // The march's boss is the announced destination — he is never fogged.
+    const isShadow = (node) => node.type !== 'boss' && !node.visited && node.depth > currentDepth + typedRange;
 
     // Compute all nodes reachable via forward paths from current position
     const futureReachable = new Set();
@@ -2862,7 +2909,7 @@ class GameUI {
     }
 
     // Helper: is a node visible
-    const isVisible = (node) => node.visited || (node.depth >= currentDepth && node.depth <= currentDepth + visibleRange);
+    const isVisible = (node) => node.type === 'boss' || node.visited || (node.depth >= currentDepth && node.depth <= currentDepth + visibleRange);
 
     // Draw lines on canvas
     const ctx = canvas.getContext('2d');
@@ -4341,7 +4388,7 @@ class GameUI {
       // or description — so the choice had to be made blind.
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong>` +
         `<span class="respite-skill-cost">[${skill.cost.label}]</span>` +
-        `<br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>` +
+        `<br><span style="font-size:0.75rem;color:var(--gold)">${this._stripUpgradeRange(upgradeText)}</span>` +
         `<div class="respite-skill-desc">${this._enhanceSkillDesc(baseDef, unit)}</div>` +
         (skill.cooldown ? `<div class="respite-skill-meta">Cooldown: ${skill.cooldown} turn${skill.cooldown > 1 ? 's' : ''}</div>` : '');
 
@@ -4399,7 +4446,7 @@ class GameUI {
           choicesEl.style.pointerEvents = '';
           choicesEl.innerHTML = '';
           document.getElementById('event-outcome').classList.remove('hidden');
-          document.getElementById('event-outcome-text').textContent = `${unit.name}'s ${skill.name} has been improved! ${upgradeText}`;
+          document.getElementById('event-outcome-text').textContent = `${unit.name}'s ${skill.name} has been improved! ${this._stripUpgradeRange(upgradeText)}`;
           document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
         }, 550);
       });
@@ -5131,19 +5178,29 @@ class GameUI {
       ? '<div class="loot-training"><span class="loot-training-text gained">Training available!</span></div>'
       : '';
 
+    // When training was earned, the next stop is the level-up screen — the
+    // title and button must say so instead of promising the march.
+    const trainingNext = this.engine.pendingSkillPicks > 0 && !this.lootScreenFinal;
+    const titleEl = document.querySelector('#loot-screen .loot-title');
+
     if (this.pendingLoot.length === 0) {
-      lootText.textContent = this._lootHadItems ? 'The spoils are claimed.'
-        : 'No spoils — but the men earn their pay in scars.';
-      itemDisplay.innerHTML = trainingLine;
+      if (titleEl) titleEl.textContent = trainingNext ? 'LEVEL UP' : 'SPOILS';
+      lootText.textContent = trainingNext
+        ? 'The men have earned a training session.'
+        : this._lootHadItems ? 'The spoils are claimed.'
+          : 'No spoils — but the men earn their pay in scars.';
+      itemDisplay.innerHTML = trainingNext ? '' : trainingLine;
       unitDisplay.innerHTML = '';
       actionsEl.innerHTML = '';
       const btn = document.createElement('button');
       btn.className = 'btn-primary';
-      btn.textContent = this.lootScreenFinal ? 'Continue' : 'Continue March';
+      btn.textContent = this.lootScreenFinal ? 'Continue'
+        : trainingNext ? 'Train the Men' : 'Continue March';
       btn.onclick = () => this._finishLoot();
       actionsEl.appendChild(btn);
       return;
     }
+    if (titleEl) titleEl.textContent = 'SPOILS';
 
     // Show one item at a time
     if (this._currentLootIdx === undefined) this._currentLootIdx = 0;
@@ -5203,10 +5260,32 @@ class GameUI {
     if (revealing) {
       this._revealedLootIds.add(lootInstanceId);
       const revealCard = itemDisplay.querySelector('.loot-card');
-      if (revealCard && item.rarity !== 'common') {
-        setTimeout(() => this.spawnForgeSparks(revealCard), 180);
+      // FX escalate with rarity: uncommon sparks, rare double-bursts with a
+      // buzz, epic erupts — spark waves, a violet shockring, a rumble.
+      if (revealCard) {
+        if (item.rarity === 'uncommon') {
+          setTimeout(() => this.spawnForgeSparks(revealCard), 180);
+        } else if (item.rarity === 'rare') {
+          setTimeout(() => this.spawnForgeSparks(revealCard), 160);
+          setTimeout(() => this.spawnForgeSparks(revealCard), 420);
+          this.haptic(15);
+          sfx('confirm', 0.6);
+        } else if (item.rarity === 'epic') {
+          setTimeout(() => this.spawnForgeSparks(revealCard), 140);
+          setTimeout(() => this.spawnForgeSparks(revealCard), 380);
+          setTimeout(() => this.spawnForgeSparks(revealCard), 640);
+          const wrap = itemDisplay.querySelector('.loot-reveal-wrap');
+          if (wrap) {
+            const ring = document.createElement('div');
+            ring.className = 'loot-epic-ring';
+            wrap.appendChild(ring);
+            setTimeout(() => ring.remove(), 900);
+          }
+          this.screenShake(4);
+          this.haptic(35);
+          sfx('unlock', 0.8);
+        }
       }
-      if (item.rarity === 'epic') this.haptic(25);
     }
 
     // --- Unit panel (bottom) ---
@@ -5397,6 +5476,10 @@ class GameUI {
     skipBtn.textContent = `Skip (+${this._getSkipRenown(item.rarity)} Renown)`;
     skipBtn.onclick = () => this._skipCurrentLoot();
     actionsEl.appendChild(skipBtn);
+  }
+
+  _stripUpgradeRange(text) {
+    return (text || '').replace(/\s*\([^)]*\u2192[^)]*\)/g, '');
   }
 
   // Die range for a skill's cost — used to show die-scaled upgrades in
@@ -5675,11 +5758,13 @@ class GameUI {
   }
 
   // "+1 XP" moment shown AFTER the spoils screen, where it used to sit as a
-  // static row on the loot screen itself.
+  // static row on the loot screen itself. The toast opens on the PREVIOUS
+  // pip state, then the earned pip plops in.
   _showXpToast() {
     const xp = this.engine.encounterXP;
+    const prev = Math.max(0, xp - 1);
     const pips = Array.from({ length: 3 }, (_, i) =>
-      `<span class="xp-pip${i < xp ? ' filled' : ''}"></span>`).join('');
+      `<span class="xp-pip${i < prev ? ' filled' : ''}" data-pip="${i}"></span>`).join('');
     const toast = document.createElement('div');
     toast.className = 'xp-toast';
     toast.innerHTML = this.lastEncounterGrantedTraining
@@ -5687,10 +5772,14 @@ class GameUI {
       : `<span class="xp-toast-gain">+1 XP</span> ${pips}`;
     document.getElementById('game').appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('show'));
+    if (!this.lastEncounterGrantedTraining && xp > prev) {
+      const newPip = toast.querySelector(`.xp-pip[data-pip="${prev}"]`);
+      if (newPip) setTimeout(() => newPip.classList.add('filled', 'plop'), 550);
+    }
     setTimeout(() => {
       toast.classList.add('fade-out');
       setTimeout(() => toast.remove(), 500);
-    }, 2600);
+    }, 3000);
   }
 
   _finishLoot() {
@@ -6381,7 +6470,7 @@ class GameUI {
       // or description — so the choice had to be made blind.
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong>` +
         `<span class="respite-skill-cost">[${skill.cost.label}]</span>` +
-        `<br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>` +
+        `<br><span style="font-size:0.75rem;color:var(--gold)">${this._stripUpgradeRange(upgradeText)}</span>` +
         `<div class="respite-skill-desc">${this._enhanceSkillDesc(baseDef, unit)}</div>` +
         (skill.cooldown ? `<div class="respite-skill-meta">Cooldown: ${skill.cooldown} turn${skill.cooldown > 1 ? 's' : ''}</div>` : '');
       btn.addEventListener('click', () => {

@@ -165,8 +165,8 @@ const RAW_CLASSES = {
         "id": "press_advantage", "name": "Press the Advantage", "cooldown": 2,
         "cost": { "type": "combined", "min": 6, "dice": 2 }, "target": "single_enemy",
         "ignoreRow": true,
-        "description": "Ranged. 2 dice totaling 6+. Suppress target: deals 40% less damage for 2 turns.",
-        "effects": { "suppress": 2 }
+        "description": "Ranged. 2 dice totaling 6+. Suppress target: deals 60% less damage for 2 turns.",
+        "effects": { "suppress": 2, "suppressPower": 0.6 }
       },
       {
         "id": "tactical_preparation", "name": "Tactical Preparation", "cooldown": 3,

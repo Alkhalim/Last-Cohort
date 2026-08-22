@@ -293,6 +293,7 @@ function buildSkillExecute(skillData) {
     // Suppress: target deals less damage
     if (effects.suppress) {
       result.suppress = effects.suppress;
+      if (effects.suppressPower) result.suppressPower = effects.suppressPower;
       if (targets[0] && !result.target) result.target = targets[0];
     }
 
@@ -1114,7 +1115,7 @@ const ACTION_RIDER_LABELS = {
   blockSelf:        v => `<span class="stat-block">+${v} block self</span>`,
   spawn:            v => `<span style="color:var(--gold)">summons ${(ENEMY_DATA && ENEMY_DATA[v] && ENEMY_DATA[v].name) || 'reinforcements'}</span>`,
   aoe:              () => '<span style="color:var(--red-bright)">AOE</span>',
-  ignoreRow:        () => '<span style="color:var(--text-dim)">any row</span>',
+  ignoreRow:        () => '',
   // Previously invisible:
   boarCharge:       () => '<span style="color:var(--red-bright)">STUNS target</span>',
   multiTarget:      () => '<span style="color:var(--red-bright)">hits multiple</span>',
@@ -1157,7 +1158,7 @@ function formatItemStats(stats) {
   };
   // Stat labels render as sigils in the browser; headless contexts (sims,
   // tests) have no icon set and keep the words.
-  const ICON_FOR = { offense: 'sword', defense: 'shield', HP: 'heart', heal: 'heart', poison: 'skull', die: 'die' };
+  const ICON_FOR = { offense: 'sword', defense: 'shield', HP: 'heart', heal: 'cross', poison: 'skull', die: 'die' };
   const fmt = (val, label) => {
     const sign = val > 0 ? '+' : '';
     const color = val < 0 ? 'var(--red-bright)' : (colors[label] || 'var(--text-bright)');

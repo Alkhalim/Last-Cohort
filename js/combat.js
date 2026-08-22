@@ -2878,7 +2878,8 @@ class CombatEngine {
     // Suppress: target deals 40% less damage for N turns
     if (result.suppress && result.target) {
       result.target._suppressed = result.suppress;
-      parts.push(`${result.target.name} is suppressed! (-40% damage for ${result.suppress} turns)`);
+      result.target._suppressPower = result.suppressPower || 0.4;
+      parts.push(`${result.target.name} is suppressed! (-${Math.round(result.target._suppressPower * 100)}% damage for ${result.suppress} turns)`);
       if (this.onVisual) this.onVisual('statusText', { enemyIndex: result.target.index, text: 'Suppressed', color: '#aa66aa' });
     }
 
@@ -4639,9 +4640,10 @@ class CombatEngine {
         dmg = Math.max(1, dmg - reduction);
         enemy._pinned = false;
       }
-      // Suppress: -40% damage
+      // Suppress: reduced damage (power set by the source; 40% default,
+      // Press the Advantage 60%)
       if (enemy._suppressed && enemy._suppressed > 0) {
-        const suppReduction = Math.max(1, Math.floor(dmg * 0.4));
+        const suppReduction = Math.max(1, Math.floor(dmg * (enemy._suppressPower || 0.4)));
         dmg = Math.max(1, dmg - suppReduction);
         enemy._suppressed--;
       }
@@ -5264,7 +5266,7 @@ class CombatEngine {
     }
     if (this.getActiveCurses().includes('hunters_shadow')) dmg += 1;
     if (enemy._pinned) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.15)));
-    if (enemy._suppressed > 0) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.4)));
+    if (enemy._suppressed > 0) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * (enemy._suppressPower || 0.4))));
     if (enemy._enemyWeaken > 0) dmg = Math.max(1, dmg - enemy._enemyWeaken);
     if (enemy._crippled > 0) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.3)));
     return Math.max(0, dmg);
