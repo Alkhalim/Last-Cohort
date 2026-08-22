@@ -6325,3 +6325,72 @@ html, body {
 .achievement-section-header { cursor: pointer; user-select: none; }
 .achievement-section-chevron { color: var(--gold-dim); font-size: 0.7rem; margin-right: 2px; }
 .achievement-section-body.collapsed { display: none; }
+
+/* ============================================================
+   Boon/Curse selection: tabs + grid for the grown collection
+   ============================================================ */
+.mod-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.mod-tab {
+  flex: 1;
+  padding: 10px 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.mod-tab.boon-tab.active {
+  color: var(--green-bright);
+  border-color: rgba(90, 170, 90, 0.5);
+  background: rgba(50, 110, 50, 0.12);
+}
+.mod-tab.curse-tab.active {
+  color: var(--red-bright);
+  border-color: rgba(180, 50, 40, 0.5);
+  background: rgba(120, 30, 20, 0.12);
+}
+.mod-tab-count { opacity: 0.75; font-size: 0.7rem; margin-left: 4px; }
+.mod-hint {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-style: italic;
+  margin: 2px 0 10px;
+}
+.mod-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mod-grid .ps-curse-card { margin: 0; }
+.mod-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 18px 0;
+}
+.ps-curse-card.boon.active {
+  border-color: rgba(90, 170, 90, 0.65);
+  box-shadow: 0 0 10px rgba(90, 170, 90, 0.2), inset 0 0 14px rgba(90, 170, 90, 0.06);
+}
+.ps-curse-card.denied {
+  animation: denied-shake 0.35s;
+}
+@keyframes denied-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.ps-curse-renown { color: var(--gold); font-size: 0.72rem; margin-top: 4px; }
+
+/* The new tabbed layout needs block flow (the old .ps-curses was flex) */
+#curse-select-curses { display: block; }
+.ps-curse-card.boon .ps-curse-name { color: var(--green-bright); }

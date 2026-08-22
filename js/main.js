@@ -517,15 +517,12 @@ class Game {
   }
 
   addRunRenown(amount) {
-    // Apply curse/boon renown modifier
+    // Curses raise renown; boons are earned gifts and cost nothing
     const curseBonus = this.activeCurses.reduce((sum, cid) => {
       const c = CURSE_DEFS.find(d => d.id === cid); return sum + (c ? c.renown : 0);
     }, 0);
-    const boonPenalty = this.activeBoons.reduce((sum, bid) => {
-      const b = BOON_DEFS.find(d => d.id === bid); return sum + (b ? b.renown : 0);
-    }, 0);
-    const modifier = 1 + (curseBonus + boonPenalty) / 100;
-    const modified = Math.max(0, Math.round(amount * modifier));
+    const modifier = 1 + curseBonus / 100;
+    let modified = Math.max(0, Math.round(amount * modifier));
     // Renown-tier curses trade pain for fame
     if (this.activeCurses && this.activeCurses.includes('heavy_laurels')) modified = Math.round(modified * 1.25);
     if (this.activeCurses && this.activeCurses.includes('famous_prey')) modified = Math.round(modified * 1.5);
@@ -938,71 +935,82 @@ class Game {
     const curseContainer = document.getElementById('curse-select-curses');
     const marchBtn = document.getElementById('btn-march');
     const totalLabel = document.getElementById('curse-renown-total');
-    const unlockedAchievements = this.achievements;
+    const a = this.achievements;
+    if (!this._modTab) this._modTab = 'boons';
 
-    let html = '';
+    const unlockedBoons = BOON_DEFS.filter(b => !!a[b.achievement]);
+    const unlockedCurses = CURSE_DEFS.filter(c => !!a[c.achievement]);
+    const MAX_BOONS = 3;
+    // Drop selections that are no longer legal (e.g. after a reset)
+    this.activeBoons = this.activeBoons.filter(bid => unlockedBoons.some(b => b.id === bid)).slice(0, MAX_BOONS);
+    this.activeCurses = this.activeCurses.filter(cid => unlockedCurses.some(c => c.id === cid));
 
-    // Curses section
-    const unlockedCurses = CURSE_DEFS.filter(c => !!unlockedAchievements[c.achievement]);
-    if (unlockedCurses.length > 0) {
-      html += '<div class="ps-modifier-section-title" style="color:var(--red-bright)">CURSES <span style="font-size:0.6rem;color:var(--text-dim)">(increase Renown)</span></div>';
-      unlockedCurses.forEach(curse => {
-        const active = this.activeCurses.includes(curse.id);
-        html += `<div class="ps-curse-card ${active ? 'active' : ''}" data-curse-id="${curse.id}" data-type="curse">
-          <div class="ps-curse-name">${curse.name}</div>
-          <div class="ps-curse-desc">${curse.description}</div>
-          <div class="ps-curse-renown" style="color:var(--gold);font-size:0.75rem;margin-top:4px;">+${curse.renown}% Renown</div>
-        </div>`;
-      });
-    }
+    let html = `
+      <div class="mod-tabs">
+        <button class="mod-tab boon-tab${this._modTab === 'boons' ? ' active' : ''}" data-tab="boons">Boons <span class="mod-tab-count">${this.activeBoons.length}/${MAX_BOONS}</span></button>
+        <button class="mod-tab curse-tab${this._modTab === 'curses' ? ' active' : ''}" data-tab="curses">Curses <span class="mod-tab-count">${this.activeCurses.length}</span></button>
+      </div>`;
 
-    // Boons section
-    const unlockedBoons = BOON_DEFS.filter(b => !!unlockedAchievements[b.achievement]);
-    if (unlockedBoons.length > 0) {
-      html += '<div class="ps-modifier-section-title" style="color:var(--green-bright);margin-top:12px">BOONS <span style="font-size:0.6rem;color:var(--text-dim)">(decrease Renown)</span></div>';
+    if (this._modTab === 'boons') {
+      html += '<p class="mod-hint">Blessings earned by deed. Choose up to three — they cost nothing.</p>';
+      html += '<div class="mod-grid">';
+      if (unlockedBoons.length === 0) html += '<div class="mod-empty">No boons earned yet. Achievements grant them.</div>';
       unlockedBoons.forEach(boon => {
         const active = this.activeBoons.includes(boon.id);
         html += `<div class="ps-curse-card boon ${active ? 'active' : ''}" data-curse-id="${boon.id}" data-type="boon">
           <div class="ps-curse-name">${boon.name}</div>
           <div class="ps-curse-desc">${boon.description}</div>
-          <div class="ps-curse-renown" style="color:var(--green-bright);font-size:0.75rem;margin-top:4px;">${boon.renown}% Renown</div>
         </div>`;
       });
+      html += '</div>';
+    } else {
+      html += '<p class="mod-hint">Invite hardship, earn renown. Take as many as you dare.</p>';
+      html += '<div class="mod-grid">';
+      if (unlockedCurses.length === 0) html += '<div class="mod-empty">No curses earned yet. Achievements grant them.</div>';
+      unlockedCurses.forEach(curse => {
+        const active = this.activeCurses.includes(curse.id);
+        html += `<div class="ps-curse-card ${active ? 'active' : ''}" data-curse-id="${curse.id}" data-type="curse">
+          <div class="ps-curse-name">${curse.name}</div>
+          <div class="ps-curse-desc">${curse.description}</div>
+          ${curse.renown ? `<div class="ps-curse-renown">+${curse.renown}% Renown</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
     }
 
     curseContainer.innerHTML = html;
 
-    // Show total renown modifier
     const curseBonus = this.activeCurses.reduce((sum, cid) => {
       const curse = CURSE_DEFS.find(c => c.id === cid);
       return sum + (curse ? curse.renown : 0);
     }, 0);
-    const boonPenalty = this.activeBoons.reduce((sum, bid) => {
-      const boon = BOON_DEFS.find(b => b.id === bid);
-      return sum + (boon ? boon.renown : 0);
-    }, 0);
-    const totalMod = curseBonus + boonPenalty;
-    if (totalMod > 0) totalLabel.textContent = `Renown modifier: +${totalMod}%`;
-    else if (totalMod < 0) totalLabel.textContent = `Renown modifier: ${totalMod}%`;
-    else totalLabel.textContent = 'No modifiers selected';
+    const parts = [];
+    if (this.activeBoons.length > 0) parts.push(`${this.activeBoons.length} boon${this.activeBoons.length > 1 ? 's' : ''}`);
+    if (curseBonus > 0) parts.push(`+${curseBonus}% Renown`);
+    else if (this.activeCurses.length > 0) parts.push(`${this.activeCurses.length} curse${this.activeCurses.length > 1 ? 's' : ''}`);
+    totalLabel.textContent = parts.length ? parts.join(' · ') : 'March unburdened, or choose your fate.';
 
-    // Bind clicks
+    curseContainer.querySelectorAll('.mod-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        this._modTab = tab.dataset.tab;
+        this.renderCurseSelect();
+      });
+    });
     curseContainer.querySelectorAll('.ps-curse-card').forEach(card => {
       card.addEventListener('click', () => {
         const cid = card.dataset.curseId;
-        const type = card.dataset.type;
-        if (type === 'curse') {
+        if (card.dataset.type === 'curse') {
           const idx = this.activeCurses.indexOf(cid);
-          if (idx >= 0) {
-            this.activeCurses.splice(idx, 1);
-          } else {
-            this.activeCurses.push(cid);
-          }
+          if (idx >= 0) this.activeCurses.splice(idx, 1);
+          else this.activeCurses.push(cid);
         } else {
-          // Boon toggle
           const idx = this.activeBoons.indexOf(cid);
           if (idx >= 0) {
             this.activeBoons.splice(idx, 1);
+          } else if (this.activeBoons.length >= MAX_BOONS) {
+            card.classList.add('denied');
+            setTimeout(() => card.classList.remove('denied'), 400);
+            return;
           } else {
             this.activeBoons.push(cid);
           }
