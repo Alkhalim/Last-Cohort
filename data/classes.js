@@ -215,10 +215,10 @@ const RAW_CLASSES = {
         "effects": { "heal": 6, "cleanse": true, "bonusHealScale": 1.15 }
       },
       {
-        "id": "emergency_draught", "name": "Emergency Draught", "cooldown": 1,
+        "id": "emergency_draught", "name": "Emergency Draught", "cooldown": 2,
         "cost": { "type": "threshold", "min": 5 }, "target": "single_ally",
-        "description": "Heal an ally for 7 HP. Cleanse poison, marks, and stun.",
-        "effects": { "heal": 7, "cleanse": true, "cleanseMarks": true, "cleanseStun": true }
+        "description": "Heal an ally for 10 HP. Cleanse poison, marks, and stun.",
+        "effects": { "heal": 10, "cleanse": true, "cleanseMarks": true, "cleanseStun": true, "bonusHealScale": 0.6 }
       },
       {
         "id": "plague_flask", "name": "Plague Flask", "cooldown": 1,

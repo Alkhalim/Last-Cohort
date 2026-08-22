@@ -365,9 +365,16 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       const repeatable = ['skill_upgrade', 'item_upgrade', 'item_trade']; // these can repeat
       // Events filter on contentDiff: their difficulty gates are content keys
       // (march-flavor text), not power gates.
+      const UTILITY_TYPES = ['skill_upgrade', 'item_upgrade', 'item_trade'];
       const eligible = EVENT_DATA.filter(e => {
-        if (e.minDifficulty && e.minDifficulty > contentDiff) return false;
-        if (e.maxDifficulty && e.maxDifficulty < contentDiff) return false;
+        if (UTILITY_TYPES.includes(e.type)) {
+          // Utility stops gate on the MARCH itself (training 1+, smith 2+,
+          // merchant 3+), not on region content difficulty
+          if (e.minDifficulty && difficulty < e.minDifficulty) return false;
+        } else {
+          if (e.minDifficulty && e.minDifficulty > contentDiff) return false;
+          if (e.maxDifficulty && e.maxDifficulty < contentDiff) return false;
+        }
         if (e.oncePerRun && usedRunEventIds.has(e.id)) return false;
         if (e.type === 'item_trade' && merchantCount >= MAX_MERCHANTS_PER_MARCH) return false;
         return true;
@@ -391,6 +398,20 @@ function generateMap(difficulty = 1, recentBosses = [], usedRunEventIds = new Se
       if (chosen && !repeatable.includes(chosen.type)) usedEventIds.add(chosen.id);
       if (chosen && chosen.oncePerRun) usedRunEventIds.add(chosen.id);
       if (chosen && chosen.type === 'item_trade') merchantCount++;
+    }
+  }
+
+  // Guarantee: every march offers at least one utility stop — training from
+  // march 1, the smith from march 2, the merchant from march 3
+  const UTILITY_GATE = { skill_upgrade: 1, item_upgrade: 2, item_trade: 3 };
+  const eventNodes = nodes.filter(n => n.type === 'event' && n.encounter);
+  const hasUtility = eventNodes.some(n => n.encounter && UTILITY_GATE[n.encounter.type] !== undefined);
+  if (!hasUtility && eventNodes.length > 0) {
+    const allowedUtility = EVENT_DATA.filter(e =>
+      UTILITY_GATE[e.type] !== undefined && difficulty >= UTILITY_GATE[e.type]);
+    if (allowedUtility.length > 0) {
+      const forced = eventNodes[Math.floor(Math.random() * eventNodes.length)];
+      forced.encounter = allowedUtility[Math.floor(Math.random() * allowedUtility.length)];
     }
   }
 

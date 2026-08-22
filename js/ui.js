@@ -1770,7 +1770,7 @@ class GameUI {
 
       // HP *costs* ("Costs 3 HP") are not healing and must not be rewritten by
       // the heal bonus — the engine charges them flat. Shield them first.
-      desc = desc.replace(/([Cc]osts(?: you)?) (\d+) HP/g, '$1 §$2§ HP');
+      desc = desc.replace(/([Cc]osts(?: you)?|[Ss]acrifices?|[Ll]oses?) (\d+) HP/g, '$1 §$2§ HP');
       // Replace heal values
       desc = desc.replace(/(\d+) HP/g, (match, base) => {
         const b = parseInt(base);
@@ -1780,7 +1780,7 @@ class GameUI {
         }
         return `<span class="stat-heal">${b}</span> HP`;
       });
-      desc = desc.replace(/§(\d+)§/g, '<span class="stat-dmg">$1</span>');
+      desc = desc.replace(/§(\d+)§/g, '<span class="stat-cost">$1</span>');
 
       // Replace "pair value" with actual value when dice are staged
       if (skill.cost && skill.cost.type === 'pair') {
@@ -2336,6 +2336,24 @@ class GameUI {
   // MAP SCREEN
   // ================================================================
 
+  // Full item card on tap — used by the smith and respite upgrade lists
+  showItemDetailPopup(itemId) {
+    const item = getItemData(itemId);
+    if (!item) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'unlock-modal-overlay show item-detail-pop';
+    overlay.innerHTML = `<div class="unlock-modal">
+      <div class="unlock-kicker">${(item.slot || '').toUpperCase()}${item.level && item.level > 1 ? ` · LV ${item.level}` : ''}</div>
+      <div class="unlock-name rarity-${item.rarity}">${getItemDisplayName(itemId)}</div>
+      <div class="unlock-desc">${formatItemStats(item.stats)} ${renderTagPips(item.classTags)}</div>
+      ${item.special ? `<div class="unlock-passive">${formatItemSpecial(item)}</div>` : ''}
+      ${item.description ? `<div class="unlock-desc" style="font-style:italic;color:var(--text-dim)">${item.description}</div>` : ''}
+      <div class="unlock-dismiss">TAP TO CLOSE</div>
+    </div>`;
+    overlay.addEventListener('click', () => overlay.remove());
+    document.getElementById('game').appendChild(overlay);
+  }
+
   showMapScreen() {
     this._eventCombat = false;
     this.showScreen('map-screen');
@@ -2428,7 +2446,7 @@ class GameUI {
 
     // Skills
     const skillsHtml = unit.skills.map(s =>
-      `<div class="profile-skill"><span class="profile-skill-name">${s.name}</span> <span class="profile-skill-cost">[${s.cost.label}]</span>${s.cooldown ? ` <span class="profile-skill-cd">CD:${s.cooldown}</span>` : ''}<div class="profile-skill-desc">${this._enhanceSkillDesc(s, unit)}</div></div>`
+      `<div class="profile-skill"><span class="profile-skill-name">${s.name}</span> <span class="profile-skill-cost">[${s.cost.label}]</span>${s.cooldown ? ` <span class="profile-skill-cd">Cooldown: ${s.cooldown}</span>` : ''}<div class="profile-skill-desc">${this._enhanceSkillDesc(s, unit)}</div></div>`
     ).join('');
 
     // Build overlay
@@ -3631,7 +3649,15 @@ class GameUI {
         btn.innerHTML = `${choice.text} <span class="event-requires">(Requires ${requirementLabel})</span>`;
         btn.disabled = true;
       } else {
-        btn.innerHTML = `${choice.text}${this.choiceStakeTag(choice, event, ci)}`;
+        // Choices unlocked by a class in the party wear that class's colors
+        if (choice.requiresTag) {
+          const badgeLabels = { melee: 'Fighter', command: 'Officer', support: 'Medic', ranged: 'Marksman' };
+          btn.classList.add('event-choice-classed');
+          btn.style.setProperty('--choice-class-color', `var(--class-${choice.requiresTag})`);
+          btn.innerHTML = `<span class="event-class-badge" style="color:var(--class-${choice.requiresTag});border-color:var(--class-${choice.requiresTag})">${badgeLabels[choice.requiresTag] || choice.requiresTag}</span> ${choice.text}${this.choiceStakeTag(choice, event, ci)}`;
+        } else {
+          btn.innerHTML = `${choice.text}${this.choiceStakeTag(choice, event, ci)}`;
+        }
         btn.addEventListener('click', () => this.resolveEventChoice(event, choice));
       }
       choicesEl.appendChild(btn);
@@ -4221,7 +4247,8 @@ class GameUI {
       const upgradeText = `Lv${startLevel} → ${endLevel}: ${upgradeDetails.join(', ')}`;
       const div = document.createElement('div');
       div.className = 'btn-event-choice';
-      div.style.pointerEvents = 'none';
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', () => this.showItemDetailPopup(itemId));
       div.style.opacity = '0';
       div.style.transform = 'translateY(10px)';
       div.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
@@ -5160,7 +5187,7 @@ class GameUI {
     });
 
     // HP *costs* are not healing — shield them from the heal-bonus rewrite.
-    desc = desc.replace(/([Cc]osts(?: you)?) (\d+) HP/g, '$1 §$2§ HP');
+    desc = desc.replace(/([Cc]osts(?: you)?|[Ss]acrifices?|[Ll]oses?) (\d+) HP/g, '$1 §$2§ HP');
     // Heal values
     desc = desc.replace(/(\d+) HP/g, (match, base) => {
       const b = parseInt(base);
@@ -5169,7 +5196,7 @@ class GameUI {
       }
       return `<span class="stat-heal">${b}</span> HP`;
     });
-    desc = desc.replace(/§(\d+)§/g, '<span class="stat-dmg">$1</span>');
+    desc = desc.replace(/§(\d+)§/g, '<span class="stat-cost">$1</span>');
 
     // Die value ranges (non-combat context — always show ranges with bonuses)
     desc = desc.replace(/die value x(\d+)/g, (m, mult) => {
@@ -5413,7 +5440,7 @@ class GameUI {
     choices.forEach(skill => {
       const card = document.createElement('div');
       card.className = 'levelup-skill-card';
-      const cdText = skill.cooldown ? `<span style="color:var(--text-dim);font-size:0.7rem;"> CD: ${skill.cooldown}</span>` : `<span style="color:var(--green-bright);font-size:0.7rem;"> No CD</span>`;
+      const cdText = skill.cooldown ? `<span style="color:var(--text-dim);font-size:0.7rem;"> Cooldown: ${skill.cooldown}</span>` : `<span style="color:var(--green-bright);font-size:0.7rem;"> No cooldown</span>`;
       const enhancedDesc = this._enhanceSkillDesc(skill, unit);
       card.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${cdText}</div>
@@ -5884,8 +5911,9 @@ class GameUI {
       const upgradeText = `Lv${startLevel} → ${endLevel}: ${upgradeDetails.join(', ')}`;
       const div = document.createElement('div');
       div.className = 'btn-event-choice';
-      div.style.pointerEvents = 'none';
       div.style.opacity = '0.9';
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', () => this.showItemDetailPopup(itemId));
       div.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${displayName}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
       choicesEl.appendChild(div);
     });
@@ -5932,6 +5960,7 @@ class GameUI {
 
     const titleEl = document.createElement('div');
     titleEl.className = 'march-rest-subtitle';
+    titleEl.id = 'march-rest-upgrade-title';
     titleEl.textContent = `Choose ${this._marchRestUpgradesLeft} skills to upgrade:`;
     choicesEl.appendChild(titleEl);
 
@@ -6015,6 +6044,14 @@ class GameUI {
         btn.style.opacity = '0.5';
         btn.style.pointerEvents = 'none';
         this._marchRestUpgradesLeft--;
+        const restTitle = document.getElementById('march-rest-upgrade-title');
+        if (restTitle) {
+          restTitle.textContent = this._marchRestUpgradesLeft === 1
+            ? 'Choose one more skill to upgrade:'
+            : this._marchRestUpgradesLeft > 1
+              ? `Choose ${this._marchRestUpgradesLeft} skills to upgrade:`
+              : 'Your men sharpen their techniques.';
+        }
         if (this._marchRestUpgradesLeft <= 0) {
           choicesEl.querySelectorAll('.btn-event-choice').forEach(b => { b.style.pointerEvents = 'none'; b.style.opacity = '0.4'; });
           this.addMarchRestContinue(choicesEl);
