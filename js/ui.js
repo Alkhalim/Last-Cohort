@@ -102,7 +102,7 @@ class GameUI {
     const tooltip = document.getElementById('morale-tooltip');
     if (!bar || !tooltip) return;
 
-    const show = () => {
+    const show = this._showMoraleTooltip = () => {
       const band = getMoraleBand(this.engine.morale);
       let effects = '';
       if (this.engine.morale >= 85) {
@@ -137,6 +137,73 @@ class GameUI {
     }, { passive: true });
     bar.addEventListener('touchend', () => { clearTimeout(holdTimer); hide(); });
     bar.addEventListener('touchcancel', () => { clearTimeout(holdTimer); hide(); });
+  }
+
+  // Ember sparks off a freshly-forged item card
+  spawnForgeSparks(el) {
+    if (window.game && window.game.settings && window.game.settings.reducedMotion) return;
+    const rect = el.getBoundingClientRect();
+    for (let i = 0; i < 8; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'hit-spark forge';
+      spark.style.left = (rect.left + 14 + Math.random() * (rect.width - 28)) + 'px';
+      spark.style.top = (rect.top + rect.height / 2) + 'px';
+      spark.style.setProperty('--sx', (Math.random() * 44 - 22) + 'px');
+      spark.style.setProperty('--sy', (-18 - Math.random() * 34) + 'px');
+      document.body.appendChild(spark);
+      setTimeout(() => spark.remove(), 620);
+    }
+  }
+
+  // Slash mark + particle burst on a card — the visceral half of a hit
+  spawnImpact(elementId, kind = 'slash') {
+    if (window.game && window.game.settings && window.game.settings.reducedMotion) return;
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (kind === 'slash') {
+      const slash = document.createElement('div');
+      slash.className = 'slash-mark';
+      slash.style.transform = `rotate(${-35 + Math.random() * 24}deg)`;
+      el.appendChild(slash);
+      setTimeout(() => slash.remove(), 450);
+    }
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const count = 6;
+    for (let i = 0; i < count; i++) {
+      const spark = document.createElement('div');
+      spark.className = `hit-spark ${kind === 'blood' ? 'blood' : ''}`;
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.8;
+      const dist = 26 + Math.random() * 30;
+      spark.style.left = cx + 'px';
+      spark.style.top = cy + 'px';
+      spark.style.setProperty('--sx', Math.cos(angle) * dist + 'px');
+      spark.style.setProperty('--sy', Math.sin(angle) * dist - 12 + 'px');
+      document.body.appendChild(spark);
+      setTimeout(() => spark.remove(), 520);
+    }
+  }
+
+  // A bolt flies from the attacker to the target (ranged skills)
+  spawnProjectile(fromId, toId, done) {
+    const from = document.getElementById(fromId);
+    const to = document.getElementById(toId);
+    if (!from || !to) { if (done) done(); return; }
+    const f = from.getBoundingClientRect();
+    const t = to.getBoundingClientRect();
+    const bolt = document.createElement('div');
+    bolt.className = 'projectile-bolt';
+    const x0 = f.left + f.width / 2, y0 = f.top + f.height / 2;
+    const x1 = t.left + t.width / 2, y1 = t.top + t.height / 2;
+    bolt.style.left = x0 + 'px';
+    bolt.style.top = y0 + 'px';
+    bolt.style.transform = `rotate(${Math.atan2(y1 - y0, x1 - x0)}rad)`;
+    document.body.appendChild(bolt);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      bolt.style.transform = `translate(${x1 - x0}px, ${y1 - y0}px) rotate(${Math.atan2(y1 - y0, x1 - x0)}rad)`;
+    }));
+    setTimeout(() => { bolt.remove(); if (done) done(); }, 240);
   }
 
   // Short vibration on mobile for heavy moments (respects reduced motion)
@@ -197,6 +264,7 @@ class GameUI {
       case 'unitHit':
         this.flashElement(`unit-${data.unitIndex}`, 'hit', 600);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
+        if (data.damage > 0) this.spawnImpact(`unit-${data.unitIndex}`, 'blood');
         this.screenShake(data.damage);
         if (data.damage >= 8) this.triggerHitstop(60);
         break;
@@ -220,6 +288,19 @@ class GameUI {
         if (window.game) window.game.triggerHint('first_block');
         break;
       case 'morale':
+        // First time an enemy attacks the cohort's spirit, explain the bar
+        if (data.fromEnemy && data.amount < 0 && this._showMoraleTooltip) {
+          try {
+            const seen = JSON.parse(localStorage.getItem('lc_hints_seen') || '{}');
+            if (!seen.first_enemy_morale_attack) {
+              seen.first_enemy_morale_attack = true;
+              localStorage.setItem('lc_hints_seen', JSON.stringify(seen));
+              this._showMoraleTooltip();
+              const tip = document.getElementById('morale-tooltip');
+              setTimeout(() => { if (tip) tip.classList.remove('visible', 'show'); if (tip) tip.style.display = ''; }, 4500);
+            }
+          } catch (e) { /* storage unavailable */ }
+        }
         this.flashElement('morale-bar', data.amount > 0 ? 'morale-up' : 'morale-down', 600);
         this.showDamagePopup('morale-bar', data.amount, 'morale');
         if (window.game && data.amount < 0) window.game.triggerHint('first_morale_change');
@@ -238,6 +319,7 @@ class GameUI {
       case 'enemyHit':
         this.flashElement(`enemy-${data.enemyIndex}`, 'hit', 400);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.damage, 'damage');
+        if (data.damage > 0) this.spawnImpact(`enemy-${data.enemyIndex}`, 'slash');
         if (data.damage >= 10) this.triggerHitstop(55);
         break;
       case 'unitPoison':
@@ -644,7 +726,7 @@ class GameUI {
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
-        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">${gicon('shield')}${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon" title="Poison ${enemy.poison} — ${poisonTotalDamage(enemy.poison)} damage over ${enemy.poison} turns">${gicon('skull')}${enemy.poison}</span>` : ''}</div>
+        <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">${gicon('shield')}${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon" title="${this.engine.partyHasItem && this.engine.partyHasItem('grinding_ring') ? `Poison ${enemy.poison} — ${enemy.poison} damage every turn (the Quern lets nothing fade)` : `Poison ${enemy.poison} — ${poisonTotalDamage(enemy.poison)} damage over ${enemy.poison} turns`}">${gicon('skull')}${enemy.poison}</span>` : ''}</div>
         ${this.renderIntentBadge(enemy)}
       `;
 
@@ -794,7 +876,9 @@ class GameUI {
       })()}
       ${(() => {
         const effects = [];
-        if (enemy.poison > 0) effects.push(`<span class="status-poison" title="Ticks for its value each turn, then decays by 1">Poison ${enemy.poison} (${poisonTotalDamage(enemy.poison)} dmg over ${enemy.poison} turns)</span>`);
+        if (enemy.poison > 0) effects.push(this.engine.partyHasItem && this.engine.partyHasItem('grinding_ring')
+          ? `<span class="status-poison" title="The Unresting Quern: poison does not fade">Poison ${enemy.poison} (${enemy.poison} dmg every turn)</span>`
+          : `<span class="status-poison" title="Ticks for its value each turn, then decays by 1">Poison ${enemy.poison} (${poisonTotalDamage(enemy.poison)} dmg over ${enemy.poison} turns)</span>`);
         if (enemy.block > 0) effects.push(`<span class="status-block">Block ${enemy.block}</span>`);
         if (enemy._marked && enemy._marked > 0) effects.push(`<span class="status-marked">Marked (${enemy._marked}t)</span>`);
         if (enemy._condemned && enemy._condemned > 0) effects.push(`<span class="status-condemned">Condemned (${enemy._condemned}t)</span>`);
@@ -1483,11 +1567,24 @@ class GameUI {
 
       // Die-value scaling preview: show range based on cost type
       const dieRange = (costType) => {
-        if (costType === 'odd') return [1, 3, 5];
-        if (costType === 'even') return [2, 4, 6];
-        const c = skill.cost;
-        if (c && c.min && c.max) return Array.from({ length: c.max - c.min + 1 }, (_, i) => c.min + i);
-        return [1, 2, 3, 4, 5, 6];
+        let theoretical;
+        if (costType === 'odd') theoretical = [1, 3, 5];
+        else if (costType === 'even') theoretical = [2, 4, 6];
+        else {
+          const c = skill.cost;
+          theoretical = (c && c.min && c.max)
+            ? Array.from({ length: c.max - c.min + 1 }, (_, i) => c.min + i)
+            : [1, 2, 3, 4, 5, 6];
+        }
+        // Mid-combat, only the dice actually on the table matter
+        if (this.engine.phase === PHASE.PLAYER_TURN && this.engine.dicePool) {
+          const avail = [...new Set(this.engine.dicePool.dice
+            .filter(d => !d.used)
+            .map(d => d.value)
+            .filter(v => theoretical.includes(v)))].sort((a, b) => a - b);
+          if (avail.length > 0) return avail;
+        }
+        return theoretical;
       };
       const costType = skill.cost && skill.cost.type;
       if (skill.effects && skill.effects.dieScaleDamage) {
@@ -1933,7 +2030,7 @@ class GameUI {
       const dicePips = this.getDicePips(skill.cost);
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${dicePips}${this.getRangeBadge(skill)} ${cdText}</div>
-        <div class="skill-desc">${this.annotateKeywords(desc)}</div>
+        <div class="skill-desc">${this.annotateKeywords(desc.replace(/(\d+)-\1\b/g, '$1'))}</div>
         ${cooldownOverlay}
       `;
 
@@ -2124,6 +2221,11 @@ class GameUI {
     const unit = this.engine.party[this.selectedUnitIndex];
     const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
     if (!skill) return;
+    // Ranged attacks loose a visible bolt at the chosen enemy
+    if (skill.ignoreRow && target && target.maxHp && !target.classId &&
+        !(window.game && window.game.settings && window.game.settings.reducedMotion)) {
+      this.spawnProjectile(`unit-${unit.index}`, `enemy-${target.index}`);
+    }
 
     const canPay = this.engine.dicePool.canPayCost(skill.cost, this.stagedSkill.diceIds);
     if (!canPay) return;
@@ -4246,7 +4348,7 @@ class GameUI {
       const displayName = getItemDisplayName(itemId);
       const upgradeText = `Lv${startLevel} → ${endLevel}: ${upgradeDetails.join(', ')}`;
       const div = document.createElement('div');
-      div.className = 'btn-event-choice';
+      div.className = 'btn-event-choice forge-card';
       div.style.cursor = 'pointer';
       div.addEventListener('click', () => this.showItemDetailPopup(itemId));
       div.style.opacity = '0';
@@ -4256,13 +4358,17 @@ class GameUI {
       choicesEl.appendChild(div);
     });
 
-    // Pop in items one by one
-    const smithItems = choicesEl.querySelectorAll('.btn-event-choice');
+    // Forge items one by one — each arrives white-hot with a burst of sparks
+    const smithItems = choicesEl.querySelectorAll('.forge-card');
     smithItems.forEach((el, i) => {
       setTimeout(() => {
         el.style.opacity = '0.9';
         el.style.transform = 'translateY(0)';
-      }, 400 + i * 500);
+        el.classList.add('forging');
+        this.spawnForgeSparks(el);
+        if (typeof this.haptic === 'function') this.haptic(18);
+        setTimeout(() => el.classList.remove('forging'), 700);
+      }, 400 + i * 550);
     });
 
     // Show continue after all items revealed
@@ -5910,12 +6016,25 @@ class GameUI {
       const displayName = getItemDisplayName(itemId);
       const upgradeText = `Lv${startLevel} → ${endLevel}: ${upgradeDetails.join(', ')}`;
       const div = document.createElement('div');
-      div.className = 'btn-event-choice';
-      div.style.opacity = '0.9';
+      div.className = 'btn-event-choice forge-card';
+      div.style.opacity = '0';
+      div.style.transform = 'translateY(10px)';
+      div.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
       div.style.cursor = 'pointer';
       div.addEventListener('click', () => this.showItemDetailPopup(itemId));
       div.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong class="rarity-${item.rarity}">${displayName}</strong><br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>`;
       choicesEl.appendChild(div);
+    });
+    // Forge them in one by one
+    choicesEl.querySelectorAll('.forge-card').forEach((el, i) => {
+      setTimeout(() => {
+        el.style.opacity = '0.9';
+        el.style.transform = 'translateY(0)';
+        el.classList.add('forging');
+        this.spawnForgeSparks(el);
+        if (typeof this.haptic === 'function') this.haptic(18);
+        setTimeout(() => el.classList.remove('forging'), 700);
+      }, 350 + i * 550);
     });
 
     this.addMarchRestContinue(choicesEl);

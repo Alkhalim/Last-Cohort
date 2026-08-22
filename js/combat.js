@@ -4915,7 +4915,7 @@ class CombatEngine {
         this.clampMorale();
         this.addLog(`${enemy.name} ${action.text}! Morale ${moraleDelta > 0 ? '+' : ''}${moraleDelta}.`);
         if (this.onVisual) {
-          this.onVisual('morale', { amount: moraleDelta });
+          this.onVisual('morale', { amount: moraleDelta, fromEnemy: true });
         }
       }
     }
