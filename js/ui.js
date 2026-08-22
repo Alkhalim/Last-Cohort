@@ -5273,6 +5273,16 @@ class GameUI {
       const item = getItemData(itemId);
       const renown = this._getSkipRenown(item ? item.rarity : 'common');
       this.engine.totalRenownEarned += renown;
+      // Sacrifice to the Gods: leave behind 3 epics in one run
+      if (item && item.rarity === 'epic' && window.game) {
+        window.game._epicsLeftThisRun = (window.game._epicsLeftThisRun || 0) + 1;
+        if (window.game._epicsLeftThisRun >= 3 && !window.game.achievements.leave_3_epics) {
+          window.game.achievements.leave_3_epics = true;
+          window.game.saveAchievements();
+          window.game.addNotification('Achievement: Sacrifice to the Gods!');
+          window.game.notifyItemUnlocks('leave_3_epics');
+        }
+      }
     }
     this.pendingLoot.splice(this._currentLootIdx, 1);
     this._replaceSlotIdx = undefined;

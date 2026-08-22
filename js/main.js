@@ -589,6 +589,7 @@ class Game {
     this.marchCount = test.difficulty - 1;
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
+    this._epicsLeftThisRun = 0;
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;
@@ -2008,9 +2009,15 @@ class Game {
     const s = this.stats;
     const a = this.achievements;
 
-    // Boss kill achievements (3 kills each for regular bosses)
-    const bossIds = ['arminius_champion', 'grove_witch', 'silent_huntsman', 'mire_mother', 'bone_speaker', 'serpent_shaman', 'fog_weaver', 'blood_stag'];
+    // Boss kill achievements: first kill and third kill for every boss
+    const bossIds = ['arminius_champion', 'grove_witch', 'silent_huntsman', 'mire_mother', 'bone_speaker', 'serpent_shaman', 'fog_weaver', 'blood_stag', 'leech_mound', 'ursus_ferox'];
     bossIds.forEach(bid => {
+      const firstKey = 'boss_' + bid + '_first';
+      if (!a[firstKey] && (s.enemiesKilled[bid] || 0) >= 1) {
+        a[firstKey] = true;
+        const data = ENEMY_DATA[bid];
+        this.addNotification(`Achievement: ${data ? data.name : bid} defeated!`);
+      }
       const key = 'boss_' + bid + '_x3';
       if (!a[key] && (s.enemiesKilled[bid] || 0) >= 3) {
         a[key] = true;
@@ -2019,6 +2026,14 @@ class Game {
       }
     });
 
+    // Story boss x3 achievements (the second trophies key off these kills)
+    [['corpse_of_arminius', 'boss_corpse_arminius_x3'], ['corpse_of_varus', 'boss_corpse_varus_x3'], ['spirit_of_arminius', 'boss_spirits_x3']].forEach(([bid, key]) => {
+      if (!a[key] && (s.enemiesKilled[bid] || 0) >= 3) {
+        a[key] = true;
+        const data = ENEMY_DATA[bid];
+        this.addNotification(`Achievement: ${data ? data.name : bid} defeated thrice!`);
+      }
+    });
     // Story boss achievements (1 kill each)
     const storyBosses = [
       { id: 'corpse_of_arminius', key: 'boss_corpse_arminius' },
@@ -2552,6 +2567,13 @@ class Game {
         { key: 'class_wulfswestr', name: "Thusnelda's Defeat", desc: "Defeat Thusnelda.", progress: () => (s.enemiesKilled['thusnelda']||0) >= 1 ? 'Done' : '0/1' },
       ]},
       { title: 'BOSS MASTERY', defs: [
+        ...[['arminius_champion', 'Germanic Warlord'], ['grove_witch', 'Grove Witch'], ['silent_huntsman', 'Silent Huntsman'],
+            ['mire_mother', 'Mire Mother'], ['bone_speaker', 'Bone Speaker'], ['serpent_shaman', 'Serpent Shaman'],
+            ['fog_weaver', 'Fog Weaver'], ['blood_stag', 'Blood Stag'], ['leech_mound', 'Leech Mound'], ['ursus_ferox', 'Ursus Ferox']]
+          .map(([bid, bname]) => ({
+            key: `boss_${bid}_first`, name: `${bname} Felled`, desc: `Defeat the ${bname} for the first time.`,
+            progress: () => (s.enemiesKilled[bid] || 0) >= 1 ? 'Done' : '0/1',
+          })),
         { key: 'boss_arminius_champion_x3', name: "Warlord Slayer", desc: "Defeat the Germanic Warlord 3 times.", progress: () => Math.min(3, s.enemiesKilled['arminius_champion']||0) + '/3' },
         { key: 'boss_grove_witch_x3', name: "Witch Hunter", desc: "Defeat the Grove Witch 3 times.", progress: () => Math.min(3, s.enemiesKilled['grove_witch']||0) + '/3' },
         { key: 'boss_silent_huntsman_x3', name: "Counter-Sniper", desc: "Defeat the Silent Huntsman 3 times.", progress: () => Math.min(3, s.enemiesKilled['silent_huntsman']||0) + '/3' },
@@ -2560,6 +2582,11 @@ class Game {
         { key: 'boss_bone_speaker_x3', name: "Silence the Dead", desc: "Defeat the Bone Speaker 3 times.", progress: () => Math.min(3, s.enemiesKilled['bone_speaker']||0) + '/3' },
         { key: 'boss_fog_weaver_x3', name: "Fog Cutter", desc: "Defeat the Fog Weaver 3 times.", progress: () => Math.min(3, s.enemiesKilled['fog_weaver']||0) + '/3' },
         { key: 'boss_blood_stag_x3', name: "Stag Hunter", desc: "Defeat the Blood Stag 3 times.", progress: () => Math.min(3, s.enemiesKilled['blood_stag']||0) + '/3' },
+        { key: 'boss_leech_mound_x3', name: "Drainer of the Drained", desc: "Defeat the Leech Mound 3 times.", progress: () => Math.min(3, s.enemiesKilled['leech_mound']||0) + '/3' },
+        { key: 'boss_ursus_ferox_x3', name: "Bear Baiter", desc: "Defeat Ursus Ferox 3 times.", progress: () => Math.min(3, s.enemiesKilled['ursus_ferox']||0) + '/3' },
+        { key: 'boss_corpse_arminius_x3', name: "Thrice-Buried Betrayer", desc: "Defeat the Corpse of Arminius 3 times.", hidden: true, progress: () => Math.min(3, s.enemiesKilled['corpse_of_arminius']||0) + '/3' },
+        { key: 'boss_corpse_varus_x3', name: "Thrice-Redeemed", desc: "Defeat the Corpse of Varus 3 times.", hidden: true, progress: () => Math.min(3, s.enemiesKilled['corpse_of_varus']||0) + '/3' },
+        { key: 'boss_spirits_x3', name: "Keeper of the Silence", desc: "Defeat the Spirits 3 times.", hidden: true, progress: () => Math.min(3, s.enemiesKilled['spirit_of_arminius']||0) + '/3' },
         { key: 'boss_corpse_arminius', name: "The Betrayer Falls", desc: "Defeat the Corpse of Arminius.", hidden: true, progress: () => a.boss_corpse_arminius ? 'Done' : '0/1' },
         { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
         { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
@@ -2624,7 +2651,18 @@ class Game {
         const boon = BOON_DEFS.find(b => b.achievement === def.key);
         const classUnlock = Object.entries(CLASS_DATA).find(([id, d]) => d.unlockKey === def.key);
         if (classUnlock) rewards.push(`<span style="color:var(--class-${classUnlock[1].tags.find(t=>t!=='roman'&&t!=='germanic')||'roman'})">Class: ${classUnlock[1].name}</span>`);
-        const itemUnlocks = this.itemUnlocksFor(def.key);
+        let itemUnlocks = this.itemUnlocksFor(def.key);
+        // Boss trophies key off kill counts, not achievement flags — map the
+        // first/x3 achievement keys to their trophy items so the rewards show
+        const STORY_FIRST = { boss_corpse_arminius: 'corpse_of_arminius', boss_corpse_varus: 'corpse_of_varus', boss_spirits_defeated: 'spirit_of_arminius', boss_spirits: 'spirit_of_arminius' };
+        let tm = def.key.match(/^boss_(.+)_x3$/);
+        if (tm) {
+          const eid = STORY_FIRST['boss_' + tm[1]] || tm[1];
+          itemUnlocks = itemUnlocks.concat(Object.values(ITEM_DATA).filter(i => !i.baseId && i.unlockKill === eid && (i.unlockKillCount || 1) === 3));
+        }
+        tm = def.key.match(/^boss_(.+)_first$/);
+        if (tm) itemUnlocks = itemUnlocks.concat(Object.values(ITEM_DATA).filter(i => !i.baseId && i.unlockKill === tm[1] && (i.unlockKillCount || 1) === 1));
+        if (STORY_FIRST[def.key]) itemUnlocks = itemUnlocks.concat(Object.values(ITEM_DATA).filter(i => !i.baseId && i.unlockKill === STORY_FIRST[def.key] && (i.unlockKillCount || 1) === 1));
         if (itemUnlocks.length > 0) rewards.push(`<span style="color:var(--gold)">Spoils: ${itemUnlocks.map(i => i.name).join(', ')}</span>`);
         if (boon) rewards.push(`<span style="color:var(--green-bright)">Boon: ${boon.name}</span>`);
         if (curse) rewards.push(`<span style="color:var(--red-bright)">Curse: ${curse.name}</span>`);
@@ -2671,6 +2709,7 @@ class Game {
     this.saveStats();
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
+    this._epicsLeftThisRun = 0;
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;
