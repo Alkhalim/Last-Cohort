@@ -84,7 +84,7 @@ const RAW_ENEMIES = {
     "id": "mire_leech", "name": "Mire Leech",
     "maxHp": 10, "row": "front", "damage": [3, 5], "speed": 2, "xpValue": 3, "maxDifficulty": 3,
     "description": "A bloated, arm-length parasite from the black swamp water. The men have heard stories about these crawling into the wounded.", "ai": "aggressive",
-    "canSpawn": true, "deathPoison": 1,
+    "canSpawn": true, "deathPoison": 2,
     "actions": [
       { "name": "Latch On", "damage": 3, "poisonTarget": 2, "chance": 0.5, "text": "latches on with burrowing mouthparts" },
       { "name": "Multiply", "damage": 0, "chance": 0.3, "text": "splits and spawns another leech", "spawn": "mire_leech" },
@@ -303,7 +303,7 @@ const RAW_ENEMIES = {
     "id": "cursed_warrior", "name": "Cursed Warrior",
     "maxHp": 15, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 6,
     "minDifficulty": 4,
-    "deathPoison": 2,
+    "deathPoison": 3,
     "description": "A Germanic warrior marked by the Bone Speaker's rituals. Black veins crawl across his skin. Even in death, he poisons.",
     "ai": "aggressive",
     "actions": [
@@ -372,7 +372,7 @@ const RAW_ENEMIES = {
     "maxHp": 20, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 12,
     "isBoss": true, "ai": "boss",
     "description": "A smaller mound reformed from surviving leeches. On death spawns 2 leeches but cannot reform again.",
-    "deathPoison": 1,
+    "deathPoison": 2,
     "actions": [
       { "name": "Blood Surge", "damage": 4, "poisonTarget": 2, "chance": 0.4, "text": "surges forward with toxic hunger" },
       { "name": "Drain", "damage": 5, "poisonTarget": 2, "chance": 0.35, "text": "latches on and drains blood" },
