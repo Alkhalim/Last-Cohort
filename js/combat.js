@@ -5188,6 +5188,7 @@ class CombatEngine {
     if (this.getActiveCurses().includes('hunters_shadow')) dmg += 1;
     if (enemy._pinned) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.15)));
     if (enemy._suppressed > 0) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.4)));
+    if (enemy._enemyWeaken > 0) dmg = Math.max(1, dmg - enemy._enemyWeaken);
     if (enemy._crippled > 0) dmg = Math.max(1, dmg - Math.max(1, Math.floor(dmg * 0.3)));
     return Math.max(0, dmg);
   }
@@ -5207,6 +5208,8 @@ class CombatEngine {
     this.enemies.forEach(e => {
       if (e.dead || e.isStructure) return;
       const intent = e._intent;
+      // A stun landed after intents were rolled still cancels the attack
+      if (e._skipNextAction) return;
       if (!intent || intent.type === 'stunned' || !intent.action) return;
       const action = intent.action;
       const hits = intent.hits || 1;

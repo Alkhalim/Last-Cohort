@@ -1147,6 +1147,7 @@ class Game {
     if (!aa.kill_boss_turn3 && this.engine.hasBossEnemy() && this.engine.turn <= 3) {
       aa.kill_boss_turn3 = true;
       this.addNotification('Achievement: Blitzkrieg — boss down in 3 turns!');
+      this.notifyItemUnlocks('kill_boss_turn3');
     }
     // Morale achievements measure the moment of the killing blow, before
     // the boss-kill morale surge
@@ -1155,16 +1156,18 @@ class Game {
     if (!aa.high_morale_finish && this.engine.hasBossEnemy() && bossKillMorale > 90) {
       aa.high_morale_finish = true;
       this.addNotification('Achievement: Unbreakable Spirit!');
+      this.notifyItemUnlocks('high_morale_finish');
     }
     // Low morale boss win
     if (!aa.low_morale_win && this.engine.hasBossEnemy() && bossKillMorale < 10) {
       aa.low_morale_win = true;
       this.addNotification('Achievement: Against All Odds!');
+      this.notifyItemUnlocks('low_morale_win');
     }
     // Solo survivor boss win
     if (!aa.solo_survivor && this.engine.hasBossEnemy()) {
       const alive = this.engine.party.filter(u => !u.downed);
-      if (alive.length === 1) { aa.solo_survivor = true; this.addNotification('Achievement: Last Man Standing!'); }
+      if (alive.length === 1) { aa.solo_survivor = true; this.addNotification('Achievement: Last Man Standing!'); this.notifyItemUnlocks('solo_survivor'); }
     }
     // No downed during march (tracked per-encounter, reset on downed)
     if (this.engine.party.some(u => u.downed)) this._marchHadDowned = true;
@@ -1194,6 +1197,7 @@ class Game {
     // "No units downed" is scoped to a single march, so it belongs here.
     if (!this._marchHadDowned && !aa.no_downed_march) {
       aa.no_downed_march = true;
+      this.notifyItemUnlocks('no_downed_march');
       this.addNotification('Achievement: Iron Discipline — no units downed!');
     }
     this._marchHadDowned = false;
@@ -1226,6 +1230,7 @@ class Game {
     // Three curses win
     if (victory && this.activeCurses && this.activeCurses.length >= 3 && !aa.three_curses_win) {
       aa.three_curses_win = true;
+      this.notifyItemUnlocks('three_curses_win');
       this.addNotification('Achievement: Masochist — won with 3+ curses!');
     }
     this._marchHadDowned = false;
@@ -1966,6 +1971,7 @@ class Game {
       if (hasThreeRares && !a.hero_three_rares) {
         a.hero_three_rares = true;
         this.addNotification('Achievement: A hero equipped 3 rare items!');
+        this.notifyItemUnlocks('hero_three_rares');
       }
 
       // One hero with only rare items (all slots filled, all rare)
@@ -2068,6 +2074,7 @@ class Game {
       if (eliteIds.some(eid => (s.enemiesKilled[eid] || 0) >= 1)) {
         a.first_elite_kill = true;
         this.addNotification('Achievement: First Elite Defeated!');
+        this.notifyItemUnlocks('first_elite_kill');
       }
     }
 
@@ -2145,7 +2152,7 @@ class Game {
     if (!a.kill_500 && totalKills >= 500) { a.kill_500 = true; this.addNotification('Achievement: 500 enemies slain — Decimator!'); }
 
     // Poison kills
-    if (!a.poison_kill_20 && (s.poisonKills || 0) >= 20) { a.poison_kill_20 = true; this.addNotification('Achievement: 20 poison kills!'); }
+    if (!a.poison_kill_20 && (s.poisonKills || 0) >= 20) { a.poison_kill_20 = true; this.addNotification('Achievement: 20 poison kills!'); this.notifyItemUnlocks('poison_kill_20'); }
 
     // Renown milestones
     if (!a.renown_100 && (s.totalRenown || 0) >= 100) { a.renown_100 = true; this.addNotification('Achievement: 100 Renown earned!'); }

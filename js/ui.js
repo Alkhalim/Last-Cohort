@@ -492,13 +492,25 @@ class GameUI {
   // number next to the HP text. Mirrors the skill-card maths so the card and
   // the bar can never disagree.
   getStagedSkillPreview() {
-    if (!this.stagedSkill || this.selectedUnitIndex === null) return null;
-    const unit = this.engine.party[this.selectedUnitIndex];
+    // Source: a staged skill, or an in-progress target selection (e.g. the
+    // second target of Twin Slash after the first is locked in)
+    let srcUnitIndex = null, srcSkillId = null, srcDiceIds = null;
+    if (this.stagedSkill && this.selectedUnitIndex !== null) {
+      srcUnitIndex = this.selectedUnitIndex;
+      srcSkillId = this.stagedSkill.skillId;
+      srcDiceIds = this.stagedSkill.diceIds;
+    } else if (this.engine.targetMode && this.engine.targetMode.skillId != null) {
+      srcUnitIndex = this.engine.targetMode.unitIndex;
+      srcSkillId = this.engine.targetMode.skillId;
+      srcDiceIds = this.engine.targetMode.diceIds || [];
+    }
+    if (srcUnitIndex === null || srcSkillId === null) return null;
+    const unit = this.engine.party[srcUnitIndex];
     if (!unit) return null;
-    const skill = unit.skills.find(s => s.id === this.stagedSkill.skillId);
+    const skill = unit.skills.find(s => s.id === srcSkillId);
     if (!skill || !skill.effects) return null;
     const fx = skill.effects;
-    const dieTotal = this.stagedSkill.diceIds.reduce((sum, id) => {
+    const dieTotal = srcDiceIds.reduce((sum, id) => {
       const d = this.engine.dicePool.dice.find(die => die.id === id);
       return sum + (d ? d.value : 0);
     }, 0);
@@ -534,8 +546,8 @@ class GameUI {
         damage = Math.round(damage * (0.5 + ((this.engine.morale || 0) / 100) * 2.0));
       }
       // Overrun: bonus per die matching the staged one (engine adds it to result.damage)
-      if (fx.overrun && this.stagedSkill.diceIds.length >= 1) {
-        const stagedDie = this.engine.dicePool.dice.find(d => d.id === this.stagedSkill.diceIds[0]);
+      if (fx.overrun && srcDiceIds.length >= 1) {
+        const stagedDie = this.engine.dicePool.dice.find(d => d.id === srcDiceIds[0]);
         if (stagedDie) {
           const matches = this.engine.dicePool.dice.filter(d => d !== stagedDie && d.value === stagedDie.value).length;
           damage += matches * (1 + (this.engine.difficulty || 1));
@@ -647,7 +659,7 @@ class GameUI {
         el.addEventListener('click', () => this.onEnemyClick(enemy));
         // Staged-skill damage preview on the enemy's HP bar
         el.addEventListener('mouseenter', () => {
-          if (this.stagedSkill) this.showTargetPreview(el, { kind: 'enemy', hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block });
+          if (this.stagedSkill || this.engine.targetMode) this.showTargetPreview(el, { kind: 'enemy', hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block });
         });
         el.addEventListener('mouseleave', () => this.hideTargetPreview(el));
       }
