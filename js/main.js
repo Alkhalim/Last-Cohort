@@ -20,6 +20,7 @@ const LEGACY_ACHIEVEMENTS = [
   { key: 'poison_100', cat: 'combat', name: 'A Hundred Venoms', desc: 'Kill 100 enemies with poison damage.', stat: s => s.poisonKills || 0, goal: 100 },
   { key: 'poison_kill_50', cat: 'combat', name: 'Venom Harvest', desc: 'Kill 50 enemies with poison damage.', stat: s => s.poisonKills || 0, goal: 50 },
   { key: 'overkill_100', cat: 'combat', name: 'The Butcher of Teutoburg', desc: 'Land a 100-damage blow.', stat: s => s.recordSingleHit || 0, goal: 100 },
+  { key: 'block_15_turn', cat: 'combat', name: 'The Shield Holds', desc: 'Absorb 15 damage with Block in a single turn.', stat: s => s.recordBlockTurn || 0, goal: 15 },
   { key: 'boss_8', cat: 'boss', name: 'Eight Champions Felled', desc: 'Slay 8 bosses in total.', stat: s => s.bossesKilled || 0, goal: 8 },
   { key: 'boss_25', cat: 'boss', name: 'Scourge of Chieftains', desc: 'Slay 25 bosses in total.', stat: s => s.bossesKilled || 0, goal: 25 },
   { key: 'bosses_50', cat: 'boss', name: 'Fifty Crowns Broken', desc: 'Slay 50 bosses in total.', stat: s => s.bossesKilled || 0, goal: 50 },
@@ -1225,6 +1226,8 @@ class Game {
       this.stats.totalDamageTaken += u.stats.damageTaken || 0;
       this.stats.totalMoraleRestored += u.stats.moraleRestored || 0;
       // Lifetime records
+      const combatMaxBlock = Math.max(this.engine._maxTurnBlock || 0, this.engine._turnBlockAbsorbed || 0);
+      if (combatMaxBlock > (this.stats.recordBlockTurn || 0)) this.stats.recordBlockTurn = combatMaxBlock;
       if ((u.stats.maxSingleHit || 0) > (this.stats.recordSingleHit || 0)) {
         this.stats.recordSingleHit = u.stats.maxSingleHit;
         this.stats.recordSingleHitBy = u.name;

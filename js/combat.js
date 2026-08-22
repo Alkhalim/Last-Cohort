@@ -88,6 +88,8 @@ class CombatEngine {
     this._heartwoodTriggered = false;
     this._heartwoodBonusDice = 0;
     this._lupaFangUsed = false;
+    this._turnBlockAbsorbed = 0;
+    this._maxTurnBlock = 0;
     this._moraleAtBossKill = null;
     this._antlerUsed = false;
     this._partyDamagedThisRound = false;
@@ -785,6 +787,10 @@ class CombatEngine {
       }
       // Banked extra actions don't carry across turns
       u._extraActions = 0;
+      if (u.index === 0) {
+        if ((this._turnBlockAbsorbed || 0) > (this._maxTurnBlock || 0)) this._maxTurnBlock = this._turnBlockAbsorbed;
+        this._turnBlockAbsorbed = 0;
+      }
       u._hitsThisTurn = 0;
       // Vetera Veteran's Plate: the promised wall arrives
       if (u._plateBlockNext > 0) {
@@ -4688,6 +4694,7 @@ class CombatEngine {
         dmg -= absorbed;
         if (absorbed > 0) {
           target.stats.blockAbsorbed += absorbed;
+          this._turnBlockAbsorbed = (this._turnBlockAbsorbed || 0) + absorbed;
           this.addLog(`${target.name}'s block absorbs ${absorbed} damage.`);
           if (this.onVisual) this.onVisual('blockClang', { unitIndex: target.index, full: dmg <= 0 });
           // Knotted Rope Belt: holding the line holds them all together
@@ -4921,6 +4928,7 @@ class CombatEngine {
             const absorbed = Math.min(u.block, aoeDmg);
             u.block -= absorbed;
             aoeDmg -= absorbed;
+            this._turnBlockAbsorbed = (this._turnBlockAbsorbed || 0) + absorbed;
           }
           u.hp = Math.max(0, u.hp - aoeDmg);
           u.stats.damageTaken += aoeDmg;
