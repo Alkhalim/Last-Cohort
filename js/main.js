@@ -551,6 +551,8 @@ class Game {
     this.marchCount = test.difficulty - 1;
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
+    this._classUnlocksThisRun = 0;
+    this._deferredClassNotified = false;
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;
@@ -1259,6 +1261,7 @@ class Game {
         activeCurses: [...(this.activeCurses || [])],
         activeBoons: [...(this.activeBoons || [])],
         selectedPartyClasses: [...(this.selectedPartyClasses || [])],
+        classUnlocksThisRun: this._classUnlocksThisRun || 0,
         currentRunRenown: this.currentRunRenown || 0,
         route: [...(this.route || [])],
         recentBosses: [...(this.recentBosses || [])],
@@ -1327,6 +1330,7 @@ class Game {
       this.engine.encountersCompleted = data.encountersCompleted;
       this.engine.totalRenownEarned = data.totalRenownEarned;
       this.engine.pendingSkillPicks = data.pendingSkillPicks;
+      this._classUnlocksThisRun = data.classUnlocksThisRun || 0;
       this.engine.encounterXP = data.encounterXP || 0;
       this.engine.skillUsageStats = data.skillUsageStats || {};
       this.engine.runKilledBosses = data.runKilledBosses || [];
@@ -2074,19 +2078,35 @@ class Game {
     // Class unlock achievements
     // Use both stats and current run difficulty to catch unlocks
     const currentDiff = Math.max(s.highestDifficulty || 1, this.difficulty || 1);
+    // Drip pacing: a great first run would otherwise dump 5+ new classes on
+    // a new player at once. At most 2 class unlocks are granted per run;
+    // conditions already met simply grant early in the NEXT run.
+    const tryUnlockClass = (key, name) => {
+      if (a[key]) return false;
+      if ((this._classUnlocksThisRun || 0) >= 2) {
+        if (!this._deferredClassNotified) {
+          this._deferredClassNotified = true;
+          this.addNotification('More recruits await your next march...');
+        }
+        return false;
+      }
+      a[key] = true;
+      this._classUnlocksThisRun = (this._classUnlocksThisRun || 0) + 1;
+      this.addNotification(`Class Unlocked: ${name}!`);
+      return true;
+    };
     // Class unlock achievements — check BOTH live stats AND existing prerequisite achievements
     // (prerequisite achievements persist even if stats are reset between versions)
 
     // First boss kill → Sagittarius
     if (!a.class_sagittarius && ((s.bossesKilled || 0) >= 1 || a.first_boss_kill)) {
-      a.class_sagittarius = true;
-      this.addNotification('Class Unlocked: Sagittarius!');
+      tryUnlockClass('class_sagittarius', 'Sagittarius');
     }
     // First elite kill → Cornicen
     if (!a.class_cornicen) {
       const eliteIds = ['oak_shield', 'wicker_man', 'ironbound_champion'];
       const hasEliteKill = s.enemiesKilled && eliteIds.some(eid => (s.enemiesKilled[eid] || 0) >= 1);
-      if (hasEliteKill || a.first_elite_kill) { a.class_cornicen = true; this.addNotification('Class Unlocked: Cornicen!'); }
+      if (hasEliteKill || a.first_elite_kill) tryUnlockClass('class_cornicen', 'Cornicen');
     }
     // --- Class unlock ladder -------------------------------------------
     // Rungs are ordered easiest → hardest. Each rung unlocks on its own
@@ -2110,19 +2130,18 @@ class Game {
       if (a[rung.key]) continue;
       const higherUnlocked = unlockLadder.slice(i + 1).some(higher => a[higher.key]);
       if (rung.met || higherUnlocked) {
-        a[rung.key] = true;
-        this.addNotification(`Class Unlocked: ${rung.name}!`);
+        tryUnlockClass(rung.key, rung.name);
       }
     }
     // Defeat Fog Weaver → Arcania
     if (!a.class_arcania) {
       const fogKill = s.enemiesKilled && (s.enemiesKilled['fog_weaver'] || 0) >= 1;
-      if (fogKill || a.boss_fog_weaver_x3) { a.class_arcania = true; this.addNotification('Class Unlocked: Arcania!'); }
+      if (fogKill || a.boss_fog_weaver_x3) tryUnlockClass('class_arcania', 'Arcania');
     }
     // Defeat Thusnelda → Wulfswestr
     if (!a.class_wulfswestr) {
       const thusKill = s.enemiesKilled && (s.enemiesKilled['thusnelda'] || 0) >= 1;
-      if (thusKill) { a.class_wulfswestr = true; this.addNotification('Class Unlocked: Wulfswestr!'); }
+      if (thusKill) tryUnlockClass('class_wulfswestr', 'Wulfswestr');
     }
     // Flawless boss win — tracked for achievements but no longer unlocks Praetorian
     if (!a._bossFlawless && this._pendingBossFlawless) {
@@ -2501,6 +2520,8 @@ class Game {
     this.saveStats();
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
+    this._classUnlocksThisRun = 0;
+    this._deferredClassNotified = false;
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;

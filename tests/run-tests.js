@@ -1539,6 +1539,23 @@ section('2.12c — achievement checks are not vacuous');
 }
 
 // ============================================================
+section('2.12d — class unlock drip pacing');
+// ============================================================
+{
+  const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
+  check('all class awards route through tryUnlockClass', () => {
+    assert(!/a\.class_[a-z_]+ = true/.test(main), 'a direct class award bypasses the drip cap');
+    assert(!/a\[rung\.key\] = true/.test(main), 'ladder awards bypass the drip cap');
+    assert(/tryUnlockClass = \(key, name\)/.test(main), 'tryUnlockClass helper missing');
+  });
+  check('at most 2 class unlocks per run', () => {
+    assert(/_classUnlocksThisRun \|\| 0\) >= 2/.test(main), 'per-run cap missing');
+    assert((main.match(/_classUnlocksThisRun = 0/g) || []).length >= 2,
+      'counter must reset for both normal and test runs');
+  });
+}
+
+// ============================================================
 section('2.13 — skill description rewrites match actual descriptions');
 // ============================================================
 {
