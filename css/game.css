@@ -5243,18 +5243,19 @@ html, body {
     opacity: 0;
   }
   30% {
-    opacity: 0.9;
+    opacity: 1;
   }
   100% {
+    /* Fully opaque — at 0.85 the speed lines behind shone through the art */
     transform: translateX(-50%) translateX(0);
-    opacity: 0.85;
+    opacity: 1;
   }
 }
 
 @keyframes cutin-slide-out {
   0% {
     transform: translateX(-50%) translateX(0);
-    opacity: 0.85;
+    opacity: 1;
   }
   100% {
     transform: translateX(-50%) translateX(50px);
@@ -5438,12 +5439,13 @@ html, body {
 
 @keyframes enemy-portrait-in {
   0% { transform: translateX(-50%) translateX(80px); opacity: 0; }
-  30% { opacity: 0.8; }
-  100% { transform: translateX(-50%) translateX(0); opacity: 0.8; }
+  30% { opacity: 1; }
+  /* Fully opaque — at 0.8 the speed lines behind shone through the art */
+  100% { transform: translateX(-50%) translateX(0); opacity: 1; }
 }
 
 @keyframes enemy-portrait-out {
-  0% { transform: translateX(-50%) translateX(0); opacity: 0.8; }
+  0% { transform: translateX(-50%) translateX(0); opacity: 1; }
   100% { transform: translateX(-50%) translateX(-50px); opacity: 0; }
 }
 
@@ -5860,9 +5862,11 @@ html, body {
   content: '';
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 78%;
+  height: 82%;
+  /* Near-opaque under the streak band: the streaks are translucent, so any
+     UI visible beneath them shone through and read as lines ON the units. */
   background:
-    linear-gradient(180deg, transparent 0%, rgba(8, 6, 4, 0.55) 22%, rgba(8, 6, 4, 0.82) 60%, rgba(8, 6, 4, 0.9) 100%);
+    linear-gradient(180deg, transparent 0%, rgba(8, 6, 4, 0.72) 16%, rgba(8, 6, 4, 0.95) 42%, rgba(8, 6, 4, 0.97) 100%);
   opacity: 0;
   transition: opacity 0.25s ease-out;
 }
@@ -6703,4 +6707,18 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .loot-rays { animation: none; }
   .loot-card.revealing { animation: none !important; }
+}
+
+/* ============================================================
+   Morale banner recolor: gold when high, purple-to-black when low
+   ============================================================ */
+#morale-fill {
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.35) 100%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 4px),
+    linear-gradient(90deg, var(--morale-col-dark, #6a1c16) 0%, var(--morale-col, #c9a227) 100%);
+}
+#morale-fill::after {
+  background: linear-gradient(135deg, var(--morale-col, #eed88a) 0%, var(--morale-col-dark, #8a7020) 100%);
+  box-shadow: 0 0 5px var(--morale-col, rgba(201, 162, 39, 0.45));
 }

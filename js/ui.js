@@ -583,6 +583,29 @@ class GameUI {
   }
 
   // --- Morale ---
+  // The banner's color IS the morale reading: bright gold when spirits are
+  // high, draining through purple into black as the cohort breaks.
+  static MORALE_COLOR_STOPS = [
+    [0, [7, 4, 9]],        // black
+    [10, [28, 14, 44]],    // near-black violet
+    [25, [61, 31, 85]],    // dark purple
+    [45, [124, 74, 138]],  // muted purple
+    [70, [201, 162, 39]],  // gold
+    [100, [240, 208, 96]], // bright gold
+  ];
+
+  moraleColor(m) {
+    const stops = GameUI.MORALE_COLOR_STOPS;
+    const v = Math.max(0, Math.min(100, m));
+    let lo = stops[0], hi = stops[stops.length - 1];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (v >= stops[i][0] && v <= stops[i + 1][0]) { lo = stops[i]; hi = stops[i + 1]; break; }
+    }
+    const t = hi[0] === lo[0] ? 0 : (v - lo[0]) / (hi[0] - lo[0]);
+    const c = lo[1].map((a, i) => Math.round(a + (hi[1][i] - a) * t));
+    return c;
+  }
+
   renderMorale() {
     const band = getMoraleBand(this.engine.morale);
     const label = document.getElementById('morale-label');
@@ -591,6 +614,9 @@ class GameUI {
     label.style.color = band.color;
     const pct = this.engine.morale;
     fill.style.width = pct + '%';
+    const [r, g, bl] = this.moraleColor(pct);
+    fill.style.setProperty('--morale-col', `rgb(${r}, ${g}, ${bl})`);
+    fill.style.setProperty('--morale-col-dark', `rgb(${Math.round(r * 0.45)}, ${Math.round(g * 0.45)}, ${Math.round(bl * 0.45)})`);
 
     this.updateMoodClass();
   }
@@ -4224,6 +4250,8 @@ class GameUI {
       btn.addEventListener('click', () => {
         // Apply the randomly chosen upgrade
         chosen.apply();
+        this.spawnForgeSparks(btn);
+        if (typeof this.haptic === 'function') this.haptic(18);
 
         // Sync the runtime skill copy with updated baseDef
         const runtimeSkill = unit.skills.find(s => s.id === skill.id);
@@ -5310,6 +5338,16 @@ class GameUI {
       });
     }
 
+    // Buff damage: "+X damage" grants scale with half the caster's equipment
+    // offense in combat — the showcase must promise the same number.
+    const halfEquipDmg = Math.floor(equipDmg / 2);
+    if (skill.effects && (skill.effects.buffAllies || skill.effects.buffSelf || skill.effects.buffTarget) && halfEquipDmg > 0) {
+      desc = desc.replace(/\+(\d+) damage/g, (match, base) => {
+        const b = parseInt(base);
+        return `+<span class="stat-dmg">${b + halfEquipDmg}</span> <span class="stat-breakdown">(${b}+${halfEquipDmg})</span> damage`;
+      });
+    }
+
     // Die-scaled Block (must be before generic Block replacement)
     desc = desc.replace(/(\d+)-(\d+) Block \(scales with die\)/g, (m, lo, hi) => {
       const loVal = parseInt(lo) + Math.floor(equipBlock * (parseInt(lo)/3));
@@ -5371,11 +5409,35 @@ class GameUI {
     desc = desc.replace(/Poison equal to unique die values in pool/g,
       `<span class="stat-poison">?</span> Poison <span class="stat-breakdown">(unique dice${equipPoison > 0 ? `+${equipPoison}` : ''})</span>`);
 
-    // Poison values
+    // Split-scaling poison (Plague Flask): main target and splash scale
+    // equipment poison by different factors — mirror the combat maths so the
+    // showcase and the fight can never disagree.
+    const sfx = skill.effects || {};
+    if (sfx.poisonSplash !== undefined) {
+      const mainScale = sfx.bonusPoisonScale || 1;
+      const splashScale = sfx.splashPoisonScale !== undefined ? sfx.splashPoisonScale : 0.5;
+      const mainBonus = Math.floor(equipPoison * mainScale);
+      const splashBonus = Math.floor(equipPoison * splashScale);
+      const chip = (total, base, bonus) => bonus > 0
+        ? `<span class="stat-poison">${total}</span> <span class="stat-breakdown">(${base}+${bonus})</span> Poison`
+        : `<span class="stat-poison">${total}</span> Poison`;
+      desc = desc.replace(/(\d+) Poison to adjacent enemies/g, (m, base) => {
+        const b = parseInt(base, 10);
+        return chip(b + splashBonus, b, splashBonus) + ' to adjacent enemies';
+      });
+      desc = desc.replace(/(\d+) Poison to target/g, (m, base) => {
+        const b = parseInt(base, 10);
+        return chip(b + mainBonus, b, mainBonus) + ' to target';
+      });
+    }
+
+    // Poison values (respect a skill-specific scale rather than assuming 1:1)
     desc = desc.replace(/(\d+) Poison/g, (match, base) => {
       const b = parseInt(base);
-      if (equipPoison > 0) {
-        return `<span class="stat-poison">${b + equipPoison}</span> <span class="stat-breakdown">(${b}+${equipPoison})</span> Poison`;
+      const scale = sfx.bonusPoisonScale || 1;
+      const bonus = Math.floor(equipPoison * scale);
+      if (bonus > 0) {
+        return `<span class="stat-poison">${b + bonus}</span> <span class="stat-breakdown">(${b}+${bonus})</span> Poison`;
       }
       return `<span class="stat-poison">${b}</span> Poison`;
     });
@@ -6200,6 +6262,8 @@ class GameUI {
           rtSkill.execute = buildSkillExecute(baseDef);
         }
 
+        this.spawnForgeSparks(btn);
+        if (typeof this.haptic === 'function') this.haptic(18);
         btn.classList.add('disabled');
         btn.style.opacity = '0.5';
         btn.style.pointerEvents = 'none';

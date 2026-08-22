@@ -359,7 +359,7 @@ const RAW_ENEMIES = {
     "minDifficulty": 4,
     "isBoss": true, "ai": "boss",
     "description": "A writhing mass of leeches fused into a single monstrous organism. On death it bursts into 5 leeches. If 3+ survive, they reform into a lesser mound. Each turn it venoms one of your dice.",
-    "deathPoison": 2,
+    "deathPoison": 3,
     "actions": [
       { "name": "Blood Tide", "damage": 6, "poisonTarget": 2, "chance": 0.3, "text": "surges forward, leeches latching onto flesh", "aoe": true, "cooldown": 2 },
       { "name": "Drain", "damage": 9, "poisonTarget": 2, "chance": 0.3, "text": "engulfs a soldier — draining blood and will" },
@@ -467,7 +467,7 @@ const RAW_ENEMIES = {
     "minDifficulty": 4,
     "description": "A diseased warrior who poisons everything he touches. When he dies, his plague spreads to all soldiers.",
     "ai": "aggressive",
-    "deathPoison": 2,
+    "deathPoison": 3,
     "actions": [
       { "name": "Plague Touch", "damage": 3, "poisonTarget": 2, "chance": 0.5, "text": "grasps with rotting hands" },
       { "name": "Bile Spray", "damage": 2, "poisonTarget": 1, "chance": 0.3, "text": "spews bile across the line", "aoe": true, "cooldown": 2 },
@@ -638,7 +638,7 @@ const RAW_ENEMIES = {
     "minDifficulty": 7,
     "description": "A mass of fungal growth shaped into a shambling form. Weak while it walks — but it bursts on death, and the spore cloud poisons every soldier.",
     "ai": "aggressive",
-    "deathPoison": 3,
+    "deathPoison": 4,
     "actions": [
       { "name": "Fungal Slam", "damage": 6, "chance": 0.4, "text": "slams with a fungus-encrusted fist" },
       { "name": "Spore Burst", "damage": 3, "poisonTarget": 1, "chance": 0.35, "text": "erupts in a cloud of toxic spores", "aoe": true, "cooldown": 2 },
