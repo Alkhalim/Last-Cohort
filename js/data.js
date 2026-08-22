@@ -1145,7 +1145,7 @@ function describeEnemyAction(action) {
 
 function formatItemStats(stats) {
   const colors = {
-    dmg: 'var(--red-bright)', block: 'var(--blue-bright)', HP: '#cc8844',
+    offense: 'var(--red-bright)', defense: 'var(--blue-bright)', HP: '#cc8844',
     heal: 'var(--green-bright)', poison: '#8a4', die: 'var(--gold)',
   };
   const fmt = (val, label) => {
@@ -1154,8 +1154,8 @@ function formatItemStats(stats) {
     return `<span style="color:${color}">${sign}${val} ${label}</span>`;
   };
   const parts = [];
-  if (stats.damage) parts.push(fmt(stats.damage, 'dmg'));
-  if (stats.block) parts.push(fmt(stats.block, 'block'));
+  if (stats.damage) parts.push(fmt(stats.damage, 'offense'));
+  if (stats.block) parts.push(fmt(stats.block, 'defense'));
   if (stats.maxHp) parts.push(fmt(stats.maxHp, 'HP'));
   if (stats.heal) parts.push(fmt(stats.heal, 'heal'));
   if (stats.poison) parts.push(fmt(stats.poison, 'poison'));

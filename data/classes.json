@@ -139,7 +139,7 @@
       },
       {
         "id": "rally_cry",
-        "name": "Rally Cry",
+        "name": "Rallying Cry",
         "cost": { "type": "combined", "min": 6, "dice": 2 },
         "target": "all_allies",
         "description": "2 dice totaling 6+. +15 Morale and +1 damage for next 2 attacks.",

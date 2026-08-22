@@ -144,7 +144,7 @@ const RAW_CLASSES = {
         "effects": { "blockAll": 7, "morale": -3, "blockScale": 2 }
       },
       {
-        "id": "rally_cry", "name": "Rally Cry", "cooldown": 3,
+        "id": "rally_cry", "name": "Rallying Cry", "cooldown": 3,
         "cost": { "type": "oddEven" }, "target": "all_allies",
         "description": "+10 Morale and +1 damage for next 2 attacks.",
         "effects": { "morale": 5, "buffAllies": { "bonusDamage": 1, "attacks": 2 } }
