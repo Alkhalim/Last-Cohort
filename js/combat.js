@@ -2023,7 +2023,7 @@ class CombatEngine {
       if (result.target.hp <= 0 && hpBeforeHit > 0 && total > 0) {
         const overkill = total - hpBeforeHit;
         const overkillPct = overkill / total;
-        if (overkillPct >= 0.75) {
+        if (overkillPct >= 0.85) {
           this.morale = Math.min(100, this.morale + 2);
           const okHeal = Math.min(2, unit.maxHp - unit.hp);
           if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }
@@ -2033,7 +2033,7 @@ class CombatEngine {
           if (this.onVisual) this.onVisual('morale', { amount: 2 });
           if (okHeal > 0 && this.onVisual) this.onVisual('unitHeal', { unitIndex: unit.index, amount: okHeal });
           if (window.game) window.game.triggerHint('first_overkill');
-        } else if (overkillPct >= 0.6) {
+        } else if (overkillPct >= 0.7) {
           this.morale = Math.min(100, this.morale + 1);
           const okHeal = Math.min(1, unit.maxHp - unit.hp);
           if (okHeal > 0) { unit.hp += okHeal; unit.stats.healingDone += okHeal; }

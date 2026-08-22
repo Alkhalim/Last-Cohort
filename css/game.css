@@ -6900,3 +6900,22 @@ html, body {
 .tag-icon.tag-ranged { color: var(--class-ranged); }
 .tag-icon.tag-elite { color: var(--class-elite); }
 .tag-icon.tag-germanic { color: var(--class-germanic); }
+
+/* ============================================================
+   Enemy tooltip: next action highlighted IN the ability list
+   ============================================================ */
+.enemy-tooltip-action.next-action {
+  background: rgba(201, 162, 39, 0.10);
+  border-left: 2px solid var(--gold);
+  padding: 4px 7px;
+  border-radius: 3px;
+  margin: 3px 0;
+}
+.enemy-tooltip-next-target {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+}

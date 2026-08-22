@@ -876,6 +876,52 @@ class GameUI {
     tooltip.id = 'enemy-tooltip';
     tooltip.className = 'enemy-tooltip';
 
+    // Pre-compute the next action so the ability LIST can highlight it,
+    // instead of repeating the ability in a separate "NEXT ATTACK" section.
+    let nextName = null, nextSuffix = '', stunnedNote = '';
+    let targetIndices = [];
+    if (!enemy.dead && !enemy.isStructure && this.engine.phase === PHASE.PLAYER_TURN && enemy._intent) {
+      const intent = enemy._intent;
+      const alive = this.engine.party.filter(u => !u.downed);
+      if (intent.type === 'stunned') {
+        stunnedNote = '<div class="enemy-tooltip-intent"><span style="color:var(--red-bright)">STUNNED — cannot act</span></div>';
+      } else {
+        const action = intent.action || {};
+        nextName = action.name || null;
+        // Validate target is still alive, re-pick if not
+        let targetUnit = this.engine.party[intent.targetIndex];
+        if (!targetUnit || targetUnit.downed) {
+          targetUnit = alive[0]; // fallback
+        }
+        // Taunt override: show the taunting unit as the actual target
+        const taunter = alive.find(u => u.taunt);
+        if (taunter && !action.aoe && !(action.morale && !action.damage && action.morale < 0)) {
+          targetUnit = taunter;
+        }
+
+        // Check if action targets self/allies rather than player party
+        const isSelfBuff = !action.damage && !action.morale && (action.blockSelf || action.blockAllEnemies || action.blockFrontRow || action.spawn);
+
+        if (isSelfBuff) {
+          nextSuffix = '→ <span style="color:var(--text-dim)">Self / Allies</span>';
+        } else if (intent.isAoe || (action.morale && !action.damage && action.morale < 0)) {
+          // AoE and pure morale attacks affect the whole party
+          targetIndices = alive.map(u => u.index);
+          nextSuffix = '→ <span style="color:var(--red-bright)">All soldiers</span>';
+        } else if (intent.isTaunted) {
+          targetIndices = [targetUnit.index];
+          nextSuffix = `→ <span style="color:var(--red-bright)">${targetUnit.name}</span> (Taunted)`;
+        } else {
+          targetIndices = [targetUnit.index];
+          nextSuffix = `→ <span style="color:var(--red-bright)">${targetUnit.name}</span>`;
+        }
+        if (intent.hits > 1) {
+          nextSuffix += ` <span style="color:var(--red-bright)">×${intent.hits}</span>`;
+        }
+      }
+    }
+
+    let nextMarked = false;
     const actions = enemy.actions.map(a => {
       let desc = `<strong>${a.name}</strong>`;
       const details = describeEnemyAction(a);
@@ -884,7 +930,10 @@ class GameUI {
       if (a.text && (details.length === 0 || enemy.isStructure)) {
         desc += `<div class="enemy-tooltip-action-text">${a.text}</div>`;
       }
-      return `<div class="enemy-tooltip-action">${this.annotateKeywords(desc)}</div>`;
+      const isNext = !nextMarked && nextName !== null && a.name === nextName;
+      if (isNext) nextMarked = true;
+      return `<div class="enemy-tooltip-action${isNext ? ' next-action' : ''}">${this.annotateKeywords(desc)}` +
+        `${isNext ? `<div class="enemy-tooltip-next-target">NEXT ${nextSuffix}</div>` : ''}</div>`;
     }).join('');
 
     const tags = [];
@@ -951,6 +1000,10 @@ class GameUI {
       })()}
       <div class="enemy-tooltip-actions-title">${enemy.isStructure ? 'Effects:' : 'Attacks:'}</div>
       ${actions}
+      ${stunnedNote}
+      ${nextName !== null && !nextMarked
+        ? `<div class="enemy-tooltip-action next-action"><strong>${nextName}</strong><div class="enemy-tooltip-next-target">NEXT ${nextSuffix}</div></div>`
+        : ''}
     `;
 
     const rect = el.getBoundingClientRect();
@@ -958,63 +1011,10 @@ class GameUI {
     tooltip.style.left = Math.max(4, rect.left - gameRect.left) + 'px';
     tooltip.style.top = (rect.bottom - gameRect.top + 4) + 'px';
 
-    // Show target intent from pre-rolled data
-    if (!enemy.dead && !enemy.isStructure && this.engine.phase === PHASE.PLAYER_TURN && enemy._intent) {
-      const intent = enemy._intent;
-      const alive = this.engine.party.filter(u => !u.downed);
-      let intentText = '';
-      let targetIndices = [];
-
-      if (intent.type === 'stunned') {
-        intentText = '<span style="color:var(--red-bright)">STUNNED — cannot act</span>';
-      } else {
-        const action = intent.action || {};
-        const actionName = action.name || '?';
-        // Validate target is still alive, re-pick if not
-        let targetUnit = this.engine.party[intent.targetIndex];
-        if (!targetUnit || targetUnit.downed) {
-          targetUnit = alive[0]; // fallback
-        }
-        // Taunt override: show the taunting unit as the actual target
-        const taunter = alive.find(u => u.taunt);
-        if (taunter && !action.aoe && !(action.morale && !action.damage && action.morale < 0)) {
-          targetUnit = taunter;
-        }
-
-        // Check if action targets self/allies rather than player party
-        const isSelfBuff = !action.damage && !action.morale && (action.blockSelf || action.blockAllEnemies || action.blockFrontRow || action.spawn);
-        const isMoraleOnly = !action.damage && action.morale && action.morale < 0 && !action.aoe;
-
-        if (isSelfBuff) {
-          intentText = `<strong>${actionName}</strong> → <span style="color:var(--text-dim)">Self / Allies</span>`;
-        } else if (intent.isAoe) {
-          targetIndices = alive.map(u => u.index);
-          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">All soldiers</span>`;
-        } else if (action.morale && !action.damage && action.morale < 0) {
-          // Pure morale attack — affects whole party, not a single target
-          targetIndices = alive.map(u => u.index);
-          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">All soldiers</span>`;
-        } else if (intent.isTaunted) {
-          targetIndices = [targetUnit.index];
-          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span> (Taunted)`;
-        } else {
-          targetIndices = [targetUnit.index];
-          intentText = `<strong>${actionName}</strong> → <span style="color:var(--red-bright)">${targetUnit.name}</span>`;
-        }
-
-        // Wounded enemies that strike twice previewed as a single hit.
-        if (intent.hits > 1) {
-          intentText += ` <span style="color:var(--red-bright)">×${intent.hits}</span>`;
-        }
-      }
-
-      tooltip.innerHTML += `<div class="enemy-tooltip-intent-label">NEXT ATTACK</div><div class="enemy-tooltip-intent">${intentText}</div>`;
-
-      targetIndices.forEach(idx => {
-        const unitEl = document.getElementById(`unit-${idx}`);
-        if (unitEl) unitEl.classList.add('enemy-target-highlight');
-      });
-    }
+    targetIndices.forEach(idx => {
+      const unitEl = document.getElementById(`unit-${idx}`);
+      if (unitEl) unitEl.classList.add('enemy-target-highlight');
+    });
 
     document.getElementById('combat-screen').appendChild(tooltip);
   }
