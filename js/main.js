@@ -575,12 +575,13 @@ class Game {
         } catch (e) { continueBtn.textContent = 'Continue Run'; }
       }
     }
-    // Next-unlock tracker: the first still-locked class and how to earn it
+    // Locked-classes tracker. Deliberately no "next": unlock order is the
+    // player's own doing, so claiming a sequence was misleading.
     const nextEl = document.getElementById('home-next-unlock');
     if (nextEl) {
-      const locked = Object.entries(CLASS_DATA).find(([id, d]) => d.hidden && !this.achievements[d.unlockKey || id]);
-      nextEl.innerHTML = locked
-        ? `Next unlock: <b>${locked[1].name}</b> — ${locked[1].unlockCondition}`
+      const lockedAll = Object.entries(CLASS_DATA).filter(([id, d]) => d.hidden && !this.achievements[d.unlockKey || id]);
+      nextEl.innerHTML = lockedAll.length > 0
+        ? `${lockedAll.length} class${lockedAll.length > 1 ? 'es' : ''} still locked — their trials are listed in the Classes hall.`
         : 'All classes unlocked. The legion stands complete.';
     }
     if (this.musicStarted) this.startMenuMusic();
@@ -1701,6 +1702,9 @@ class Game {
       { key: 'boss', label: 'Boss' },
     ];
 
+    // Everything renders as uniform squares, matching the undiscovered slots.
+    // Tiles hold ONLY artwork — kill 1: silhouette, kill 3: full art,
+    // kill 10: lore (in the detail popup). Frame color marks the foe's rank.
     const renderEntries = (filter) => {
       const sorted = [...discovered].sort((a, b) => {
         if (a.isBoss !== b.isBoss) return a.isBoss ? -1 : 1;
@@ -1708,45 +1712,25 @@ class Game {
         return a.name.localeCompare(b.name);
       });
 
-      let html = '';
+      let tiles = '';
       sorted.forEach(enemy => {
         const cat = getCategory(enemy);
         if (filter !== 'all' && cat !== filter) return;
         const kills = s.enemiesKilled[enemy.id] || 0;
         const tier = kills >= 10 ? 3 : kills >= 3 ? 2 : 1;
-        const tag = enemy.isBoss ? '<span class="bestiary-tag boss">BOSS</span>' : enemy.isElite ? '<span class="bestiary-tag elite">ELITE</span>' : '';
-        const row = enemy.row === 'front' ? 'Front Row' : 'Back Row';
-
-        let details = `<div class="bestiary-stat">HP: ${enemy.maxHp} | ${row} | Killed: ${kills}</div>`;
-        if (tier >= 2) {
-          const actions = (enemy.actions || []).map(a => {
-            let info = a.name;
-            if (a.damage) info += ` (${a.damage} dmg)`;
-            if (a.poisonTarget) info += ` (+${a.poisonTarget} poison)`;
-            if (a.morale) info += ` (${a.morale} morale)`;
-            if (a.aoe) info += ' [AoE]';
-            return `<span class="bestiary-action">${info}</span>`;
-          }).join('');
-          details += `<div class="bestiary-actions">${actions}</div>`;
-        }
-        if (tier >= 3) {
-          details += `<div class="bestiary-lore">${enemy.description}</div>`;
-        }
-        if (tier < 2) details += `<div class="bestiary-locked">Kill 3 times to reveal abilities.</div>`;
-        else if (tier < 3) details += `<div class="bestiary-locked">Kill 10 times to reveal lore.</div>`;
-
-        const portrait = getEnemyPortrait(enemy.id);
-        html += `<div class="bestiary-entry tier-${tier}">
-          <div class="bestiary-header"><img class="bestiary-portrait" src="${portrait}" alt="${enemy.name}">${tag}<span class="bestiary-name">${enemy.name}</span></div>
-          ${details}
+        const frame = enemy.isBoss ? 'frame-boss' : enemy.isElite ? 'frame-elite' : 'frame-common';
+        tiles += `<div class="bestiary-slot filled ${frame}" data-enemy-id="${enemy.id}" title="${tier >= 2 ? enemy.name : '???'}">
+          <img class="bestiary-tile-art${tier === 1 ? ' silhouette' : ''}" src="${getEnemyPortrait(enemy.id)}" alt="">
         </div>`;
       });
 
       const undiscovered = allEnemies.length - discovered.length;
-      if (filter === 'all' && undiscovered > 0) {
-        html += `<div class="bestiary-grid-label">${undiscovered} still hidden in the forest</div>` + slotGrid(undiscovered);
-      }
-      return html;
+      const hiddenSlots = (filter === 'all' && undiscovered > 0)
+        ? Array.from({ length: undiscovered }, () => '<div class="bestiary-slot">?</div>').join('')
+        : '';
+      const label = (filter === 'all' && undiscovered > 0)
+        ? `<div class="bestiary-grid-label">${undiscovered} still hidden in the forest</div>` : '';
+      return `<div class="bestiary-grid tiles">${tiles}${hiddenSlots}</div>` + label;
     };
 
     // Render filter bar + entries
@@ -1759,14 +1743,60 @@ class Game {
     const entriesId = 'bestiary-entries';
     content.innerHTML = filterHtml + `<div id="${entriesId}">${renderEntries('all')}</div>`;
 
+    const bindTiles = () => {
+      content.querySelectorAll('.bestiary-slot.filled').forEach(el => {
+        el.addEventListener('click', () => this.showBestiaryDetail(el.dataset.enemyId));
+      });
+    };
+    bindTiles();
+
     // Bind filter clicks
     content.querySelectorAll('.bestiary-filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         content.querySelectorAll('.bestiary-filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(entriesId).innerHTML = renderEntries(btn.dataset.filter);
+        bindTiles();
       });
     });
+  }
+
+  // Tap a bestiary tile for the full record — stats always, abilities from
+  // 3 kills, lore from 10.
+  showBestiaryDetail(enemyId) {
+    const enemy = ENEMY_DATA[enemyId];
+    if (!enemy) return;
+    const kills = this.stats.enemiesKilled[enemyId] || 0;
+    const tier = kills >= 10 ? 3 : kills >= 3 ? 2 : 1;
+    const tag = enemy.isBoss ? '<span class="bestiary-tag boss">BOSS</span>' : enemy.isElite ? '<span class="bestiary-tag elite">ELITE</span>' : '';
+    const row = enemy.row === 'front' ? 'Front Row' : 'Back Row';
+
+    let details = `<div class="bestiary-stat">HP: ${enemy.maxHp} | ${row} | Killed: ${kills}</div>`;
+    if (tier >= 2) {
+      const actions = (enemy.actions || []).map(a => {
+        let info = a.name;
+        if (a.damage) info += ` (${a.damage} dmg)`;
+        if (a.poisonTarget) info += ` (+${a.poisonTarget} poison)`;
+        if (a.morale) info += ` (${a.morale} morale)`;
+        if (a.aoe) info += ' [AoE]';
+        return `<span class="bestiary-action">${info}</span>`;
+      }).join('');
+      details += `<div class="bestiary-actions">${actions}</div>`;
+    }
+    if (tier >= 3) details += `<div class="bestiary-lore">${enemy.description}</div>`;
+    if (tier < 2) details += `<div class="bestiary-locked">Kill 3 times to reveal abilities.</div>`;
+    else if (tier < 3) details += `<div class="bestiary-locked">Kill 10 times to reveal lore.</div>`;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'unlock-modal-overlay show bestiary-detail-pop';
+    overlay.innerHTML = `<div class="unlock-modal bestiary-detail">
+      <img class="bestiary-detail-art${tier === 1 ? ' silhouette' : ''}" src="${getEnemyPortrait(enemyId)}" alt="">
+      <div class="unlock-name">${tier >= 2 ? enemy.name : 'Unknown Horror'} ${tag}</div>
+      ${details}
+      <div class="unlock-dismiss">TAP TO CLOSE</div>
+    </div>`;
+    overlay.addEventListener('click', () => overlay.remove());
+    document.getElementById('game').appendChild(overlay);
   }
 
   showCodexScreen() {
@@ -2556,10 +2586,9 @@ class Game {
           <div class="classes-slots">Slots: ${data.equipSlots.weapon}W / ${data.equipSlots.armor}A / ${data.equipSlots.trinket}T</div>
         </div>`;
       } else {
-        // Spotlight the first locked class as the player's next goal
-        const isNext = !html.includes('next-unlock');
-        html += `<div class="classes-card locked${isNext ? ' next-unlock' : ''}">
-          ${isNext ? '<div class="next-unlock-ribbon">NEXT UNLOCK</div>' : ''}
+        // No "next unlock" spotlight — achievement order is the player's own,
+        // so all locked classes present as equal trials.
+        html += `<div class="classes-card locked">
           <div class="classes-header">
             <span class="classes-name" style="opacity:0.5">${data.name}</span>
             <span class="classes-tags">${tagPips}</span>

@@ -7043,3 +7043,93 @@ html, body {
 .stat-icon.icon-morale { color: var(--gold); }
 /* Glossary-tappable icons keep the underline cue */
 .stat-icon.kw { border-bottom: 1px dotted rgba(216, 190, 140, 0.5); }
+
+/* ============================================================
+   Sticky Back buttons, feet-free portraits (sprite framing)
+   ============================================================ */
+/* Back stays reachable while only the content scrolls above it */
+.submenu-back {
+  position: sticky;
+  bottom: 8px;
+  z-index: 5;
+  box-shadow: 0 -8px 16px rgba(8, 6, 4, 0.75);
+}
+
+/* Cut-in figures: lower legs drop below the frame so the art reads as a
+   sprite bust, not a full miniature with feet */
+.skill-cutin-portrait { bottom: -14%; }
+.enemy-cutin-portrait { bottom: -14%; }
+
+/* Title keyart: same treatment — figures rise from the frame's lower edge */
+.home-keyart {
+  background:
+    linear-gradient(180deg, rgba(11, 10, 8, 0.4) 0%, rgba(11, 10, 8, 0.05) 45%, rgba(11, 10, 8, 0.75) 100%),
+    url('../assets/LEG.png') right -40px bottom -46px / auto 62% no-repeat,
+    url('../assets/enemy_arminius_champion.png') left -50px bottom -46px / auto 58% no-repeat;
+}
+
+/* Recruit-unlock modal: bust crop instead of a tiny full-body figure */
+.unlock-bust {
+  width: 112px;
+  height: 118px;
+  max-width: none;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 6px;
+  border: 2px solid var(--border-highlight);
+}
+
+
+/* ============================================================
+   Bestiary tiles: uniform squares, art only, rank-colored frames
+   ============================================================ */
+.bestiary-grid.tiles {
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: 7px;
+}
+.bestiary-slot.filled {
+  position: relative;
+  overflow: hidden;
+  border-style: solid;
+  cursor: pointer;
+  padding: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(40, 34, 22, 0.9) 0%, rgba(12, 10, 7, 0.95) 80%);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.bestiary-slot.filled:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+}
+.bestiary-tile-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+/* One kill: only the shadow of the thing */
+.bestiary-tile-art.silhouette, .bestiary-detail-art.silhouette {
+  filter: brightness(0.12) saturate(0) contrast(1.15);
+}
+/* Rank frames */
+.bestiary-slot.frame-common { border-color: rgba(160, 140, 90, 0.4); }
+.bestiary-slot.frame-elite {
+  border-color: var(--gold);
+  box-shadow: 0 0 6px rgba(201, 162, 39, 0.35), inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.bestiary-slot.frame-boss {
+  border-color: var(--purple);
+  box-shadow: 0 0 8px rgba(122, 78, 140, 0.5), inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+/* Detail popup */
+.bestiary-detail { text-align: center; }
+.bestiary-detail-art {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 6px;
+  border: 2px solid var(--border-highlight);
+  margin-bottom: 8px;
+}
+.bestiary-detail .bestiary-stat { margin: 6px 0; }
+.bestiary-detail .bestiary-actions { justify-content: center; }
