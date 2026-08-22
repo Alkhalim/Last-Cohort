@@ -1060,15 +1060,27 @@ class Game {
     const resetBtn = document.getElementById('btn-reset-progress');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        // A hard-to-undo action gets a real confirmation dialog
+        // A hard-to-undo action gets a real confirmation dialog, with
+        // checkboxes for exactly which slices of progression to erase
         const overlay = document.createElement('div');
         overlay.className = 'unlock-modal-overlay show reset-confirm';
+        const CATS = [
+          { id: 'classes', label: 'Class unlocks', checked: true },
+          { id: 'achievements', label: 'Achievements & item waves', checked: true },
+          { id: 'bestiary', label: 'Bestiary & boss trophies', checked: true },
+          { id: 'stats', label: 'Stats, records & renown', checked: true },
+          { id: 'leaderboard', label: 'Leaderboard & run history', checked: true },
+        ];
         overlay.innerHTML = `
           <div class="unlock-modal">
-            <div class="unlock-kicker">RESET ALL PROGRESSION</div>
-            <div class="unlock-desc">Every run, unlock, achievement, and record will be erased. The forest forgets you entirely.<br><br><b>Really reset?</b></div>
+            <div class="unlock-kicker">RESET PROGRESSION</div>
+            <div class="unlock-desc">Choose what the forest forgets. Any reset also abandons the current run.</div>
+            <div class="reset-cats">${CATS.map(c => `
+              <label class="reset-cat"><input type="checkbox" data-cat="${c.id}" ${c.checked ? 'checked' : ''}><span>${c.label}</span></label>`).join('')}
+            </div>
+            <div class="unlock-desc"><b>Really reset?</b></div>
             <div class="reset-confirm-row">
-              <button class="btn-secondary btn-danger" id="btn-reset-yes">Erase everything</button>
+              <button class="btn-secondary btn-danger" id="btn-reset-yes">Erase selected</button>
               <button class="btn-secondary" id="btn-reset-no">Keep my legion</button>
             </div>
           </div>`;
@@ -1076,10 +1088,40 @@ class Game {
         overlay.querySelector('#btn-reset-no').addEventListener('click', () => overlay.remove());
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
         overlay.querySelector('#btn-reset-yes').addEventListener('click', () => {
+          const on = {};
+          overlay.querySelectorAll('input[data-cat]').forEach(cb => { on[cb.dataset.cat] = cb.checked; });
           try {
-            [RENOWN_STORAGE_KEY, STATS_STORAGE_KEY, ACHIEVEMENTS_STORAGE_KEY,
-             RUN_HISTORY_STORAGE_KEY, SAVED_RUN_STORAGE_KEY,
-             'lc_hints_seen', 'lc_choices_seen'].forEach(k => localStorage.removeItem(k));
+            // Achievements: split class unlocks from everything else
+            if (on.classes || on.achievements) {
+              let ach = {};
+              try { ach = JSON.parse(localStorage.getItem(ACHIEVEMENTS_STORAGE_KEY) || '{}'); } catch (e2) {}
+              Object.keys(ach).forEach(k => {
+                const isClass = k.startsWith('class_');
+                if ((isClass && on.classes) || (!isClass && on.achievements)) delete ach[k];
+              });
+              localStorage.setItem(ACHIEVEMENTS_STORAGE_KEY, JSON.stringify(ach));
+            }
+            // Stats: bestiary (kill counts, relocks boss trophies) vs the rest
+            if (on.bestiary || on.stats) {
+              let st = {};
+              try { st = JSON.parse(localStorage.getItem(STATS_STORAGE_KEY) || '{}'); } catch (e2) {}
+              if (on.bestiary && on.stats) {
+                localStorage.removeItem(STATS_STORAGE_KEY);
+              } else if (on.bestiary) {
+                st.enemiesKilled = {};
+                localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(st));
+              } else {
+                const kills = st.enemiesKilled || {};
+                localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify({ enemiesKilled: kills }));
+              }
+            }
+            if (on.stats) {
+              localStorage.removeItem(RENOWN_STORAGE_KEY);
+              localStorage.removeItem('lc_hints_seen');
+              localStorage.removeItem('lc_choices_seen');
+            }
+            if (on.leaderboard) localStorage.removeItem(RUN_HISTORY_STORAGE_KEY);
+            localStorage.removeItem(SAVED_RUN_STORAGE_KEY);
           } catch (e2) { /* storage unavailable */ }
           window.location.reload();
         });

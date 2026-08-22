@@ -6280,3 +6280,43 @@ html, body {
 #options-screen .btn-secondary { margin-top: 10px; }
 #options-screen .option-hint { margin-bottom: 4px; }
 #options-screen .submenu-content { padding-bottom: 28px; }
+
+/* Selective reset categories */
+.reset-cats {
+  text-align: left;
+  margin: 4px 0 12px;
+  border-top: 1px solid rgba(46, 34, 14, 0.55);
+  border-bottom: 1px solid rgba(46, 34, 14, 0.55);
+  padding: 8px 0;
+}
+.reset-cat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  font-size: 0.78rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.reset-cat input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  border: 1px solid var(--gold-dim);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  position: relative;
+}
+.reset-cat input[type="checkbox"]:checked::after {
+  content: '✕';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red-bright);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
