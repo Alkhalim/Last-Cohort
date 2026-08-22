@@ -49,7 +49,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 6, "ignoreRow": true }
       },
       {
-        "id": "twin_slash", "name": "Twin Slash", "cooldown": 1,
+        "id": "twin_slash", "name": "Twin Slash", "cooldown": 2,
         "cost": { "type": "pairOdd" }, "target": "dual_enemy",
         "description": "Deal 9 damage to each of two targets.",
         "effects": { "damage": 9, "bonusDmgScale": 0.75 }
@@ -376,7 +376,7 @@ const RAW_CLASSES = {
     "maxHp": 25,
     "tags": ["command", "roman"],
     "complexity": 3,
-    "hidden": true, "unlockCondition": "Reach March 2", "unlockKey": "class_signifer",
+    "hidden": true, "unlockCondition": "Complete 8 marches in total", "unlockKey": "class_signifer",
     "equipSlots": { "weapon": 1, "armor": 3, "trinket": 3 },
     "description": "Standard Bearer. Rallies the cohort with morale and buffs.",
     "passive": {
@@ -558,7 +558,7 @@ const RAW_CLASSES = {
     "tags": ["melee", "roman"],
     "complexity": 2,
     "hidden": true,
-    "unlockCondition": "Reach March 4",
+    "unlockCondition": "Slay 10 bosses",
     "unlockKey": "class_equites",
     "equipSlots": { "weapon": 3, "armor": 2, "trinket": 2 },
     "description": "Roman cavalry. Devastating charge openers that can strike any target.",
@@ -655,7 +655,7 @@ const RAW_CLASSES = {
     "maxHp": 20,
     "tags": ["ranged", "roman"],
     "complexity": 3,
-    "hidden": true, "unlockCondition": "Reach March 5", "unlockKey": "class_ballistarius",
+    "hidden": true, "unlockCondition": "Slay 150 enemies", "unlockKey": "class_ballistarius",
     "equipSlots": { "weapon": 2, "armor": 1, "trinket": 4 },
     "description": "Roman siege crossbowman. Every hit weakens the enemy, reducing their damage.",
     "passive": {
@@ -752,7 +752,7 @@ const RAW_CLASSES = {
     "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
-    "unlockCondition": "Complete two full runs", "unlockKey": "class_praetorian",
+    "unlockCondition": "Complete four full runs", "unlockKey": "class_praetorian",
     "description": "Imperial bodyguard. The Emperor's finest, forged in blood and loyalty.",
     "passive": {
       "name": "Unyielding",
@@ -940,7 +940,7 @@ const RAW_CLASSES = {
     "tags": ["command", "support", "roman"],
     "complexity": 3,
     "hidden": true,
-    "unlockCondition": "Reach March 6",
+    "unlockCondition": "Reach March 6 in two runs",
     "unlockKey": "class_vestalis",
     "equipSlots": { "weapon": 1, "armor": 2, "trinket": 4 },
     "description": "Vestal priestess. Morale engine, healer, and divine protector.",
@@ -1125,7 +1125,7 @@ const RAW_CLASSES = {
     "complexity": 3,
     "equipSlots": { "weapon": 2, "armor": 4, "trinket": 1 },
     "hidden": true,
-    "unlockCondition": "Complete a full run", "unlockKey": "class_cataphract",
+    "unlockCondition": "Complete two full runs", "unlockKey": "class_cataphract",
     "description": "Heavy cavalry officer. Mobile fortress that commands from the saddle.",
     "passive": {
       "name": "Iron Vanguard",

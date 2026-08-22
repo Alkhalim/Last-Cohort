@@ -1539,19 +1539,25 @@ section('2.12c — achievement checks are not vacuous');
 }
 
 // ============================================================
-section('2.12d — class unlock drip pacing');
+section('2.12d — class unlock natural pacing');
 // ============================================================
 {
   const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
   check('all class awards route through tryUnlockClass', () => {
-    assert(!/a\.class_[a-z_]+ = true/.test(main), 'a direct class award bypasses the drip cap');
-    assert(!/a\[rung\.key\] = true/.test(main), 'ladder awards bypass the drip cap');
+    assert(!/a\.class_[a-z_]+ = true/.test(main), 'a direct class award bypasses the helper');
+    assert(!/a\[rung\.key\] = true/.test(main), 'ladder awards bypass the helper');
     assert(/tryUnlockClass = \(key, name\)/.test(main), 'tryUnlockClass helper missing');
   });
-  check('at most 2 class unlocks per run', () => {
-    assert(/_classUnlocksThisRun \|\| 0\) >= 2/.test(main), 'per-run cap missing');
-    assert((main.match(/_classUnlocksThisRun = 0/g) || []).length >= 2,
-      'counter must reset for both normal and test runs');
+  check('ladder gates are cumulative, not march-depth (one run cannot sweep them)', () => {
+    assert(/totalMarches >= 8/.test(main), 'Signifer gate not cumulative');
+    assert(/bossesKilled \|\| 0\) >= 10/.test(main), 'Equites gate not cumulative');
+    assert(/totalSlain >= 150/.test(main), 'Ballistarius gate not cumulative');
+    assert(/thresholdRuns \|\| 0\) >= 2/.test(main), 'Vestalis gate not cumulative');
+    assert(!/met: currentDiff >=/.test(main), 'march-depth gates would cascade in a single run');
+  });
+  check('cumulative stats are tracked', () => {
+    assert(/totalMarchesCompleted = \(this\.stats\.totalMarchesCompleted \|\| 0\) \+ 1/.test(main), 'march counter missing');
+    assert(/thresholdRuns = \(this\.stats\.thresholdRuns \|\| 0\) \+ 1/.test(main), 'threshold counter missing');
   });
 }
 

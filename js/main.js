@@ -551,8 +551,6 @@ class Game {
     this.marchCount = test.difficulty - 1;
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
-    this._classUnlocksThisRun = 0;
-    this._deferredClassNotified = false;
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;
@@ -1261,7 +1259,6 @@ class Game {
         activeCurses: [...(this.activeCurses || [])],
         activeBoons: [...(this.activeBoons || [])],
         selectedPartyClasses: [...(this.selectedPartyClasses || [])],
-        classUnlocksThisRun: this._classUnlocksThisRun || 0,
         currentRunRenown: this.currentRunRenown || 0,
         route: [...(this.route || [])],
         recentBosses: [...(this.recentBosses || [])],
@@ -1330,7 +1327,6 @@ class Game {
       this.engine.encountersCompleted = data.encountersCompleted;
       this.engine.totalRenownEarned = data.totalRenownEarned;
       this.engine.pendingSkillPicks = data.pendingSkillPicks;
-      this._classUnlocksThisRun = data.classUnlocksThisRun || 0;
       this.engine.encounterXP = data.encounterXP || 0;
       this.engine.skillUsageStats = data.skillUsageStats || {};
       this.engine.runKilledBosses = data.runKilledBosses || [];
@@ -2078,20 +2074,12 @@ class Game {
     // Class unlock achievements
     // Use both stats and current run difficulty to catch unlocks
     const currentDiff = Math.max(s.highestDifficulty || 1, this.difficulty || 1);
-    // Drip pacing: a great first run would otherwise dump 5+ new classes on
-    // a new player at once. At most 2 class unlocks are granted per run;
-    // conditions already met simply grant early in the NEXT run.
+    // Unlocks land the moment they are earned. Pacing comes from the gates
+    // themselves: cumulative thresholds (total marches, total boss kills,
+    // total slain, Threshold visits) that no single run can sweep.
     const tryUnlockClass = (key, name) => {
       if (a[key]) return false;
-      if ((this._classUnlocksThisRun || 0) >= 2) {
-        if (!this._deferredClassNotified) {
-          this._deferredClassNotified = true;
-          this.addNotification('More recruits await your next march...');
-        }
-        return false;
-      }
       a[key] = true;
-      this._classUnlocksThisRun = (this._classUnlocksThisRun || 0) + 1;
       this.addNotification(`Class Unlocked: ${name}!`);
       return true;
     };
@@ -2115,15 +2103,17 @@ class Game {
     //
     // Runs are FINAL_MARCH (6) marches long — nothing may gate past March 6.
     const runsWon = s.runsCompleted || 0;
+    const totalMarches = s.totalMarchesCompleted || 0;
+    const totalSlain = Object.values(s.enemiesKilled || {}).reduce((sum, v) => sum + v, 0);
     const unlockLadder = [
-      { key: 'class_signifer',     name: 'Signifer',     met: currentDiff >= 2 },
-      { key: 'class_equites',      name: 'Equites',      met: currentDiff >= 4 },
-      { key: 'class_ballistarius', name: 'Ballistarius', met: currentDiff >= 5 },
-      { key: 'class_vestalis',     name: 'Vestalis',     met: currentDiff >= 6 },
+      { key: 'class_signifer',     name: 'Signifer',     met: totalMarches >= 8 },
+      { key: 'class_equites',      name: 'Equites',      met: (s.bossesKilled || 0) >= 10 },
+      { key: 'class_ballistarius', name: 'Ballistarius', met: totalSlain >= 150 },
+      { key: 'class_vestalis',     name: 'Vestalis',     met: (s.thresholdRuns || 0) >= 2 },
       // Completing a run means defeating the final march boss. Retiring home
       // does not count — see trackRunEnd().
-      { key: 'class_cataphract',   name: 'Cataphract',   met: runsWon >= 1 || !!a.boss_spirits_defeated },
-      { key: 'class_praetorian',   name: 'Praetorian',   met: runsWon >= 2 },
+      { key: 'class_cataphract',   name: 'Cataphract',   met: runsWon >= 2 || !!a.boss_spirits_defeated },
+      { key: 'class_praetorian',   name: 'Praetorian',   met: runsWon >= 4 },
     ];
     for (let i = 0; i < unlockLadder.length; i++) {
       const rung = unlockLadder[i];
@@ -2398,12 +2388,12 @@ class Game {
       { title: 'PROGRESSION', defs: [
         { key: 'first_boss_kill', name: "First Blood", desc: "Defeat your first boss.", progress: () => (s.bossesKilled || 0) >= 1 ? 'Done' : '0/1' },
         { key: 'first_elite_kill', name: "Elite Slayer", desc: "Defeat your first elite enemy.", progress: () => { const ids = ['oak_shield','wicker_man','ironbound_champion']; return ids.some(id => (s.enemiesKilled[id]||0)>=1) ? 'Done' : '0/1'; } },
-        { key: 'class_signifer', name: "Deeper Into The Forest", desc: "Reach March 2.", progress: () => (s.highestDifficulty||1) >= 2 ? 'Done' : `March ${s.highestDifficulty||1}/2` },
-        { key: 'class_equites', name: "Veteran's March", desc: "Reach March 4.", progress: () => (s.highestDifficulty||1) >= 4 ? 'Done' : `March ${s.highestDifficulty||1}/4` },
-        { key: 'class_ballistarius', name: "Deep March", desc: "Reach March 5.", progress: () => (s.highestDifficulty||1) >= 5 ? 'Done' : `March ${s.highestDifficulty||1}/5` },
-        { key: 'class_vestalis', name: "The Threshold", desc: "Reach March 6.", progress: () => (s.highestDifficulty||1) >= 6 ? 'Done' : `March ${s.highestDifficulty||1}/6` },
-        { key: 'class_cataphract', name: "Into The Darkness", desc: "Complete a full run.", progress: () => (s.runsCompleted||0) >= 1 ? 'Done' : `${s.runsCompleted||0}/1 runs` },
-        { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Complete two full runs.", progress: () => (s.runsCompleted||0) >= 2 ? 'Done' : `${s.runsCompleted||0}/2 runs` },
+        { key: 'class_signifer', name: "March-Hardened", desc: "Complete 8 marches in total.", progress: () => (s.totalMarchesCompleted||0) >= 8 ? 'Done' : `${Math.min(8, s.totalMarchesCompleted||0)}/8 marches` },
+        { key: 'class_equites', name: "Slayer of Champions", desc: "Slay 10 bosses in total.", progress: () => (s.bossesKilled||0) >= 10 ? 'Done' : `${Math.min(10, s.bossesKilled||0)}/10 bosses` },
+        { key: 'class_ballistarius', name: "Reaper of the Forest", desc: "Slay 150 enemies in total.", progress: () => { const t = Object.values(s.enemiesKilled||{}).reduce((x,v)=>x+v,0); return t >= 150 ? 'Done' : `${Math.min(150, t)}/150 slain`; } },
+        { key: 'class_vestalis', name: "Twice to the Threshold", desc: "Reach March 6 in two different runs.", progress: () => (s.thresholdRuns||0) >= 2 ? 'Done' : `${Math.min(2, s.thresholdRuns||0)}/2 runs` },
+        { key: 'class_cataphract', name: "Into The Darkness", desc: "Complete two full runs.", progress: () => (s.runsCompleted||0) >= 2 ? 'Done' : `${s.runsCompleted||0}/2 runs` },
+        { key: 'class_praetorian', name: "The Emperor's Guard", desc: "Complete four full runs.", progress: () => (s.runsCompleted||0) >= 4 ? 'Done' : `${s.runsCompleted||0}/4 runs` },
         { key: 'class_arcania', name: "Through The Fog", desc: "Defeat the Fog Weaver.", progress: () => (s.enemiesKilled['fog_weaver']||0) >= 1 ? 'Done' : '0/1' },
         { key: 'class_wulfswestr', name: "Thusnelda's Defeat", desc: "Defeat Thusnelda.", progress: () => (s.enemiesKilled['thusnelda']||0) >= 1 ? 'Done' : '0/1' },
       ]},
@@ -2520,8 +2510,6 @@ class Game {
     this.saveStats();
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
-    this._classUnlocksThisRun = 0;
-    this._deferredClassNotified = false;
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;
@@ -2571,6 +2559,13 @@ class Game {
     this.difficulty++;
     this.marchCount++;
     this.engine.difficulty = this.difficulty;
+    // Cumulative pacing stats: every completed march counts, and reaching
+    // the Threshold registers once per run (difficulty hits 6 only once)
+    this.stats.totalMarchesCompleted = (this.stats.totalMarchesCompleted || 0) + 1;
+    if (this.difficulty === FINAL_MARCH) {
+      this.stats.thresholdRuns = (this.stats.thresholdRuns || 0) + 1;
+    }
+    this.saveStats();
     if (this.difficulty > this.stats.highestDifficulty) {
       this.stats.highestDifficulty = this.difficulty;
       this.saveStats();
