@@ -6394,3 +6394,11 @@ html, body {
 /* The new tabbed layout needs block flow (the old .ps-curses was flex) */
 #curse-select-curses { display: block; }
 .ps-curse-card.boon .ps-curse-name { color: var(--green-bright); }
+
+/* Unlock modal: the achievement that earned the spoils */
+.unlock-source {
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin: -4px 0 10px;
+}

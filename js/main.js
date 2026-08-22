@@ -1238,7 +1238,9 @@ class Game {
         if (item.baseId || item.unlockKill !== eid) return;
         const need = item.unlockKillCount || 1;
         if (before < need && before + 1 >= need) {
-          this.queueUnlockModal({ kind: 'items', items: [item], trophy: true });
+          const bName = ENEMY_DATA[eid] ? ENEMY_DATA[eid].name : eid;
+          this.queueUnlockModal({ kind: 'items', items: [item], trophy: true,
+            source: `${bName} ${need >= 3 ? 'felled three times' : 'felled'}` });
         }
       });
     });
@@ -2410,6 +2412,7 @@ class Game {
       const single = items.length === 1 ? items[0] : null;
       inner = `
         <div class="unlock-kicker">${next.trophy ? 'TROPHY CLAIMED' : 'NEW SPOILS ENTER THE FOREST'}</div>
+        ${next.source ? `<div class="unlock-source">${next.source}</div>` : ''}
         ${single ? `
           <div class="unlock-name rarity-${single.rarity}">${single.name}</div>
           <div class="unlock-desc">${single.slot} · ${single.rarity}</div>
@@ -2429,6 +2432,42 @@ class Game {
     requestAnimationFrame(() => overlay.classList.add('show'));
   }
 
+  // Names + requirements for gate keys outside the legacy table, so the
+  // unlock spotlight can say WHAT earned the spoils
+  static GATE_INFO = {
+    first_boss_kill: ['First Boss Defeated', 'Defeat your first boss'],
+    first_elite_kill: ['First Elite Defeated', 'Defeat your first elite enemy'],
+    flawless_encounter: ['Flawless Victory', 'Win an encounter with no soldier taking damage'],
+    kill_boss_turn3: ['Blitzkrieg', 'Kill a boss within 3 turns'],
+    solo_survivor: ['Last Man Standing', 'Win a boss fight with one soldier left'],
+    no_downed_march: ['Iron Discipline', 'Complete a march with no soldier downed'],
+    three_curses_win: ['Masochist', 'Win a run carrying 3 or more curses'],
+    hero_three_rares: ['Collector', 'Equip one soldier with 3 rare items'],
+    poison_kill_20: ['Venomous Legacy', 'Kill 20 enemies with poison damage'],
+    overkill_30: ['Excessive Force', 'Deal 30+ damage in a single hit'],
+    high_morale_finish: ['Unbreakable Spirit', 'Finish a boss fight above 90 morale'],
+    low_morale_win: ['Against All Odds', 'Win a boss fight below 10 morale'],
+    boss_corpse_arminius: ['The Betrayer Falls', 'Defeat the Corpse of Arminius'],
+    boss_corpse_varus: ['Varus Redeemed', 'Defeat the Corpse of Varus'],
+    boss_spirits_defeated: ['The Forest Is Silenced', 'Defeat the Spirits'],
+    boss_lindwurm: ['Dragon Slayer', 'Slay the Lindwurm Lord'],
+    hidden_march_clear: ['Secret Paths', 'Complete a hidden march'],
+    kill_50: ["Centurion's Tally", 'Kill 50 enemies in total'],
+    kill_200: ["Legionary's Harvest", 'Kill 200 enemies in total'],
+    kill_500: ['Decimator', 'Kill 500 enemies in total'],
+    five_wins: ['Conqueror', 'Win 5 runs'],
+    all_classes_used: ['Versatile Commander', 'Complete a march with every class'],
+    party_all_rares: ['Legion of Gold', 'Equip the whole party with only rare items'],
+    leave_3_epics: ['Sacrifice to the Gods', 'Leave behind 3 epic items in one run'],
+  };
+
+  gateSource(key) {
+    const legacy = (typeof LEGACY_ACHIEVEMENTS !== 'undefined') && LEGACY_ACHIEVEMENTS.find(d => d.key === key);
+    if (legacy) return `${legacy.name} — ${legacy.desc}`;
+    const info = Game.GATE_INFO[key];
+    return info ? `${info[0]} — ${info[1]}` : null;
+  }
+
   // Items gated behind this achievement key (new spoils entering the pool)
   itemUnlocksFor(key) {
     return Object.values(ITEM_DATA).filter(i => i.unlockKey === key && !i.baseId);
@@ -2437,7 +2476,7 @@ class Game {
   notifyItemUnlocks(key) {
     const items = this.itemUnlocksFor(key);
     if (items.length > 0) {
-      this.queueUnlockModal({ kind: 'items', items });
+      this.queueUnlockModal({ kind: 'items', items, source: this.gateSource(key) });
     }
   }
 
