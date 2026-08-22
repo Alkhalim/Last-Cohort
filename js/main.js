@@ -138,6 +138,7 @@ const BOON_DEFS = [
 
 class Game {
   constructor() {
+    window.game = this;
     this.engine = new CombatEngine();
     this.ui = new GameUI(this.engine);
     this.lifetimeRenown = this.loadLifetimeRenown();
@@ -2393,13 +2394,17 @@ class Game {
   queueUnlockModal(data) {
     this._unlockModalQueue = this._unlockModalQueue || [];
     this._unlockModalQueue.push(data);
-    if (!this._unlockModalShowing) this._showNextUnlockModal();
+    if (!this._unlockModalShowing) {
+      this._unlockModalShowing = true;
+      // Defer past the current call stack so modals fired during boot's
+      // retroactive achievement sweep appear after the game is ready
+      setTimeout(() => this._showNextUnlockModal(), 50);
+    }
   }
 
   _showNextUnlockModal() {
     const next = (this._unlockModalQueue || []).shift();
     if (!next) { this._unlockModalShowing = false; return; }
-    this._unlockModalShowing = true;
 
     const overlay = document.createElement('div');
     overlay.className = 'unlock-modal-overlay';
@@ -2969,14 +2974,14 @@ const REDUCED_ART_ENEMY = {
 };
 
 function getPlayerPortrait(classTitle) {
-  if (window.game && window.game.settings.reducedArt) {
+  if (window.game && window.game.settings && window.game.settings.reducedArt) {
     return REDUCED_ART_PLAYER[classTitle] || `assets/${classTitle}.png`;
   }
   return `assets/${classTitle}.png`;
 }
 
 function getEnemyPortrait(enemyId) {
-  if (window.game && window.game.settings.reducedArt) {
+  if (window.game && window.game.settings && window.game.settings.reducedArt) {
     const cat = REDUCED_ART_ENEMY_CATEGORY[enemyId] || 'melee';
     return REDUCED_ART_ENEMY[cat] || 'assets/enemy_portrait.png';
   }
