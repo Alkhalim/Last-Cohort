@@ -2385,6 +2385,7 @@ class Game {
       first_unit_downed: 'Downed units revive after combat at 50% HP. Protect your weakest members.',
       first_skill_pick: 'Choose skills that complement your party. You can\'t take them all — pick what fits your strategy.',
       first_item_drop: 'Equip items to boost your soldiers. Match items to the right class tags for best results.',
+      first_overkill: 'OVERKILL! Killing an enemy with far more damage than needed restores morale and a little HP — the men love a decisive blow.',
     };
     if (hints[id]) this.showHint(id, hints[id]);
   }
@@ -2567,7 +2568,7 @@ class Game {
     const portrait = getPlayerPortrait(data.title);
 
     const skillsHtml = data.skills.map(s => {
-      const cdText = s.cooldown ? `<span class="cd-detail-cd">CD: ${s.cooldown}</span>` : '';
+      const cdText = s.cooldown ? `<span class="cd-detail-cd">Cooldown: ${s.cooldown}</span>` : '';
       const starterTag = s.starter ? '<span class="cd-detail-starter">Starter</span>' : '';
       return `<div class="cd-detail-skill">
         <div class="cd-detail-skill-header">
@@ -2584,7 +2585,7 @@ class Game {
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'class-detail-overlay';
-      document.getElementById('game-container').appendChild(overlay);
+      document.getElementById('game').appendChild(overlay);
     }
 
     overlay.innerHTML = `

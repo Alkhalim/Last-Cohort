@@ -531,6 +531,8 @@ class GameUI {
     }
     bar.classList.remove('hidden');
     document.getElementById('boss-hp-name').textContent = boss.name;
+    const track = bar.querySelector('.boss-hp-track');
+    if (track) track.style.setProperty('--hp-seg', (1000 / boss.maxHp) + '%');
     const pct = (boss.hp / boss.maxHp) * 100;
     const prevPct = this._prevBossHpPct !== undefined ? this._prevBossHpPct : pct;
     this._prevBossHpPct = pct;
@@ -775,12 +777,12 @@ class GameUI {
       el.innerHTML = `
         ${enemy._skipNextAction ? '<div class="unit-stun-overlay">STUNNED</div>' : ''}
         <div class="enemy-name">${enemy.name}${enemy.isBoss ? ` <span class="boss-icon">${gicon('skull')}</span>` : ''}</div>
-        <div class="hp-bar">
+        <div class="hp-bar" style="--hp-seg:${1000 / enemy.maxHp}%">
           <div class="hp-drain" style="width:${drainPct}%"></div>
           <div class="hp-fill ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${hpPct}%"></div>
         </div>
         <div class="hp-text">${enemy.hp}/${enemy.maxHp}${enemy.block > 0 ? ` <span class="block-icon">${gicon('shield')}${enemy.block}</span>` : ''}${enemy.poison > 0 ? ` <span class="poison-icon" title="${this.engine.partyHasItem && this.engine.partyHasItem('grinding_ring') ? `Poison ${enemy.poison} — ${enemy.poison} damage every turn (the Quern lets nothing fade)` : `Poison ${enemy.poison} — ${poisonTotalDamage(enemy.poison)} damage over ${enemy.poison} turns`}">${gicon('skull')}${enemy.poison}</span>` : ''}</div>
-        ${this.renderIntentBadge(enemy)}
+        <div class="enemy-intent-slot">${this.renderIntentBadge(enemy)}</div>
       `;
 
       if (drainPct > hpPct) {
@@ -1400,7 +1402,7 @@ class GameUI {
           <span class="unit-name">${unit.name}</span>
         </div>
         <div class="hp-bar-container">
-          <div class="hp-bar">
+          <div class="hp-bar" style="--hp-seg:${1000 / unit.maxHp}%">
             <div class="hp-drain" style="width:${drainPct}%"></div>
             <div class="hp-fill ${isHealing ? 'healing' : ''} ${hpPct < 20 ? 'critical' : hpPct < 40 ? 'hp-low' : hpPct < 65 ? 'hp-mid' : ''}" style="width:${fillStartPct}%"></div>
             ${threatHtml}
@@ -2549,7 +2551,7 @@ class GameUI {
       const pct = (u.hp / u.maxHp) * 100;
       return `<div class="map-party-unit${u.downed ? ' downed' : ''}" data-unit-idx="${i}">
         <span class="map-party-name">${renderClassName(u.classId, u.title)}</span>
-        <div class="map-party-hp-bar">
+        <div class="map-party-hp-bar" style="--hp-seg:${1000 / u.maxHp}%">
           <div class="map-party-hp-fill${pct < 20 ? ' critical' : pct < 40 ? ' hp-low' : pct < 65 ? ' hp-mid' : ''}" style="width:${pct}%"></div>
         </div>
         <span class="map-party-hp-text">${u.hp}/${u.maxHp}</span>
@@ -2678,6 +2680,15 @@ class GameUI {
     label.textContent = `${band.label} (${this.engine.morale})`;
     label.style.color = band.color;
 
+    // Current run renown, next to morale
+    let renownEl = document.getElementById('map-renown-label');
+    if (!renownEl) {
+      renownEl = document.createElement('span');
+      renownEl.id = 'map-renown-label';
+      label.insertAdjacentElement('beforebegin', renownEl);
+    }
+    renownEl.textContent = `${Math.round(this.engine.totalRenownEarned || 0)} RENOWN`;
+
     // Bind morale tooltip on map label
     if (!label._moraleTooltipBound) {
       label._moraleTooltipBound = true;
@@ -2723,6 +2734,7 @@ class GameUI {
     const canvas = document.getElementById('map-canvas');
     const wrapper = document.getElementById('map-canvas-wrapper');
     const container = document.getElementById('map-scroll-container');
+    const prevScrollTop = container.scrollTop;
 
     // Calculate dimensions
     const maxDepth = Math.max(...this.mapNodes.map(n => n.depth));
@@ -3594,18 +3606,35 @@ class GameUI {
         (label ? `<span class="map-node-label">${label}</span>` : '');
 
       if (isReachableNode && !node.visited) {
+        // Phase-sync the pulse to a shared clock: the sway loop rebuilds
+        // these nodes every ~2s, and without this the 1.5s pulse restarted
+        // from zero mid-cycle — a visible snap instead of a clean loop.
+        el.style.animationDelay = (-((performance.now() / 1000) % 1.5)).toFixed(3) + 's';
         el.addEventListener('click', () => this.onMapNodeClick(node));
       }
 
       nodesLayer.appendChild(el);
     }
 
-    // Scroll to show the current position (or bottom for start)
-    if (this.currentNodeId !== null) {
-      const pos = nodePositions[this.currentNodeId];
-      container.scrollTop = pos.y - container.clientHeight / 2;
+    // Scroll to show the current position (or bottom for start) — but only
+    // when the position CHANGED. The sway loop re-renders every ~2 seconds,
+    // and re-centering each time yanked the map away from a player who had
+    // scrolled up to study the route.
+    if (this._mapRenderedNodes !== this.mapNodes) {
+      // A new march's map: always take the initial auto-scroll.
+      this._mapRenderedNodes = this.mapNodes;
+      this._mapScrolledFor = '__new_map__';
+    }
+    if (this._mapScrolledFor !== this.currentNodeId) {
+      this._mapScrolledFor = this.currentNodeId;
+      if (this.currentNodeId !== null) {
+        const pos = nodePositions[this.currentNodeId];
+        container.scrollTop = pos.y - container.clientHeight / 2;
+      } else {
+        container.scrollTop = totalHeight;
+      }
     } else {
-      container.scrollTop = totalHeight;
+      container.scrollTop = prevScrollTop;
     }
   }
 
@@ -4670,7 +4699,7 @@ class GameUI {
         <span class="unit-roundel camp-roundel ring-${tag}">${gicon(ROLE_ICON[tag] || 'shield')}</span>
         <span class="camp-unit-name" style="color:var(--class-${tag})">${u.name}</span>
         <span class="camp-unit-hp" style="color:${hpColor}">${u.downed ? 'FALLEN' : `${u.hp}/${u.maxHp}`}</span>
-        <div class="camp-hp-bar"><div class="camp-hp-fill" style="width:${u.downed ? 0 : hpPct}%;background:${hpColor}"></div></div>
+        <div class="camp-hp-bar" style="--hp-seg:${1000 / u.maxHp}%"><div class="camp-hp-fill" style="width:${u.downed ? 0 : hpPct}%;background:${hpColor}"></div></div>
       </div>`;
     });
     statusHtml += '</div>';
@@ -4930,6 +4959,7 @@ class GameUI {
 
     // XP bar: every encounter adds XP, skill pick granted every 3 encounters (bosses always grant)
     this.lastEncounterGrantedTraining = this.engine.addEncounterXP(isBossVictory);
+    this._xpGainedThisLoot = true;
 
     // Roll drops — filter by usability and enforce rarity caps by threat
     const threat = this.currentNodeThreat || 1;
@@ -5013,15 +5043,11 @@ class GameUI {
     const unitDisplay = document.getElementById('loot-unit-display');
     const actionsEl = document.getElementById('loot-actions');
 
-    // XP training status
-    const xp = this.engine.encounterXP;
-    const xpNeeded = 3;
-    const xpPips = Array.from({ length: xpNeeded }, (_, i) =>
-      `<span class="xp-pip${i < xp ? ' filled' : ''}"></span>`
-    ).join('');
+    // Training status. The XP pips moved to a toast AFTER the spoils screen —
+    // here they only diluted the loot moment.
     const trainingLine = this.lastEncounterGrantedTraining
       ? '<div class="loot-training"><span class="loot-training-text gained">Training available!</span></div>'
-      : `<div class="loot-training"><span class="loot-training-text none">XP: ${xpPips}</span></div>`;
+      : '';
 
     if (this.pendingLoot.length === 0) {
       lootText.textContent = this._lootHadItems ? 'The spoils are claimed.'
@@ -5532,12 +5558,35 @@ class GameUI {
     this.renderLootScreen();
   }
 
+  // "+1 XP" moment shown AFTER the spoils screen, where it used to sit as a
+  // static row on the loot screen itself.
+  _showXpToast() {
+    const xp = this.engine.encounterXP;
+    const pips = Array.from({ length: 3 }, (_, i) =>
+      `<span class="xp-pip${i < xp ? ' filled' : ''}"></span>`).join('');
+    const toast = document.createElement('div');
+    toast.className = 'xp-toast';
+    toast.innerHTML = this.lastEncounterGrantedTraining
+      ? '<span class="xp-toast-gain">+1 XP</span> The men have earned a training session!'
+      : `<span class="xp-toast-gain">+1 XP</span> ${pips}`;
+    document.getElementById('game').appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 500);
+    }, 2600);
+  }
+
   _finishLoot() {
     // Convert any remaining items to Renown
     this.pendingLoot.forEach(itemId => {
       const item = getItemData(itemId);
       if (item) this.engine.totalRenownEarned += this._getSkipRenown(item.rarity);
     });
+    if (this._xpGainedThisLoot) {
+      this._xpGainedThisLoot = false;
+      this._showXpToast();
+    }
     this.pendingLoot = [];
     this._currentLootIdx = undefined;
     this._lootUnitIdx = undefined;
@@ -6015,7 +6064,7 @@ class GameUI {
       const tag = getPrimaryTag(u.classId);
       const hpPct = Math.round((u.hp / u.maxHp) * 100);
       const hpColor = hpPct > 60 ? 'var(--green-bright)' : hpPct > 30 ? 'var(--gold)' : 'var(--red-bright)';
-      statusHtml += `<div class="camp-unit-status"><span class="camp-unit-name" style="color:var(--class-${tag})">${u.title}</span><span class="camp-unit-hp" style="color:${hpColor}">${u.downed ? 'FALLEN' : u.hp + '/' + u.maxHp}</span><div class="camp-hp-bar"><div class="camp-hp-fill" style="width:${u.downed ? 0 : hpPct}%;background:${hpColor}"></div></div></div>`;
+      statusHtml += `<div class="camp-unit-status"><span class="camp-unit-name" style="color:var(--class-${tag})">${u.title}</span><span class="camp-unit-hp" style="color:${hpColor}">${u.downed ? 'FALLEN' : u.hp + '/' + u.maxHp}</span><div class="camp-hp-bar" style="--hp-seg:${1000 / u.maxHp}%"><div class="camp-hp-fill" style="width:${u.downed ? 0 : hpPct}%;background:${hpColor}"></div></div></div>`;
     });
     statusHtml += '</div>';
     statusEl.innerHTML = statusHtml;

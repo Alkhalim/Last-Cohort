@@ -938,6 +938,12 @@ function renderTagPips(classTags) {
   // Hide "roman" tag when there are other tags (avoid empty grey dot)
   const nonRoman = classTags.filter(t => t !== 'roman');
   const tagsToShow = nonRoman.length > 0 ? nonRoman : classTags;
+  // Items show the class-role sigils, not anonymous colored dots. GICONS /
+  // ROLE_ICON live in ui.js, so headless contexts (sims, tests) keep dots.
+  if (typeof GICONS !== 'undefined' && typeof ROLE_ICON !== 'undefined') {
+    return tagsToShow.map(t =>
+      `<span class="tag-icon tag-${t}" title="${t}">${GICONS[ROLE_ICON[t] || 'shield'] || ''}</span>`).join('');
+  }
   return tagsToShow.map(t => `<span class="tag-pip tag-${t}"></span>`).join('');
 }
 

@@ -6726,3 +6726,177 @@ html, body {
   background: linear-gradient(135deg, var(--morale-col, #eed88a) 0%, var(--morale-col-dark, #8a7020) 100%);
   box-shadow: 0 0 5px var(--morale-col, rgba(201, 162, 39, 0.45));
 }
+
+/* ============================================================
+   Options alignment pass: one column of switches, one of values
+   ============================================================ */
+/* The name takes all free space, so every switch and every On/Off value
+   lands in the same two right-hand columns regardless of label width. */
+.option-toggle { gap: 12px; }
+.option-toggle .option-name { flex: 1 1 auto; }
+.option-toggle input[type="checkbox"] { margin: 0; display: block; }
+.option-toggle .option-value { min-width: 32px; text-align: right; }
+/* Hints that follow a button (not a toggle card) were pulled onto the
+   button by .option-hint's negative top margin. */
+#options-screen .btn-secondary + .option-hint {
+  margin: 8px 0 4px;
+  text-align: center;
+}
+/* Breathing room below the last control on phones with browser chrome */
+#options-screen .submenu-content {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ============================================================
+   HP-bar gradations scale with the pool: one tick per 10 HP
+   ============================================================ */
+/* --hp-seg is set inline per bar (1000 / maxHp %). A 30 HP soldier shows
+   two ticks, a 60 HP boss five — the bar itself now conveys size instead
+   of always carving the same quarter-marks. Fallback keeps quarters. */
+.hp-bar::after, .boss-hp-track::after, .camp-hp-bar::after, .map-party-hp-bar::after {
+  background: repeating-linear-gradient(90deg,
+    transparent 0 calc(var(--hp-seg, 25%) - 1px),
+    rgba(0, 0, 0, 0.4) calc(var(--hp-seg, 25%) - 1px) var(--hp-seg, 25%));
+}
+
+/* ============================================================
+   Target highlighting crank: valid targets must POP
+   ============================================================ */
+/* Hovering a skill (.preview) and staging one (.targetable) were a faint
+   static glow, easy to miss entirely. Now: bright rim + lift + pulse. */
+.enemy-card.preview {
+  filter: drop-shadow(0 0 8px rgba(230, 80, 60, 0.7)) brightness(1.1);
+  opacity: 1;
+}
+.enemy-card.targetable {
+  filter: drop-shadow(0 0 9px rgba(235, 90, 65, 0.9)) brightness(1.12);
+  animation: target-pulse-enemy 0.85s ease-in-out infinite alternate;
+}
+@keyframes target-pulse-enemy {
+  from { filter: drop-shadow(0 0 6px rgba(230, 80, 60, 0.55)) brightness(1.05); transform: translateY(0) rotate(var(--tilt, 0deg)); }
+  to { filter: drop-shadow(0 0 14px rgba(245, 110, 75, 1)) brightness(1.2); transform: translateY(-3px) rotate(var(--tilt, 0deg)); }
+}
+.unit-card.preview {
+  border-color: var(--green-bright);
+  box-shadow: 0 0 10px rgba(120, 190, 84, 0.55), inset 0 0 8px rgba(106, 170, 74, 0.15);
+}
+.unit-card.targetable {
+  border-color: var(--green-bright);
+  animation: target-pulse-ally 0.85s ease-in-out infinite alternate;
+}
+@keyframes target-pulse-ally {
+  from { box-shadow: 0 0 6px rgba(106, 170, 74, 0.45); transform: translateY(0); }
+  to { box-shadow: 0 0 18px rgba(140, 210, 95, 0.95), inset 0 0 12px rgba(106, 170, 74, 0.3); transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .enemy-card.targetable, .unit-card.targetable { animation: none; }
+  .enemy-card.targetable { filter: drop-shadow(0 0 12px rgba(240, 100, 70, 0.95)) brightness(1.15); }
+  .unit-card.targetable { box-shadow: 0 0 16px rgba(140, 210, 95, 0.9); }
+}
+
+/* ============================================================
+   Map header: readable morale chip, run renown, stacked party bars
+   ============================================================ */
+/* Morale on the march screen was small dim text over the forest art */
+#map-morale-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(10, 8, 5, 0.55);
+  padding: 3px 9px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+#map-renown-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  background: rgba(10, 8, 5, 0.55);
+  padding: 3px 9px;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+/* Party bar: class name above its HP bar, not beside it */
+.map-party-unit {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+.map-party-name {
+  min-width: 0;
+  text-align: center;
+}
+.map-party-hp-bar { width: 100%; }
+.map-party-hp-text {
+  text-align: center;
+  font-size: 0.58rem;
+}
+
+/* ============================================================
+   XP toast: the "+1 XP" moment after the spoils screen
+   ============================================================ */
+.xp-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 90px;
+  transform: translateX(-50%) translateY(16px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(28, 23, 14, 0.97) 0%, rgba(18, 14, 8, 0.97) 100%);
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  padding: 9px 16px;
+  z-index: 950;
+  font-size: 0.78rem;
+  color: var(--text-bright);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.xp-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.xp-toast.fade-out { opacity: 0; transform: translateX(-50%) translateY(10px); }
+.xp-toast-gain {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+}
+.xp-toast .xp-pip { width: 9px; height: 9px; }
+
+/* ============================================================
+   Enemy card footer: reserved intent slot — no layout hopping
+   ============================================================ */
+/* The intent badge appears/disappears (cleared per enemy as it acts,
+   absent for dead/structures), and the card height jumped with it.
+   The slot always occupies one badge-height. */
+.enemy-intent-slot {
+  margin-top: auto;
+  min-height: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.enemy-intent-slot .enemy-intent-badge { margin-top: 0; }
+
+/* ============================================================
+   Item tag icons: class sigils in class colors
+   ============================================================ */
+.tag-icon {
+  display: inline-flex;
+  vertical-align: -1px;
+}
+.tag-icon .gicon { width: 11px; height: 11px; }
+.tag-icon.tag-melee { color: var(--class-melee); }
+.tag-icon.tag-command { color: var(--class-command); }
+.tag-icon.tag-support { color: var(--class-support); }
+.tag-icon.tag-roman { color: var(--class-roman); }
+.tag-icon.tag-ranged { color: var(--class-ranged); }
+.tag-icon.tag-elite { color: var(--class-elite); }
+.tag-icon.tag-germanic { color: var(--class-germanic); }
