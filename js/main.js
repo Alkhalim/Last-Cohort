@@ -1311,8 +1311,12 @@ class Game {
     this.stats.marchesCompleted = (this.stats.marchesCompleted || 0) + 1;
 
     const aa = this.achievements;
-    // "No units downed" is scoped to a single march, so it belongs here.
-    if (!this._marchHadDowned && !aa.no_downed_march) {
+    // Iron Discipline: three clean marches, counted across runs
+    if (!this._marchHadDowned) {
+      this.stats.cleanMarches = (this.stats.cleanMarches || 0) + 1;
+      this.saveStats();
+    }
+    if (!aa.no_downed_march && (this.stats.cleanMarches || 0) >= 3) {
       aa.no_downed_march = true;
       this.notifyItemUnlocks('no_downed_march');
       this.addNotification('Achievement: Iron Discipline — no units downed!');
@@ -2196,9 +2200,9 @@ class Game {
     }
 
     // First boss/elite kill milestones
-    if (!a.first_boss_kill && (s.bossesKilled || 0) >= 1) {
+    if (!a.first_boss_kill && (s.bossesKilled || 0) >= 3) {
       a.first_boss_kill = true;
-      this.addNotification('Achievement: First Boss Defeated!');
+      this.addNotification('Achievement: Blood-Proven — three champions slain!');
       this.notifyItemUnlocks('first_boss_kill');
     }
     if (!a.first_elite_kill && s.enemiesKilled) {
@@ -2438,12 +2442,12 @@ class Game {
   // Names + requirements for gate keys outside the legacy table, so the
   // unlock spotlight can say WHAT earned the spoils
   static GATE_INFO = {
-    first_boss_kill: ['First Boss Defeated', 'Defeat your first boss'],
+    first_boss_kill: ['Blood-Proven', 'Slay 3 bosses of any kind'],
     first_elite_kill: ['First Elite Defeated', 'Defeat your first elite enemy'],
     flawless_encounter: ['Flawless Victory', 'Win an encounter with no soldier taking damage'],
     kill_boss_turn3: ['Blitzkrieg', 'Kill a boss within 3 turns'],
     solo_survivor: ['Last Man Standing', 'Win a boss fight with one soldier left'],
-    no_downed_march: ['Iron Discipline', 'Complete a march with no soldier downed'],
+    no_downed_march: ['Iron Discipline', 'Complete 3 marches with no soldier downed'],
     three_curses_win: ['Masochist', 'Win a run carrying 3 or more curses'],
     hero_three_rares: ['Collector', 'Equip one soldier with 3 rare items'],
     poison_kill_20: ['Venomous Legacy', 'Kill 20 enemies with poison damage'],
@@ -2626,7 +2630,7 @@ class Game {
     const totalKills = Object.values(s.enemiesKilled || {}).reduce((sum, v) => sum + v, 0);
     const SECTIONS = [
       { title: 'PROGRESSION', defs: [
-        { key: 'first_boss_kill', name: "First Blood", desc: "Defeat your first boss.", progress: () => (s.bossesKilled || 0) >= 1 ? 'Done' : '0/1' },
+        { key: 'first_boss_kill', name: "Blood-Proven", desc: "Slay 3 bosses of any kind.", progress: () => (s.bossesKilled || 0) >= 3 ? 'Done' : `${Math.min(3, s.bossesKilled || 0)}/3` },
         { key: 'first_elite_kill', name: "Elite Slayer", desc: "Defeat your first elite enemy.", progress: () => { const ids = ['oak_shield','wicker_man','ironbound_champion']; return ids.some(id => (s.enemiesKilled[id]||0)>=1) ? 'Done' : '0/1'; } },
         { key: 'class_signifer', name: "March-Hardened", desc: "Complete 8 marches in total.", progress: () => (s.totalMarchesCompleted||0) >= 8 ? 'Done' : `${Math.min(8, s.totalMarchesCompleted||0)}/8 marches` },
         { key: 'class_equites', name: "Slayer of Champions", desc: "Slay 10 bosses in total.", progress: () => (s.bossesKilled||0) >= 10 ? 'Done' : `${Math.min(10, s.bossesKilled||0)}/10 bosses` },
@@ -2670,7 +2674,7 @@ class Game {
         { key: 'kill_200', name: "Legionary's Harvest", desc: "Kill 200 enemies total.", progress: () => Math.min(200, totalKills) + '/200' },
         { key: 'kill_500', name: "Decimator", desc: "Kill 500 enemies total.", progress: () => Math.min(500, totalKills) + '/500' },
         { key: 'flawless_encounter', name: "Flawless Victory", desc: "Win an encounter with no unit taking damage.", progress: () => a.flawless_encounter ? 'Done' : 'Not yet' },
-        { key: 'no_downed_march', name: "Iron Discipline", desc: "Complete a march without any unit being downed.", progress: () => a.no_downed_march ? 'Done' : 'Not yet' },
+        { key: 'no_downed_march', name: "Iron Discipline", desc: "Complete 3 marches with no soldier downed (across runs).", progress: () => (s.cleanMarches || 0) >= 3 ? 'Done' : `${Math.min(3, s.cleanMarches || 0)}/3` },
         { key: 'kill_boss_turn3', name: "Blitzkrieg", desc: "Kill a boss within 3 turns.", progress: () => a.kill_boss_turn3 ? 'Done' : 'Not yet' },
         ...LEGACY_ACHIEVEMENTS.filter(d => d.cat === 'combat').map(legacyDef),
         { key: 'poison_kill_20', name: "Venomous Legacy", desc: "Kill 20 enemies with poison damage.", progress: () => Math.min(20, s.poisonKills||0) + '/20' },
