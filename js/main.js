@@ -481,6 +481,8 @@ class Game {
   startBossMusic(bossId) {
     if (this.musicMode === 'boss') return;
     this.musicMode = 'boss';
+    // Remember the march's theme so the victory can hand the stage back to it
+    this._preBossTrackSrc = this.currentTrack ? this.currentTrack.src : null;
     // Start from silence — the intro splash already faded out previous music
     if (this.currentTrack) {
       this.stopTrack(this.currentTrack, 0);
@@ -501,6 +503,19 @@ class Game {
     if (this.musicMode === 'gameplay') return;
     this.musicMode = 'gameplay';
     this.playNextGameplayTrack();
+  }
+
+  // Boss fight over: fade the boss theme out and bring the march's own
+  // theme back. The next march then replaces it as usual.
+  endBossMusic() {
+    if (this.musicMode !== 'boss') return;
+    this.musicMode = 'gameplay';
+    if (this.settings.fullSoundtrack && this._preBossTrackSrc && this.currentTrack && this.musicStarted) {
+      this.fadeToTrack(this._preBossTrackSrc, false);
+    } else {
+      this.playNextGameplayTrack();
+    }
+    this._preBossTrackSrc = null;
   }
 
   setMusicVolume(val) {

@@ -4968,6 +4968,9 @@ class GameUI {
 
   showLootScreen(isBossVictory) {
     if (window.game) window.game.triggerHint('first_item_drop');
+    // The boss is dead — fade his theme out and let the march's own music
+    // return while the spoils are claimed.
+    if (isBossVictory && window.game && window.game.endBossMusic) window.game.endBossMusic();
     this.engine.afterEncounter();
 
     // Final boss: skip loot and training, grant bonus renown instead.
