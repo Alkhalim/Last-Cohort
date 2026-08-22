@@ -6265,3 +6265,18 @@ html, body {
   .unlock-modal, .unlock-modal-overlay { transition: none; }
   .unlock-dismiss { animation: none; }
 }
+
+/* Reset confirmation dialog */
+.reset-confirm { cursor: default; }
+.reset-confirm-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.reset-confirm-row button { flex: 1; margin: 0; }
+
+/* Options: breathing room for the action buttons at the bottom */
+#options-screen .options-group { margin-bottom: 18px; }
+#options-screen .btn-secondary { margin-top: 10px; }
+#options-screen .option-hint { margin-bottom: 4px; }
+#options-screen .submenu-content { padding-bottom: 28px; }

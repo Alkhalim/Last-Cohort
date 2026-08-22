@@ -2,6 +2,33 @@
 // Last Cohort – Main Entry Point
 // ============================================================
 
+
+// Cumulative "legacy" achievements: lifetime milestones that pace item
+// unlocks across many runs. Each key can gate items (unlockKey on items).
+const LEGACY_ACHIEVEMENTS = [
+  { key: 'blooded_50', name: 'First Blood-Price', desc: 'Slay 50 enemies in total.', stat: s => Object.values(s.enemiesKilled || {}).reduce((a, v) => a + v, 0), goal: 50 },
+  { key: 'reaper_300', name: 'Three Hundred Ghosts', desc: 'Slay 300 enemies in total.', stat: s => Object.values(s.enemiesKilled || {}).reduce((a, v) => a + v, 0), goal: 300 },
+  { key: 'boss_8', name: 'Eight Champions Felled', desc: 'Slay 8 bosses in total.', stat: s => s.bossesKilled || 0, goal: 8 },
+  { key: 'boss_25', name: 'Scourge of Chieftains', desc: 'Slay 25 bosses in total.', stat: s => s.bossesKilled || 0, goal: 25 },
+  { key: 'marches_12', name: 'Twelve Marches Deep', desc: 'Complete 12 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 12 },
+  { key: 'marches_30', name: 'Thirty Marches', desc: 'Complete 30 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 30 },
+  { key: 'runs_3', name: 'Three Times Into the Trees', desc: 'March into the forest 3 times.', stat: s => s.totalRuns || 0, goal: 3 },
+  { key: 'runs_8', name: 'The Forest Knows Your Name', desc: 'March into the forest 8 times.', stat: s => s.totalRuns || 0, goal: 8 },
+  { key: 'encounters_40', name: 'Forty Skirmishes', desc: 'Win 40 encounters in total.', stat: s => s.encountersWon || 0, goal: 40 },
+  { key: 'dmg_8000', name: 'Mountain of Wounds', desc: 'Deal 8000 damage in total.', stat: s => s.totalDamageDealt || 0, goal: 8000 },
+  { key: 'heal_600', name: 'Six Hundred Mendings', desc: 'Heal 600 HP in total.', stat: s => s.totalHealingDone || 0, goal: 600 },
+  { key: 'block_800', name: 'Wall of the North', desc: 'Generate 800 Block in total.', stat: s => s.totalBlockGenerated || 0, goal: 800 },
+  { key: 'morale_300', name: 'Keeper of Spirits', desc: 'Restore 300 Morale in total.', stat: s => s.totalMoraleRestored || 0, goal: 300 },
+  { key: 'taken_1500', name: 'Scarred Legion', desc: 'Endure 1500 damage in total.', stat: s => s.totalDamageTaken || 0, goal: 1500 },
+  { key: 'poison_kill_50', name: 'Venom Harvest', desc: 'Kill 50 enemies with poison damage.', stat: s => s.poisonKills || 0, goal: 50 },
+  { key: 'renown_300', name: 'Name in Bronze', desc: 'Earn 300 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 300 },
+  { key: 'threshold_4', name: 'Student of the Threshold', desc: 'Reach March 6 in four runs.', stat: s => s.thresholdRuns || 0, goal: 4 },
+  { key: 'classes_6', name: 'Six Banners', desc: 'Field 6 different classes.', stat: s => Object.keys(s.classesUsed || {}).length, goal: 6 },
+  { key: 'classes_10', name: 'All Banners Raised', desc: 'Field 10 different classes.', stat: s => Object.keys(s.classesUsed || {}).length, goal: 10 },
+  { key: 'runs_won_3', name: 'Thrice Through the Dark', desc: 'Complete 3 full runs.', stat: s => s.runsCompleted || 0, goal: 3 },
+  { key: 'overkill_100', name: 'The Butcher of Teutoburg', desc: 'Land a 100-damage blow.', stat: s => s.recordSingleHit || 0, goal: 100 },
+];
+
 const RENOWN_STORAGE_KEY = 'lastCohort_renown';
 const SETTINGS_STORAGE_KEY = 'lastCohort_settings';
 const STATS_STORAGE_KEY = 'lastCohort_stats';
@@ -1022,21 +1049,29 @@ class Game {
     const resetBtn = document.getElementById('btn-reset-progress');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        if (!resetBtn.classList.contains('confirming')) {
-          resetBtn.classList.add('confirming');
-          resetBtn.textContent = 'Tap again to erase EVERYTHING';
-          setTimeout(() => {
-            resetBtn.classList.remove('confirming');
-            resetBtn.textContent = 'Reset All Progression';
-          }, 4000);
-          return;
-        }
-        try {
-          [RENOWN_STORAGE_KEY, STATS_STORAGE_KEY, ACHIEVEMENTS_STORAGE_KEY,
-           RUN_HISTORY_STORAGE_KEY, SAVED_RUN_STORAGE_KEY,
-           'lc_hints_seen', 'lc_choices_seen'].forEach(k => localStorage.removeItem(k));
-        } catch (e) { /* storage unavailable */ }
-        window.location.reload();
+        // A hard-to-undo action gets a real confirmation dialog
+        const overlay = document.createElement('div');
+        overlay.className = 'unlock-modal-overlay show reset-confirm';
+        overlay.innerHTML = `
+          <div class="unlock-modal">
+            <div class="unlock-kicker">RESET ALL PROGRESSION</div>
+            <div class="unlock-desc">Every run, unlock, achievement, and record will be erased. The forest forgets you entirely.<br><br><b>Really reset?</b></div>
+            <div class="reset-confirm-row">
+              <button class="btn-secondary btn-danger" id="btn-reset-yes">Erase everything</button>
+              <button class="btn-secondary" id="btn-reset-no">Keep my legion</button>
+            </div>
+          </div>`;
+        document.getElementById('game').appendChild(overlay);
+        overlay.querySelector('#btn-reset-no').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        overlay.querySelector('#btn-reset-yes').addEventListener('click', () => {
+          try {
+            [RENOWN_STORAGE_KEY, STATS_STORAGE_KEY, ACHIEVEMENTS_STORAGE_KEY,
+             RUN_HISTORY_STORAGE_KEY, SAVED_RUN_STORAGE_KEY,
+             'lc_hints_seen', 'lc_choices_seen'].forEach(k => localStorage.removeItem(k));
+          } catch (e2) { /* storage unavailable */ }
+          window.location.reload();
+        });
       });
     }
 
@@ -2154,6 +2189,15 @@ class Game {
     // Poison kills
     if (!a.poison_kill_20 && (s.poisonKills || 0) >= 20) { a.poison_kill_20 = true; this.addNotification('Achievement: 20 poison kills!'); this.notifyItemUnlocks('poison_kill_20'); }
 
+    // Legacy milestones — cumulative, and most carry an item wave
+    LEGACY_ACHIEVEMENTS.forEach(def => {
+      if (!a[def.key] && def.stat(s, this) >= def.goal) {
+        a[def.key] = true;
+        this.addNotification(`Achievement: ${def.name}!`);
+        this.notifyItemUnlocks(def.key);
+      }
+    });
+
     // Renown milestones
     if (!a.renown_100 && (s.totalRenown || 0) >= 100) { a.renown_100 = true; this.addNotification('Achievement: 100 Renown earned!'); }
     if (!a.renown_500 && (s.totalRenown || 0) >= 500) { a.renown_500 = true; this.addNotification('Achievement: 500 Renown — Legendary!'); }
@@ -2486,6 +2530,13 @@ class Game {
         { key: 'hero_first_epic', name: "Relic Hunter", desc: "Equip your first epic item.", progress: () => a.hero_first_epic ? 'Done' : 'Not yet' },
         { key: 'hero_three_epics', name: "Relic Hoarder", desc: "One hero with 3 epic items.", progress: () => a.hero_three_epics ? 'Done' : 'Not yet' },
       ]},
+      { title: 'LEGACY OF THE FOREST', defs: LEGACY_ACHIEVEMENTS.map(d => ({
+        key: d.key, name: d.name, desc: d.desc,
+        progress: () => {
+          const v = d.stat(s, this);
+          return v >= d.goal ? 'Done' : `${Math.min(d.goal, Math.round(v))}/${d.goal}`;
+        },
+      })) },
       { title: 'SPECIAL', defs: [
         { key: 'full_bestiary', name: "Naturalist", desc: "Discover every enemy in the bestiary.", progress: () => a.full_bestiary ? 'Done' : 'Not yet' },
         { key: 'all_classes_used', name: "Versatile Commander", desc: "Complete a march with every class.", progress: () => a.all_classes_used ? 'Done' : 'Not yet' },
