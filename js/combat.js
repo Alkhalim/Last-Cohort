@@ -5108,7 +5108,7 @@ class CombatEngine {
         this.addLog(`${enemy.name} tries to multiply but there's no room.`);
       } else {
         // Already spawned, do a basic attack instead
-        this.addLog(`${enemy.name} writhes but cannot spawn again.`);
+        this.addLog(`${enemy.name} writhes, but can summon no more.`);
       }
     }
 

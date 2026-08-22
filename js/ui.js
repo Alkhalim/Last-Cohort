@@ -980,7 +980,7 @@ class GameUI {
         if (enemy.turnDamageAll) passives.push(`Passive: deals ${enemy.turnDamageAll} damage to all soldiers each turn.`);
         if (enemy.healBoss) passives.push(`Passive: heals boss for ${enemy.healBoss} HP each turn.`);
         if (enemy.id === 'healing_totem') passives.push('Passive: roots one of your dice each turn.');
-        if (enemy.canSpawn) passives.push('Passive: can spawn copies of itself.');
+        if (enemy.canSpawn) passives.push('Passive: can summon more of its kind.');
         if (enemy.id === 'arminius_champion') passives.push('Passive: Iron Discipline — all enemies gain 7 Block every 3 turns.');
         if (enemy.id === 'thusnelda') passives.push('Passive: gains Block per living ally each turn.');
         if (enemy.id === 'serpent_shaman') passives.push('Passive: dances each turn — swaps position with a snake and heals 3 HP.');

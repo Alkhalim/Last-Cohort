@@ -2446,15 +2446,17 @@ class Game {
     } else {
       const items = next.items || [];
       const single = items.length === 1 ? items[0] : null;
+      // Reads as "unlocked as a possible drop", NOT "you found this item" —
+      // the old phrasing was mistaken for an item grant.
       inner = `
-        <div class="unlock-kicker">${next.trophy ? 'TROPHY CLAIMED' : 'NEW SPOILS ENTER THE FOREST'}</div>
-        ${next.source ? `<div class="unlock-source">${next.source}</div>` : ''}
+        <div class="unlock-kicker">${next.trophy ? 'TROPHY CLAIMED' : 'ACHIEVEMENT REWARD'}</div>
+        ${next.source ? `<div class="unlock-source">${next.trophy ? '' : 'Achievement: '}${next.source}</div>` : ''}
         ${single ? `
           <div class="unlock-name rarity-${single.rarity}">${single.name}</div>
           <div class="unlock-desc">${single.slot} · ${single.rarity}</div>
           ${single.special ? `<div class="unlock-passive">${single.special}</div>` : ''}` : `
-          <div class="unlock-item-list">${items.map(i => `<div class="unlock-item rarity-${i.rarity}">${i.name}</div>`).join('')}</div>
-          <div class="unlock-desc">${items.length} new item${items.length > 1 ? 's' : ''} can now drop.</div>`}`;
+          <div class="unlock-item-list">${items.map(i => `<div class="unlock-item rarity-${i.rarity}">${i.name}</div>`).join('')}</div>`}
+        <div class="unlock-drop-note">New spoils enter the forest — ${single ? 'this item' : `these ${items.length} items`} can now be found as loot on future marches. Not yet in your possession.</div>`;
     }
     overlay.innerHTML = `<div class="unlock-modal">${inner}<div class="unlock-dismiss">TAP TO CONTINUE</div></div>`;
     overlay.addEventListener('click', () => {

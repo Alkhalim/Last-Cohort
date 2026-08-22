@@ -371,7 +371,7 @@ const RAW_ENEMIES = {
     "id": "lesser_leech_mound", "name": "Lesser Leech Mound",
     "maxHp": 20, "row": "front", "damage": [3, 6], "speed": 1, "xpValue": 12,
     "isBoss": true, "ai": "boss",
-    "description": "A smaller mound reformed from surviving leeches. On death spawns 2 leeches but cannot reform again.",
+    "description": "A smaller mound reformed from surviving leeches. On death it releases 2 leeches, but cannot reform again.",
     "deathPoison": 2,
     "actions": [
       { "name": "Blood Surge", "damage": 4, "poisonTarget": 2, "chance": 0.4, "text": "surges forward with toxic hunger" },

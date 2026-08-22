@@ -1111,7 +1111,7 @@ const ACTION_RIDER_LABELS = {
   blockAllEnemies:  v => `<span class="stat-block">+${v} block all</span>`,
   blockFrontRow:    v => `<span class="stat-block">+${v} block front</span>`,
   blockSelf:        v => `<span class="stat-block">+${v} block self</span>`,
-  spawn:            () => '<span style="color:var(--gold)">spawns unit</span>',
+  spawn:            v => `<span style="color:var(--gold)">summons ${(ENEMY_DATA && ENEMY_DATA[v] && ENEMY_DATA[v].name) || 'reinforcements'}</span>`,
   aoe:              () => '<span style="color:var(--red-bright)">AOE</span>',
   ignoreRow:        () => '<span style="color:var(--text-dim)">any row</span>',
   // Previously invisible:
