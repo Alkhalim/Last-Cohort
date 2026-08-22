@@ -6,38 +6,42 @@
 // Cumulative "legacy" achievements: lifetime milestones that pace item
 // unlocks across many runs. Each key can gate items (unlockKey on items).
 const LEGACY_ACHIEVEMENTS = [
-  { key: 'blooded_50', name: 'First Blood-Price', desc: 'Slay 50 enemies in total.', stat: s => Object.values(s.enemiesKilled || {}).reduce((a, v) => a + v, 0), goal: 50 },
-  { key: 'reaper_300', name: 'Three Hundred Ghosts', desc: 'Slay 300 enemies in total.', stat: s => Object.values(s.enemiesKilled || {}).reduce((a, v) => a + v, 0), goal: 300 },
-  { key: 'boss_8', name: 'Eight Champions Felled', desc: 'Slay 8 bosses in total.', stat: s => s.bossesKilled || 0, goal: 8 },
-  { key: 'boss_25', name: 'Scourge of Chieftains', desc: 'Slay 25 bosses in total.', stat: s => s.bossesKilled || 0, goal: 25 },
-  { key: 'marches_12', name: 'Twelve Marches Deep', desc: 'Complete 12 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 12 },
-  { key: 'marches_30', name: 'Thirty Marches', desc: 'Complete 30 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 30 },
-  { key: 'runs_3', name: 'Three Times Into the Trees', desc: 'March into the forest 3 times.', stat: s => s.totalRuns || 0, goal: 3 },
-  { key: 'runs_8', name: 'The Forest Knows Your Name', desc: 'March into the forest 8 times.', stat: s => s.totalRuns || 0, goal: 8 },
-  { key: 'encounters_40', name: 'Sixty Skirmishes', desc: 'Win 60 encounters in total.', stat: s => s.encountersWon || 0, goal: 60 },
-  { key: 'dmg_8000', name: 'Mountain of Wounds', desc: 'Deal 15000 damage in total.', stat: s => s.totalDamageDealt || 0, goal: 15000 },
-  { key: 'heal_600', name: 'A Thousand Mendings', desc: 'Heal 1500 HP in total.', stat: s => s.totalHealingDone || 0, goal: 1500 },
-  { key: 'block_800', name: 'Wall of the North', desc: 'Generate 2000 Block in total.', stat: s => s.totalBlockGenerated || 0, goal: 2000 },
-  { key: 'morale_300', name: 'Keeper of Spirits', desc: 'Restore 800 Morale in total.', stat: s => s.totalMoraleRestored || 0, goal: 800 },
-  { key: 'taken_1500', name: 'Scarred Legion', desc: 'Endure 3000 damage in total.', stat: s => s.totalDamageTaken || 0, goal: 3000 },
-  { key: 'poison_kill_50', name: 'Venom Harvest', desc: 'Kill 50 enemies with poison damage.', stat: s => s.poisonKills || 0, goal: 50 },
-  { key: 'renown_300', name: 'Name in Bronze', desc: 'Earn 750 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 750 },
-  { key: 'threshold_4', name: 'Student of the Threshold', desc: 'Reach March 6 in four runs.', stat: s => s.thresholdRuns || 0, goal: 4 },
-  { key: 'classes_6', name: 'Six Banners', desc: 'Field 6 different classes.', stat: s => Object.keys(s.classesUsed || {}).length, goal: 6 },
-  { key: 'classes_10', name: 'All Banners Raised', desc: 'Field 10 different classes.', stat: s => Object.keys(s.classesUsed || {}).length, goal: 10 },
-  { key: 'runs_won_3', name: 'Thrice Through the Dark', desc: 'Complete 3 full runs.', stat: s => s.runsCompleted || 0, goal: 3 },
-  { key: 'overkill_100', name: 'The Butcher of Teutoburg', desc: 'Land a 100-damage blow.', stat: s => s.recordSingleHit || 0, goal: 100 },
-  { key: 'kills_600', name: 'Six Hundred Fallen', desc: 'Slay 600 enemies in total.', stat: s => Object.values(s.enemiesKilled || {}).reduce((a, v) => a + v, 0), goal: 600 },
-  { key: 'bosses_50', name: 'Fifty Crowns Broken', desc: 'Slay 50 bosses in total.', stat: s => s.bossesKilled || 0, goal: 50 },
-  { key: 'marches_50', name: 'Fifty Marches', desc: 'Complete 50 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 50 },
-  { key: 'dmg_30000', name: 'Avalanche of Iron', desc: 'Deal 30000 damage in total.', stat: s => s.totalDamageDealt || 0, goal: 30000 },
-  { key: 'heal_3000', name: 'Three Thousand Mercies', desc: 'Heal 3000 HP in total.', stat: s => s.totalHealingDone || 0, goal: 3000 },
-  { key: 'block_4000', name: 'Bulwark Eternal', desc: 'Generate 4000 Block in total.', stat: s => s.totalBlockGenerated || 0, goal: 4000 },
-  { key: 'taken_6000', name: 'Anvil of the North', desc: 'Endure 6000 damage in total.', stat: s => s.totalDamageTaken || 0, goal: 6000 },
-  { key: 'encounters_100', name: 'A Hundred Battles', desc: 'Win 100 encounters in total.', stat: s => s.encountersWon || 0, goal: 100 },
-  { key: 'renown_1500', name: 'Legend in Bronze', desc: 'Earn 1500 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 1500 },
-  { key: 'poison_100', name: 'A Hundred Venoms', desc: 'Kill 100 enemies with poison damage.', stat: s => s.poisonKills || 0, goal: 100 },
-  { key: 'runs_15', name: 'Fifteen Descents', desc: 'March into the forest 15 times.', stat: s => s.totalRuns || 0, goal: 15 },
+  // cat 'combat' renders in the COMBAT section, 'boss' in BOSS MASTERY,
+  // 'legacy' in Legacy of the Forest — one taxonomy, no duplicates
+  { key: 'dmg_8000', cat: 'combat', name: 'Mountain of Wounds', desc: 'Deal 15000 damage in total.', stat: s => s.totalDamageDealt || 0, goal: 15000 },
+  { key: 'dmg_30000', cat: 'combat', name: 'Avalanche of Iron', desc: 'Deal 30000 damage in total.', stat: s => s.totalDamageDealt || 0, goal: 30000 },
+  { key: 'heal_600', cat: 'combat', name: 'A Thousand Mendings', desc: 'Heal 1500 HP in total.', stat: s => s.totalHealingDone || 0, goal: 1500 },
+  { key: 'heal_3000', cat: 'combat', name: 'Three Thousand Mercies', desc: 'Heal 3000 HP in total.', stat: s => s.totalHealingDone || 0, goal: 3000 },
+  { key: 'block_800', cat: 'combat', name: 'Wall of the North', desc: 'Generate 2000 Block in total.', stat: s => s.totalBlockGenerated || 0, goal: 2000 },
+  { key: 'block_4000', cat: 'combat', name: 'Bulwark Eternal', desc: 'Generate 4000 Block in total.', stat: s => s.totalBlockGenerated || 0, goal: 4000 },
+  { key: 'morale_300', cat: 'combat', name: 'Keeper of Spirits', desc: 'Restore 800 Morale in total.', stat: s => s.totalMoraleRestored || 0, goal: 800 },
+  { key: 'taken_1500', cat: 'combat', name: 'Scarred Legion', desc: 'Endure 3000 damage in total.', stat: s => s.totalDamageTaken || 0, goal: 3000 },
+  { key: 'taken_6000', cat: 'combat', name: 'Anvil of the North', desc: 'Endure 6000 damage in total.', stat: s => s.totalDamageTaken || 0, goal: 6000 },
+  { key: 'poison_100', cat: 'combat', name: 'A Hundred Venoms', desc: 'Kill 100 enemies with poison damage.', stat: s => s.poisonKills || 0, goal: 100 },
+  { key: 'poison_kill_50', cat: 'combat', name: 'Venom Harvest', desc: 'Kill 50 enemies with poison damage.', stat: s => s.poisonKills || 0, goal: 50 },
+  { key: 'overkill_100', cat: 'combat', name: 'The Butcher of Teutoburg', desc: 'Land a 100-damage blow.', stat: s => s.recordSingleHit || 0, goal: 100 },
+  { key: 'boss_8', cat: 'boss', name: 'Eight Champions Felled', desc: 'Slay 8 bosses in total.', stat: s => s.bossesKilled || 0, goal: 8 },
+  { key: 'boss_25', cat: 'boss', name: 'Scourge of Chieftains', desc: 'Slay 25 bosses in total.', stat: s => s.bossesKilled || 0, goal: 25 },
+  { key: 'bosses_50', cat: 'boss', name: 'Fifty Crowns Broken', desc: 'Slay 50 bosses in total.', stat: s => s.bossesKilled || 0, goal: 50 },
+  { key: 'marches_12', cat: 'legacy', name: 'Twelve Marches Deep', desc: 'Complete 12 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 12 },
+  { key: 'marches_30', cat: 'legacy', name: 'Thirty Marches', desc: 'Complete 30 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 30 },
+  { key: 'marches_50', cat: 'legacy', name: 'Fifty Marches', desc: 'Complete 50 marches in total.', stat: s => s.totalMarchesCompleted || 0, goal: 50 },
+  { key: 'runs_3', cat: 'legacy', name: 'Three Times Into the Trees', desc: 'March into the forest 3 times.', stat: s => s.totalRuns || 0, goal: 3 },
+  { key: 'runs_8', cat: 'legacy', name: 'The Forest Knows Your Name', desc: 'March into the forest 8 times.', stat: s => s.totalRuns || 0, goal: 8 },
+  { key: 'runs_15', cat: 'legacy', name: 'Fifteen Descents', desc: 'March into the forest 15 times.', stat: s => s.totalRuns || 0, goal: 15 },
+  { key: 'encounters_40', cat: 'legacy', name: 'Sixty Skirmishes', desc: 'Win 60 encounters in total.', stat: s => s.encountersWon || 0, goal: 60 },
+  { key: 'encounters_100', cat: 'legacy', name: 'A Hundred Battles', desc: 'Win 100 encounters in total.', stat: s => s.encountersWon || 0, goal: 100 },
+  { key: 'renown_300', cat: 'legacy', name: 'Name in Bronze', desc: 'Earn 750 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 750 },
+  { key: 'renown_1500', cat: 'legacy', name: 'Legend in Bronze', desc: 'Earn 1500 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 1500 },
+  { key: 'renown_3000', cat: 'legacy', name: 'Statue in the Forum', desc: 'Earn 3000 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 3000 },
+  { key: 'renown_6000', cat: 'legacy', name: 'Songs of the Legion', desc: 'Earn 6000 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 6000 },
+  { key: 'renown_12000', cat: 'legacy', name: 'Triumph in Rome', desc: 'Earn 12000 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 12000 },
+  { key: 'renown_25000', cat: 'legacy', name: 'Deified', desc: 'Earn 25000 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 25000 },
+  { key: 'renown_50000', cat: 'legacy', name: 'The Eternal Name', desc: 'Earn 50000 lifetime Renown.', stat: (s, g) => (g && g.lifetimeRenown) || 0, goal: 50000 },
+  { key: 'threshold_4', cat: 'legacy', name: 'Student of the Threshold', desc: 'Reach March 6 in four runs.', stat: s => s.thresholdRuns || 0, goal: 4 },
+  { key: 'classes_6', cat: 'legacy', name: 'Six Banners', desc: 'Field 6 different classes.', stat: s => Object.keys(s.classesUsed || {}).length, goal: 6 },
+  { key: 'classes_10', cat: 'legacy', name: 'All Banners Raised', desc: 'Field 10 different classes.', stat: s => Object.keys(s.classesUsed || {}).length, goal: 10 },
+  { key: 'runs_won_3', cat: 'legacy', name: 'Thrice Through the Dark', desc: 'Complete 3 full runs.', stat: s => s.runsCompleted || 0, goal: 3 },
 ];
 
 const RENOWN_STORAGE_KEY = 'lastCohort_renown';
@@ -104,6 +108,9 @@ const CURSE_DEFS = [
   { id: 'rare_collector', name: "Rare Collector", achievement: 'hero_three_rares', description: "Uncommon/rare items drop 30% less.", renown: 10 },
   { id: 'golden_challenge', name: "Golden Challenge", achievement: 'hero_only_rares', description: "Start with 1 fewer die (3 instead of 4).", renown: 30 },
   { id: 'victors_burden', name: "Victor's Burden", achievement: 'class_vestalis', description: "Enemies gain +1 Block at the start of each turn.", renown: 15 },
+  { id: 'trophy_hunger', name: "Named Prey", achievement: 'full_bestiary', description: "Enemies your legion has slain 10+ times fight harder: +15% HP.", renown: 20 },
+  { id: 'heavy_laurels', name: "Heavy Laurels", achievement: 'renown_6000', description: "Renown earned +25%, but morale decays 1 faster each turn.", renown: 0 },
+  { id: 'famous_prey', name: "Famous Prey", achievement: 'renown_25000', description: "Every enemy hunts the famous legion: +5% HP. Renown earned +50%.", renown: 0 },
 ];
 
 const BOON_DEFS = [
@@ -122,6 +129,10 @@ const BOON_DEFS = [
   { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+1 + half the march damage for the first 2 turns of combat.", renown: -10 },
   { id: 'epic_fortune', name: "Epic Fortune", achievement: 'hero_three_epics', description: "Item drops have +10% chance to upgrade rarity.", renown: -15 },
   { id: 'demigods_shield', name: "Demigod's Shield", achievement: 'hero_only_epics', description: "All soldiers start combat with Block equal to twice the march.", renown: -15 },
+  { id: 'known_enemy', name: "Old Foes", achievement: 'full_bestiary', description: "+2 damage against enemies your legion has slain 10 or more times.", renown: -15 },
+  { id: 'gilded_name', name: "Gilded Name", achievement: 'renown_3000', description: "Start each run with +30 Renown already earned.", renown: -10 },
+  { id: 'veterans_wages', name: "Veteran's Wages", achievement: 'renown_12000', description: "A third action at every camp.", renown: -25 },
+  { id: 'living_legend', name: "Living Legend", achievement: 'renown_50000', description: "+1 die at turn start while morale is 90 or higher.", renown: -20 },
 ];
 
 class Game {
@@ -515,6 +526,9 @@ class Game {
     }, 0);
     const modifier = 1 + (curseBonus + boonPenalty) / 100;
     const modified = Math.max(0, Math.round(amount * modifier));
+    // Renown-tier curses trade pain for fame
+    if (this.activeCurses && this.activeCurses.includes('heavy_laurels')) modified = Math.round(modified * 1.25);
+    if (this.activeCurses && this.activeCurses.includes('famous_prey')) modified = Math.round(modified * 1.5);
     this.lifetimeRenown += modified;
     this.currentRunRenown = (this.currentRunRenown || 0) + modified;
     this.saveLifetimeRenown();
@@ -590,6 +604,7 @@ class Game {
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
     this._epicsLeftThisRun = 0;
+    if (this.activeBoons && this.activeBoons.includes('gilded_name')) this.addRunRenown(30);
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;
@@ -2105,6 +2120,7 @@ class Game {
       if (allOnlyRares && !a.party_all_rares) {
         a.party_all_rares = true;
         this.addNotification('Achievement: Entire party equipped with only rare items!');
+        this.notifyItemUnlocks('party_all_rares');
       }
 
       // Epic equipment achievements
@@ -2250,9 +2266,9 @@ class Game {
 
     // Kill milestones
     const totalKills = Object.values(s.enemiesKilled || {}).reduce((sum, v) => sum + v, 0);
-    if (!a.kill_50 && totalKills >= 50) { a.kill_50 = true; this.addNotification('Achievement: 50 enemies slain!'); }
-    if (!a.kill_200 && totalKills >= 200) { a.kill_200 = true; this.addNotification('Achievement: 200 enemies slain!'); }
-    if (!a.kill_500 && totalKills >= 500) { a.kill_500 = true; this.addNotification('Achievement: 500 enemies slain — Decimator!'); }
+    if (!a.kill_50 && totalKills >= 50) { a.kill_50 = true; this.addNotification('Achievement: 50 enemies slain!'); this.notifyItemUnlocks('kill_50'); }
+    if (!a.kill_200 && totalKills >= 200) { a.kill_200 = true; this.addNotification('Achievement: 200 enemies slain!'); this.notifyItemUnlocks('kill_200'); }
+    if (!a.kill_500 && totalKills >= 500) { a.kill_500 = true; this.addNotification('Achievement: 500 enemies slain — Decimator!'); this.notifyItemUnlocks('kill_500'); }
 
     // Poison kills
     if (!a.poison_kill_20 && (s.poisonKills || 0) >= 20) { a.poison_kill_20 = true; this.addNotification('Achievement: 20 poison kills!'); this.notifyItemUnlocks('poison_kill_20'); }
@@ -2267,24 +2283,21 @@ class Game {
     });
 
     // Renown milestones
-    if (!a.renown_100 && (s.totalRenown || 0) >= 100) { a.renown_100 = true; this.addNotification('Achievement: 100 Renown earned!'); }
-    if (!a.renown_500 && (s.totalRenown || 0) >= 500) { a.renown_500 = true; this.addNotification('Achievement: 500 Renown — Legendary!'); }
 
     // Run milestones
-    if (!a.ten_runs && (s.totalRuns || 0) >= 10) { a.ten_runs = true; this.addNotification('Achievement: 10 runs completed!'); }
-    if (!a.five_wins && (s.runsCompleted || 0) >= 5) { a.five_wins = true; this.addNotification('Achievement: 5 victories!'); }
+    if (!a.five_wins && (s.runsCompleted || 0) >= 5) { a.five_wins = true; this.addNotification('Achievement: 5 victories!'); this.notifyItemUnlocks('five_wins'); }
 
     // Bestiary completion
     if (!a.full_bestiary && s.enemiesKilled) {
       const allEnemies = Object.values(ENEMY_DATA).filter(e => !e.canSpawn);
       const discovered = allEnemies.filter(e => (s.enemiesKilled[e.id] || 0) >= 1);
-      if (discovered.length >= allEnemies.length) { a.full_bestiary = true; this.addNotification('Achievement: Bestiary complete!'); }
+      if (discovered.length >= allEnemies.length) { a.full_bestiary = true; this.addNotification('Achievement: Bestiary complete!'); this.addNotification('Naturalist rewards: a new Boon and Curse!'); }
     }
 
     // All classes used (tracked via stats)
     if (!a.all_classes_used && s.classesUsed) {
       const allClasses = Object.keys(CLASS_DATA);
-      if (allClasses.every(cid => s.classesUsed[cid])) { a.all_classes_used = true; this.addNotification('Achievement: Every class used!'); }
+      if (allClasses.every(cid => s.classesUsed[cid])) { a.all_classes_used = true; this.addNotification('Achievement: Every class used!'); this.notifyItemUnlocks('all_classes_used'); }
     }
 
     this.saveAchievements();
@@ -2551,6 +2564,14 @@ class Game {
     const a = this.achievements;
     const s = this.stats;
 
+    // Cumulative table entries render inside their thematic sections
+    const legacyDef = d => ({
+      key: d.key, name: d.name, desc: d.desc,
+      progress: () => {
+        const v = d.stat(s, this);
+        return v >= d.goal ? 'Done' : `${Math.min(d.goal, Math.round(v))}/${d.goal}`;
+      },
+    });
     // Build full achievement list organized by section
     const totalKills = Object.values(s.enemiesKilled || {}).reduce((sum, v) => sum + v, 0);
     const SECTIONS = [
@@ -2587,6 +2608,7 @@ class Game {
         { key: 'boss_corpse_arminius_x3', name: "Thrice-Buried Betrayer", desc: "Defeat the Corpse of Arminius 3 times.", hidden: true, progress: () => Math.min(3, s.enemiesKilled['corpse_of_arminius']||0) + '/3' },
         { key: 'boss_corpse_varus_x3', name: "Thrice-Redeemed", desc: "Defeat the Corpse of Varus 3 times.", hidden: true, progress: () => Math.min(3, s.enemiesKilled['corpse_of_varus']||0) + '/3' },
         { key: 'boss_spirits_x3', name: "Keeper of the Silence", desc: "Defeat the Spirits 3 times.", hidden: true, progress: () => Math.min(3, s.enemiesKilled['spirit_of_arminius']||0) + '/3' },
+        ...LEGACY_ACHIEVEMENTS.filter(d => d.cat === 'boss').map(legacyDef),
         { key: 'boss_corpse_arminius', name: "The Betrayer Falls", desc: "Defeat the Corpse of Arminius.", hidden: true, progress: () => a.boss_corpse_arminius ? 'Done' : '0/1' },
         { key: 'boss_corpse_varus', name: "Varus Redeemed", desc: "Defeat the Corpse of Varus.", hidden: true, progress: () => a.boss_corpse_varus ? 'Done' : '0/1' },
         { key: 'boss_spirits_defeated', name: "The Forest Is Silenced", desc: "Defeat the Spirits.", hidden: true, progress: () => a.boss_spirits_defeated ? 'Done' : '0/1' },
@@ -2600,6 +2622,7 @@ class Game {
         { key: 'flawless_encounter', name: "Flawless Victory", desc: "Win an encounter with no unit taking damage.", progress: () => a.flawless_encounter ? 'Done' : 'Not yet' },
         { key: 'no_downed_march', name: "Iron Discipline", desc: "Complete a march without any unit being downed.", progress: () => a.no_downed_march ? 'Done' : 'Not yet' },
         { key: 'kill_boss_turn3', name: "Blitzkrieg", desc: "Kill a boss within 3 turns.", progress: () => a.kill_boss_turn3 ? 'Done' : 'Not yet' },
+        ...LEGACY_ACHIEVEMENTS.filter(d => d.cat === 'combat').map(legacyDef),
         { key: 'poison_kill_20', name: "Venomous Legacy", desc: "Kill 20 enemies with poison damage.", progress: () => Math.min(20, s.poisonKills||0) + '/20' },
         { key: 'overkill_30', name: "Excessive Force", desc: "Deal 30+ damage in a single hit.", progress: () => a.overkill_30 ? 'Done' : 'Not yet' },
       ]},
@@ -2610,13 +2633,7 @@ class Game {
         { key: 'hero_first_epic', name: "Relic Hunter", desc: "Equip your first epic item.", progress: () => a.hero_first_epic ? 'Done' : 'Not yet' },
         { key: 'hero_three_epics', name: "Relic Hoarder", desc: "One hero with 3 epic items.", progress: () => a.hero_three_epics ? 'Done' : 'Not yet' },
       ]},
-      { title: 'LEGACY OF THE FOREST', defs: LEGACY_ACHIEVEMENTS.map(d => ({
-        key: d.key, name: d.name, desc: d.desc,
-        progress: () => {
-          const v = d.stat(s, this);
-          return v >= d.goal ? 'Done' : `${Math.min(d.goal, Math.round(v))}/${d.goal}`;
-        },
-      })) },
+      { title: 'LEGACY OF THE FOREST', defs: LEGACY_ACHIEVEMENTS.filter(d => d.cat === 'legacy').map(legacyDef) },
       { title: 'SPECIAL', defs: [
         { key: 'full_bestiary', name: "Naturalist", desc: "Discover every enemy in the bestiary.", progress: () => a.full_bestiary ? 'Done' : 'Not yet' },
         { key: 'all_classes_used', name: "Versatile Commander", desc: "Complete a march with every class.", progress: () => a.all_classes_used ? 'Done' : 'Not yet' },
@@ -2624,9 +2641,6 @@ class Game {
         { key: 'low_morale_win', name: "Against All Odds", desc: "Win a boss fight with morale below 10.", progress: () => a.low_morale_win ? 'Done' : 'Not yet' },
         { key: 'solo_survivor', name: "Last Man Standing", desc: "Win a boss fight with only one unit alive.", progress: () => a.solo_survivor ? 'Done' : 'Not yet' },
         { key: 'three_curses_win', name: "Masochist", desc: "Complete a march with 3 or more curses active.", progress: () => a.three_curses_win ? 'Done' : 'Not yet' },
-        { key: 'renown_100', name: "Renowned", desc: "Accumulate 100 total Renown.", progress: () => Math.min(100, s.totalRenown||0) + '/100' },
-        { key: 'renown_500', name: "Legendary", desc: "Accumulate 500 total Renown.", progress: () => Math.min(500, s.totalRenown||0) + '/500' },
-        { key: 'ten_runs', name: "Veteran", desc: "Complete 10 runs (win or lose).", progress: () => Math.min(10, s.totalRuns||0) + '/10' },
         { key: 'five_wins', name: "Conqueror", desc: "Win 5 runs.", progress: () => Math.min(5, s.runsCompleted||0) + '/5' },
         { key: 'hidden_march_clear', name: "Secret Paths", desc: "Complete a hidden march.", hidden: true, progress: () => a.hidden_march_clear ? 'Done' : '0/1' },
         { key: 'leave_3_epics', name: "Sacrifice to the Gods", desc: "Leave behind 3 epic items in a single run.", progress: () => a.leave_3_epics ? 'Done' : 'Not yet' },
@@ -2637,9 +2651,10 @@ class Game {
     const unlockedCount = allDefs.filter(d => !!a[d.key]).length;
     let html = `<div class="achieves-counter">${unlockedCount}/${allDefs.length} earned</div>`;
 
-    SECTIONS.forEach(section => {
+    SECTIONS.forEach((section, si) => {
       const sectionUnlocked = section.defs.filter(d => !!a[d.key]).length;
-      html += `<div class="achievement-section-header">${section.title} <span class="achievement-section-count">${sectionUnlocked}/${section.defs.length}</span></div>`;
+      html += `<div class="achievement-section-header${si === 0 ? '' : ' collapsed'}" data-section="${si}"><span class="achievement-section-chevron">${si === 0 ? '▾' : '▸'}</span> ${section.title} <span class="achievement-section-count">${sectionUnlocked}/${section.defs.length}</span></div>`;
+      html += `<div class="achievement-section-body${si === 0 ? '' : ' collapsed'}" data-section-body="${si}">`;
       section.defs.forEach(def => {
         const unlocked = !!a[def.key];
         if (def.hidden && !unlocked) {
@@ -2682,9 +2697,19 @@ class Game {
           </div>
         </div>`;
       });
+      html += '</div>';
     });
 
     content.innerHTML = html;
+    content.querySelectorAll('.achievement-section-header').forEach(h => {
+      h.addEventListener('click', () => {
+        const body = content.querySelector(`[data-section-body="${h.dataset.section}"]`);
+        const collapsed = h.classList.toggle('collapsed');
+        if (body) body.classList.toggle('collapsed', collapsed);
+        const chev = h.querySelector('.achievement-section-chevron');
+        if (chev) chev.textContent = collapsed ? '▸' : '▾';
+      });
+    });
   }
 
   // --- Run management ---
@@ -2710,6 +2735,7 @@ class Game {
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
     this._epicsLeftThisRun = 0;
+    if (this.activeBoons && this.activeBoons.includes('gilded_name')) this.addRunRenown(30);
     this._leaderboardSaved = false;
     this._runEndTracked = false;
     this.currentRunRenown = 0;

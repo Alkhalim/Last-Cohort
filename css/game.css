@@ -6320,3 +6320,8 @@ html, body {
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+/* Collapsible achievement sections */
+.achievement-section-header { cursor: pointer; user-select: none; }
+.achievement-section-chevron { color: var(--gold-dim); font-size: 0.7rem; margin-right: 2px; }
+.achievement-section-body.collapsed { display: none; }

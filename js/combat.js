@@ -343,6 +343,15 @@ class CombatEngine {
     if (data.isBoss && this.getActiveCurses().includes('champions_mark')) {
       scaledMaxHp = Math.round(scaledMaxHp * 1.2);
     }
+    // Curse: Famous Prey — everyone hunts the famous legion
+    if (this.getActiveCurses().includes('famous_prey')) {
+      scaledMaxHp = Math.round(scaledMaxHp * 1.05);
+    }
+    // Curse: Named Prey — your old kills fight harder
+    if (this.getActiveCurses().includes('trophy_hunger')) {
+      const tkc = (window.game && window.game.stats && window.game.stats.enemiesKilled && window.game.stats.enemiesKilled[enemyId]) || 0;
+      if (tkc >= 10) scaledMaxHp = Math.round(scaledMaxHp * 1.15);
+    }
     const blockScale = 1.2;
     const scaledActions = data.actions.map(a => ({
       ...a,
@@ -858,6 +867,11 @@ class CombatEngine {
     if (this.turn === 1 && this._ambushCombat && this.partyHasItem('ambushers_leathers')) {
       // extraDice is accumulated below alongside the other dice bonuses
       this._eventBonusDiceAmbush = 2;
+    }
+    // Living Legend: fame steadies the hand — +1 die at high morale
+    if (this.morale >= 90 && this.getActiveBoons().includes('living_legend')) {
+      extraDice += 1;
+      this.addLog('Living Legend — the men fight for the story. (+1 die)');
     }
     // Cavalry Speed: from march 4, the head start lasts into turn 2
     if (this.turn === 2 && this._cavalrySecondWind) {
@@ -1796,6 +1810,11 @@ class CombatEngine {
       bonusDmg += chargeBonus;
       unit.passiveTriggered = true;
       parts.push('Cavalry Charge!');
+    }
+    // Boon: Old Foes — the bestiary is a book of weaknesses
+    if (isDealingDamage && result.target && this.getActiveBoons().includes('known_enemy')) {
+      const kc = (window.game && window.game.stats && window.game.stats.enemiesKilled && window.game.stats.enemiesKilled[result.target.id]) || 0;
+      if (kc >= 10) bonusDmg += 2;
     }
     // Trophy and relic damage bonuses
     if (isDealingDamage) {
@@ -4102,7 +4121,8 @@ class CombatEngine {
     const helmReduction = helmCarrier ? this.getItemLevel(helmCarrier, 'champions_helm') : 0;
     const rawDiff = (this.difficulty || 1) - 1;
     const diffDecay = rawDiff <= 4 ? rawDiff : 4 + Math.floor((rawDiff - 4) / 2);
-    const curseDecay = this.getActiveCurses().includes('witchs_gaze') ? 2 : 0;
+    const curseDecay = (this.getActiveCurses().includes('witchs_gaze') ? 2 : 0)
+      + (this.getActiveCurses().includes('heavy_laurels') ? 1 : 0);
     const moraleDecay = Math.max(0, this.turn + diffDecay + curseDecay - helmReduction);
     this.morale = Math.max(0, this.morale - moraleDecay);
     this.clampMorale();

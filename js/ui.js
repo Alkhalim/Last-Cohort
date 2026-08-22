@@ -4374,7 +4374,7 @@ class GameUI {
     // Threshold rest: special final march rest before the spirits
     if (node._thresholdRest) {
       this._isThresholdRest = true;
-      this.campActionsLeft = 2;
+      this.campActionsLeft = (window.game && window.game.activeBoons && window.game.activeBoons.includes('veterans_wages')) ? 3 : 2;
       this.campLog = [];
       this.campLog.push('★ The veil between worlds is thin here. Your men can feel the spirits waiting beyond. Some pray. Some sharpen their blades. No one speaks of going home.');
       this.engine.morale = Math.max(0, this.engine.morale - 5);
@@ -4392,7 +4392,7 @@ class GameUI {
     }
 
     if (this._isLairFeast) {
-      this.campActionsLeft = 2;
+      this.campActionsLeft = (window.game && window.game.activeBoons && window.game.activeBoons.includes('veterans_wages')) ? 3 : 2;
       this.campLog = [];
       // Lair Feast: morale penalty, no morale camp event
       const moraleLoss = 8;
@@ -4402,7 +4402,7 @@ class GameUI {
       return;
     }
 
-    this.campActionsLeft = 2;
+    this.campActionsLeft = (window.game && window.game.activeBoons && window.game.activeBoons.includes('veterans_wages')) ? 3 : 2;
     this.campLog = [];
 
     // 30% chance of a small positive camp event (scales with difficulty)
@@ -5563,6 +5563,13 @@ class GameUI {
       // Save renown earned during hidden march
       if (window.game) window.game.addRunRenown(this.engine.totalRenownEarned);
       this.engine.totalRenownEarned = 0;
+      // Secret Paths: the hidden march is cleared
+      if (window.game && !window.game.achievements.hidden_march_clear) {
+        window.game.achievements.hidden_march_clear = true;
+        window.game.saveAchievements();
+        window.game.addNotification('Achievement: Secret Paths!');
+        window.game.notifyItemUnlocks('hidden_march_clear');
+      }
 
       const btnContainer = document.getElementById('btn-run-complete');
       btnContainer.textContent = 'Return to the March';
