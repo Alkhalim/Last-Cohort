@@ -6164,3 +6164,104 @@ html, body {
   0%, 100% { box-shadow: 0 0 0 rgba(208, 64, 64, 0); }
   50% { box-shadow: 0 0 12px rgba(208, 64, 64, 0.4); }
 }
+
+/* ============================================================
+   Unlock spotlight: content rewards demand a tap
+   ============================================================ */
+.unlock-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 5, 3, 0.78);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.25s;
+  cursor: pointer;
+  padding: 24px;
+}
+.unlock-modal-overlay.show { opacity: 1; }
+.unlock-modal-overlay.closing { opacity: 0; }
+
+.unlock-modal {
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  background: var(--bg-card, #17130d);
+  border: 1px solid var(--gold-dim);
+  border-radius: 8px;
+  padding: 22px 20px 16px;
+  box-shadow: 0 0 40px rgba(201, 162, 39, 0.25), 0 12px 40px rgba(0, 0, 0, 0.8);
+  transform: scale(0.9) translateY(10px);
+  transition: transform 0.3s cubic-bezier(0.2, 1.2, 0.35, 1);
+}
+.unlock-modal-overlay.show .unlock-modal { transform: scale(1) translateY(0); }
+
+.unlock-kicker {
+  font-family: 'Cinzel', serif;
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  color: var(--gold);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  background: var(--laurel) bottom center repeat-x;
+}
+.unlock-bust {
+  height: 130px;
+  width: auto;
+  max-width: 60%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+  margin-bottom: 6px;
+}
+.unlock-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 12px rgba(201, 162, 39, 0.25);
+}
+.unlock-desc {
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.unlock-passive {
+  color: var(--gold);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  font-style: italic;
+  border-top: 1px solid rgba(46, 34, 14, 0.55);
+  box-shadow: 0 -1px 0 rgba(232, 216, 160, 0.07);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+.unlock-item-list { margin-bottom: 8px; }
+.unlock-item {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 3px 0;
+}
+.unlock-dismiss {
+  margin-top: 14px;
+  font-size: 0.58rem;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  animation: dismiss-breathe 1.8s ease-in-out infinite;
+}
+@keyframes dismiss-breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.unlock-item.rarity-epic, .unlock-name.rarity-epic { color: #cc44ff; }
+.unlock-item.rarity-rare, .unlock-name.rarity-rare { color: var(--gold); }
+.unlock-item.rarity-uncommon, .unlock-name.rarity-uncommon { color: var(--green-bright); }
+@media (prefers-reduced-motion: reduce) {
+  .unlock-modal, .unlock-modal-overlay { transition: none; }
+  .unlock-dismiss { animation: none; }
+}

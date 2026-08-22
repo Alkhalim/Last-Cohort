@@ -1126,7 +1126,7 @@ class Game {
         if (item.baseId || item.unlockKill !== eid) return;
         const need = item.unlockKillCount || 1;
         if (before < need && before + 1 >= need) {
-          this.addNotification(`Trophy claimed: ${item.name} can now drop!`);
+          this.queueUnlockModal({ kind: 'items', items: [item], trophy: true });
         }
       });
     });
@@ -2080,7 +2080,7 @@ class Game {
     const tryUnlockClass = (key, name) => {
       if (a[key]) return false;
       a[key] = true;
-      this.addNotification(`Class Unlocked: ${name}!`);
+      this.queueUnlockModal({ kind: 'class', key, name });
       return true;
     };
     // Class unlock achievements — check BOTH live stats AND existing prerequisite achievements
@@ -2239,6 +2239,56 @@ class Game {
     if (hints[id]) this.showHint(id, hints[id]);
   }
 
+  // --- Unlock spotlight: content rewards (classes, items) get a foreground
+  // modal the player must tap away; plain achievements stay as toasts ---
+  queueUnlockModal(data) {
+    this._unlockModalQueue = this._unlockModalQueue || [];
+    this._unlockModalQueue.push(data);
+    if (!this._unlockModalShowing) this._showNextUnlockModal();
+  }
+
+  _showNextUnlockModal() {
+    const next = (this._unlockModalQueue || []).shift();
+    if (!next) { this._unlockModalShowing = false; return; }
+    this._unlockModalShowing = true;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'unlock-modal-overlay';
+    let inner = '';
+    if (next.kind === 'class') {
+      const entry = Object.entries(CLASS_DATA).find(([id, d]) => (d.unlockKey || id) === next.key);
+      const data = entry ? entry[1] : null;
+      const tag = data ? (data.tags.find(t => t !== 'roman' && t !== 'germanic') || 'roman') : 'roman';
+      inner = `
+        <div class="unlock-kicker">A NEW RECRUIT JOINS THE LEGION</div>
+        ${data ? `<img class="unlock-bust" src="${getPlayerPortrait(data.title)}" alt="${next.name}">` : ''}
+        <div class="unlock-name" style="color:var(--class-${tag})">${next.name}</div>
+        ${data ? `<div class="unlock-desc">${data.description}</div>
+        <div class="unlock-passive"><strong>${data.passive.name}:</strong> ${data.passive.description}</div>` : ''}`;
+    } else {
+      const items = next.items || [];
+      const single = items.length === 1 ? items[0] : null;
+      inner = `
+        <div class="unlock-kicker">${next.trophy ? 'TROPHY CLAIMED' : 'NEW SPOILS ENTER THE FOREST'}</div>
+        ${single ? `
+          <div class="unlock-name rarity-${single.rarity}">${single.name}</div>
+          <div class="unlock-desc">${single.slot} · ${single.rarity}</div>
+          ${single.special ? `<div class="unlock-passive">${single.special}</div>` : ''}` : `
+          <div class="unlock-item-list">${items.map(i => `<div class="unlock-item rarity-${i.rarity}">${i.name}</div>`).join('')}</div>
+          <div class="unlock-desc">${items.length} new item${items.length > 1 ? 's' : ''} can now drop.</div>`}`;
+    }
+    overlay.innerHTML = `<div class="unlock-modal">${inner}<div class="unlock-dismiss">TAP TO CONTINUE</div></div>`;
+    overlay.addEventListener('click', () => {
+      overlay.classList.add('closing');
+      setTimeout(() => {
+        overlay.remove();
+        this._showNextUnlockModal();
+      }, 200);
+    });
+    document.getElementById('game').appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+  }
+
   // Items gated behind this achievement key (new spoils entering the pool)
   itemUnlocksFor(key) {
     return Object.values(ITEM_DATA).filter(i => i.unlockKey === key && !i.baseId);
@@ -2247,7 +2297,7 @@ class Game {
   notifyItemUnlocks(key) {
     const items = this.itemUnlocksFor(key);
     if (items.length > 0) {
-      this.addNotification(`New spoils enter the forest: ${items.length} item${items.length > 1 ? 's' : ''} can now drop!`);
+      this.queueUnlockModal({ kind: 'items', items });
     }
   }
 
