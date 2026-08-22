@@ -4063,7 +4063,7 @@ class GameUI {
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong>` +
         `<span class="respite-skill-cost">[${skill.cost.label}]</span>` +
         `<br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>` +
-        `<div class="respite-skill-desc">${baseDef.description || ''}</div>` +
+        `<div class="respite-skill-desc">${this._enhanceSkillDesc(baseDef, unit)}</div>` +
         (skill.cooldown ? `<div class="respite-skill-meta">Cooldown: ${skill.cooldown} turn${skill.cooldown > 1 ? 's' : ''}</div>` : '');
 
       btn.addEventListener('click', () => {
@@ -5084,7 +5084,7 @@ class GameUI {
 
   // Apply equipment-aware stat replacements to a skill description
   _enhanceSkillDesc(skill, unit) {
-    let desc = skill.description;
+    let desc = skill.description || '';
     const equipDmg = unit.equipDamage || 0;
     const equipHeal = unit.equipHeal || 0;
     const equipBlock = unit.equipBlock || 0;
@@ -5963,7 +5963,7 @@ class GameUI {
       btn.innerHTML = `<span style="color:var(--class-${tag})">${unit.title}</span> — <strong>${skill.name}</strong>` +
         `<span class="respite-skill-cost">[${skill.cost.label}]</span>` +
         `<br><span style="font-size:0.75rem;color:var(--gold)">${upgradeText}</span>` +
-        `<div class="respite-skill-desc">${baseDef.description || ''}</div>` +
+        `<div class="respite-skill-desc">${this._enhanceSkillDesc(baseDef, unit)}</div>` +
         (skill.cooldown ? `<div class="respite-skill-meta">Cooldown: ${skill.cooldown} turn${skill.cooldown > 1 ? 's' : ''}</div>` : '');
       btn.addEventListener('click', () => {
         if (eff.damage) baseDef.effects.damage += amt;
