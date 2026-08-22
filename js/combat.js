@@ -88,6 +88,7 @@ class CombatEngine {
     this._heartwoodTriggered = false;
     this._heartwoodBonusDice = 0;
     this._lupaFangUsed = false;
+    this._moraleAtBossKill = null;
     this._antlerUsed = false;
     this._partyDamagedThisRound = false;
     this._ambushCombat = false;
@@ -3702,6 +3703,9 @@ class CombatEngine {
           this.killedEnemies.push(e.id);
           this.totalEnemiesKilled++;
           this.addLog(`${e.name} falls!`);
+          // Achievements measure morale at the killing blow, BEFORE the
+          // boss-kill morale surge (restore-to-75 made "win below 10" impossible)
+          if (e.isBoss && !e._isSpectral) this._moraleAtBossKill = this.morale;
           // Kill attribution for trophies
           if (this._lastActingUnit && !this._lastActingUnit.downed) {
             this._lastActingUnit._runKills = (this._lastActingUnit._runKills || 0) + 1;
@@ -4252,6 +4256,7 @@ class CombatEngine {
               e.dead = true; e.hp = 0; this.killedEnemies.push(e.id); this.totalEnemiesKilled++;
               this.poisonKills = (this.poisonKills || 0) + 1;
               this.addLog(`${e.name} falls to poison!`);
+              if (e.isBoss && !e._isSpectral) this._moraleAtBossKill = this.morale;
               // Mushroom Pouch: the men cheer when the toxin finishes the work
               if (this.partyHasItem('mushroom_pouch')) {
                 this.morale = Math.min(100, this.morale + 3);

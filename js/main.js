@@ -1148,13 +1148,16 @@ class Game {
       aa.kill_boss_turn3 = true;
       this.addNotification('Achievement: Blitzkrieg — boss down in 3 turns!');
     }
+    // Morale achievements measure the moment of the killing blow, before
+    // the boss-kill morale surge
+    const bossKillMorale = this.engine._moraleAtBossKill != null ? this.engine._moraleAtBossKill : this.engine.morale;
     // High morale boss finish
-    if (!aa.high_morale_finish && this.engine.hasBossEnemy() && this.engine.morale > 90) {
+    if (!aa.high_morale_finish && this.engine.hasBossEnemy() && bossKillMorale > 90) {
       aa.high_morale_finish = true;
       this.addNotification('Achievement: Unbreakable Spirit!');
     }
     // Low morale boss win
-    if (!aa.low_morale_win && this.engine.hasBossEnemy() && this.engine.morale < 10) {
+    if (!aa.low_morale_win && this.engine.hasBossEnemy() && bossKillMorale < 10) {
       aa.low_morale_win = true;
       this.addNotification('Achievement: Against All Odds!');
     }
@@ -1949,7 +1952,7 @@ class Game {
     }
 
     // Check party equipment for rare achievements (at run end)
-    if (this.engine && this.engine.party) {
+    if (this.engine && this.engine.party && this.engine.party.length > 0) {
       // One hero with 3 rare items
       const hasThreeRares = this.engine.party.some(u => {
         let rareCount = 0;

@@ -1519,6 +1519,26 @@ section('2.12b — unlock conditions fit the 6-march structure');
 }
 
 // ============================================================
+section('2.12c — achievement checks are not vacuous');
+// ============================================================
+{
+  const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
+  check('equipment achievements guard against an empty party', () => {
+    assert(/this\.engine && this\.engine\.party && this\.engine\.party\.length > 0/.test(main),
+      'party.every() on an empty party vacuously awards Legion of Gold');
+  });
+  check('morale boss achievements use the killing-blow snapshot', () => {
+    assert(/bossKillMorale < 10/.test(main) && /bossKillMorale > 90/.test(main),
+      'boss-kill morale surge (restore to 75) makes "win below 10" impossible');
+  });
+  const combat = fs.readFileSync(path.join(ROOT, 'js/combat.js'), 'utf8');
+  check('engine snapshots morale at the boss-killing blow', () => {
+    assert((combat.match(/_moraleAtBossKill = this\.morale/g) || []).length >= 2,
+      'snapshot missing from attack and/or poison kill paths');
+  });
+}
+
+// ============================================================
 section('2.13 — skill description rewrites match actual descriptions');
 // ============================================================
 {
