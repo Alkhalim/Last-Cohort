@@ -6148,3 +6148,19 @@ html, body {
   border: 1px solid rgba(90, 170, 90, 0.45);
   background: rgba(50, 110, 50, 0.14);
 }
+
+/* --- Danger-zone button: reset progression --- */
+.btn-danger {
+  border-color: rgba(160, 45, 35, 0.5);
+  color: #c88a80;
+}
+.btn-danger.confirming {
+  border-color: var(--red-bright);
+  color: var(--red-bright);
+  background: rgba(120, 25, 18, 0.25);
+  animation: danger-pulse 0.9s ease-in-out infinite;
+}
+@keyframes danger-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(208, 64, 64, 0); }
+  50% { box-shadow: 0 0 12px rgba(208, 64, 64, 0.4); }
+}

@@ -1018,6 +1018,28 @@ class Game {
       this.saveSettings();
     });
 
+    // Reset progression: two-stage confirm, then wipe and reload
+    const resetBtn = document.getElementById('btn-reset-progress');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (!resetBtn.classList.contains('confirming')) {
+          resetBtn.classList.add('confirming');
+          resetBtn.textContent = 'Tap again to erase EVERYTHING';
+          setTimeout(() => {
+            resetBtn.classList.remove('confirming');
+            resetBtn.textContent = 'Reset All Progression';
+          }, 4000);
+          return;
+        }
+        try {
+          [RENOWN_STORAGE_KEY, STATS_STORAGE_KEY, ACHIEVEMENTS_STORAGE_KEY,
+           RUN_HISTORY_STORAGE_KEY, SAVED_RUN_STORAGE_KEY,
+           'lc_hints_seen', 'lc_choices_seen'].forEach(k => localStorage.removeItem(k));
+        } catch (e) { /* storage unavailable */ }
+        window.location.reload();
+      });
+    }
+
     // Display toggles: screen shake, reduced motion, colorblind bars
     for (const [id, key] of [['opt-screen-shake', 'screenShake'], ['opt-reduced-motion', 'reducedMotion'], ['opt-cb-bars', 'cbBars']]) {
       const cb = document.getElementById(id);
