@@ -52,51 +52,51 @@ const ACHIEVEMENTS_STORAGE_KEY = 'lastCohort_achievements';
 const RUN_HISTORY_STORAGE_KEY = 'lastCohort_runHistory';
 const SAVED_RUN_STORAGE_KEY = 'lastCohort_savedRun';
 
-const MUSIC_MENU = 'assets/music.mp3';
+const MUSIC_MENU = 'assets/audio/music/music.mp3';
 const MUSIC_GAMEPLAY = [
-  'assets/Teutoburg Shadows.mp3',
-  'assets/Forgotten Paths.mp3',
-  'assets/Forest of Broken Eagles.mp3',
-  'assets/Lost in the Muck.mp3',
-  'assets/Legion in the Leaves.mp3',
-  'assets/Frontier of the Unquiet Crown.mp3',
-  'assets/Teutoburgs Black Earth.mp3',
-  'assets/Eyes in the Undergrowth.mp3',
+  'assets/audio/music/Teutoburg Shadows.mp3',
+  'assets/audio/music/Forgotten Paths.mp3',
+  'assets/audio/music/Forest of Broken Eagles.mp3',
+  'assets/audio/music/Lost in the Muck.mp3',
+  'assets/audio/music/Legion in the Leaves.mp3',
+  'assets/audio/music/Frontier of the Unquiet Crown.mp3',
+  'assets/audio/music/Teutoburgs Black Earth.mp3',
+  'assets/audio/music/Eyes in the Undergrowth.mp3',
 ];
-const MUSIC_BOSS = 'assets/Shadow of Arminius.mp3';
+const MUSIC_BOSS = 'assets/audio/music/Shadow of Arminius.mp3';
 const MUSIC_BOSS_OVERRIDE = {
-  'arminius_champion': 'assets/Champion of the Forest Warlord.mp3',
-  'grove_witch': 'assets/Swamp Fury Unleashed.mp3',
-  'serpent_shaman': 'assets/Venom Rite.mp3',
-  'silent_huntsman': 'assets/Black Water March.mp3',
-  'mire_mother': 'assets/Ironhide Rite.mp3',
-  'fog_weaver': 'assets/Fog Remembers.mp3',
-  'bone_speaker': 'assets/Bonefall.mp3',
-  'blood_stag': 'assets/Blood Stag Rising.mp3',
-  'revenant_of_ariovistus': 'assets/Barrow Raider.mp3',
-  'corpse_of_arminius': 'assets/Chosen of Arminius.mp3',
-  'corpse_of_varus': 'assets/Stahlwall.mp3',
-  'spirit_of_varus': 'assets/Stahlwall.mp3',
-  'spirit_of_arminius': 'assets/Legion of the Hollow Standard.mp3',
-  'thusnelda': 'assets/Bloodroot Crown.mp3',
-  'leech_mound': 'assets/Bog Wurm Ascendant.mp3',
-  'lesser_leech_mound': 'assets/Bog Wurm Ascendant.mp3',
-  'ursus_ferox': 'assets/Fury of the Rootbound Titan.mp3',
-  'lindwurm_lord': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
-  'lord_of_lies': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
-  'lord_of_future_sight': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
-  'undefeated_lord': 'assets/Lindwurm Lord of the Ancient Woods.mp3',
+  'arminius_champion': 'assets/audio/music/Champion of the Forest Warlord.mp3',
+  'grove_witch': 'assets/audio/music/Swamp Fury Unleashed.mp3',
+  'serpent_shaman': 'assets/audio/music/Venom Rite.mp3',
+  'silent_huntsman': 'assets/audio/music/Black Water March.mp3',
+  'mire_mother': 'assets/audio/music/Ironhide Rite.mp3',
+  'fog_weaver': 'assets/audio/music/Fog Remembers.mp3',
+  'bone_speaker': 'assets/audio/music/Bonefall.mp3',
+  'blood_stag': 'assets/audio/music/Blood Stag Rising.mp3',
+  'revenant_of_ariovistus': 'assets/audio/music/Barrow Raider.mp3',
+  'corpse_of_arminius': 'assets/audio/music/Chosen of Arminius.mp3',
+  'corpse_of_varus': 'assets/audio/music/Stahlwall.mp3',
+  'spirit_of_varus': 'assets/audio/music/Stahlwall.mp3',
+  'spirit_of_arminius': 'assets/audio/music/Legion of the Hollow Standard.mp3',
+  'thusnelda': 'assets/audio/music/Bloodroot Crown.mp3',
+  'leech_mound': 'assets/audio/music/Bog Wurm Ascendant.mp3',
+  'lesser_leech_mound': 'assets/audio/music/Bog Wurm Ascendant.mp3',
+  'ursus_ferox': 'assets/audio/music/Fury of the Rootbound Titan.mp3',
+  'lindwurm_lord': 'assets/audio/music/Lindwurm Lord of the Ancient Woods.mp3',
+  'lord_of_lies': 'assets/audio/music/Lindwurm Lord of the Ancient Woods.mp3',
+  'lord_of_future_sight': 'assets/audio/music/Lindwurm Lord of the Ancient Woods.mp3',
+  'undefeated_lord': 'assets/audio/music/Lindwurm Lord of the Ancient Woods.mp3',
 };
 
 const MARCH_THEMES = {
-  1:  { name: 'The Ambush Trail',     subtitle: 'The forest closes behind you.',   theme: 'forest', music: 'assets/Cohort Defiant.mp3' },
-  2:  { name: 'The Hunting Grounds',  subtitle: 'They know these woods. You do not.', theme: 'forest-dark', music: 'assets/Hunters in the Canopy.mp3' },
-  3:  { name: 'The Poisoned Bog',     subtitle: 'The ground turns to black water.',  theme: 'bog', music: 'assets/Black Mire Pulse.mp3' },
-  4:  { name: 'The Old Forest',       subtitle: 'Ancient things stir between the roots.', theme: 'ancient', music: 'assets/Roots Remember Blood.mp3' },
-  5:  { name: 'The Blood Grove',      subtitle: 'Altars stained red. The druids watch.', theme: 'blood', music: 'assets/Crimson Ritual.mp3' },
-  6:  { name: 'The Haunted March',    subtitle: 'The dead walk in Roman formation.',  theme: 'haunted', music: 'assets/Eagle of the Unremembered.mp3' },
-  7:  { name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.', theme: 'heart', music: 'assets/Root-Rot Cathedral.mp3' },
-  8:  { name: 'The Threshold',        subtitle: 'Between worlds. The spirits await.', theme: 'threshold', music: 'assets/Spirits at the Teutoburg Gate.mp3' },
+  1:  { name: 'The Ambush Trail',     subtitle: 'The forest closes behind you.',   theme: 'forest', music: 'assets/audio/music/Cohort Defiant.mp3' },
+  2:  { name: 'The Hunting Grounds',  subtitle: 'They know these woods. You do not.', theme: 'forest-dark', music: 'assets/audio/music/Hunters in the Canopy.mp3' },
+  3:  { name: 'The Poisoned Bog',     subtitle: 'The ground turns to black water.',  theme: 'bog', music: 'assets/audio/music/Black Mire Pulse.mp3' },
+  4:  { name: 'The Old Forest',       subtitle: 'Ancient things stir between the roots.', theme: 'ancient', music: 'assets/audio/music/Roots Remember Blood.mp3' },
+  5:  { name: 'The Blood Grove',      subtitle: 'Altars stained red. The druids watch.', theme: 'blood', music: 'assets/audio/music/Crimson Ritual.mp3' },
+  6:  { name: 'The Haunted March',    subtitle: 'The dead walk in Roman formation.',  theme: 'haunted', music: 'assets/audio/music/Eagle of the Unremembered.mp3' },
+  7:  { name: 'The Heart of the Forest', subtitle: 'The trees are flesh. The ground pulses.', theme: 'heart', music: 'assets/audio/music/Root-Rot Cathedral.mp3' },
+  8:  { name: 'The Threshold',        subtitle: 'Between worlds. The spirits await.', theme: 'threshold', music: 'assets/audio/music/Spirits at the Teutoburg Gate.mp3' },
 };
 
 // --- Curse Definitions ---
@@ -170,6 +170,7 @@ class Game {
     this.lowpassFilter = null;
     this.currentSource = null;
     this.bindAudioUnlock();
+    this.bindGlobalClickSfx();
 
     this.showHomeScreen();
     this.bindStartScreen();
@@ -497,6 +498,71 @@ class Game {
       bossSrc = MUSIC_BOSS;
     }
     this.currentTrack = this.playTrack(bossSrc, true);
+  }
+
+  // --- Sound effects -----------------------------------------------------
+  // One tap = one sound. Variants are picked at random; same-name plays are
+  // throttled so bursts (AoE hits) don't stack into noise.
+  static SFX_LIB = {
+    click: ['assets/audio/sfx/ui/click_1.wav', 'assets/audio/sfx/ui/click_2.wav', 'assets/audio/sfx/ui/click_3.wav'],
+    confirm: ['assets/audio/sfx/ui/confirm.wav'],
+    back: ['assets/audio/sfx/ui/back.wav'],
+    error: ['assets/audio/sfx/ui/error.wav'],
+    unlock: ['assets/audio/sfx/ui/unlock.ogg'],
+    loot: ['assets/audio/sfx/ui/loot_open.ogg'],
+    fanfare: ['assets/audio/sfx/ui/fanfare.wav'],
+    camp: ['assets/audio/sfx/ui/camp_fire.ogg'],
+    march: ['assets/audio/sfx/ui/march_begin.ogg'],
+    sword: ['assets/audio/sfx/combat/sword_attack_1.ogg', 'assets/audio/sfx/combat/sword_attack_2.ogg', 'assets/audio/sfx/combat/sword_attack_3.ogg'],
+    hit: ['assets/audio/sfx/combat/sword_hit_1.ogg', 'assets/audio/sfx/combat/sword_hit_2.ogg', 'assets/audio/sfx/combat/sword_hit_3.ogg'],
+    blocked: ['assets/audio/sfx/combat/sword_blocked_1.ogg', 'assets/audio/sfx/combat/sword_blocked_2.ogg', 'assets/audio/sfx/combat/sword_blocked_3.ogg'],
+    parry: ['assets/audio/sfx/combat/sword_parry.ogg'],
+    unsheath: ['assets/audio/sfx/combat/sword_unsheath.ogg'],
+    bow: ['assets/audio/sfx/combat/bow_attack_1.ogg', 'assets/audio/sfx/combat/bow_attack_2.ogg'],
+    bow_hit: ['assets/audio/sfx/combat/bow_hit_1.ogg', 'assets/audio/sfx/combat/bow_hit_2.ogg', 'assets/audio/sfx/combat/bow_hit_3.ogg'],
+    spell: ['assets/audio/sfx/combat/spell_impact_1.ogg', 'assets/audio/sfx/combat/spell_impact_2.ogg', 'assets/audio/sfx/combat/spell_impact_3.ogg'],
+    buff: ['assets/audio/sfx/combat/buff.ogg'],
+    fire: ['assets/audio/sfx/combat/fireball.ogg'],
+  };
+
+  playSfx(name, vol = 1) {
+    try {
+      if (!this.settings || (this.settings.soundVolume || 0) <= 0) return;
+      const list = Game.SFX_LIB[name];
+      if (!list) return;
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      this._sfxLast = this._sfxLast || {};
+      if (this._sfxLast[name] && now - this._sfxLast[name] < 70) return;
+      this._sfxLast[name] = now;
+      const src = list[Math.floor(Math.random() * list.length)];
+      this._sfxCache = this._sfxCache || {};
+      if (!this._sfxCache[src]) {
+        const base = new Audio(src);
+        base.preload = 'auto';
+        this._sfxCache[src] = base;
+      }
+      const a = this._sfxCache[src].cloneNode();
+      a.volume = Math.max(0, Math.min(1, (this.settings.soundVolume / 100) * vol));
+      a.play().catch(() => {});
+    } catch (e) { /* audio unavailable */ }
+  }
+
+  // Blanket rule: no click goes silent. Specific moments layer their own
+  // sounds on top (loot, unlocks, combat) via direct playSfx calls.
+  bindGlobalClickSfx() {
+    document.addEventListener('click', (e) => {
+      if (!e.isTrusted) return;
+      const t = e.target.closest && e.target.closest(
+        'button, .btn-event-choice, .classes-card, .die, .map-node.reachable, ' +
+        '.bestiary-slot.filled, .unlock-modal-overlay, .loot-slot-item, ' +
+        '.ps-class-card, .mod-card, .levelup-skill-card, .skill-item, .achievement-section-header');
+      if (!t) return;
+      if (t.classList && (t.classList.contains('submenu-back') || t.id === 'btn-options-back')) {
+        this.playSfx('back', 0.8);
+      } else {
+        this.playSfx('click', 0.8);
+      }
+    }, true);
   }
 
   resumeGameplayMusic() {
@@ -2459,6 +2525,7 @@ class Game {
   _showNextUnlockModal() {
     const next = (this._unlockModalQueue || []).shift();
     if (!next) { this._unlockModalShowing = false; return; }
+    this.playSfx('unlock', 0.9);
 
     const overlay = document.createElement('div');
     overlay.className = 'unlock-modal-overlay';
@@ -2965,9 +3032,9 @@ class Game {
           n.encounter.enemies.forEach(eid => enemyIds.add(eid));
         }
       });
-      preloadImages([...enemyIds].map(eid => `assets/enemy_${eid}.png`));
+      preloadImages([...enemyIds].map(eid => `assets/portraits/enemies/enemy_${eid}.png`));
     }
-    preloadImages(['assets/enemy_portrait.png']);
+    preloadImages(['assets/portraits/enemies/enemy_portrait.png']);
 
     // Show map behind the card
     this.ui.showMapScreen();
@@ -2983,10 +3050,10 @@ class Game {
 // Boot
 // Reduced art: map class titles to trait-based generic portraits
 const REDUCED_ART_PLAYER = {
-  'LEG': 'assets/LEG.png', 'EQU': 'assets/LEG.png', 'PRA': 'assets/LEG.png',       // melee → LEG
-  'CEN': 'assets/CEN.png', 'SIG': 'assets/CEN.png',                                  // command → CEN
-  'MED': 'assets/MED.png', 'COR': 'assets/MED.png',                                   // support → MED
-  'SAG': 'assets/SAG.png', 'BAL': 'assets/SAG.png',                                   // ranged → SAG
+  'LEG': 'assets/portraits/classes/LEG.png', 'EQU': 'assets/portraits/classes/LEG.png', 'PRA': 'assets/portraits/classes/LEG.png',       // melee → LEG
+  'CEN': 'assets/portraits/classes/CEN.png', 'SIG': 'assets/portraits/classes/CEN.png',                                  // command → CEN
+  'MED': 'assets/portraits/classes/MED.png', 'COR': 'assets/portraits/classes/MED.png',                                   // support → MED
+  'SAG': 'assets/portraits/classes/SAG.png', 'BAL': 'assets/portraits/classes/SAG.png',                                   // ranged → SAG
 };
 
 // Reduced art: map enemy IDs to category-based generic portraits
@@ -3021,26 +3088,26 @@ const REDUCED_ART_ENEMY_CATEGORY = {
   lindwurm: 'boss', dragon_hatchling: 'monster', wyrm_cultist: 'caster',
 };
 const REDUCED_ART_ENEMY = {
-  melee: 'assets/enemy_cheruscan_raider.png',
-  ranged: 'assets/enemy_sling_hunter.png',
-  caster: 'assets/enemy_bog_seer.png',
-  monster: 'assets/enemy_marsh_wolf.png',
-  boss: 'assets/enemy_arminius_champion.png',
+  melee: 'assets/portraits/enemies/enemy_cheruscan_raider.png',
+  ranged: 'assets/portraits/enemies/enemy_sling_hunter.png',
+  caster: 'assets/portraits/enemies/enemy_bog_seer.png',
+  monster: 'assets/portraits/enemies/enemy_marsh_wolf.png',
+  boss: 'assets/portraits/enemies/enemy_arminius_champion.png',
 };
 
 function getPlayerPortrait(classTitle) {
   if (window.game && window.game.settings && window.game.settings.reducedArt) {
-    return REDUCED_ART_PLAYER[classTitle] || `assets/${classTitle}.png`;
+    return REDUCED_ART_PLAYER[classTitle] || `assets/portraits/classes/${classTitle}.png`;
   }
-  return `assets/${classTitle}.png`;
+  return `assets/portraits/classes/${classTitle}.png`;
 }
 
 function getEnemyPortrait(enemyId) {
   if (window.game && window.game.settings && window.game.settings.reducedArt) {
     const cat = REDUCED_ART_ENEMY_CATEGORY[enemyId] || 'melee';
-    return REDUCED_ART_ENEMY[cat] || 'assets/enemy_portrait.png';
+    return REDUCED_ART_ENEMY[cat] || 'assets/portraits/enemies/enemy_portrait.png';
   }
-  return `assets/enemy_${enemyId}.png`;
+  return `assets/portraits/enemies/enemy_${enemyId}.png`;
 }
 
 function isFastMode() {
@@ -3070,8 +3137,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Preload all unit portraits
   preloadImages([
-    'assets/LEG.png', 'assets/CEN.png', 'assets/MED.png',
-    'assets/SAG.png', 'assets/SIG.png', 'assets/COR.png',
-    'assets/EQU.png', 'assets/BAL.png', 'assets/PRA.png',
+    'assets/portraits/classes/LEG.png', 'assets/portraits/classes/CEN.png', 'assets/portraits/classes/MED.png',
+    'assets/portraits/classes/SAG.png', 'assets/portraits/classes/SIG.png', 'assets/portraits/classes/COR.png',
+    'assets/portraits/classes/EQU.png', 'assets/portraits/classes/BAL.png', 'assets/portraits/classes/PRA.png',
   ]);
 });

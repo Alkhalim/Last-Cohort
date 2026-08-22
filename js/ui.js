@@ -35,6 +35,8 @@ function iconizeStatWords(html) {
     .replace(/(\d) (Poison|poison|Block|block|damage|HP|Morale|morale)\b/g, swap);
 }
 
+const sfx = (n, v) => { if (window.game && window.game.playSfx) window.game.playSfx(n, v); };
+
 // Which sigil marks each role's roundel on the party cards
 const ROLE_ICON = { melee: 'sword', ranged: 'arrow', command: 'banner', support: 'leaf', elite: 'helm', germanic: 'axe', roman: 'shield' };
 function gicon(name) { return GICONS[name] || ''; }
@@ -235,6 +237,7 @@ class GameUI {
 
   // A bolt flies from the attacker to the target (ranged skills)
   spawnProjectile(fromId, toId, done) {
+    sfx('bow', 0.7);
     const from = document.getElementById(fromId);
     const to = document.getElementById(toId);
     if (!from || !to) { if (done) done(); return; }
@@ -312,7 +315,8 @@ class GameUI {
       case 'unitHit':
         this.flashElement(`unit-${data.unitIndex}`, 'hit', 600);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
-        if (data.damage > 0) this.spawnImpact(`unit-${data.unitIndex}`, 'blood');
+        if (data.damage > 0) { this.spawnImpact(`unit-${data.unitIndex}`, 'blood'); sfx('hit', data.damage >= 8 ? 1 : 0.75); }
+        else sfx('blocked', 0.7);
         this.screenShake(data.damage);
         if (data.damage >= 6) this.impactFlash('red');
         if (data.damage >= 8) this.triggerHitstop(100);
@@ -328,6 +332,7 @@ class GameUI {
         break;
       }
       case 'unitHeal':
+        sfx('buff', 0.45);
         this.flashElement(`unit-${data.unitIndex}`, 'healed', 600);
         this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'heal');
         break;
@@ -362,6 +367,7 @@ class GameUI {
         }
         break;
       case 'passiveProc': {
+        sfx('confirm', 0.5);
         // A class passive fired — name it and glow the card
         const procId = data.unitIndex !== undefined ? `unit-${data.unitIndex}` : `enemy-${data.enemyIndex}`;
         this.showStatusPopup(procId, `✦ ${data.name}`, 'var(--gold)');
@@ -377,11 +383,13 @@ class GameUI {
       case 'enemyBlock':
         this.flashElement(`enemy-${data.enemyIndex}`, 'blocked', 500);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.amount, 'block');
+        sfx('blocked', 0.5);
         break;
       case 'enemyHit':
         this.flashElement(`enemy-${data.enemyIndex}`, 'hit', 400);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.damage, 'damage');
-        if (data.damage > 0) this.spawnImpact(`enemy-${data.enemyIndex}`, 'slash');
+        if (data.damage > 0) { this.spawnImpact(`enemy-${data.enemyIndex}`, 'slash'); sfx('hit', data.damage >= 10 ? 1 : 0.8); }
+        else sfx('blocked', 0.7);
         if (data.damage >= 12) this.impactFlash();
         if (data.damage >= 7) this.triggerHitstop(data.damage >= 12 ? 110 : 75);
         break;
@@ -389,11 +397,23 @@ class GameUI {
         this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'poison');
         break;
       case 'enemyPoison':
+        sfx('spell', 0.55);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.amount, 'poison');
         if (window.game) window.game.triggerHint('first_poison');
         break;
       case 'skillCutIn':
         this.showSkillCutIn(data.classTitle, data.skillName);
+        // Tie the big art back to WHO is acting: the unit's card steps
+        // forward and glows while the cut-in plays.
+        if (data.unitIndex !== undefined) {
+          const actEl = document.getElementById(`unit-${data.unitIndex}`);
+          if (actEl) {
+            actEl.classList.remove('acting');
+            void actEl.offsetWidth;
+            actEl.classList.add('acting');
+            setTimeout(() => actEl.classList.remove('acting'), 1100);
+          }
+        }
         break;
       case 'enemyCutIn':
         this.showEnemyCutIn(data.enemyName, data.enemyId, data.actionName);
@@ -445,7 +465,7 @@ class GameUI {
   preloadPartyPortraits() {
     if (!this._preloadedPortraits) this._preloadedPortraits = {};
     this.engine.party.forEach(u => {
-      const src = `assets/${u.title}.png`;
+      const src = `assets/portraits/classes/${u.title}.png`;
       if (!this._preloadedPortraits[u.title]) {
         const img = new Image();
         img.src = src;
@@ -456,6 +476,7 @@ class GameUI {
 
   showSkillCutIn(classTitle, skillName) {
     if (typeof isFastMode === 'function' && isFastMode()) return;
+    sfx('unsheath', 0.8);
     const existing = document.getElementById('skill-cutin');
     if (existing) existing.remove();
 
@@ -464,7 +485,7 @@ class GameUI {
     cutin.className = 'skill-cutin';
     // Use preloaded image if available
     const preloaded = this._preloadedPortraits && this._preloadedPortraits[classTitle];
-    const imgSrc = preloaded ? preloaded.src : `assets/${classTitle}.png`;
+    const imgSrc = preloaded ? preloaded.src : `assets/portraits/classes/${classTitle}.png`;
     cutin.innerHTML = `
       <img class="skill-cutin-portrait" src="${imgSrc}" alt="${classTitle}">
       <div class="skill-cutin-name">${skillName}</div>
@@ -486,11 +507,12 @@ class GameUI {
   // Enemy cut-in — portrait + name + action
   showEnemyCutIn(enemyName, enemyId, actionName) {
     if (typeof isFastMode === 'function' && isFastMode()) return;
+    sfx('sword', 0.7);
     const existing = document.getElementById('enemy-cutin');
     if (existing) existing.remove();
 
-    const portraitSrc = typeof getEnemyPortrait === 'function' ? getEnemyPortrait(enemyId) : `assets/enemy_${enemyId}.png`;
-    const fallbackSrc = 'assets/enemy_portrait.png';
+    const portraitSrc = typeof getEnemyPortrait === 'function' ? getEnemyPortrait(enemyId) : `assets/portraits/enemies/enemy_${enemyId}.png`;
+    const fallbackSrc = 'assets/portraits/enemies/enemy_portrait.png';
 
     const cutin = document.createElement('div');
     cutin.id = 'enemy-cutin';
@@ -977,8 +999,8 @@ class GameUI {
     if (enemy.isElite) tags.push('<span class="enemy-tag tag-elite">ELITE</span>');
     tags.push(`<span class="enemy-tag">${enemy.row} row</span>`);
 
-    const portraitSrc = typeof getEnemyPortrait === 'function' ? getEnemyPortrait(enemy.id) : `assets/enemy_${enemy.id}.png`;
-    const fallbackSrc = 'assets/enemy_portrait.png';
+    const portraitSrc = typeof getEnemyPortrait === 'function' ? getEnemyPortrait(enemy.id) : `assets/portraits/enemies/enemy_${enemy.id}.png`;
+    const fallbackSrc = 'assets/portraits/enemies/enemy_portrait.png';
 
     tooltip.innerHTML = `
       <div class="enemy-tooltip-header">
@@ -3900,7 +3922,7 @@ class GameUI {
         vig.id = 'event-vignette';
         document.getElementById('event-screen').prepend(vig);
       }
-      vig.style.backgroundImage = `url('${typeof getEnemyPortrait === 'function' ? getEnemyPortrait(combatEnemy) : `assets/enemy_${combatEnemy}.png`}')`;
+      vig.style.backgroundImage = `url('${typeof getEnemyPortrait === 'function' ? getEnemyPortrait(combatEnemy) : `assets/portraits/enemies/enemy_${combatEnemy}.png`}')`;
       vig.style.display = 'block';
     } else if (vig) {
       vig.style.display = 'none';
@@ -4707,6 +4729,7 @@ class GameUI {
   }
 
   showCampScreen() {
+    sfx('camp', 0.8);
     if (window.game) window.game.triggerHint('first_camp');
     this.showScreen('event-screen');
     document.getElementById('event-screen').classList.add('camp-mode');
@@ -4992,6 +5015,7 @@ class GameUI {
 
   showLootScreen(isBossVictory) {
     if (window.game) window.game.triggerHint('first_item_drop');
+    sfx(isBossVictory ? 'fanfare' : 'loot', isBossVictory ? 0.9 : 0.7);
     // The boss is dead — fade his theme out and let the march's own music
     // return while the spoils are claimed.
     if (isBossVictory && window.game && window.game.endBossMusic) window.game.endBossMusic();

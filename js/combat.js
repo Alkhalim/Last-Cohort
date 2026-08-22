@@ -1685,7 +1685,7 @@ class CombatEngine {
     }
 
     // Trigger cut-in portrait for the attacking unit
-    if (this.onVisual) this.onVisual('skillCutIn', { classTitle: unit.title, skillName: skill.name });
+    if (this.onVisual) this.onVisual('skillCutIn', { classTitle: unit.title, skillName: skill.name, unitIndex: unit.index });
 
     const result = skill.execute(unit, targets, usedDice, skill.effects);
 
