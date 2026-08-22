@@ -812,7 +812,7 @@ class GameUI {
   // so players had no way to plan around incoming damage.
   renderIntentBadge(enemy) {
     if (enemy.dead || enemy.isStructure) return '';
-    if (this.engine.phase !== PHASE.PLAYER_TURN) return '';
+    if (this.engine.phase !== PHASE.PLAYER_TURN && this.engine.phase !== PHASE.ENEMY_TURN) return '';
     const intent = enemy._intent;
     if (!intent) return '';
     if (intent.type === 'stunned') {
@@ -4256,7 +4256,7 @@ class GameUI {
             const numGroupIdx = groups.findIndex(g => typeof g === 'string' && /^[+-]?\d+$/.test(g));
             if (numGroupIdx >= 0) {
               const oldVal = parseInt(groups[numGroupIdx]);
-              const newVal = chosen.key === 'selfDamage' ? oldVal - 1 : (chosen.key === 'morale' ? oldVal + 3 : oldVal + 1);
+              const newVal = chosen.key === 'selfDamage' ? oldVal - amt : (chosen.key === 'morale' ? oldVal + moraleAmt : oldVal + amt);
               groups[numGroupIdx] = String(newVal);
               return groups.slice(0, -2).join(''); // exclude offset and full string
             }
@@ -4333,7 +4333,7 @@ class GameUI {
 
     const titleEl = document.createElement('div');
     titleEl.className = 'march-rest-subtitle';
-    titleEl.textContent = 'The smith improves your equipment:';
+    titleEl.textContent = 'The smith improved your equipment:';
     choicesEl.appendChild(titleEl);
 
     const diff = window.game ? window.game.difficulty : 1;
@@ -5046,18 +5046,32 @@ class GameUI {
     const remaining = this.pendingLoot.length - this._currentLootIdx;
     lootText.textContent = remaining > 1 ? `${remaining} items found` : 'Item found';
 
-    // --- Item card (top) ---
+    // --- Item card (top): each new item ARRIVES, it doesn't just render ---
+    const lootInstanceId = this.pendingLoot[this._currentLootIdx];
+    if (!this._revealedLootIds) this._revealedLootIds = new Set();
+    const revealing = !this._revealedLootIds.has(lootInstanceId);
     itemDisplay.innerHTML = `
       ${trainingLine}
-      <div class="loot-card rarity-${item.rarity}">
-        <div class="loot-card-header">
-          <span class="loot-item-name">${getItemDisplayName(this.pendingLoot[this._currentLootIdx])}</span>
-          <span class="loot-rarity">${item.rarity.toUpperCase()}</span>
+      <div class="loot-reveal-wrap">
+        <div class="loot-rays rays-${item.rarity}"></div>
+        <div class="loot-card rarity-${item.rarity}${revealing ? ' revealing' : ''}">
+          <div class="loot-card-header">
+            <span class="loot-item-name">${getItemDisplayName(lootInstanceId)}</span>
+            <span class="loot-rarity">${item.rarity.toUpperCase()}</span>
+          </div>
+          <div class="loot-item-meta">${item.slot} · ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
+          ${item.special ? `<div class="loot-item-special">${formatItemSpecial(item)}</div>` : ''}
         </div>
-        <div class="loot-item-meta">${item.slot} · ${formatItemStats(item.stats)} <span class="loot-item-tags">${renderTagPips(item.classTags)}</span></div>
-        ${item.special ? `<div class="loot-item-special">${formatItemSpecial(item)}</div>` : ''}
       </div>
     `;
+    if (revealing) {
+      this._revealedLootIds.add(lootInstanceId);
+      const revealCard = itemDisplay.querySelector('.loot-card');
+      if (revealCard && item.rarity !== 'common') {
+        setTimeout(() => this.spawnForgeSparks(revealCard), 180);
+      }
+      if (item.rarity === 'epic') this.haptic(25);
+    }
 
     // --- Unit panel (bottom) ---
     if (eligible.length === 0) {
@@ -6002,7 +6016,7 @@ class GameUI {
 
     const titleEl = document.createElement('div');
     titleEl.className = 'march-rest-subtitle';
-    titleEl.textContent = 'The blacksmith improves your equipment:';
+    titleEl.textContent = 'The blacksmith improved your equipment:';
     choicesEl.appendChild(titleEl);
 
     const restDiff = window.game ? window.game.difficulty : 1;
