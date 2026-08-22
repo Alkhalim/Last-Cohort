@@ -1063,8 +1063,9 @@ const ITEM_SPECIAL_SCALING = {
 // stale.
 function formatItemSpecial(item) {
   if (!item.special) return '';
+  const iconize = t => (typeof iconizeStatWords === 'function') ? iconizeStatWords(t) : t;
   const lv = item.level || 1;
-  if (lv <= 1) return item.special;
+  if (lv <= 1) return iconize(item.special);
   const baseId = item.baseId || item.id;
   const scaling = ITEM_SPECIAL_SCALING[baseId];
   if (!scaling) return item.special;
@@ -1086,7 +1087,7 @@ function formatItemSpecial(item) {
     // Continue past what we just wrote so the next rule can't re-match it.
     searchFrom = absolute + scaled.length;
   }
-  return text;
+  return iconize(text);
 }
 
 // Poison ticks for its full value and then decays by 1, so N poison deals
@@ -1154,10 +1155,16 @@ function formatItemStats(stats) {
     offense: 'var(--red-bright)', defense: 'var(--blue-bright)', HP: '#cc8844',
     heal: 'var(--green-bright)', poison: '#8a4', die: 'var(--gold)',
   };
+  // Stat labels render as sigils in the browser; headless contexts (sims,
+  // tests) have no icon set and keep the words.
+  const ICON_FOR = { offense: 'sword', defense: 'shield', HP: 'heart', heal: 'heart', poison: 'skull', die: 'die' };
   const fmt = (val, label) => {
     const sign = val > 0 ? '+' : '';
     const color = val < 0 ? 'var(--red-bright)' : (colors[label] || 'var(--text-bright)');
-    return `<span style="color:${color}">${sign}${val} ${label}</span>`;
+    const tail = (typeof GICONS !== 'undefined' && GICONS[ICON_FOR[label]])
+      ? `<span class="stat-icon" title="${label}">${GICONS[ICON_FOR[label]]}</span>`
+      : ` ${label}`;
+    return `<span style="color:${color}">${sign}${val}${typeof tail === 'string' && tail.startsWith('<') ? ' ' + tail : tail}</span>`;
   };
   const parts = [];
   if (stats.damage) parts.push(fmt(stats.damage, 'offense'));

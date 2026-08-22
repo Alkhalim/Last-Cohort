@@ -343,11 +343,12 @@ const RAW_ENEMIES = {
   },
   "serpent_shade": {
     "id": "serpent_shade", "name": "Serpent Shade",
-    "maxHp": 10, "row": "front", "damage": [2, 4], "speed": 1, "xpValue": 2,
-    "description": "A spectral snake left behind by the Shaman's dance. It bites once, then dissolves.",
+    "maxHp": 10, "row": "front", "damage": [6, 6], "speed": 1, "xpValue": 2,
+    "description": "A spectral snake left behind by the Shaman's dance. It bites once — hard — then dissolves.",
     "ai": "aggressive",
+    "dissolveAfterAttack": true,
     "actions": [
-      { "name": "Phantom Bite", "damage": 3, "poisonTarget": 2, "chance": 1.0, "text": "strikes with ghostly fangs" }
+      { "name": "Phantom Bite", "damage": 6, "poisonTarget": 3, "chance": 1.0, "text": "strikes with ghostly fangs" }
     ]
   },
 

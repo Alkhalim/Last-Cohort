@@ -10,7 +10,30 @@ const GICONS = {
   leaf: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M5.5 2 H6.5 V11 H5.5 Z" fill="currentColor"/><path d="M5.8 6.8 C5.6 4.4 4.2 3 1.9 2.7 C2.1 5.1 3.6 6.6 5.8 6.8 Z" fill="currentColor"/><path d="M6.2 9.4 C6.4 7 7.8 5.6 10.1 5.3 C9.9 7.7 8.4 9.2 6.2 9.4 Z" fill="currentColor"/></svg>`,
   helm: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 10 V6 a3.4 3.4 0 0 1 6.8 0 V10 H7.2 V7.4 H4.8 V10 Z" fill="currentColor"/><path d="M3.2 3.3 C4.4 1.1 7.6 1.1 8.8 3.3 L7.9 4 C6.9 2.4 5.1 2.4 4.1 4 Z" fill="currentColor"/></svg>`,
   axe: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.2 11 L4.2 10.6 L8 5.4 L7 4.8 Z" fill="currentColor"/><path d="M6.2 1.4 C9.2 1.6 10.6 4.2 10 6.9 C8.3 6.1 6.7 4.7 6.2 1.4 Z" fill="currentColor"/></svg>`,
+  heart: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10.6 C2.6 8.2 1.1 6.1 1.1 4.4 a2.5 2.5 0 0 1 4.9 -0.7 a2.5 2.5 0 0 1 4.9 0.7 C10.9 6.1 9.4 8.2 6 10.6 Z" fill="currentColor"/></svg>`,
+  die: `<svg class="gicon" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="4.2" cy="4.2" r="0.9" fill="currentColor"/><circle cx="7.8" cy="7.8" r="0.9" fill="currentColor"/></svg>`,
 };
+
+// Replace stat-word mentions ("3 Poison", "5 Block", "4 damage") with the
+// matching sigil. Only number-adjacent or stat-span-adjacent mentions are
+// swapped, so prose ("Cleanse poison") keeps its words — and its glossary.
+// Poison/Block icons stay glossary-tappable via the kw classes.
+function iconizeStatWords(html) {
+  if (!html || typeof GICONS === 'undefined') return html;
+  const I = (name, cls, word, kw) =>
+    `<span class="stat-icon ${cls}${kw ? ' kw' : ''}"${kw ? ` data-kw="${kw}"` : ''} title="${word}">${GICONS[name]}</span>`;
+  const MAP = {
+    poison: I('skull', 'icon-poison', 'Poison', 'poison'),
+    block: I('shield', 'icon-block', 'Block', 'block'),
+    damage: I('sword', 'icon-damage', 'damage'),
+    hp: I('heart', 'icon-heal', 'HP'),
+    morale: I('banner', 'icon-morale', 'Morale'),
+  };
+  const swap = (m, pre, w) => pre + ' ' + MAP[w.toLowerCase()];
+  return html
+    .replace(/(<\/span>) (Poison|poison|Block|block|damage|HP|Morale|morale)\b/g, swap)
+    .replace(/(\d) (Poison|poison|Block|block|damage|HP|Morale|morale)\b/g, swap);
+}
 
 // Which sigil marks each role's roundel on the party cards
 const ROLE_ICON = { melee: 'sword', ranged: 'arrow', command: 'banner', support: 'leaf', elite: 'helm', germanic: 'axe', roman: 'shield' };
@@ -945,7 +968,7 @@ class GameUI {
       }
       const isNext = !nextMarked && nextName !== null && a.name === nextName;
       if (isNext) nextMarked = true;
-      return `<div class="enemy-tooltip-action${isNext ? ' next-action' : ''}">${this.annotateKeywords(desc)}` +
+      return `<div class="enemy-tooltip-action${isNext ? ' next-action' : ''}">${this.annotateKeywords(iconizeStatWords(desc))}` +
         `${isNext ? `<div class="enemy-tooltip-next-target">NEXT ${nextSuffix}</div>` : ''}</div>`;
     }).join('');
 
@@ -981,6 +1004,7 @@ class GameUI {
         if (enemy.healBoss) passives.push(`Passive: heals boss for ${enemy.healBoss} HP each turn.`);
         if (enemy.id === 'healing_totem') passives.push('Passive: roots one of your dice each turn.');
         if (enemy.canSpawn) passives.push('Passive: can summon more of its kind.');
+        if (enemy.dissolveAfterAttack) passives.push('Passive: bites once, then dissolves.');
         if (enemy.id === 'arminius_champion') passives.push('Passive: Iron Discipline — all enemies gain 7 Block every 3 turns.');
         if (enemy.id === 'thusnelda') passives.push('Passive: gains Block per living ally each turn.');
         if (enemy.id === 'serpent_shaman') passives.push('Passive: dances each turn — swaps position with a snake and heals 3 HP.');
@@ -2103,7 +2127,7 @@ class GameUI {
       const dicePips = this.getDicePips(skill.cost);
       el.innerHTML = `
         <div class="skill-name">${skill.name} <span class="skill-cost">[${skill.cost.label}]</span>${dicePips}${this.getRangeBadge(skill)} ${cdText}</div>
-        <div class="skill-desc">${this.annotateKeywords(desc.replace(/(\d+)-\1\b/g, '$1'))}</div>
+        <div class="skill-desc">${this.annotateKeywords(iconizeStatWords(desc.replace(/(\d+)-\1\b/g, '$1')))}</div>
         ${cooldownOverlay}
       `;
 
@@ -5197,7 +5221,7 @@ class GameUI {
     const slotItems = slots.map((id, si) => {
       const eq = id ? getItemData(id) : null;
       const selected = !hasEmpty && this._replaceSlotIdx === si;
-      if (!eq) return `<div class="loot-slot-item empty">— empty —</div>`;
+      if (!eq) return `<div class="loot-slot-item empty equip-here" data-empty-slot="${si}">— empty — <span class="loot-empty-hint">tap to equip</span></div>`;
       // Stat diff if this slot is selected for replacement
       let diffHtml = '';
       if (selected) {
@@ -5311,6 +5335,13 @@ class GameUI {
       el.addEventListener('click', () => {
         this._replaceSlotIdx = parseInt(el.dataset.slotIdx, 10);
         this.renderLootScreen();
+      });
+    });
+
+    // Tapping an empty slot equips straight into it — no trip to the button
+    unitDisplay.querySelectorAll('.loot-slot-item.equip-here').forEach(el => {
+      el.addEventListener('click', () => {
+        this._claimLoot(() => this._equipCurrentLoot(unit.index));
       });
     });
 
@@ -5533,7 +5564,7 @@ class GameUI {
     desc = desc.replace(/(?<!">)(\d+) damage/g, '<span class="stat-dmg">$1</span> damage');
     desc = desc.replace(/(\d+) Morale/g, '<span class="stat-morale-text">$1</span> Morale');
 
-    return desc;
+    return iconizeStatWords(desc);
   }
 
   _getSkipRenown(rarity) {

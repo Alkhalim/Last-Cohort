@@ -1297,15 +1297,24 @@ class CombatEngine {
 
     return unit.skills.map(skill => {
       const canUse = this.canUseSkill(unitIndex, skill, available);
-      return { ...skill, canUse };
+      // Expose the effective cost so the card shows what will actually be
+      // charged (e.g. Bandage Roll turning "2d 8+" into "4+")
+      return { ...skill, cost: this.effectiveCost(unit, skill), canUse };
     });
   }
 
-  // Bandage Roll of the X Legion: revive skills need 1 less on the die
+  // Bandage Roll of the X Legion: revive skills need one die fewer.
+  // All revive skills are "2 dice totaling N+", so they become a single die
+  // at a proportionally scaled threshold (2d 8+ -> 4+).
   effectiveCost(unit, skill) {
     if (skill.effects && skill.effects.revive && unit && this.unitHasItem(unit, 'legion_bandage_roll')) {
-      const c = { ...skill.cost };
-      if (typeof c.min === 'number' && c.min > 1) { c.min = c.min - 1; return c; }
+      const c = skill.cost;
+      if (c.type === 'combined' && c.dice >= 2) {
+        const newDice = c.dice - 1;
+        const newMin = Math.max(1, Math.ceil((c.min || 2) * newDice / c.dice));
+        if (newDice === 1) return { type: 'threshold', min: newMin, dice: 1, label: `${newMin}+` };
+        return { ...c, dice: newDice, min: newMin, label: `${newDice}d ${newMin}+` };
+      }
     }
     return skill.cost;
   }
@@ -5136,6 +5145,17 @@ class CombatEngine {
         enemy.row = 'front';
         this.addLog(`${enemy.name} charges from the treeline!`);
       }
+    }
+
+    // One-bite summons (Serpent Shade): after acting, dissolve without
+    // granting a kill — no counters, no drops, no morale surge.
+    if (enemy.dissolveAfterAttack && !enemy.dead) {
+      enemy.dead = true;
+      enemy.hp = 0;
+      enemy._intent = null;
+      this.addLog(`${enemy.name} dissolves into mist.`);
+      if (this.onVisual) this.onVisual('statusText', { enemyIndex: enemy.index, text: 'Dissolves!', color: 'var(--text-dim)' });
+      if (this.enemies.every(e => e.dead)) this.triggerVictory();
     }
   }
 

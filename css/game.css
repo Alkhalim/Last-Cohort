@@ -7026,3 +7026,20 @@ html, body {
   color: var(--text-dim);
   line-height: 1.5;
 }
+
+
+/* ============================================================
+   Stat sigils: poison/block/damage/HP/morale words become icons
+   ============================================================ */
+.stat-icon {
+  display: inline-flex;
+  vertical-align: -1px;
+}
+.stat-icon .gicon { width: 11px; height: 11px; }
+.stat-icon.icon-poison { color: #8a4; }
+.stat-icon.icon-block { color: var(--blue-bright); }
+.stat-icon.icon-damage { color: var(--red-bright); }
+.stat-icon.icon-heal { color: var(--green-bright); }
+.stat-icon.icon-morale { color: var(--gold); }
+/* Glossary-tappable icons keep the underline cue */
+.stat-icon.kw { border-bottom: 1px dotted rgba(216, 190, 140, 0.5); }
