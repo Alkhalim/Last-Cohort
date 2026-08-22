@@ -170,19 +170,44 @@ class GameUI {
     }
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const count = 6;
+    // Shockwave ring at the point of impact
+    const ring = document.createElement('div');
+    ring.className = `impact-ring ${kind === 'blood' ? 'blood' : ''}`;
+    ring.style.left = cx + 'px';
+    ring.style.top = cy + 'px';
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 420);
+    const count = 12;
     for (let i = 0; i < count; i++) {
       const spark = document.createElement('div');
       spark.className = `hit-spark ${kind === 'blood' ? 'blood' : ''}`;
-      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.8;
-      const dist = 26 + Math.random() * 30;
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.7;
+      const dist = 42 + Math.random() * 55;
+      const size = 4 + Math.random() * 4;
+      spark.style.width = size + 'px';
+      spark.style.height = size + 'px';
       spark.style.left = cx + 'px';
       spark.style.top = cy + 'px';
       spark.style.setProperty('--sx', Math.cos(angle) * dist + 'px');
-      spark.style.setProperty('--sy', Math.sin(angle) * dist - 12 + 'px');
+      spark.style.setProperty('--sy', Math.sin(angle) * dist - 16 + 'px');
       document.body.appendChild(spark);
-      setTimeout(() => spark.remove(), 520);
+      setTimeout(() => spark.remove(), 560);
     }
+  }
+
+  // A frame of white — the classic full-screen impact flash
+  impactFlash(color) {
+    if (window.game && window.game.settings && window.game.settings.reducedMotion) return;
+    let flash = document.getElementById('impact-flash');
+    if (!flash) {
+      flash = document.createElement('div');
+      flash.id = 'impact-flash';
+      document.getElementById('game').appendChild(flash);
+    }
+    flash.className = color === 'red' ? 'red' : '';
+    flash.classList.remove('go');
+    void flash.offsetWidth;
+    flash.classList.add('go');
   }
 
   // A bolt flies from the attacker to the target (ranged skills)
@@ -266,7 +291,8 @@ class GameUI {
         this.showDamagePopup(`unit-${data.unitIndex}`, data.damage, 'damage');
         if (data.damage > 0) this.spawnImpact(`unit-${data.unitIndex}`, 'blood');
         this.screenShake(data.damage);
-        if (data.damage >= 8) this.triggerHitstop(60);
+        if (data.damage >= 6) this.impactFlash('red');
+        if (data.damage >= 8) this.triggerHitstop(100);
         break;
       case 'blockClang': {
         const icon = document.querySelector(`#unit-${data.unitIndex} .block-icon`);
@@ -320,7 +346,8 @@ class GameUI {
         this.flashElement(`enemy-${data.enemyIndex}`, 'hit', 400);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.damage, 'damage');
         if (data.damage > 0) this.spawnImpact(`enemy-${data.enemyIndex}`, 'slash');
-        if (data.damage >= 10) this.triggerHitstop(55);
+        if (data.damage >= 12) this.impactFlash();
+        if (data.damage >= 7) this.triggerHitstop(data.damage >= 12 ? 110 : 75);
         break;
       case 'unitPoison':
         this.showDamagePopup(`unit-${data.unitIndex}`, data.amount, 'poison');
@@ -362,12 +389,12 @@ class GameUI {
     void screen.offsetWidth;
 
     let shakeClass, duration;
-    if (damage >= 8) {
+    if (damage >= 7) {
       shakeClass = 'shake-heavy';
-      duration = 500;
-    } else if (damage >= 4) {
+      duration = 550;
+    } else if (damage >= 3) {
       shakeClass = 'shake-medium';
-      duration = 400;
+      duration = 420;
     } else {
       shakeClass = 'shake-small';
       duration = 300;
@@ -2378,7 +2405,7 @@ class GameUI {
     if (!target) return;
 
     const popup = document.createElement('div');
-    popup.className = `damage-popup${type === 'heal' ? ' heal' : ''}${type === 'morale' ? ' morale' : ''}${type === 'block' ? ' block' : ''}${type === 'poison' ? ' poison' : ''}`;
+    popup.className = `damage-popup${type === 'heal' ? ' heal' : ''}${type === 'morale' ? ' morale' : ''}${type === 'block' ? ' block' : ''}${type === 'poison' ? ' poison' : ''}${type === 'damage' && amount >= 10 ? ' big-hit' : ''}`;
     if (type === 'damage') {
       popup.textContent = `-${amount}`;
     } else if (type === 'heal') {
