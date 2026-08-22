@@ -96,21 +96,21 @@ const CURSE_DEFS = [
 ];
 
 const BOON_DEFS = [
-  { id: 'serpent_blessing', name: "Serpent's Blessing", achievement: 'boss_serpent_shaman_x3', description: "Start each combat with 2 Poison on all enemies.", renown: -10 },
+  { id: 'serpent_blessing', name: "Serpent's Blessing", achievement: 'boss_serpent_shaman_x3', description: "All enemies start combat with Poison equal to 1 + the march.", renown: -10 },
   { id: 'fog_sight', name: "Fog Sight", achievement: 'boss_fog_weaver_x3', description: "Enemy intents always show exact damage numbers.", renown: -10 },
-  { id: 'stag_vigor', name: "Stag's Vigor", achievement: 'boss_blood_stag_x3', description: "Heal 2 HP per unit at the start of each combat.", renown: -15 },
+  { id: 'stag_vigor', name: "Stag's Vigor", achievement: 'boss_blood_stag_x3', description: "Heal 2 + march HP per soldier at the start of each combat.", renown: -15 },
   { id: 'spirits_peace', name: "Spirit's Peace", achievement: 'boss_spirits_defeated', description: "Start each march at 60 morale instead of 50.", renown: -15 },
   { id: 'varus_lesson', name: "Varus's Lesson", achievement: 'boss_corpse_varus', description: "+1 bonus die on the first turn of each combat.", renown: -10 },
   { id: 'arminius_defiance', name: "Arminius's Defiance", achievement: 'boss_corpse_arminius', description: "Downed units revive with 20% more HP after fights.", renown: -20 },
-  { id: 'fresh_recruits', name: "Fresh Recruits", achievement: 'first_boss_kill', description: "+5 max HP to all units at the start of each run.", renown: -10 },
-  { id: 'scouts_blessing', name: "Scout's Blessing", achievement: 'first_elite_kill', description: "Heal 2 HP per unit at the start of each combat.", renown: -10 },
-  { id: 'standard_march', name: "Standard Bearer's March", achievement: 'class_signifer', description: "Start each combat with +3 morale.", renown: -10 },
-  { id: 'cavalry_speed', name: "Cavalry Speed", achievement: 'class_equites', description: "+1 bonus die on the first turn of each combat.", renown: -10 },
-  { id: 'fog_piercer', name: "Fog Piercer", achievement: 'class_arcania', description: "All units start combat with 3 Block.", renown: -10 },
-  { id: 'kings_hoard', name: "King's Hoard", achievement: 'boss_ariovistus', description: "Start each run with a random uncommon item.", renown: -10 },
-  { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+2 damage to all units for the first 2 turns of combat.", renown: -10 },
+  { id: 'fresh_recruits', name: "Fresh Recruits", achievement: 'first_boss_kill', description: "+4 max HP at the start, and +2 more after every march.", renown: -10 },
+  { id: 'scouts_blessing', name: "Scout's Blessing", achievement: 'first_elite_kill', description: "Heal 2 + half the march HP per soldier at the start of each combat.", renown: -10 },
+  { id: 'standard_march', name: "Standard Bearer's March", achievement: 'class_signifer', description: "Start each combat with +2 + march Morale.", renown: -10 },
+  { id: 'cavalry_speed', name: "Cavalry Speed", achievement: 'class_equites', description: "+1 die on the first turn; from march 4, on the second turn too.", renown: -10 },
+  { id: 'fog_piercer', name: "Fog Piercer", achievement: 'class_arcania', description: "All soldiers start combat with 2 + march Block.", renown: -10 },
+  { id: 'kings_hoard', name: "King's Hoard", achievement: 'boss_ariovistus', description: "Start each run with a random rare item.", renown: -10 },
+  { id: 'first_blood', name: "First Blood", achievement: 'hero_first_epic', description: "+1 + half the march damage for the first 2 turns of combat.", renown: -10 },
   { id: 'epic_fortune', name: "Epic Fortune", achievement: 'hero_three_epics', description: "Item drops have +10% chance to upgrade rarity.", renown: -15 },
-  { id: 'demigods_shield', name: "Demigod's Shield", achievement: 'hero_only_epics', description: "All units start combat with 3 Block.", renown: -15 },
+  { id: 'demigods_shield', name: "Demigod's Shield", achievement: 'hero_only_epics', description: "All soldiers start combat with Block equal to twice the march.", renown: -15 },
 ];
 
 class Game {
@@ -2637,14 +2637,14 @@ class Game {
       : ['legionary', 'centurion', 'medicus'];
     this.engine.initParty(partyClasses);
 
-    // Boon: Fresh Recruits — +5 max HP to all
+    // Boon: Fresh Recruits — +4 max HP at the start, +2 more every march
     if (this.activeBoons.includes('fresh_recruits')) {
-      this.engine.party.forEach(u => { u.maxHp += 5; u.baseMaxHp += 5; u.hp += 5; });
+      this.engine.party.forEach(u => { u.maxHp += 4; u.baseMaxHp += 4; u.hp += 4; });
     }
 
-    // Boon: King's Hoard — start with a random uncommon item
+    // Boon: King's Hoard — start with a random rare item
     if (this.activeBoons.includes('kings_hoard')) {
-      const uncommons = Object.values(ITEM_DATA).filter(i => i.rarity === 'uncommon' && this.engine.party.some(u => canEquipItem(u, i)));
+      const uncommons = Object.values(ITEM_DATA).filter(i => i.rarity === 'rare' && !i.unlockKey && !i.unlockKill && this.engine.party.some(u => canEquipItem(u, i)));
       if (uncommons.length > 0) {
         const item = uncommons[Math.floor(Math.random() * uncommons.length)];
         const eligible = this.engine.party.filter(u => canEquipItem(u, item));
@@ -2667,6 +2667,10 @@ class Game {
     this.difficulty++;
     this.marchCount++;
     this.engine.difficulty = this.difficulty;
+    // Boon: Fresh Recruits — the recruits toughen with every march
+    if (this.activeBoons && this.activeBoons.includes('fresh_recruits')) {
+      this.engine.party.forEach(u => { u.maxHp += 2; u.baseMaxHp += 2; u.hp = Math.min(u.maxHp, u.hp + 2); });
+    }
     // Cumulative pacing stats: every completed march counts, and reaching
     // the Threshold registers once per run (difficulty hits 6 only once)
     this.stats.totalMarchesCompleted = (this.stats.totalMarchesCompleted || 0) + 1;

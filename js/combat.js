@@ -283,38 +283,52 @@ class CombatEngine {
         }
       }
 
-      // Apply boon effects at combat start
+      // Apply boon effects at combat start — all scale with the march, so
+      // boons stay relevant against the lategame they were bought for
       const boons = this.getActiveBoons();
+      const boonMarch = this.difficulty || 1;
       if (boons.includes('serpent_blessing')) {
-        this.enemies.forEach(e => { if (!e.dead) e.poison = (e.poison || 0) + 2; });
-        this.addLog("Serpent's Blessing — all enemies start poisoned!");
+        const sbPoison = 1 + boonMarch;
+        this.enemies.forEach(e => { if (!e.dead) e.poison = (e.poison || 0) + sbPoison; });
+        this.addLog(`Serpent's Blessing — all enemies start with ${sbPoison} Poison!`);
       }
       if (boons.includes('stag_vigor')) {
-        this.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + 2); });
-        this.addLog("Stag's Vigor — all soldiers heal 2 HP!");
+        const svHeal = 2 + boonMarch;
+        this.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + svHeal); });
+        this.addLog(`Stag's Vigor — all soldiers heal ${svHeal} HP!`);
       }
       if (boons.includes('demigods_shield')) {
-        this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + 3; });
-        this.addLog("Demigod's Shield — all soldiers gain 3 Block!");
+        const dsBlock = 2 * boonMarch;
+        this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + dsBlock; });
+        this.addLog(`Demigod's Shield — all soldiers gain ${dsBlock} Block!`);
       }
       if (boons.includes('first_blood')) {
-        this.party.forEach(u => { if (!u.downed) u.buffs.push({ damage: 2, attacksLeft: 99 }); });
+        const fbDmg = 1 + Math.ceil(boonMarch / 2);
+        this.party.forEach(u => { if (!u.downed) u.buffs.push({ damage: fbDmg, attacksLeft: 99 }); });
         this._firstBloodTurn = 2; // remove after 2 turns
       }
-      if (boons.includes('varus_lesson') || boons.includes('cavalry_speed')) {
+      if (boons.includes('varus_lesson')) {
         this._boonBonusDice = (this._boonBonusDice || 0) + 1;
       }
+      if (boons.includes('cavalry_speed')) {
+        this._boonBonusDice = (this._boonBonusDice || 0) + 1;
+        // From march 4 the cavalry keeps its head start one turn longer
+        if (boonMarch >= 4) this._cavalrySecondWind = true;
+      }
       if (boons.includes('scouts_blessing')) {
-        this.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + 2); });
-        this.addLog("Scout's Blessing — all soldiers heal 2 HP!");
+        const scHeal = 2 + Math.floor(boonMarch / 2);
+        this.party.forEach(u => { if (!u.downed) u.hp = Math.min(u.maxHp, u.hp + scHeal); });
+        this.addLog(`Scout's Blessing — all soldiers heal ${scHeal} HP!`);
       }
       if (boons.includes('standard_march')) {
-        this.morale = Math.min(100, this.morale + 3);
-        this.addLog("Standard Bearer's March — +3 Morale!");
+        const smMorale = 2 + boonMarch;
+        this.morale = Math.min(100, this.morale + smMorale);
+        this.addLog(`Standard Bearer's March — +${smMorale} Morale!`);
       }
       if (boons.includes('fog_piercer')) {
-        this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + 3; });
-        this.addLog("Fog Piercer — all soldiers gain 3 Block!");
+        const fpBlock = 2 + boonMarch;
+        this.party.forEach(u => { if (!u.downed) u.block = (u.block || 0) + fpBlock; });
+        this.addLog(`Fog Piercer — all soldiers gain ${fpBlock} Block!`);
       }
       this.addLog('Prepare yourselves!');
       this.startRollPhase();
@@ -844,6 +858,12 @@ class CombatEngine {
     if (this.turn === 1 && this._ambushCombat && this.partyHasItem('ambushers_leathers')) {
       // extraDice is accumulated below alongside the other dice bonuses
       this._eventBonusDiceAmbush = 2;
+    }
+    // Cavalry Speed: from march 4, the head start lasts into turn 2
+    if (this.turn === 2 && this._cavalrySecondWind) {
+      this._cavalrySecondWind = false;
+      extraDice += 1;
+      this.addLog('Cavalry Speed — the charge carries into the second turn! (+1 die)');
     }
     // Bonus dice from abilities (Tactical Preparation, etc.)
     if (this._bonusDiceNext) {
