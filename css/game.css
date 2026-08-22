@@ -249,6 +249,10 @@ html, body {
   padding: 2rem 1.2rem;
   max-width: 420px;
   width: 100%;
+  /* Long submenus (How to Play, Codex, ...) must scroll — the parent
+     .screen is a fixed-height frame that clips overflow. */
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .submenu-title {
