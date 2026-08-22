@@ -1562,6 +1562,21 @@ section('2.12d — class unlock natural pacing');
 }
 
 // ============================================================
+section('2.12e — item wave caps');
+// ============================================================
+{
+  const items = fs.readFileSync(path.join(ROOT, 'data/items.js'), 'utf8');
+  check('no achievement gates more than 3 items', () => {
+    const waves = {};
+    for (const m of items.matchAll(/"unlockKey": "(\w+)"/g)) {
+      waves[m[1]] = (waves[m[1]] || 0) + 1;
+    }
+    const over = Object.entries(waves).filter(([, n]) => n > 3);
+    assert(over.length === 0, 'over-cap waves: ' + over.map(([k, n]) => `${k}=${n}`).join(', '));
+  });
+}
+
+// ============================================================
 section('2.13 — skill description rewrites match actual descriptions');
 // ============================================================
 {
