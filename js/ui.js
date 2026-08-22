@@ -338,6 +338,19 @@ class GameUI {
           this.showStatusPopup(`enemy-${data.enemyIndex}`, data.text, data.color || 'var(--gold)');
         }
         break;
+      case 'passiveProc': {
+        // A class passive fired — name it and glow the card
+        const procId = data.unitIndex !== undefined ? `unit-${data.unitIndex}` : `enemy-${data.enemyIndex}`;
+        this.showStatusPopup(procId, `✦ ${data.name}`, 'var(--gold)');
+        const procEl = document.getElementById(procId);
+        if (procEl) {
+          procEl.classList.remove('passive-proc');
+          void procEl.offsetWidth;
+          procEl.classList.add('passive-proc');
+          setTimeout(() => procEl.classList.remove('passive-proc'), 950);
+        }
+        break;
+      }
       case 'enemyBlock':
         this.flashElement(`enemy-${data.enemyIndex}`, 'blocked', 500);
         this.showDamagePopup(`enemy-${data.enemyIndex}`, data.amount, 'block');
@@ -1017,6 +1030,11 @@ class GameUI {
     });
 
     document.getElementById('combat-screen').appendChild(tooltip);
+    // Clamp within the screen: right-side enemies squeezed the tooltip
+    // against the edge into a narrow column.
+    const tipWidth = tooltip.offsetWidth;
+    const desiredLeft = rect.left - gameRect.left;
+    tooltip.style.left = Math.max(4, Math.min(desiredLeft, gameRect.width - tipWidth - 4)) + 'px';
   }
 
   hideEnemyTooltip() {
@@ -4232,6 +4250,11 @@ class GameUI {
       if (effects.damageAll) candidates.push({ key: 'damageAll', text: `+${amt} damage to all (${effects.damageAll} → ${effects.damageAll + amt})`, apply: () => baseDef.effects.damageAll += amt });
       if (effects.selfDamage) candidates.push({ key: 'selfDamage', text: `-${amt} self damage (${effects.selfDamage} → ${effects.selfDamage - amt})`, apply: () => baseDef.effects.selfDamage -= amt });
       if (effects.buffAllies) candidates.push({ key: 'buffAllies', text: `+${amt} buff damage (${effects.buffAllies.bonusDamage} → ${effects.buffAllies.bonusDamage + amt})`, apply: () => baseDef.effects.buffAllies.bonusDamage += amt });
+      // Zero-base die-scaled stats: the die IS the number, so advertise the
+      // resulting range, not the internal base ("+1 heal (0 → 1)").
+      if (effects.damage === 0 && effects.dieScaleDamage) candidates.push({ key: 'damage', dieUnit: 'damage', text: this._dieUpgradeText(skill, 'damage', 0, amt), apply: () => baseDef.effects.damage += amt });
+      if (effects.heal === 0 && effects.dieScaleHeal) candidates.push({ key: 'heal', dieUnit: 'HP', text: this._dieUpgradeText(skill, 'healing', 0, amt), apply: () => baseDef.effects.heal += amt });
+      if (effects.block === 0 && effects.dieScaleBlock) candidates.push({ key: 'block', dieUnit: 'Block', text: this._dieUpgradeText(skill, 'block', 0, amt), apply: () => baseDef.effects.block += amt });
       // Fallback numeric effects — exclude non-upgradeable mechanics
       const excludeFromUpgrade = new Set([
         'pierceBlock', 'moraleCost', 'bonusDmgScale', 'caltrops', 'splashAdjacentPct', 'momentumStrike', 'breakneckCharge', 'allInCharge', 'gladiusThrust', 'aimedShot',
@@ -4281,6 +4304,8 @@ class GameUI {
         chosen.apply();
         this.spawnForgeSparks(btn);
         if (typeof this.haptic === 'function') this.haptic(18);
+        btn.classList.add('upgrade-chosen');
+        choicesEl.style.pointerEvents = 'none';
 
         // Sync the runtime skill copy with updated baseDef
         const runtimeSkill = unit.skills.find(s => s.id === skill.id);
@@ -4306,7 +4331,9 @@ class GameUI {
           buffAllies: /\+(\d+)(\s+damage)/,
         };
         const pattern = descPatterns[chosen.key];
-        if (pattern) {
+        if (chosen.dieUnit) {
+          baseDef.description = this._bumpDescNumber(baseDef.description, chosen.dieUnit, amt);
+        } else if (pattern) {
           const oldDesc = baseDef.description;
           baseDef.description = oldDesc.replace(pattern, (match, ...groups) => {
             // Find which group is the number and increment/decrement it
@@ -4321,10 +4348,14 @@ class GameUI {
           });
         }
 
-        choicesEl.innerHTML = '';
-        document.getElementById('event-outcome').classList.remove('hidden');
-        document.getElementById('event-outcome-text').textContent = `${unit.name}'s ${skill.name} has been improved! ${upgradeText}`;
-        document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+        // Let the sparks and the golden flash land before swapping screens
+        setTimeout(() => {
+          choicesEl.style.pointerEvents = '';
+          choicesEl.innerHTML = '';
+          document.getElementById('event-outcome').classList.remove('hidden');
+          document.getElementById('event-outcome-text').textContent = `${unit.name}'s ${skill.name} has been improved! ${upgradeText}`;
+          document.getElementById('btn-event-continue').onclick = () => this.showMapScreen();
+        }, 550);
       });
 
       choicesEl.appendChild(btn);
@@ -5310,6 +5341,33 @@ class GameUI {
     actionsEl.appendChild(skipBtn);
   }
 
+  // Die range for a skill's cost — used to show die-scaled upgrades in
+  // player-facing numbers instead of the internal base ("+1 heal (0 -> 1)").
+  _skillDieRange(skill) {
+    const c = skill.cost || {};
+    if (c.type === 'range') return [c.min, c.max];
+    if (c.type === 'odd') return [1, 5];
+    if (c.type === 'even') return [2, 6];
+    if (c.type === 'exact') return [c.val, c.val];
+    if (c.type === 'threshold') return [c.min, 6];
+    return [1, 6];
+  }
+
+  _dieUpgradeText(skill, label, base, amt) {
+    const [dl, dh] = this._skillDieRange(skill);
+    const lo = dl + base, hi = dh + base;
+    return lo === hi
+      ? `+${amt} ${label} (${lo} → ${lo + amt})`
+      : `+${amt} ${label} (${lo}-${hi} → ${lo + amt}-${hi + amt})`;
+  }
+
+  // Bump the number (or lo-hi range) in front of a unit word in a description
+  _bumpDescNumber(desc, unit, amt) {
+    const re = new RegExp('(\\d+)(?:-(\\d+))?( ' + unit + ')');
+    return desc.replace(re, (m, lo, hi, u) =>
+      hi !== undefined ? `${+lo + amt}-${+hi + amt}${u}` : `${+lo + amt}${u}`);
+  }
+
   // Apply equipment-aware stat replacements to a skill description
   _enhanceSkillDesc(skill, unit) {
     let desc = skill.description || '';
@@ -6253,6 +6311,9 @@ class GameUI {
       else if (eff.morale) upgradeText = `+${moraleAmt} morale (${eff.morale} → ${eff.morale + moraleAmt})`;
       else if (eff.damageAll) upgradeText = `+${amt} damage to all (${eff.damageAll} → ${eff.damageAll + amt})`;
       else if (eff.buffAllies) upgradeText = `+${amt} buff damage (${eff.buffAllies.bonusDamage} → ${eff.buffAllies.bonusDamage + amt})`;
+      else if (eff.damage === 0 && eff.dieScaleDamage) { upgradeText = this._dieUpgradeText(skill, 'damage', 0, amt); }
+      else if (eff.heal === 0 && eff.dieScaleHeal) { upgradeText = this._dieUpgradeText(skill, 'healing', 0, amt); }
+      else if (eff.block === 0 && eff.dieScaleBlock) { upgradeText = this._dieUpgradeText(skill, 'block', 0, amt); }
       else { const key = Object.keys(eff).find(k => typeof eff[k] === 'number'); if (key) upgradeText = `+${amt} ${key} (${eff[key]} → ${eff[key] + amt})`; }
 
       const tag = getPrimaryTag(unit.classId);
@@ -6276,6 +6337,13 @@ class GameUI {
         else if (eff.morale) baseDef.effects.morale += moraleAmt;
         else if (eff.damageAll) baseDef.effects.damageAll += amt;
         else if (eff.buffAllies) baseDef.effects.buffAllies.bonusDamage += amt;
+        else if (eff.damage === 0 && eff.dieScaleDamage) { baseDef.effects.damage += amt; baseDef.description = this._bumpDescNumber(baseDef.description, 'damage', amt); }
+        else if (eff.heal === 0 && eff.dieScaleHeal) {
+          baseDef.effects.heal += amt;
+          baseDef.description = this._bumpDescNumber(baseDef.description, 'HP', amt);
+          if (eff.block === 0 && eff.dieScaleBlock) { baseDef.effects.block += amt; baseDef.description = this._bumpDescNumber(baseDef.description, 'Block', amt); }
+        }
+        else if (eff.block === 0 && eff.dieScaleBlock) { baseDef.effects.block += amt; baseDef.description = this._bumpDescNumber(baseDef.description, 'Block', amt); }
 
         // Update description numbers to match new effects
         const descKey = Object.keys(eff).find(k => typeof eff[k] === 'number');
@@ -6290,8 +6358,9 @@ class GameUI {
           poisonAll: /(\s)(\d+)(\s+[Pp]oison)/,
           morale: /([+-]?)(\d+)(\s+[Mm]orale)/,
         };
+        const dieScaledZero = (eff.damage === 0 && eff.dieScaleDamage) || (eff.heal === 0 && eff.dieScaleHeal) || (eff.block === 0 && eff.dieScaleBlock);
         const dp = descPatterns2[descKey];
-        if (dp && baseDef.description) {
+        if (!dieScaledZero && dp && baseDef.description) {
           baseDef.description = baseDef.description.replace(dp, (m, ...g) => {
             const ni = g.findIndex(x => typeof x === 'string' && /^\d+$/.test(x));
             if (ni >= 0) {

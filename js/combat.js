@@ -612,6 +612,7 @@ class CombatEngine {
         if (heal > 0) {
           this.addLog(`Sacred Flame heals ${lowestHp.name} for ${heal} HP.`);
           if (this.onVisual) this.onVisual('unitHeal', { unitIndex: lowestHp.index, amount: heal });
+          if (this.onVisual) this.onVisual('passiveProc', { unitIndex: vestalis.index, name: 'Sacred Flame' });
         }
       }
     }
@@ -1188,8 +1189,10 @@ class CombatEngine {
   }
 
   processDicePassives() {
-    const hasMedicus = this.party.some(u => u.classId === 'medicus' && !u.downed);
-    const hasSagittarius = this.party.some(u => u.classId === 'sagittarius' && !u.downed);
+    const medicus = this.party.find(u => u.classId === 'medicus' && !u.downed);
+    const hasMedicus = !!medicus;
+    const sagittarius = this.party.find(u => u.classId === 'sagittarius' && !u.downed);
+    const hasSagittarius = !!sagittarius;
     const legionary = this.party.find(u => u.classId === 'legionary' && !u.downed);
 
     const triggeredDice = []; // { dieId, type } for UI flash
@@ -1204,6 +1207,7 @@ class CombatEngine {
           target.hp = Math.min(target.maxHp, target.hp + passiveHeal);
           this.addLog(`Healer's Instinct: ${target.name} healed ${passiveHeal} HP.`);
           if (this.onVisual) this.onVisual('unitHeal', { unitIndex: target.index, amount: passiveHeal });
+          if (this.onVisual) this.onVisual('passiveProc', { unitIndex: medicus.index, name: "Healer's Instinct" });
           triggeredDice.push({ dieId: die.id, type: 'heal' });
         }
       }
@@ -1216,6 +1220,7 @@ class CombatEngine {
           const target = alive[Math.floor(Math.random() * alive.length)];
           target.hp = Math.max(0, target.hp - passiveDmg);
           this.addLog(`Eagle Eye: ${target.name} takes ${passiveDmg} damage.`);
+          if (this.onVisual) this.onVisual('passiveProc', { unitIndex: sagittarius.index, name: 'Eagle Eye' });
           triggeredDice.push({ dieId: die.id, type: 'damage' });
         }
       }
@@ -1239,6 +1244,7 @@ class CombatEngine {
         legionary.block = (legionary.block || 0) + blockGain;
         this.addLog(`Disciplined Formation: ${legionary.name} gains ${blockGain} Block (${pairValues.length} pair${pairValues.length > 1 ? 's' : ''}).`);
         if (this.onVisual) this.onVisual('unitBlock', { unitIndex: legionary.index, amount: blockGain });
+        if (this.onVisual) this.onVisual('passiveProc', { unitIndex: legionary.index, name: 'Disciplined Formation' });
       }
     }
 
@@ -1634,6 +1640,7 @@ class CombatEngine {
         }
       });
       this.addLog('Iron Vanguard! All allies gain 3 Block.');
+      if (this.onVisual) this.onVisual('passiveProc', { unitIndex: unit.index, name: 'Iron Vanguard' });
     }
 
     // Destrier's Barding: first action each combat grants all allies +2 Block

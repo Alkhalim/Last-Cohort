@@ -219,6 +219,12 @@ class Game {
     try {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+      // Bass shelf: the source mixes run bass-light, so warm up the low end
+      this.bassShelf = this.audioCtx.createBiquadFilter();
+      this.bassShelf.type = 'lowshelf';
+      this.bassShelf.frequency.value = 180;
+      this.bassShelf.gain.value = 4.5;
+
       // Lowpass filter
       this.lowpassFilter = this.audioCtx.createBiquadFilter();
       this.lowpassFilter.type = 'lowpass';
@@ -312,7 +318,9 @@ class Game {
     if (!this.audioCtx) return;
     try {
       const source = this.audioCtx.createMediaElementSource(audio);
-      source.connect(this.lowpassFilter);
+      // source → bass shelf → lowpass → (dry + reverb)
+      source.connect(this.bassShelf);
+      this.bassShelf.connect(this.lowpassFilter);
       this.currentSource = source;
       this.audioFilterActive = true;
     } catch (e) {

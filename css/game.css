@@ -6919,3 +6919,87 @@ html, body {
   letter-spacing: 0.08em;
   margin-top: 3px;
 }
+
+
+/* ============================================================
+   Upgrade click FX, event hover glow, passive proc highlight
+   ============================================================ */
+/* Event options glow while hovered so the focused choice is unmistakable */
+.btn-event-choice:hover:not(.event-choice-locked) {
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(201, 162, 39, 0.35), inset 0 0 10px rgba(201, 162, 39, 0.08);
+  transform: translateY(-1px);
+}
+/* The chosen upgrade card flashes gold under the sparks */
+.btn-event-choice.upgrade-chosen {
+  animation: upgrade-chosen-flash 0.55s ease-out;
+  border-color: var(--gold);
+}
+@keyframes upgrade-chosen-flash {
+  0% { background: rgba(201, 162, 39, 0.45); box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); filter: brightness(1.6); }
+  100% { background: var(--bg-card); box-shadow: none; filter: brightness(1); }
+}
+/* Passive ability procs: the card glows gold while the name floats up */
+.unit-card.passive-proc, .enemy-card.passive-proc {
+  animation: passive-proc-glow 0.9s ease-out;
+}
+@keyframes passive-proc-glow {
+  0% { box-shadow: 0 0 4px rgba(201, 162, 39, 0.3); }
+  25% { box-shadow: 0 0 18px rgba(230, 195, 80, 0.9), inset 0 0 12px rgba(201, 162, 39, 0.25); }
+  100% { box-shadow: none; }
+}
+/* Enemy tooltip keeps its natural width when clamped near the edge */
+.enemy-tooltip { width: max-content; }
+@media (prefers-reduced-motion: reduce) {
+  .btn-event-choice.upgrade-chosen, .unit-card.passive-proc, .enemy-card.passive-proc { animation: none; }
+}
+
+/* ============================================================
+   Camp action pips as living campfires; smooth boss name reveal
+   ============================================================ */
+/* Each remaining camp action is a small fire that breathes warm orange */
+.camp-torch {
+  position: relative;
+  width: 15px; height: 17px;
+  background: linear-gradient(180deg, transparent 68%, #5a4326 72%, #3a2a16 100%);
+  border-radius: 0 0 30% 30%;
+  filter: none;
+  overflow: visible;
+}
+.camp-torch::before {
+  content: '';
+  position: absolute;
+  left: 15%; right: 15%; top: 0; bottom: 22%;
+  background: radial-gradient(ellipse 52% 64% at 50% 80%,
+    #ffe9a8 0%, #ffce6a 22%, #ff9a2e 46%, #d1571d 66%, rgba(160, 55, 12, 0) 78%);
+  border-radius: 50% 50% 42% 42% / 65% 65% 35% 35%;
+  transform-origin: 50% 95%;
+  animation: campfire-flicker 0.85s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 4px rgba(255, 150, 40, 0.65));
+}
+.camp-torch:nth-child(even)::before { animation-delay: -0.42s; animation-duration: 0.74s; }
+@keyframes campfire-flicker {
+  0% { transform: scaleY(0.96) scaleX(1.02) rotate(-1.5deg); filter: drop-shadow(0 0 3px rgba(255, 150, 40, 0.5)) brightness(0.96); }
+  100% { transform: scaleY(1.14) scaleX(0.9) rotate(1.5deg); filter: drop-shadow(0 0 6px rgba(255, 170, 60, 0.85)) brightness(1.18); }
+}
+.camp-torch.spent { background: linear-gradient(180deg, transparent 68%, #4a4038 72%, #2c2620 100%); }
+.camp-torch.spent::before {
+  animation: none;
+  background: radial-gradient(ellipse 55% 45% at 50% 88%, #56504a 0%, rgba(60, 55, 50, 0) 70%);
+  filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .camp-torch::before { animation: none; }
+}
+
+/* Boss name: animate only transform/filter. The old keyframes tweened
+   letter-spacing, which reflows text in whole-pixel steps — the visible
+   jitter near the end of the reveal. */
+.boss-intro-name {
+  animation: boss-name-in 1.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+@keyframes boss-name-in {
+  0% { opacity: 0; transform: scale(1.45); filter: blur(7px); }
+  40% { opacity: 1; }
+  100% { transform: scale(1); filter: blur(0); }
+}
