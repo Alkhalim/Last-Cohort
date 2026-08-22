@@ -2337,6 +2337,7 @@ class GameUI {
   // ================================================================
 
   showMapScreen() {
+    this._eventCombat = false;
     this.showScreen('map-screen');
     this.renderMapPartyBar();
     this.renderMapMorale();
@@ -3926,6 +3927,10 @@ class GameUI {
         const encounter = { name: combatData.name, enemies: combatData.enemies, intro: combatData.intro };
         this.currentNodeThreat = 3;
         this.engine.initEncounter(encounter);
+        // Event combats (Thusnelda's ambush etc.) return to the CURRENT march
+        // on victory — they are not march bosses, even when a boss fights in
+        // them, and must never enter the post-boss march-completion flow.
+        this._eventCombat = true;
         this.showScreen('combat-screen');
         this.selectedUnitIndex = null;
         this.stagedSkill = null;
@@ -4722,7 +4727,7 @@ class GameUI {
     // final-march boss victory ends the run — except inside the hidden march.
     const diff = window.game ? window.game.difficulty : 1;
     const finalMarch = typeof FINAL_MARCH !== 'undefined' ? FINAL_MARCH : 8;
-    const isFinalBoss = diff >= finalMarch && isBossVictory && !this._inHiddenMarch;
+    const isFinalBoss = diff >= finalMarch && isBossVictory && !this._inHiddenMarch && !this._eventCombat;
     if (isFinalBoss) {
       const bonusRenown = 60;
       this.engine.totalRenownEarned += bonusRenown;
@@ -4804,8 +4809,8 @@ class GameUI {
       this.pendingEventCombatLoot = null;
     }
 
-    this.lootScreenFinal = isBossVictory;
-    this.lootReturnToMap = !isBossVictory;
+    this.lootScreenFinal = isBossVictory && !this._eventCombat;
+    this.lootReturnToMap = !this.lootScreenFinal;
     // Remember whether this screen ever had loot: the empty state after the
     // last item is claimed must not read "nothing was found".
     this._lootHadItems = this.pendingLoot.length > 0;
