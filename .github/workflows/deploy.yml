@@ -26,13 +26,13 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Convert assets
+        # Recursive: audio moved into assets/audio/{music,sfx} — the old
+        # top-level glob matched nothing, so the sed below rewrote code to
+        # .ogg files that never existed and every mp3 sound 404ed on Pages.
         run: |
-          cd assets
-          for f in *.mp3; do
-            if [ -f "$f" ]; then
-              ffmpeg -i "$f" -acodec libvorbis "${f%.mp3}.ogg"
-              rm "$f"
-            fi
+          find assets -type f -name "*.mp3" -print0 | while IFS= read -r -d '' f; do
+            ffmpeg -loglevel error -i "$f" -acodec libvorbis "${f%.mp3}.ogg"
+            rm "$f"
           done
 
       - name: Update file references
