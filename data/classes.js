@@ -73,7 +73,7 @@ const RAW_CLASSES = {
         "effects": { "damage": 2, "shieldbreak": true, "bonusDmgScale": 0.5 }
       },
       {
-        "id": "shoulder_charge", "name": "Shoulder Charge", "cooldown": 1,
+        "id": "shoulder_charge", "name": "Shoulder Charge", "cooldown": 2,
         "cost": { "type": "range", "min": 3, "max": 4 }, "target": "single_enemy",
         "description": "Deal 4 damage, knock to back row. Back row: +20%, deal 6 damage, stun.",
         "effects": { "damage": 4, "shoulderCharge": true }
