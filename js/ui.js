@@ -2807,7 +2807,10 @@ class GameUI {
       renownEl.id = 'map-renown-label';
       label.insertAdjacentElement('beforebegin', renownEl);
     }
-    renownEl.textContent = `${Math.round(this.engine.totalRenownEarned || 0)} RENOWN`;
+    // Whole-run renown: what past marches banked plus this march's unbanked
+    // earnings — not just the current march's slice
+    const bankedRenown = (window.game && window.game.currentRunRenown) || 0;
+    renownEl.textContent = `${Math.round(bankedRenown + (this.engine.totalRenownEarned || 0))} RENOWN`;
 
     // Bind morale tooltip on map label
     if (!label._moraleTooltipBound) {
