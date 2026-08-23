@@ -7423,3 +7423,7 @@ html, body {
   background: var(--wood-face);
   filter: brightness(1.15);
 }
+
+/* The fog layers hang 22% past the wrapper; unclipped, that overhang
+   became phantom scroll space below the map. */
+#map-canvas-wrapper { overflow: hidden; }
