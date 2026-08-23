@@ -504,15 +504,24 @@ class Game {
   // One tap = one sound. Variants are picked at random; same-name plays are
   // throttled so bursts (AoE hits) don't stack into noise.
   static SFX_LIB = {
-    click: ['assets/audio/sfx/ui/click_1.wav', 'assets/audio/sfx/ui/click_2.wav', 'assets/audio/sfx/ui/click_3.wav'],
-    confirm: ['assets/audio/sfx/ui/confirm.wav'],
-    back: ['assets/audio/sfx/ui/back.wav'],
-    error: ['assets/audio/sfx/ui/error.wav'],
-    unlock: ['assets/audio/sfx/ui/unlock.ogg'],
+    // UI voices from the tactile card-table set — warmer than the old
+    // electronic chirps
+    click: ['assets/audio/sfx/ui/click-1.mp3', 'assets/audio/sfx/ui/click-2.mp3'],
+    confirm: ['assets/audio/sfx/ui/draft-take-1.mp3'],
+    back: ['assets/audio/sfx/ui/slide-1.mp3', 'assets/audio/sfx/ui/slide-2.mp3'],
+    error: ['assets/audio/sfx/ui/drop-invalid-1.mp3'],
+    unlock: ['assets/audio/sfx/ui/crystallize-1.mp3', 'assets/audio/sfx/ui/crystallize-2.mp3'],
     loot: ['assets/audio/sfx/ui/loot_open.ogg'],
-    fanfare: ['assets/audio/sfx/ui/fanfare.wav'],
+    fanfare: ['assets/audio/sfx/ui/victory-1.mp3'],
+    defeat: ['assets/audio/sfx/ui/defeat-1.mp3'],
     camp: ['assets/audio/sfx/ui/camp_fire.ogg'],
     march: ['assets/audio/sfx/ui/march_begin.ogg'],
+    // Dice: bone tumbling, picking, nudging
+    dice_roll: ['assets/audio/sfx/ui/shuffle-1.mp3', 'assets/audio/sfx/ui/shuffle-2.mp3'],
+    die_pick: ['assets/audio/sfx/ui/token-1.mp3', 'assets/audio/sfx/ui/token-2.mp3'],
+    die_adjust: ['assets/audio/sfx/ui/flip-1.mp3', 'assets/audio/sfx/ui/flip-2.mp3', 'assets/audio/sfx/ui/flip-3.mp3'],
+    end_turn: ['assets/audio/sfx/ui/end-turn-1.mp3'],
+    channel: ['assets/audio/sfx/ui/channel-1.mp3'],
     sword: ['assets/audio/sfx/combat/sword_attack_1.ogg', 'assets/audio/sfx/combat/sword_attack_2.ogg', 'assets/audio/sfx/combat/sword_attack_3.ogg'],
     hit: ['assets/audio/sfx/combat/sword_hit_1.ogg', 'assets/audio/sfx/combat/sword_hit_2.ogg', 'assets/audio/sfx/combat/sword_hit_3.ogg'],
     blocked: ['assets/audio/sfx/combat/sword_blocked_1.ogg', 'assets/audio/sfx/combat/sword_blocked_2.ogg', 'assets/audio/sfx/combat/sword_blocked_3.ogg'],
@@ -557,7 +566,11 @@ class Game {
         '.bestiary-slot.filled, .unlock-modal-overlay, .loot-slot-item, ' +
         '.ps-class-card, .mod-card, .levelup-skill-card, .skill-item, .achievement-section-header');
       if (!t) return;
-      if (t.classList && (t.classList.contains('submenu-back') || t.id === 'btn-options-back')) {
+      if (t.id === 'btn-end-turn') {
+        this.playSfx('end_turn', 0.9);
+      } else if (t.classList && t.classList.contains('die')) {
+        // dice have their own pick sound wired at the handler
+      } else if (t.classList && (t.classList.contains('submenu-back') || t.id === 'btn-options-back')) {
         this.playSfx('back', 0.8);
       } else {
         this.playSfx('click', 0.8);

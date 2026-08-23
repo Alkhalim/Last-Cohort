@@ -425,7 +425,7 @@ class GameUI {
         }
         break;
       case 'enemyCutIn':
-        this.showEnemyCutIn(data.enemyName, data.enemyId, data.actionName);
+        this.showEnemyCutIn(data.enemyName, data.enemyId, data.actionName, data.sfxKind);
         break;
       case 'dicePassive':
         if (data.triggers) {
@@ -524,9 +524,9 @@ class GameUI {
   }
 
   // Enemy cut-in — portrait + name + action
-  showEnemyCutIn(enemyName, enemyId, actionName) {
+  showEnemyCutIn(enemyName, enemyId, actionName, sfxKind) {
     if (typeof isFastMode === 'function' && isFastMode()) return;
-    sfx('sword', 0.7);
+    sfx(sfxKind || 'sword', 0.7);
     const existing = document.getElementById('enemy-cutin');
     if (existing) existing.remove();
 
@@ -581,6 +581,13 @@ class GameUI {
 
   // --- Main render ---
   render() {
+    // Phase-transition sounds: bones tumble as a player turn opens, and the
+    // defeat sting lands once when the line breaks
+    if (this.engine && this.engine.phase !== this._lastSfxPhase) {
+      if (this.engine.phase === PHASE.PLAYER_TURN) sfx('dice_roll', 0.7);
+      else if (this.engine.phase === PHASE.DEFEAT) sfx('defeat', 0.9);
+      this._lastSfxPhase = this.engine.phase;
+    }
     this.hideEnemyTooltip();
     // Victory/Defeat: render enemies one final time (so death animations show), then phase UI
     if (this.engine.phase === PHASE.VICTORY || this.engine.phase === PHASE.DEFEAT) {
@@ -1318,6 +1325,7 @@ class GameUI {
             e.stopPropagation();
             if (down.disabled) return;
             down.disabled = true;
+            sfx('die_adjust', 0.7);
             this.engine.adjustDie(die.id, -1);
             this.pruneStagedDice();
             this.render();
@@ -1332,6 +1340,7 @@ class GameUI {
             e.stopPropagation();
             if (up.disabled) return;
             up.disabled = true;
+            sfx('die_adjust', 0.7);
             this.engine.adjustDie(die.id, 1);
             this.pruneStagedDice();
             this.render();
@@ -1368,6 +1377,7 @@ class GameUI {
   }
 
   onDieClickStaged(die) {
+    sfx('die_pick', 0.8);
     if (!this.stagedSkill || die.used) return;
     const idx = this.stagedSkill.diceIds.indexOf(die.id);
     const skill = this.engine.party[this.selectedUnitIndex].skills.find(s => s.id === this.stagedSkill.skillId);

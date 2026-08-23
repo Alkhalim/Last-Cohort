@@ -4404,7 +4404,18 @@ class CombatEngine {
     // Show enemy portrait before action
     const intentAction = enemy._intent && enemy._intent.action ? enemy._intent.action.name : '';
     const fast = typeof isFastMode === 'function' && isFastMode();
-    if (this.onVisual) this.onVisual('enemyCutIn', { enemyName: enemy.name, enemyId: enemy.id, actionName: intentAction });
+    // The cut-in announces what KIND of act follows: swing, shield, salve,
+    // venom, or a will-sapping chant — not always a sword.
+    const actData = enemy._intent && enemy._intent.action;
+    let cutInSfx = 'sword';
+    if (actData) {
+      if (actData.spawn) cutInSfx = 'spell';
+      else if (!actData.damage && (actData.blockSelf || actData.blockAllEnemies || actData.blockFrontRow)) cutInSfx = 'blocked';
+      else if (!actData.damage && (actData.healSelf || actData.healAlly)) cutInSfx = 'buff';
+      else if (!actData.damage && actData.morale) cutInSfx = 'channel';
+      else if (!actData.damage && actData.poisonTarget) cutInSfx = 'spell';
+    }
+    if (this.onVisual) this.onVisual('enemyCutIn', { enemyName: enemy.name, enemyId: enemy.id, actionName: intentAction, sfxKind: cutInSfx });
 
     // Delay action slightly so portrait is visible
     setTimeout(() => {
