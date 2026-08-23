@@ -180,7 +180,7 @@ class Game {
   // --- Settings ---
   loadSettings() {
     const defaults = {
-      musicVolume: 15, soundVolume: 50, trackingEnabled: false,
+      musicVolume: 15, soundVolume: 40, trackingEnabled: false,
       fullSoundtrack: false, reducedArt: false, fastMode: false,
       screenShake: true, reducedMotion: false, cbBars: false,
     };
@@ -551,7 +551,8 @@ class Game {
         this._sfxCache[src] = base;
       }
       const a = this._sfxCache[src].cloneNode();
-      a.volume = Math.max(0, Math.min(1, (this.settings.soundVolume / 100) * vol));
+      // Master SFX attenuation: raw samples run hot against the music bed
+      a.volume = Math.max(0, Math.min(1, (this.settings.soundVolume / 100) * vol * 0.6));
       a.play().catch(() => {});
     } catch (e) { /* audio unavailable */ }
   }
