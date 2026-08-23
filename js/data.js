@@ -854,6 +854,25 @@ function rollDrop(enemyId, party, difficulty) {
         weighted.length = 0;
         boosted.forEach(id => weighted.push(id));
       }
+      // Never OFFER the same item twice in one run while alternatives exist.
+      // The early pool is shallow (27 of 172 items unlocked at the start),
+      // so without this the few survivors — Centurion's Whistle chief among
+      // them — came up again and again. Tracks offers, not equips, so
+      // skipped items count too.
+      const runDropped = (typeof window !== 'undefined' && window.game && window.game._runDroppedBaseIds) || null;
+      if (runDropped && runDropped.size > 0) {
+        const fresh = weighted.filter(id => !runDropped.has(id));
+        if (fresh.length > 0) {
+          weighted.length = 0;
+          fresh.forEach(id => weighted.push(id));
+        }
+      }
+      const recordOffer = (id) => {
+        if (id && typeof window !== 'undefined' && window.game) {
+          if (!window.game._runDroppedBaseIds) window.game._runDroppedBaseIds = new Set();
+          window.game._runDroppedBaseIds.add(id);
+        }
+      };
       // Smart drop filtering: reduce chance if slot is full on all eligible characters
       if (party && party.length > 0) {
         let filtered = weighted.filter(itemId => {
@@ -879,6 +898,7 @@ function rollDrop(enemyId, party, difficulty) {
             if (Math.random() < 0.3) return null;
           }
         }
+        recordOffer(picked);
         return picked;
       }
       const picked = weighted[Math.floor(Math.random() * weighted.length)];
@@ -888,6 +908,7 @@ function rollDrop(enemyId, party, difficulty) {
           if (Math.random() < 0.3) return null;
         }
       }
+      recordOffer(picked);
       return picked;
     }
   }

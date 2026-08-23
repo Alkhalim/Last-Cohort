@@ -1480,6 +1480,7 @@ class Game {
         route: [...(this.route || [])],
         recentBosses: [...(this.recentBosses || [])],
         usedRunEventIds: [...(this.usedRunEventIds || [])],
+        runDroppedBaseIds: [...(this._runDroppedBaseIds || [])],
         morale: this.engine.morale,
         totalEnemiesKilled: this.engine.totalEnemiesKilled,
         encountersCompleted: this.engine.encountersCompleted,
@@ -1537,6 +1538,9 @@ class Game {
       this.route = (data.route && data.route.length) ? data.route : generateRoute();
       this.recentBosses = data.recentBosses || [];
       this.usedRunEventIds = new Set(data.usedRunEventIds || []);
+      // Drop memory: saved if present; older saves seed it from the party's
+      // equipment below (owned = certainly offered before)
+      this._runDroppedBaseIds = new Set(data.runDroppedBaseIds || []);
       this._leaderboardSaved = false;
 
       this.engine.morale = data.morale;
@@ -1593,6 +1597,12 @@ class Game {
         }
         this.engine.computeEquipmentStats(u);
       });
+
+      // Old saves carry no drop memory — seed it from the party's equipment
+      // (owned means it was certainly offered this run)
+      if (this._runDroppedBaseIds.size === 0 && typeof getOwnedItemBaseIds === 'function') {
+        getOwnedItemBaseIds(this.engine.party).forEach(id => this._runDroppedBaseIds.add(id));
+      }
 
       this.ui.mapNodes = data.mapNodes;
       this.ui.currentNodeId = data.currentNodeId;
@@ -2915,6 +2925,9 @@ class Game {
     this.saveStats();
     this.recentBosses = [];
     this.usedRunEventIds = new Set();
+    // Fresh run, fresh drop memory (rollDrop refuses to re-offer an item
+    // this run while alternatives exist)
+    this._runDroppedBaseIds = new Set();
     this._epicsLeftThisRun = 0;
     if (this.activeBoons && this.activeBoons.includes('gilded_name')) this.addRunRenown(30);
     this._leaderboardSaved = false;
