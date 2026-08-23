@@ -186,7 +186,18 @@ class Game {
     };
     try {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (stored) return { ...defaults, ...JSON.parse(stored) };
+      if (stored) {
+        const merged = { ...defaults, ...JSON.parse(stored) };
+        // One-time rebalance: sliders cranked to near-zero against the old
+        // over-loud SFX became inaudible under the new 0.6 master
+        // attenuation. Lift them once to the new default.
+        if (!merged._sfxRebalanced) {
+          if ((merged.soundVolume || 0) < 25) merged.soundVolume = 40;
+          merged._sfxRebalanced = true;
+          try { localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(merged)); } catch (e2) {}
+        }
+        return merged;
+      }
     } catch (e) {}
     return defaults;
   }

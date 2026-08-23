@@ -7427,3 +7427,37 @@ html, body {
 /* The fog layers hang 22% past the wrapper; unclipped, that overhang
    became phantom scroll space below the map. */
 #map-canvas-wrapper { overflow: hidden; }
+
+/* ============================================================
+   Sticky Back: opaque apron — nothing scrolls visibly behind it
+   ============================================================ */
+.submenu-back {
+  border: 1px solid var(--gold-dim);
+}
+/* The apron: covers the side padding and the strip below the button so
+   scrolling content disappears under a clean fade instead of sliding
+   past its edges. Sits behind the button face (own stacking context
+   from the sticky z-index). */
+.submenu-back::before {
+  content: '';
+  position: absolute;
+  left: -1.4rem;
+  right: -1.4rem;
+  top: -14px;
+  bottom: -44px;
+  background: linear-gradient(180deg, transparent 0%, rgba(10, 8, 6, 0.94) 14px, rgba(10, 8, 6, 0.98) 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Back apron v2: fully opaque under the button — the first fade still let
+   content read through below it */
+.submenu-back::before {
+  background: linear-gradient(180deg, transparent 0%, rgba(10, 8, 6, 0.97) 12px, #0a0806 26px, #0a0806 100%);
+}
+
+/* A clear frame seats the Back button on its apron */
+.submenu-back {
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  box-shadow: inset 0 1px 0 rgba(232, 228, 216, 0.08), 0 0 0 1px rgba(10, 8, 6, 0.9), 0 -6px 14px rgba(8, 6, 4, 0.7);
+}
