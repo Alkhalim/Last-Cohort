@@ -1262,7 +1262,7 @@ class CombatEngine {
 
   // --- Centurion passive / Seer's Knucklebone ---
   canAdjustDie() {
-    if (!this.dicePool.adjustUsed && this.morale < 70 && this.party.some(u => u.classId === 'centurion' && !u.downed)) return true;
+    if (!this.dicePool.adjustUsed && this.party.some(u => u.classId === 'centurion' && !u.downed)) return true;
     if (!this.dicePool.itemAdjustUsed && this.partyHasItem('seers_knucklebone')) return true;
     return false;
   }

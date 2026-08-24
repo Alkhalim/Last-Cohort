@@ -527,8 +527,7 @@ class Game {
     defeat: ['assets/audio/sfx/ui/defeat-1.mp3'],
     camp: ['assets/audio/sfx/ui/camp_fire.ogg'],
     march: ['assets/audio/sfx/ui/march_begin.ogg'],
-    // Dice: bone tumbling, picking, nudging
-    dice_roll: ['assets/audio/sfx/ui/shuffle-1.mp3', 'assets/audio/sfx/ui/shuffle-2.mp3'],
+    // Dice: bone picking and nudging (the roll is a clatter burst of these)
     die_pick: ['assets/audio/sfx/ui/token-1.mp3', 'assets/audio/sfx/ui/token-2.mp3'],
     die_adjust: ['assets/audio/sfx/ui/flip-1.mp3', 'assets/audio/sfx/ui/flip-2.mp3', 'assets/audio/sfx/ui/flip-3.mp3'],
     end_turn: ['assets/audio/sfx/ui/end-turn-1.mp3'],
@@ -566,6 +565,15 @@ class Game {
       a.volume = Math.max(0, Math.min(1, (this.settings.soundVolume / 100) * vol * 0.6));
       a.play().catch(() => {});
     } catch (e) { /* audio unavailable */ }
+  }
+
+  // Dice hitting the table: a staggered clatter of small knocks — the card
+  // shuffle sample read as exactly what it was.
+  playDiceClatter() {
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => this.playSfx(i % 2 ? 'die_pick' : 'die_adjust', 0.45 + Math.random() * 0.3),
+        i * (60 + Math.random() * 45));
+    }
   }
 
   // Blanket rule: no click goes silent. Specific moments layer their own

@@ -584,7 +584,7 @@ class GameUI {
     // Phase-transition sounds: bones tumble as a player turn opens, and the
     // defeat sting lands once when the line breaks
     if (this.engine && this.engine.phase !== this._lastSfxPhase) {
-      if (this.engine.phase === PHASE.PLAYER_TURN) sfx('dice_roll', 0.7);
+      if (this.engine.phase === PHASE.PLAYER_TURN && window.game && window.game.playDiceClatter) window.game.playDiceClatter();
       else if (this.engine.phase === PHASE.DEFEAT) sfx('defeat', 0.9);
       this._lastSfxPhase = this.engine.phase;
     }

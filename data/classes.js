@@ -102,9 +102,8 @@ const RAW_CLASSES = {
     "description": "Officer. Buffs allies and controls the battlefield.",
     "passive": {
       "name": "Discipline of Office",
-      "description": "Once per turn, adjust one die by +1 or -1. Only active below 70 morale.",
-      "usedThisTurn": false,
-      "moraleMax": 70
+      "description": "Once per turn, adjust one die by +1 or -1.",
+      "usedThisTurn": false
     },
     "skills": [
       {
