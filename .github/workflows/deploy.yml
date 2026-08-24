@@ -20,6 +20,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    # A hung conversion previously burned the full 6h limit (reported as
+    # "cancelled"); fail fast instead.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -27,12 +30,14 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Convert assets
-        # Recursive: audio moved into assets/audio/{music,sfx} — the old
-        # top-level glob matched nothing, so the sed below rewrote code to
-        # .ogg files that never existed and every mp3 sound 404ed on Pages.
+        # Recursive glob (audio lives in assets/audio/{music,sfx}). No pipe
+        # into the loop: ffmpeg grabs the loop's stdin and hangs the job for
+        # the full 6h limit — which is what killed the last three deploys.
+        # -nostdin -y makes ffmpeg unconditionally non-interactive.
         run: |
-          find assets -type f -name "*.mp3" -print0 | while IFS= read -r -d '' f; do
-            ffmpeg -loglevel error -i "$f" -acodec libvorbis "${f%.mp3}.ogg"
+          shopt -s globstar nullglob
+          for f in assets/**/*.mp3; do
+            ffmpeg -nostdin -y -loglevel error -i "$f" -acodec libvorbis "${f%.mp3}.ogg"
             rm "$f"
           done
 
