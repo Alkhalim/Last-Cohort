@@ -7477,3 +7477,11 @@ html, body {
   box-shadow: inset 0 1px 0 rgba(232, 228, 216, 0.08), inset 0 -2px 3px rgba(0, 0, 0, 0.35);
   pointer-events: none;
 }
+
+/* Cut-in vignette v3: the near-opaque curtain buried the party HP bars
+   during attack animations. Moderate darkening keeps the art dominant
+   while unit cards stay readable behind it. */
+.skill-cutin::before, .enemy-cutin::before {
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(8, 6, 4, 0.5) 16%, rgba(8, 6, 4, 0.72) 42%, rgba(8, 6, 4, 0.8) 100%);
+}
